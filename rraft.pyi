@@ -383,8 +383,6 @@ class Ready_Ref:
         If it contains a MsgSnap message, the application MUST report back to raft
         when the snapshot has been received or has failed by calling ReportSnapshot.
         """
-    def messages(self) -> List[Message_Ref]:
-        """ """
     def take_messages(self) -> List[Message_Owner]:
         """
         Take the Messages.
