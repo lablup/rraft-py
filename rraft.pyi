@@ -1973,8 +1973,6 @@ class MajorityConfig_Ref:
         """"""
     def try_reserve(self, additional: int) -> None:
         """"""
-    def to_string(self) -> str:
-        """"""
 
 class MajorityConfig_Owner:
     """
