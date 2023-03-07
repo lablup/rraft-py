@@ -1835,7 +1835,7 @@ class Progress_Ref:
         Otherwise it decreases the progress next index to min(rejected, last)
         and returns true.
         """
-    def snapshot_failure(self):
+    def snapshot_failure(self) -> None:
         """
         Sets the snapshot to failure.
         """
@@ -1859,9 +1859,9 @@ class Progress_Ref:
         """
         Optimistically advance the index
         """
-    def get_ins(self) -> Inflight_Ref:
+    def get_ins(self) -> Inflights_Ref:
         """"""
-    def set_ins(self, inflights: Inflight_Ref) -> None:
+    def set_ins(self, inflights: Inflights_Ref) -> None:
         """"""
     def get_commit_group_id(self) -> int:
         """"""
@@ -2027,7 +2027,7 @@ class Config_Ref:
         """Runs validations against the config."""
     def get_read_only_option(self) -> ReadOnlyOption:
         """"""
-    def set_read_only_option(self, read_only_option: ReadOnlyOption):
+    def set_read_only_option(self, read_only_option: ReadOnlyOption) -> None:
         """"""
     def get_id(self) -> int:
         """"""
