@@ -376,8 +376,7 @@ class Ready_Ref:
         Entries specifies entries to be saved to stable storage.
         """
     def take_entries(self) -> List[Entry_Owner]:
-        """
-        """
+        """ """
     def messages(self) -> List[Message_Ref]:
         """
         Messages specifies outbound messages to be sent.
@@ -385,8 +384,7 @@ class Ready_Ref:
         when the snapshot has been received or has failed by calling ReportSnapshot.
         """
     def messages(self) -> List[Message_Ref]:
-        """
-        """
+        """ """
     def take_messages(self) -> List[Message_Owner]:
         """
         Take the Messages.
@@ -397,8 +395,7 @@ class Ready_Ref:
         Entries and Snapshot are persisted to stable storage.
         """
     def take_persisted_messages(self) -> List[Message_Owner]:
-        """
-        """
+        """ """
     def read_states(self) -> List[ReadState_Ref]:
         """
         ReadStates specifies the state for read only query.
@@ -1800,8 +1797,7 @@ class ProgressTracker_Ref:
         Prepares for a new round of vote counting via recordVote.
         """
     def votes(self) -> Dict[int, bool]:
-        """
-        """
+        """ """
 
 class ProgressTracker_Owner:
     """
@@ -1991,13 +1987,13 @@ class MajorityConfig_Owner:
     def make_ref(self) -> MajorityConfig_Ref: ...
     def clone(self) -> MajorityConfig_Owner: ...
 
-# src/prelude/inflight.rs
-class Inflight_Ref:
+# src/prelude/inflights.rs
+class Inflights_Ref:
     """
-    Reference type of :class:`Inflight_Owner`.
+    Reference type of :class:`Inflights_Ref`.
     """
 
-    def clone(self) -> Inflight_Owner: ...
+    def clone(self) -> Inflights_Owner: ...
     def add(self, inflight: int) -> None:
         """Adds an inflight into inflights"""
     def cap(self) -> int:
@@ -2011,14 +2007,14 @@ class Inflight_Ref:
     def free_first_one(self) -> None:
         """Frees the first buffer entry."""
 
-class Inflight_Owner:
+class Inflights_Owner:
     """
     A buffer of inflight messages.
     """
 
     def __init__(self, cap: int) -> None: ...
-    def make_ref(self) -> Inflight_Ref: ...
-    def clone(self) -> Inflight_Owner: ...
+    def make_ref(self) -> Inflights_Ref: ...
+    def clone(self) -> Inflights_Owner: ...
 
 # src/prelude/config.rs
 class Config_Ref:

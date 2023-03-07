@@ -1,6 +1,6 @@
 from typing import Optional
 
-from rraft import Inflight_Owner
+from rraft import Inflights_Owner
 
 
 def test_inflight_add():
