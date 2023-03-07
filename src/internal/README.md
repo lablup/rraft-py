@@ -1,0 +1,1 @@
+Extra binding types for internal types of raft-rs.

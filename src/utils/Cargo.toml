@@ -1,0 +1,12 @@
+[package]
+name = "utils"
+version = "0.1.0"
+authors = ["jopemachine"]
+edition = "2018"
+
+[dependencies]
+pyo3 = { version = "0.17.3", features = ["extension-module"] }
+
+[lib]
+name = "utils"
+path = "lib.rs"
