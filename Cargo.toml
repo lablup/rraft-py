@@ -1,7 +1,7 @@
 [package]
 name = "rraft-py"
 version = "0.1.0"
-authors = ["jopemachine"]
+authors = ["Lablup Inc."]
 license = ""
 keywords = ["raft", "distributed-systems", "ha"]
 repository = "https://github.com/jopemachine/rraft-py"
