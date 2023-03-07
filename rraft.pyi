@@ -20,7 +20,7 @@ def default_logger() -> Logger_Owner:
     Currently, this is a `log` adaptor behind a `Once` to ensure there is no clobbering.
     """
 
-def vote_resp_msg_type(typ: MessageType) -> MessageType:
+def vote_resp_msg_type(t: MessageType) -> MessageType:
     """
     Maps vote and pre_vote message types to their correspond responses.
     """
@@ -376,7 +376,9 @@ class Ready_Ref:
         Entries specifies entries to be saved to stable storage.
         """
     def take_entries(self) -> List[Entry_Owner]:
-        """ """
+        """
+        Take the Entries.
+        """
     def messages(self) -> List[Message_Ref]:
         """
         Messages specifies outbound messages to be sent.
@@ -393,7 +395,9 @@ class Ready_Ref:
         Entries and Snapshot are persisted to stable storage.
         """
     def take_persisted_messages(self) -> List[Message_Owner]:
-        """ """
+        """
+        Take the Persisted Messages.
+        """
     def read_states(self) -> List[ReadState_Ref]:
         """
         ReadStates specifies the state for read only query.
@@ -975,19 +979,19 @@ class ConfChangeV2_Ref:
     def clone(self) -> ConfChangeV2_Owner: ...
     def get_changes(self) -> List[Any]:
         """ """
-    def set_context(self, v: List[Any]):
+    def set_context(self, v: List[Any]) -> None:
         """ """
     def clear_context(self) -> None:
         """ """
     def get_context(self) -> List[Any]:
         """ """
-    def set_changes(self, v: List[Any]):
+    def set_changes(self, v: List[Any]) -> None:
         """ """
     def clear_changes(self) -> None:
         """ """
-    def get_transition(self) -> Any:
+    def get_transition(self) -> ConfChangeTransition:
         """ """
-    def set_transition(self, v: Any):
+    def set_transition(self, v: ConfChangeTransition) -> None:
         """ """
     def clear_transition(self) -> None:
         """ """
@@ -1020,7 +1024,7 @@ class ConfChangeSingle_Ref:
         """ """
     def get_change_type(self) -> ConfChangeType:
         """ """
-    def set_context(self, context: List[Any]) -> None:
+    def set_change_type(self, v: ConfChangeType) -> None:
         """ """
     def clear_change_type(self) -> None:
         """ """
