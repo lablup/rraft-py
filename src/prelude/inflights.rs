@@ -2,7 +2,7 @@ use pyo3::{prelude::*, pyclass::CompareOp};
 
 use raft::Inflights;
 
-use utils::reference::{RustRef, RustRef_Default_Implementation};
+use utils::reference::RustRef;
 
 #[derive(Clone)]
 #[pyclass(name = "Inflights_Owner")]

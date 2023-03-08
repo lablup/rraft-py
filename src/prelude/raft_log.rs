@@ -13,7 +13,7 @@ use crate::storage::storage::Py_Storage;
 use raft::prelude::Entry;
 use raft::storage::MemStorage;
 use raft::RaftLog;
-use utils::reference::{RustRef, RustRef_Default_Implementation};
+use utils::reference::RustRef;
 
 use super::super::eraftpb::entry::{Py_Entry_Mut, Py_Entry_Ref};
 use super::unstable::Py_Unstable_Ref;

@@ -2,7 +2,7 @@ use pyo3::{prelude::*, types::PyString};
 use slog::*;
 use slog_async::OverflowStrategy;
 
-use utils::reference::{RustRef, RustRef_Default_Implementation};
+use utils::reference::RustRef;
 
 #[pyclass(name = "OverflowStrategy")]
 pub struct Py_OverflowStrategy(pub OverflowStrategy);

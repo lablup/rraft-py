@@ -26,7 +26,7 @@ use crate::prelude::snapshot_status::Py_SnapshotStatus;
 use crate::prelude::status::Py_Status__MemStorage_Owner;
 use crate::storage::mem_storage::{Py_MemStorage_Mut, Py_MemStorage_Ref};
 use crate::storage::storage::Py_Storage;
-use utils::reference::{RustRef, RustRef_Default_Implementation};
+use utils::reference::RustRef;
 
 #[pyclass(name = "RawNode__MemStorage_Owner")]
 pub struct Py_RawNode__MemStorage_Owner {

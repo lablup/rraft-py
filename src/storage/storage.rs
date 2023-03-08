@@ -5,7 +5,7 @@ use raft::storage::Storage;
 
 use crate::eraftpb::entry::Py_Entry_Ref;
 use crate::eraftpb::snapshot::{Py_Snapshot_Owner, Py_Snapshot_Ref};
-use utils::reference::{RustRef, RustRef_Default_Implementation};
+use utils::reference::RustRef;
 
 use super::super::eraftpb::entry::Py_Entry_Mut;
 use super::raft_state::{Py_RaftState_Mut, Py_RaftState_Ref};

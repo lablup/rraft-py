@@ -3,7 +3,7 @@ use pyo3::{prelude::*, types::PyList};
 
 use raft::eraftpb::ConfState;
 
-use utils::reference::{RustRef, RustRef_Default_Implementation};
+use utils::reference::RustRef;
 
 #[derive(Clone)]
 #[pyclass(name = "ConfState_Owner")]

@@ -5,7 +5,7 @@ use raft::{SoftState, Status};
 use crate::eraftpb::hard_state::{Py_HardState_Mut, Py_HardState_Ref};
 
 use utils::{
-    reference::{RustRef, RustRef_Default_Implementation},
+    reference::RustRef,
     uncloneable_reference::{UncloneableRustRef, UncloneableRustRef_Default_Implementation},
     unsafe_cast::{make_mut, make_static, make_static_mut},
 };

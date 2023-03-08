@@ -7,7 +7,7 @@ use pyo3::{prelude::*, types::PySet};
 use crate::internal::slog::Py_Logger_Mut;
 use fxhash::FxHasher;
 use raft::ProgressTracker;
-use utils::reference::{RustRef, RustRef_Default_Implementation};
+use utils::reference::RustRef;
 use utils::unsafe_cast::make_mut;
 
 use super::progress::Py_Progress_Ref;

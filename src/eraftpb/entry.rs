@@ -3,7 +3,7 @@ use pyo3::{prelude::*, types::PyList};
 
 use raft::eraftpb::Entry;
 
-use utils::reference::{RustRef, RustRef_Default_Implementation};
+use utils::reference::RustRef;
 
 use super::entry_type::Py_EntryType;
 

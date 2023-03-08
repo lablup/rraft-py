@@ -13,7 +13,7 @@ use utils::{
     unsafe_cast::make_mut,
 };
 
-use utils::reference::{RustRef, RustRef_Default_Implementation};
+use utils::reference::RustRef;
 
 #[pyclass(name = "Unstable_Owner")]
 pub struct Py_Unstable_Owner {

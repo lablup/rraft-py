@@ -4,7 +4,7 @@ use raft::Progress;
 
 use utils::{
     errors::to_pyresult,
-    reference::{RustRef, RustRef_Default_Implementation},
+    reference::RustRef,
 };
 
 use super::{

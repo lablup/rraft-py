@@ -4,7 +4,7 @@ use pyo3::{prelude::*, pyclass::CompareOp, types::PyList};
 use raft::eraftpb::Message;
 use utils::unsafe_cast::make_mut;
 
-use utils::reference::{RustRef, RustRef_Default_Implementation};
+use utils::reference::RustRef;
 
 use super::{
     entry::{Py_Entry_Mut, Py_Entry_Ref},

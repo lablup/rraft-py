@@ -3,7 +3,7 @@ use pyo3::{prelude::*, pyclass::CompareOp};
 use raft::eraftpb::SnapshotMetadata;
 
 use utils::{
-    reference::{RustRef, RustRef_Default_Implementation},
+    reference::RustRef,
     unsafe_cast::make_mut,
 };
 

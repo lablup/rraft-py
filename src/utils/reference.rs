@@ -41,24 +41,13 @@ unsafe impl<T: Sync> Sync for RefMutContainer<T> {}
 #[derive(Clone)]
 pub struct RustRef<FromRust: Clone>(pub RefMutContainer<FromRust>);
 
-pub trait RustRef_Default_Implementation<FromRust: Clone> {
-    fn new(s: &mut FromRust) -> Self;
-    fn destroyed_error() -> PyErr;
-    fn map_as_ref<F, U>(&self, f: F) -> PyResult<U>
-    where
-        F: FnOnce(&FromRust) -> U;
-    fn map_as_mut<F, U>(&mut self, f: F) -> PyResult<U>
-    where
-        F: FnOnce(&mut FromRust) -> U;
-}
-
-impl<FromRust: Clone> RustRef_Default_Implementation<FromRust> for RustRef<FromRust> {
-    fn new(s: &mut FromRust) -> Self {
+impl<FromRust: Clone> RustRef<FromRust> {
+    pub fn new(s: &mut FromRust) -> Self {
         Self(RefMutContainer::new(s))
     }
 
     /// Provides a way to access a reference to the underlying data
-    fn map_as_ref<F, U>(&self, f: F) -> PyResult<U>
+    pub fn map_as_ref<F, U>(&self, f: F) -> PyResult<U>
     where
         F: FnOnce(&FromRust) -> U,
     {
@@ -66,14 +55,14 @@ impl<FromRust: Clone> RustRef_Default_Implementation<FromRust> for RustRef<FromR
     }
 
     /// Provides a way to access a mutable reference to the underlying data
-    fn map_as_mut<F, U>(&mut self, f: F) -> PyResult<U>
+    pub fn map_as_mut<F, U>(&mut self, f: F) -> PyResult<U>
     where
         F: FnOnce(&mut FromRust) -> U,
     {
         self.0.map_mut(f).ok_or_else(Self::destroyed_error)
     }
 
-    fn destroyed_error() -> PyErr {
+    pub fn destroyed_error() -> PyErr {
         _destroyed_error()
     }
 }

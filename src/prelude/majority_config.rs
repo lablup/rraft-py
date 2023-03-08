@@ -3,7 +3,7 @@ use pyo3::{prelude::*, pyclass::CompareOp, types::PySet};
 use fxhash::FxHasher;
 use raft::MajorityConfig;
 use std::{collections::HashSet, hash::BuildHasherDefault};
-use utils::{errors::to_pyresult, reference::RustRef_Default_Implementation};
+use utils::errors::to_pyresult;
 
 use utils::reference::RustRef;
 

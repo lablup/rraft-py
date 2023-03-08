@@ -6,7 +6,7 @@ use pyo3::prelude::*;
 use raft::raw_node::LightReady;
 use utils::unsafe_cast::make_mut;
 use utils::{
-    reference::{RustRef, RustRef_Default_Implementation},
+    reference::RustRef,
     uncloneable_reference::{UncloneableRustRef, UncloneableRustRef_Default_Implementation},
 };
 

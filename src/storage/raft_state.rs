@@ -1,7 +1,7 @@
 use pyo3::prelude::*;
 
 use raft::storage::RaftState;
-use utils::reference::{RustRef, RustRef_Default_Implementation};
+use utils::reference::RustRef;
 
 use crate::eraftpb::{
     conf_state::{Py_ConfState_Mut, Py_ConfState_Ref},

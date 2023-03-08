@@ -1,7 +1,7 @@
 use pyo3::{prelude::*, pyclass::CompareOp, types::PyList};
 use raft::{eraftpb::ConfChangeV2, prelude::ConfChangeSingle};
 use utils::{
-    reference::{RustRef, RustRef_Default_Implementation},
+    reference::RustRef,
     unsafe_cast::make_mut,
 };
 

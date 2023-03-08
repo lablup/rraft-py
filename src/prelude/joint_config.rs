@@ -5,7 +5,7 @@ use pyo3::{prelude::*, pyclass::CompareOp, types::PySet};
 use fxhash::FxHasher;
 use raft::JointConfig;
 
-use utils::reference::{RustRef, RustRef_Default_Implementation};
+use utils::reference::RustRef;
 
 #[derive(Clone)]
 #[pyclass(name = "JointConfig_Owner")]

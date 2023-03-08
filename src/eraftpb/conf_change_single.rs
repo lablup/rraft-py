@@ -1,5 +1,5 @@
 use pyo3::{prelude::*, pyclass::CompareOp};
-use utils::reference::{RustRef, RustRef_Default_Implementation};
+use utils::reference::RustRef;
 
 use super::conf_change_type::Py_ConfChangeType;
 

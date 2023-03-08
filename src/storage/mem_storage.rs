@@ -5,7 +5,7 @@ use pyo3::prelude::*;
 use raft::{prelude::ConfState, storage::MemStorage, storage::Storage};
 use utils::{
     errors::to_pyresult,
-    reference::{RustRef, RustRef_Default_Implementation},
+    reference::RustRef,
     uncloneable_reference::{UncloneableRustRef, UncloneableRustRef_Default_Implementation},
     unsafe_cast::make_mut,
 };

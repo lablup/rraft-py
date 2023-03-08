@@ -5,7 +5,7 @@ use pyo3::{
 };
 
 use raft::eraftpb::Snapshot;
-use utils::reference::{RustRef, RustRef_Default_Implementation};
+use utils::reference::RustRef;
 use utils::unsafe_cast::make_mut;
 
 use super::snapshot_metadata::{Py_SnapshotMetadata_Mut, Py_SnapshotMetadata_Ref};

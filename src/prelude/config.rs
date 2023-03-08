@@ -3,7 +3,7 @@ use pyo3::prelude::*;
 use raft::Config;
 use utils::errors::to_pyresult;
 
-use utils::reference::{RustRef, RustRef_Default_Implementation};
+use utils::reference::RustRef;
 
 use super::readonly_option::Py_ReadOnlyOption;
 
