@@ -1,7 +1,6 @@
 use pyo3::prelude::*;
 use pyo3::types::PyList;
 use utils::errors::to_pyresult;
-use utils::uncloneable_reference::UncloneableRustRef;
 use utils::unsafe_cast::make_mut;
 
 use crate::eraftpb::entry::Py_Entry_Owner;
@@ -25,7 +24,7 @@ pub struct Py_RaftLog__MemStorage_Owner {
 
 #[pyclass(name = "RaftLog__MemStorage_Ref")]
 pub struct Py_RaftLog__MemStorage_Ref {
-    pub inner: UncloneableRustRef<RaftLog<MemStorage>>,
+    pub inner: RustRef<RaftLog<MemStorage>>,
 }
 
 #[pymethods]
@@ -39,7 +38,7 @@ impl Py_RaftLog__MemStorage_Owner {
 
     pub fn make_ref(&mut self) -> Py_RaftLog__MemStorage_Ref {
         Py_RaftLog__MemStorage_Ref {
-            inner: UncloneableRustRef::new(&mut self.inner),
+            inner: RustRef::new(&mut self.inner),
         }
     }
 
@@ -202,7 +201,7 @@ impl Py_RaftLog__MemStorage_Ref {
 
     pub fn unstable(&self) -> PyResult<Py_Unstable_Ref> {
         self.inner.map_as_ref(|inner| Py_Unstable_Ref {
-            inner: UncloneableRustRef::new(unsafe { make_mut(inner.unstable()) }),
+            inner: RustRef::new(unsafe { make_mut(inner.unstable()) }),
         })
     }
 
@@ -277,7 +276,7 @@ impl Py_RaftLog__PyStorage_Owner {}
 
 #[pyclass(name = "RaftLog_Ref")]
 pub struct Py_RaftLog__PyStorage_Ref {
-    pub inner: UncloneableRustRef<RaftLog<Py_Storage>>,
+    pub inner: RustRef<RaftLog<Py_Storage>>,
 }
 
 impl Py_RaftLog__PyStorage_Ref {}

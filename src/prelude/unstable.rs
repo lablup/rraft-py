@@ -8,10 +8,7 @@ use crate::{
     internal::slog::{Py_Logger_Mut, Py_Logger_Ref},
 };
 use raft::{prelude::Snapshot, Unstable};
-use utils::{
-    uncloneable_reference::UncloneableRustRef,
-    unsafe_cast::make_mut,
-};
+use utils::unsafe_cast::make_mut;
 
 use utils::reference::RustRef;
 
@@ -22,7 +19,7 @@ pub struct Py_Unstable_Owner {
 
 #[pyclass(name = "Unstable_Ref")]
 pub struct Py_Unstable_Ref {
-    pub inner: UncloneableRustRef<Unstable>,
+    pub inner: RustRef<Unstable>,
 }
 
 #[pymethods]
@@ -36,7 +33,7 @@ impl Py_Unstable_Owner {
 
     pub fn make_ref(&mut self) -> Py_Unstable_Ref {
         Py_Unstable_Ref {
-            inner: UncloneableRustRef::new(&mut self.inner),
+            inner: RustRef::new(&mut self.inner),
         }
     }
 

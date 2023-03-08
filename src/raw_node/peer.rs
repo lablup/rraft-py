@@ -2,7 +2,7 @@ use pyo3::{prelude::*, types::PyList};
 
 use raft::raw_node::Peer;
 
-use utils::uncloneable_reference::UncloneableRustRef;
+use utils::reference::RustRef;
 
 #[pyclass(name = "Peer_Owner")]
 pub struct Py_Peer_Owner {
@@ -11,7 +11,7 @@ pub struct Py_Peer_Owner {
 
 #[pyclass(name = "Peer_Ref")]
 pub struct Py_Peer_Ref {
-    pub inner: UncloneableRustRef<Peer>,
+    pub inner: RustRef<Peer>,
 }
 
 #[pymethods]
@@ -25,7 +25,7 @@ impl Py_Peer_Owner {
 
     pub fn make_ref(&mut self) -> Py_Peer_Ref {
         Py_Peer_Ref {
-            inner: UncloneableRustRef::new(&mut self.inner),
+            inner: RustRef::new(&mut self.inner),
         }
     }
 

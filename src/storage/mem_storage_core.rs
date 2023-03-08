@@ -4,7 +4,6 @@ use raft::storage::MemStorageCore;
 use utils::{
     errors::to_pyresult,
     reference::RustRef,
-    uncloneable_reference::UncloneableRustRef,
     unsafe_cast::make_mut,
 };
 
@@ -22,7 +21,7 @@ pub struct Py_MemStorageCore_Owner {
 
 #[pyclass(name = "MemStorageCore_Ref")]
 pub struct Py_MemStorageCore_Ref {
-    pub inner: UncloneableRustRef<MemStorageCore>,
+    pub inner: RustRef<MemStorageCore>,
 }
 
 #[pymethods]
@@ -36,7 +35,7 @@ impl Py_MemStorageCore_Owner {
 
     pub fn make_ref(&mut self) -> Py_MemStorageCore_Ref {
         Py_MemStorageCore_Ref {
-            inner: UncloneableRustRef::new(&mut self.inner),
+            inner: RustRef::new(&mut self.inner),
         }
     }
 }

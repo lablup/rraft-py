@@ -2,7 +2,6 @@ use pyo3::{prelude::*, types::PyList};
 use utils::{
     errors::to_pyresult,
     reference::RustRef,
-    uncloneable_reference::UncloneableRustRef,
     unsafe_cast::make_mut,
 };
 
@@ -36,7 +35,7 @@ pub struct Py_Raft__MemStorage_Owner {
 
 #[pyclass(name = "Raft__MemStorage_Ref")]
 pub struct Py_Raft__MemStorage_Ref {
-    pub inner: UncloneableRustRef<Raft<MemStorage>>,
+    pub inner: RustRef<Raft<MemStorage>>,
 }
 
 #[pymethods]
@@ -50,7 +49,7 @@ impl Py_Raft__MemStorage_Owner {
 
     pub fn make_ref(&mut self) -> Py_Raft__MemStorage_Ref {
         Py_Raft__MemStorage_Ref {
-            inner: UncloneableRustRef::new(&mut self.inner),
+            inner: RustRef::new(&mut self.inner),
         }
     }
 }
@@ -217,7 +216,7 @@ impl Py_Raft__MemStorage_Ref {
 
     pub fn soft_state(&self) -> PyResult<Py_SoftState_Ref> {
         self.inner.map_as_ref(|inner| Py_SoftState_Ref {
-            inner: UncloneableRustRef::new(unsafe { make_mut(&inner.soft_state()) }),
+            inner: RustRef::new(unsafe { make_mut(&inner.soft_state()) }),
         })
     }
 
@@ -424,7 +423,7 @@ impl Py_Raft__MemStorage_Ref {
 
     pub fn get_raft_log(&mut self) -> PyResult<Py_RaftLog__MemStorage_Ref> {
         self.inner.map_as_mut(|inner| Py_RaftLog__MemStorage_Ref {
-            inner: UncloneableRustRef::new(&mut inner.raft_log),
+            inner: RustRef::new(&mut inner.raft_log),
         })
     }
 
@@ -451,7 +450,7 @@ impl Py_Raft__PyStorage_Owner {}
 
 #[pyclass(name = "Raft_Ref")]
 pub struct Py_Raft__PyStorage_Ref {
-    pub inner: UncloneableRustRef<Raft<Py_Storage>>,
+    pub inner: RustRef<Raft<Py_Storage>>,
 }
 
 #[pymethods]

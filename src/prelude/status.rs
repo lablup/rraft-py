@@ -6,7 +6,6 @@ use crate::eraftpb::hard_state::{Py_HardState_Mut, Py_HardState_Ref};
 
 use utils::{
     reference::RustRef,
-    uncloneable_reference::UncloneableRustRef,
     unsafe_cast::{make_mut, make_static, make_static_mut},
 };
 
@@ -24,7 +23,7 @@ pub struct Py_Status__MemStorage_Owner {
 
 #[pyclass(name = "Status__MemStorage_Ref")]
 pub struct Py_Status__MemStorage_Ref {
-    pub inner: UncloneableRustRef<Status<'static>>,
+    pub inner: RustRef<Status<'static>>,
 }
 
 #[pymethods]
@@ -47,7 +46,7 @@ impl Py_Status__MemStorage_Owner {
 
     pub fn make_ref(&mut self) -> Py_Status__MemStorage_Ref {
         Py_Status__MemStorage_Ref {
-            inner: UncloneableRustRef::new(&mut self.inner),
+            inner: RustRef::new(&mut self.inner),
         }
     }
 }
@@ -96,7 +95,7 @@ impl Py_Status__MemStorage_Ref {
 
     pub fn get_ss(&mut self) -> PyResult<Py_SoftState_Ref> {
         self.inner.map_as_mut(|inner| Py_SoftState_Ref {
-            inner: UncloneableRustRef::new(unsafe { make_mut(&inner.ss) }),
+            inner: RustRef::new(unsafe { make_mut(&inner.ss) }),
         })
     }
 

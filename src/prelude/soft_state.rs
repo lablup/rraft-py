@@ -2,7 +2,7 @@ use pyo3::prelude::*;
 
 use raft::SoftState;
 
-use utils::uncloneable_reference::UncloneableRustRef;
+use utils::reference::RustRef;
 
 use super::state_role::Py_StateRole;
 
@@ -13,7 +13,7 @@ pub struct Py_SoftState_Owner {
 
 #[pyclass(name = "SoftState_Ref")]
 pub struct Py_SoftState_Ref {
-    pub inner: UncloneableRustRef<SoftState>,
+    pub inner: RustRef<SoftState>,
 }
 
 #[pymethods]
@@ -27,7 +27,7 @@ impl Py_SoftState_Owner {
 
     pub fn make_ref(&mut self) -> Py_SoftState_Ref {
         Py_SoftState_Ref {
-            inner: UncloneableRustRef::new(&mut self.inner),
+            inner: RustRef::new(&mut self.inner),
         }
     }
 

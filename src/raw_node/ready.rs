@@ -15,7 +15,6 @@ use crate::{
 use raft::{raw_node::Ready, SoftState};
 use utils::{
     reference::RustRef,
-    uncloneable_reference::UncloneableRustRef,
     unsafe_cast::make_mut,
 };
 
@@ -26,7 +25,7 @@ pub struct Py_Ready_Owner {
 
 #[pyclass(name = "Ready_Ref")]
 pub struct Py_Ready_Ref {
-    pub inner: UncloneableRustRef<Ready>,
+    pub inner: RustRef<Ready>,
 }
 
 #[pymethods]
@@ -40,7 +39,7 @@ impl Py_Ready_Owner {
 
     pub fn make_ref(&mut self) -> Py_Ready_Ref {
         Py_Ready_Ref {
-            inner: UncloneableRustRef::new(&mut self.inner),
+            inner: RustRef::new(&mut self.inner),
         }
     }
 

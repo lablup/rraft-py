@@ -39,9 +39,9 @@ unsafe impl<T: Send> Send for RefMutContainer<T> {}
 unsafe impl<T: Sync> Sync for RefMutContainer<T> {}
 
 #[derive(Clone)]
-pub struct RustRef<FromRust: Clone>(pub RefMutContainer<FromRust>);
+pub struct RustRef<FromRust>(pub RefMutContainer<FromRust>);
 
-impl<FromRust: Clone> RustRef<FromRust> {
+impl<FromRust> RustRef<FromRust> {
     pub fn new(s: &mut FromRust) -> Self {
         Self(RefMutContainer::new(s))
     }

@@ -8,7 +8,6 @@ use raft::Ready;
 
 use raft::raw_node::RawNode;
 use utils::errors::to_pyresult;
-use utils::uncloneable_reference::UncloneableRustRef;
 use utils::unsafe_cast::make_mut;
 
 use super::light_ready::Py_LightReady_Owner;
@@ -35,7 +34,7 @@ pub struct Py_RawNode__MemStorage_Owner {
 
 #[pyclass(name = "RawNode__MemStorage_Ref")]
 pub struct Py_RawNode__MemStorage_Ref {
-    pub inner: UncloneableRustRef<RawNode<MemStorage>>,
+    pub inner: RustRef<RawNode<MemStorage>>,
 }
 
 #[pymethods]
@@ -49,7 +48,7 @@ impl Py_RawNode__MemStorage_Owner {
 
     pub fn make_ref(&mut self) -> Py_RawNode__MemStorage_Ref {
         Py_RawNode__MemStorage_Ref {
-            inner: UncloneableRustRef::new(&mut self.inner),
+            inner: RustRef::new(&mut self.inner),
         }
     }
 }
@@ -265,7 +264,7 @@ impl Py_RawNode__MemStorage_Ref {
 
     pub fn get_raft(&mut self) -> PyResult<Py_Raft__MemStorage_Ref> {
         self.inner.map_as_mut(|inner| Py_Raft__MemStorage_Ref {
-            inner: UncloneableRustRef::new(&mut inner.raft),
+            inner: RustRef::new(&mut inner.raft),
         })
     }
 }
@@ -280,7 +279,7 @@ impl Py_RawNode__PyStorage_Owner {}
 
 #[pyclass(name = "RawNode_Ref")]
 pub struct Py_RawNode__PyStorage_Ref {
-    pub inner: UncloneableRustRef<RawNode<Py_Storage>>,
+    pub inner: RustRef<RawNode<Py_Storage>>,
 }
 
 #[pymethods]

@@ -5,10 +5,7 @@ use crate::eraftpb::{
 use pyo3::prelude::*;
 use raft::raw_node::LightReady;
 use utils::unsafe_cast::make_mut;
-use utils::{
-    reference::RustRef,
-    uncloneable_reference::UncloneableRustRef,
-};
+use utils::reference::RustRef;
 
 #[pyclass(name = "LightReady_Owner")]
 pub struct Py_LightReady_Owner {
@@ -17,7 +14,7 @@ pub struct Py_LightReady_Owner {
 
 #[pyclass(name = "LightReady_Ref")]
 pub struct Py_LightReady_Ref {
-    pub inner: UncloneableRustRef<LightReady>,
+    pub inner: RustRef<LightReady>,
 }
 
 #[pymethods]
@@ -31,7 +28,7 @@ impl Py_LightReady_Owner {
 
     pub fn make_ref(&mut self) -> Py_LightReady_Ref {
         Py_LightReady_Ref {
-            inner: UncloneableRustRef::new(&mut self.inner),
+            inner: RustRef::new(&mut self.inner),
         }
     }
 

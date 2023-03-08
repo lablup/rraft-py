@@ -6,7 +6,6 @@ use raft::{prelude::ConfState, storage::MemStorage, storage::Storage};
 use utils::{
     errors::to_pyresult,
     reference::RustRef,
-    uncloneable_reference::UncloneableRustRef,
     unsafe_cast::make_mut,
 };
 
@@ -141,7 +140,7 @@ impl Py_MemStorage_Ref {
             let mut wl = inner.wl();
 
             let arg = Py_MemStorageCore_Ref {
-                inner: UncloneableRustRef::new(wl.deref_mut()),
+                inner: RustRef::new(wl.deref_mut()),
             };
 
             cb.call1(py, (arg,));
@@ -153,7 +152,7 @@ impl Py_MemStorage_Ref {
             let rl = inner.rl();
 
             let arg = Py_MemStorageCore_Ref {
-                inner: UncloneableRustRef::new(unsafe { make_mut(rl.deref()) }),
+                inner: RustRef::new(unsafe { make_mut(rl.deref()) }),
             };
 
             cb.call1(py, (arg,));
