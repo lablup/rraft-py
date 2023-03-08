@@ -1,3 +1,4 @@
+from typing import Dict
 from test_utils import new_message, new_storage, new_test_raft, empty_entry
 from rraft import (
     Logger_Ref,
@@ -138,9 +139,7 @@ def test_leader_bcast_beat():
 #
 # test_follower_start_election
 # test_candidate_start_new_election
-@pytest.mark.parametrize(
-    "state", [StateRole.Follower, StateRole.Candidate]
-)
+@pytest.mark.parametrize("state", [StateRole.Follower, StateRole.Candidate])
 def test_nonleader_start_election(state: StateRole):
     l = default_logger()
     storage = new_storage()
@@ -182,7 +181,52 @@ def test_nonleader_start_election(state: StateRole):
 # c) it is unclear about the result
 # Reference: section 5.2
 def test_leader_election_in_one_round_rpc():
-    pass
+    l = default_logger()
+
+    class Test:
+        def __init__(self, size: int, votes: Dict[int, bool], state: StateRole):
+            self.size = size
+            self.votes = votes
+            self.state = state
+
+    tests = [
+        # win the election when receiving votes from a majority of the servers
+        Test(1, {}, StateRole.Leader),
+        Test(3, {2: True, 3: True}, StateRole.Leader),
+        Test(3, {2: True}, StateRole.Leader),
+        Test(5, {2: True, 3: True, 4: True, 5: True}, StateRole.Leader),
+        Test(5, {2: True, 3: True, 4: True}, StateRole.Leader),
+        Test(5, {2: True, 3: True}, StateRole.Leader),
+        # return to follower state if it receives vote denial from a majority
+        Test(3, {2: False, 3: False}, StateRole.Follower),
+        Test(5, {2: False, 3: False, 4: False, 5: False}, StateRole.Follower),
+        Test(5, {2: True, 3: False, 4: False, 5: False}, StateRole.Follower),
+        # stay in candidate if it does not obtain the majority
+        Test(3, {}, StateRole.Candidate),
+        Test(5, {2: True}, StateRole.Candidate),
+        Test(5, {2: False, 2: False}, StateRole.Candidate),
+        Test(5, {}, StateRole.Candidate),
+    ]
+
+    for i, v in enumerate(tests):
+        size, votes, state = v.size, v.votes, v.state
+        storage = new_storage()
+        r = new_test_raft(1, list(range(1, size + 1)), 10, 1, storage.make_ref(), l)
+        r.step(new_message(1, 1, MessageType.MsgHup, 0))
+
+        for id, vote in votes.items():
+            m = new_message(id, 1, MessageType.MsgRequestVoteResponse, 0)
+            m.make_ref().set_term(r.raft.make_ref().get_term())
+            m.make_ref().set_reject(not vote)
+            r.step(m.make_ref())
+
+        assert (
+            r.raft.make_ref().get_state() == state
+        ), f"#{i}: state = {r.raft.make_ref().get_state()}, want {state}"
+
+        assert (
+            r.raft.make_ref().get_term() == 1
+        ), f"#{i}: term = {r.raft.make_ref().get_term()}, want {1}"
 
 
 # test_follower_vote tests that each follower will vote for at most one
