@@ -1,5 +1,5 @@
 from typing import Dict
-from test_utils import new_message, new_storage, new_test_raft, empty_entry
+from test_utils import new_message, new_storage, new_test_raft, empty_entry, hard_state
 from rraft import (
     Logger_Ref,
     MemStorage_Ref,
@@ -8,6 +8,7 @@ from rraft import (
     MessageType,
     StateRole,
     default_logger,
+    INVALID_ID,
 )
 
 import os
@@ -233,7 +234,40 @@ def test_leader_election_in_one_round_rpc():
 # candidate in a given term, on a first-come-first-served basis.
 # Reference: section 5.2
 def test_follower_vote():
-    pass
+    l = default_logger()
+
+    class Test:
+        def __init__(self, vote: int, nvote: int, wreject: bool):
+            self.vote = vote
+            self.nvote = nvote
+            self.wreject = wreject
+
+    tests = [
+        Test(INVALID_ID, 1, False),
+        Test(INVALID_ID, 2, False),
+        Test(1, 1, False),
+        Test(2, 2, False),
+        Test(1, 2, True),
+        Test(2, 1, True),
+    ]
+
+    for i, v in enumerate(tests):
+        vote, nvote, wreject = v.vote, v.nvote, v.wreject
+        storage = new_storage()
+        r = new_test_raft(1, [1, 2, 3], 10, 1, storage.make_ref(), l)
+        hs = hard_state(1, 0, vote)
+        r.raft.make_ref().load_state(hs.make_ref())
+
+        m = new_message(nvote, 1, MessageType.MsgRequestVote, 0)
+        m.make_ref().set_term(1)
+        r.step(m.make_ref())
+
+        msgs = r.read_messages()
+        m = new_message(1, nvote, MessageType.MsgRequestVoteResponse, 0)
+        m.make_ref().set_term(1)
+        m.make_ref().set_reject(wreject)
+        expected_msgs = [m]
+        assert msgs == expected_msgs, f"#{i}: msgs = {msgs}, want {expected_msgs}"
 
 
 # test_candidate_fallback tests that while waiting for votes,
