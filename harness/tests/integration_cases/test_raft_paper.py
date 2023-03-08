@@ -1,4 +1,4 @@
-from typing import Dict
+from typing import Dict, List
 from test_utils import new_message, new_storage, new_test_raft, empty_entry, hard_state
 from rraft import (
     Logger_Ref,
@@ -276,7 +276,34 @@ def test_follower_vote():
 # it recognizes the leader as legitimate and returns to follower state.
 # Reference: section 5.2
 def test_candidate_fallback():
-    pass
+    l = default_logger()
+
+    def new_message_ext(f: int, to: int, term: int) -> Message_Owner:
+        m = new_message(f, to, MessageType.MsgAppend, 0)
+        m.make_ref().set_term(term)
+        return m
+
+    tests: List[Message_Owner] = [
+        new_message_ext(2, 1, 2),
+        new_message_ext(2, 1, 3),
+    ]
+
+    for i, m in enumerate(tests):
+        storage = new_storage()
+        r = new_test_raft(1, [1, 2, 3], 10, 1, storage.make_ref(), l)
+        r.raft.make_ref().step(new_message(1, 1, MessageType.MsgHup, 0))
+        assert r.raft.make_ref().get_state() == StateRole.Candidate
+
+        term = m.make_ref().get_term()
+        r.raft.make_ref().step(m.make_ref())
+
+        assert (
+            r.raft.make_ref().get_state() == StateRole.Follower
+        ), f"#{i}: state = {r.raft.make_ref().get_state()}, want {StateRole.Follower}"
+
+        assert (
+            r.raft.make_ref().get_term() == term
+        ), f"#{i}: term = {r.raft.make_ref().get_term()}, want {term}"
 
 
 def test_follower_election_timeout_randomized():
