@@ -46,7 +46,7 @@ def test_raw_node_read_index():
 # Ensures that a node can be started correctly. Note that RawNode requires the
 # application to bootstrap the state, i.e. it does not accept peers and will not
 # create faux configuration change entries.
-def test_raw_node_start():
+def test_raw_node_start():
     pass
 
 def test_raw_node_restart():
