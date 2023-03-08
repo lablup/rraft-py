@@ -15,7 +15,7 @@ use crate::{
 use raft::{raw_node::Ready, SoftState};
 use utils::{
     reference::RustRef,
-    uncloneable_reference::{UncloneableRustRef, UncloneableRustRef_Default_Implementation},
+    uncloneable_reference::UncloneableRustRef,
     unsafe_cast::make_mut,
 };
 

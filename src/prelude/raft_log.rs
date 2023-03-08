@@ -1,7 +1,7 @@
 use pyo3::prelude::*;
 use pyo3::types::PyList;
 use utils::errors::to_pyresult;
-use utils::uncloneable_reference::{UncloneableRustRef, UncloneableRustRef_Default_Implementation};
+use utils::uncloneable_reference::UncloneableRustRef;
 use utils::unsafe_cast::make_mut;
 
 use crate::eraftpb::entry::Py_Entry_Owner;

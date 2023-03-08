@@ -6,7 +6,7 @@ use raft::{prelude::ConfState, storage::MemStorage, storage::Storage};
 use utils::{
     errors::to_pyresult,
     reference::RustRef,
-    uncloneable_reference::{UncloneableRustRef, UncloneableRustRef_Default_Implementation},
+    uncloneable_reference::UncloneableRustRef,
     unsafe_cast::make_mut,
 };
 

@@ -2,7 +2,7 @@ use pyo3::{prelude::*, types::PyList};
 
 use raft::raw_node::Peer;
 
-use utils::uncloneable_reference::{UncloneableRustRef, UncloneableRustRef_Default_Implementation};
+use utils::uncloneable_reference::UncloneableRustRef;
 
 #[pyclass(name = "Peer_Owner")]
 pub struct Py_Peer_Owner {

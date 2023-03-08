@@ -7,7 +7,7 @@ use raft::raw_node::LightReady;
 use utils::unsafe_cast::make_mut;
 use utils::{
     reference::RustRef,
-    uncloneable_reference::{UncloneableRustRef, UncloneableRustRef_Default_Implementation},
+    uncloneable_reference::UncloneableRustRef,
 };
 
 #[pyclass(name = "LightReady_Owner")]

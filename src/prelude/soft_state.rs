@@ -2,7 +2,7 @@ use pyo3::prelude::*;
 
 use raft::SoftState;
 
-use utils::uncloneable_reference::{UncloneableRustRef, UncloneableRustRef_Default_Implementation};
+use utils::uncloneable_reference::UncloneableRustRef;
 
 use super::state_role::Py_StateRole;
 

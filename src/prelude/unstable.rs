@@ -9,7 +9,7 @@ use crate::{
 };
 use raft::{prelude::Snapshot, Unstable};
 use utils::{
-    uncloneable_reference::{UncloneableRustRef, UncloneableRustRef_Default_Implementation},
+    uncloneable_reference::UncloneableRustRef,
     unsafe_cast::make_mut,
 };
 

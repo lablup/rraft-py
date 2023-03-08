@@ -8,7 +8,7 @@ use raft::Ready;
 
 use raft::raw_node::RawNode;
 use utils::errors::to_pyresult;
-use utils::uncloneable_reference::{UncloneableRustRef, UncloneableRustRef_Default_Implementation};
+use utils::uncloneable_reference::UncloneableRustRef;
 use utils::unsafe_cast::make_mut;
 
 use super::light_ready::Py_LightReady_Owner;
