@@ -336,20 +336,47 @@ def test_non_leader_election_timeout_randomized(state: StateRole):
         timeouts[time] = True
 
 
-def test_follower_election_timeout_nonconflict():
-    pass
-
-
-def test_candidates_election_timeout_nonconf():
-    pass
-
-
 # test_nonleaders_election_timeout_nonconfict tests that in most cases only a
 # single server(follower or candidate) will time out, which reduces the
 # likelihood of split vote in the new election.
 # Reference: section 5.2
-def test_nonleaders_election_timeout_nonconfict():
-    pass
+#
+# test_follower_election_timeout_nonconflict
+# test_candidates_election_timeout_nonconf
+@pytest.mark.parametrize("state", [StateRole.Follower, StateRole.Candidate])
+def test_nonleaders_election_timeout_nonconfict(state: StateRole):
+    l = default_logger()
+    et = 10
+    size = 5
+    rs: List[Interface] = []
+    ids = list(range(1, size + 1))
+    for id in ids:
+        storage = new_storage()
+        rs.append(new_test_raft(id, ids, et, 1, storage.make_ref(), l.make_ref()))
+
+    conflicts = 0
+
+    for _ in range(0, 1000):
+        for r in rs:
+            term = r.raft.make_ref().get_term()
+            if state == StateRole.Follower:
+                r.raft.make_ref().become_follower(term + 1, INVALID_ID)
+            elif state == StateRole.Candidate:
+                r.raft.make_ref().become_candidate()
+            else:
+                assert False, "non leader state is expect!"
+
+        timeout_num = 0
+        while timeout_num == 0:
+            for r in rs:
+                r.raft.make_ref().tick()
+
+                if not r.read_messages():
+                    timeout_num += 1
+
+        # several rafts time out at the same tick
+        if timeout_num > 1:
+            conflicts += 1
 
 
 # test_leader_start_replication tests that when receiving client proposals,
