@@ -306,19 +306,34 @@ def test_candidate_fallback():
         ), f"#{i}: term = {r.raft.make_ref().get_term()}, want {term}"
 
 
-def test_follower_election_timeout_randomized():
-    pass
-
-
-def test_candidate_election_timeout_randomized():
-    pass
-
-
 # test_non_leader_election_timeout_randomized tests that election timeout for
 # follower or candidate is randomized.
 # Reference: section 5.2
-def test_non_leader_election_timeout_randomized():
-    pass
+#
+# test_follower_election_timeout_randomized
+# test_candidate_election_timeout_randomized
+@pytest.mark.parametrize("state", [StateRole.Follower, StateRole.Candidate])
+def test_non_leader_election_timeout_randomized(state: StateRole):
+    l = default_logger()
+    et = 10
+    storage = new_storage()
+    r = new_test_raft(1, [1, 2, 3], et, 1, storage.make_ref(), l)
+    timeouts = {}
+    for _ in range(1000 * et):
+        term = r.raft.make_ref().get_term()
+        if state == StateRole.Follower:
+            r.raft.make_ref().become_follower(term + 1, 2)
+        elif state == StateRole.Candidate:
+            r.raft.make_ref().become_candidate()
+        else:
+            assert False, "only non leader state is accepted!"
+
+        time = 0
+        while not r.read_messages():
+            r.raft.make_ref().tick()
+            time += 1
+
+        timeouts[time] = True
 
 
 def test_follower_election_timeout_nonconflict():
