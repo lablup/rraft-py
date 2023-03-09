@@ -631,7 +631,120 @@ def test_follower_commit_entry():
 # append entries.
 # Reference: section 5.3
 def test_follower_check_msg_append():
-    pass
+    l = default_logger()
+    ents = [empty_entry(1, 1), empty_entry(2, 2)]
+
+    class Test:
+        def __init__(
+            self,
+            term: int,
+            index: int,
+            windex: int,
+            w_commit: int,
+            wreject: bool,
+            wreject_hint: int,
+            w_log_term: int,
+        ) -> None:
+            self.term = term
+            self.index = index
+            self.windex = windex
+            self.w_commit = w_commit
+            self.wreject = wreject
+            self.wreject_hint = wreject_hint
+            self.w_log_term = w_log_term
+
+    tests = [
+        # match with committed entries
+        Test(
+            0,
+            0,
+            1,
+            1,
+            False,
+            0,
+            0,
+        ),
+        Test(
+            ents[0].make_ref().get_term(),
+            ents[0].make_ref().get_index(),
+            1,
+            1,
+            False,
+            0,
+            0,
+        ),
+        # match with uncommitted entries
+        Test(
+            ents[1].make_ref().get_term(),
+            ents[1].make_ref().get_index(),
+            2,
+            1,
+            False,
+            0,
+            0,
+        ),
+        # unmatch with existing entry
+        Test(
+            ents[0].make_ref().get_term(),
+            ents[1].make_ref().get_index(),
+            ents[1].make_ref().get_index(),
+            1,
+            True,
+            1,
+            1,
+        ),
+        # unexisting entry
+        Test(
+            ents[1].make_ref().get_term() + 1,
+            ents[1].make_ref().get_index() + 1,
+            ents[1].make_ref().get_index() + 1,
+            1,
+            True,
+            2,
+            2,
+        ),
+    ]
+
+    for i, v in enumerate(tests):
+        term, index, windex, w_commit, wreject, wreject_hint, w_log_term = (
+            v.term,
+            v.index,
+            v.windex,
+            v.w_commit,
+            v.wreject,
+            v.wreject_hint,
+            v.w_log_term,
+        )
+
+        cs = ConfState_Owner([1, 2, 3], [])
+        store: MemStorage_Owner = MemStorage_Owner.new_with_conf_state(cs.make_ref())
+        store.make_ref().wl(lambda core: core.append(ents))
+        cfg = new_test_config(1, 10, 1)
+        r = new_test_raft_with_config(cfg.make_ref(), store.make_ref(), l.make_ref())
+
+        hs = hard_state(0, 1, 0)
+        r.raft.make_ref().load_state(hs.make_ref())
+        r.raft.make_ref().become_follower(2, 2)
+
+        m = new_message(2, 1, MessageType.MsgAppend, 0)
+        m.make_ref().set_term(2)
+        m.make_ref().set_log_term(term)
+        m.make_ref().set_index(index)
+        r.step(m.make_ref())
+
+        msgs = r.read_messages()
+        wm = new_message(1, 2, MessageType.MsgAppendResponse, 0)
+        wm.make_ref().set_term(2)
+        wm.make_ref().set_index(windex)
+        wm.make_ref().set_commit(w_commit)
+
+        if wreject:
+            wm.make_ref().set_reject(wreject)
+            wm.make_ref().set_reject_hint(wreject_hint)
+            wm.make_ref().set_log_term(w_log_term)
+
+        excepted_msgs = [wm]
+        assert msgs == excepted_msgs, f"#{i}: msgs = {msgs}, want {excepted_msgs}"
 
 
 # test_follower_append_entries tests that when AppendEntries RPC is valid,
