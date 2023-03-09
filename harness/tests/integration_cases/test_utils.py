@@ -43,7 +43,6 @@ def ltoa(raft_log: RaftLog__MemStorage_Ref) -> str:
 
 
 def new_storage() -> MemStorage_Owner:
-    # storage = MemStorage_Owner()
     return MemStorage_Owner()
 
 
@@ -167,7 +166,8 @@ def new_message(from_: int, to: int, t: MessageType, n: int) -> Message_Owner:
         ents = []
         for _ in range(0, n):
             ents.append(new_entry(0, 0, SOME_DATA))
-        m.make_ref().set_entries(ents)
+
+        m.make_ref().set_entries(list(map(lambda x: x.make_ref(), ents)))
     return m
 
 

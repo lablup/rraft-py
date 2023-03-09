@@ -60,9 +60,9 @@ class Network:
     # A `None` node will be replaced with a new Raft node, and its configuration will
     # be `peers`.
     @staticmethod
-    def new(peers: List[Optional[Interface]], l: Logger_Ref):
+    def new(peers: List[Optional[Interface]], l: Logger_Ref) -> Any:
         cfg = Network.default_config()
-        Network.new_with_config(peers, cfg.make_ref(), l)
+        return Network.new_with_config(peers, cfg.make_ref(), l)
 
     # Initialize a network from `peers` with explicitly specified `config`.
     @staticmethod

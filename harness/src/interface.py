@@ -1,6 +1,11 @@
 from typing import List
 
-from rraft import Message_Owner, Message_Ref, Raft__MemStorage_Owner
+from rraft import (
+    Message_Owner,
+    Message_Ref,
+    Raft__MemStorage_Owner,
+    RaftLog__MemStorage_Ref,
+)
 
 # A simulated Raft facade for testing.
 #
@@ -15,9 +20,12 @@ from rraft import Message_Owner, Message_Ref, Raft__MemStorage_Owner
 
 class Interface:
     # Create a new interface to a new raft.
-    def __init__(self, raft: Raft__MemStorage_Owner):
-        self.raft = raft
-        self.raft_log = raft.make_ref().get_raft_log()
+    def __init__(self, r: Raft__MemStorage_Owner) -> None:
+        self.raft = r
+
+    @property
+    def raft_log(self) -> RaftLog__MemStorage_Ref:
+        return self.raft.make_ref().get_raft_log()
 
     # Step the raft, if it exists.
     def step(self, message: Message_Ref) -> None:
@@ -33,18 +41,17 @@ class Interface:
     # Persist the unstable snapshot and entries.
     def persist(self) -> None:
         if self.raft:
-            snapshot = self.raft_log.unstable_snapshot()
-            if snapshot:
+            if snapshot := self.raft_log.unstable_snapshot():
                 snap = snapshot.clone()
                 index = snap.make_ref().get_metadata().get_index()
                 self.raft_log.stable_snap(index)
-                self.raft_log.get_store().wl(lambda core: core.apply_snapshot(snap))
+                self.raft_log.get_store().wl(
+                    lambda core: core.apply_snapshot(snap.make_ref())
+                )
                 self.raft.make_ref().on_persist_snap(index)
                 self.raft.make_ref().commit_apply(index)
 
-            unstable = self.raft_log.unstable_entries()
-
-            if unstable:
+            if unstable := self.raft_log.unstable_entries():
                 e = unstable[-1]
                 last_idx, last_term = e.get_index(), e.get_term()
                 self.raft_log.stable_entries(last_idx, last_term)
