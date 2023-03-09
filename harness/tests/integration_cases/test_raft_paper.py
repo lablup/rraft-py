@@ -753,7 +753,71 @@ def test_follower_check_msg_append():
 # Also, it writes the new entry into stable storage.
 # Reference: section 5.3
 def test_follower_append_entries():
-    pass
+    l = default_logger()
+
+    class Test:
+        def __init__(
+            self,
+            index: int,
+            term: int,
+            ents: List[Entry_Owner],
+            wents: List[Entry_Owner],
+            wunstable: List[Entry_Owner],
+        ) -> None:
+            self.index = index
+            self.term = term
+            self.ents = ents
+            self.wents = wents
+            self.wunstable = wunstable
+
+    tests = [
+        Test(
+            2,
+            2,
+            [empty_entry(3, 3)],
+            [empty_entry(1, 1), empty_entry(2, 2), empty_entry(3, 3)],
+            [empty_entry(3, 3)],
+        ),
+        Test(
+            1,
+            1,
+            [empty_entry(3, 2), empty_entry(4, 3)],
+            [empty_entry(1, 1), empty_entry(3, 2), empty_entry(4, 3)],
+            [empty_entry(3, 2), empty_entry(4, 3)],
+        ),
+        Test(0, 0, [empty_entry(1, 1)], [empty_entry(1, 1), empty_entry(2, 2)], []),
+        Test(0, 0, [empty_entry(3, 1)], [empty_entry(3, 1)], [empty_entry(3, 1)]),
+    ]
+
+    for i, v in enumerate(tests):
+        index, term, ents, wents, wunstable = (
+            v.index,
+            v.term,
+            v.ents,
+            v.wents,
+            v.wunstable,
+        )
+        cs = ConfState_Owner([1, 2, 3], [])
+        store = MemStorage_Owner.new_with_conf_state(cs.make_ref())
+        store.make_ref().wl(
+            lambda core: core.append([empty_entry(1, 1), empty_entry(2, 2)])
+        )
+        cfg = new_test_config(1, 10, 1)
+        r = new_test_raft_with_config(cfg.make_ref(), store.make_ref(), l.make_ref())
+        r.raft.make_ref().become_follower(2, 2)
+
+        m = new_message(2, 1, MessageType.MsgAppend, 0)
+        m.make_ref().set_term(2)
+        m.make_ref().set_log_term(term)
+        m.make_ref().set_index(index)
+        m.make_ref().set_entries(list(map(lambda e: e.make_ref(), ents)))
+        r.step(m.make_ref())
+
+        g = r.raft_log.all_entries()
+        assert g == wents, f"#{i}: ents = {g}, want {wents}"
+
+        g = r.raft_log.unstable_entries()
+        assert g == wunstable, f"#{i}: unstable_entries = {g}, want {wunstable}"
 
 
 # test_leader_sync_follower_log tests that the leader could bring a follower's log
