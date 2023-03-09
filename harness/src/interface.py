@@ -53,7 +53,9 @@ class Interface:
 
             if unstable := self.raft_log.unstable_entries():
                 e = unstable[-1]
+                cloned_unstable = list(map(lambda x: x.clone(), unstable))
+
                 last_idx, last_term = e.get_index(), e.get_term()
                 self.raft_log.stable_entries(last_idx, last_term)
-                self.raft_log.get_store().wl(lambda core: core.append(unstable))
+                self.raft_log.get_store().wl(lambda core: core.append(cloned_unstable))
                 self.raft.make_ref().on_persist_entries(last_idx, last_term)
