@@ -446,14 +446,81 @@ def test_leader_start_replication():
 # servers eventually find out.
 # Reference: section 5.3
 def test_leader_commit_entry():
-    pass
+    l = default_logger()
+    s = new_storage()
+    r = new_test_raft(1, [1, 2, 3], 10, 1, s.make_ref(), l)
+    r.raft.make_ref().become_candidate()
+    r.raft.make_ref().become_leader()
+    commit_noop_entry(r, s.make_ref())
+    li = r.raft_log.last_index()
+
+    propose = new_message(1, 1, MessageType.MsgPropose, 1)
+
+    r.step(propose.make_ref())
+    r.persist()
+
+    for m in r.read_messages():
+        reply = accept_and_reply(m.make_ref())
+        r.step(reply.make_ref())
+
+    assert r.raft_log.get_committed() == li + 1
+
+    wents = [new_entry(1, li + 1, SOME_DATA)]
+
+    assert r.raft_log.next_entries(None) == wents
+
+    msgs = r.read_messages()
+    msgs.sort(key=lambda m: str(m))
+
+    for i, m in enumerate(msgs):
+        assert i + 2 == m.make_ref().get_to()
+        assert m.make_ref().get_msg_type() == MessageType.MsgAppend
+        assert m.make_ref().get_commit() == li + 1
 
 
 # test_leader_acknowledge_commit tests that a log entry is committed once the
 # leader that created the entry has replicated it on a majority of the servers.
 # Reference: section 5.3
 def test_leader_acknowledge_commit():
-    pass
+    l = default_logger()
+
+    class Test:
+        def __init__(self, size: int, acceptors: Dict[int, bool], wack: bool):
+            self.size = size
+            self.acceptors = acceptors
+            self.wack = wack
+
+    tests = [
+        Test(1, {}, True),
+        Test(3, {}, False),
+        Test(3, {2: True}, True),
+        Test(3, {2: True, 3: True}, True),
+        Test(5, {}, False),
+        Test(5, {2: True}, False),
+        Test(5, {2: True, 3: True}, True),
+        Test(5, {2: True, 3: True, 4: True}, True),
+        Test(5, {2: True, 3: True, 4: True, 5: True}, True),
+    ]
+
+    for i, v in enumerate(tests):
+        size, acceptors, wack = v.size, v.acceptors, v.wack
+        s = new_storage()
+        r = new_test_raft(
+            1, list(range(1, size + 1)), 10, 1, s.make_ref(), l.make_ref()
+        )
+        r.raft.make_ref().become_candidate()
+        r.raft.make_ref().become_leader()
+        commit_noop_entry(r, s.make_ref())
+        li = r.raft_log.last_index()
+        r.step(new_message(1, 1, MessageType.MsgPropose, 1))
+        r.persist()
+
+        for m in r.read_messages():
+            if m.make_ref().get_to() in acceptors.keys():
+                r.step(accept_and_reply(m.make_ref()))
+
+        g = r.raft_log.get_committed() > li
+        assert not (g ^ wack), f"#{i}: ack commit = {g}, want {wack}"
 
 
 # test_leader_commit_preceding_entries tests that when leader commits a log entry,
