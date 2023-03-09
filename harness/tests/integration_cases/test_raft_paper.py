@@ -7,11 +7,15 @@ from test_utils import (
     hard_state,
     new_entry,
     SOME_DATA,
+    new_test_config,
+    new_test_raft_with_config,
 )
 from rraft import (
+    ConfState_Owner,
     Entry_Owner,
     Entry_Ref,
     Logger_Ref,
+    MemStorage_Owner,
     MemStorage_Ref,
     Message_Owner,
     Message_Ref,
@@ -529,7 +533,38 @@ def test_leader_acknowledge_commit():
 # Also, it applies the entry to its local state machine (in log order).
 # Reference: section 5.3
 def test_leader_commit_preceding_entries():
-    pass
+    l = default_logger()
+    tests: List[List[Entry_Owner]] = [
+        [],
+        [empty_entry(2, 1)],
+        [empty_entry(1, 1), empty_entry(2, 2)],
+        [empty_entry(1, 1)],
+    ]
+
+    for i, tt in enumerate(tests):
+        cs_owner = ConfState_Owner([1, 2, 3], [])
+        store = MemStorage_Owner.new_with_conf_state(cs_owner.make_ref())
+        store.make_ref().wl(lambda core: core.append(tt))
+        cfg = new_test_config(1, 10, 1)
+        r = new_test_raft_with_config(cfg.make_ref(), store.make_ref(), l.make_ref())
+
+        hs = hard_state(2, 0, 0)
+        r.raft.make_ref().load_state(hs.make_ref())
+        r.raft.make_ref().become_candidate()
+        r.raft.make_ref().become_leader()
+
+        r.step(new_message(1, 1, MessageType.MsgPropose, 1))
+        r.persist()
+
+        for m in r.read_messages():
+            r.step(accept_and_reply(m.make_ref()))
+
+        li = len(tt)
+        tt.extend([empty_entry(3, li + 1), new_entry(3, li + 2, SOME_DATA)])
+        g = r.raft_log.next_entries(None)
+        wg = list(map(lambda x: x.make_ref(), tt))
+
+        assert g == wg, f"#{i}: ents = {g}, want {wg}"
 
 
 # test_follower_commit_entry tests that once a follower learns that a log entry
