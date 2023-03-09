@@ -622,7 +622,7 @@ def test_follower_commit_entry():
 
         wents = ents[:commit]
         g = r.raft_log.next_entries(None)
-        assert g == wents, f"#{i}: next_wents = {g}, want {wents}"
+        assert g == wents, f"#{i}: next_ents = {g}, want {wents}"
 
 
 # test_follower_check_msg_append tests that if the follower does not find an
