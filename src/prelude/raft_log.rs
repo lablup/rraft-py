@@ -79,6 +79,39 @@ impl Py_RaftLog__MemStorage_Ref {
         })
     }
 
+    pub fn next_entries(&self, max_size: Option<u64>, py: Python) -> PyResult<Option<PyObject>> {
+        self.inner.map_as_ref(|inner| {
+            inner.next_entries(max_size).and_then(|entries| {
+                let entries = entries
+                    .into_iter()
+                    .map(|entry| Py_Entry_Owner { inner: entry })
+                    .collect::<Vec<_>>();
+
+                Some(entries.into_py(py))
+            })
+        })
+    }
+
+    pub fn next_entries_since(
+        &self,
+        since_idx: u64,
+        max_size: Option<u64>,
+        py: Python,
+    ) -> PyResult<Option<PyObject>> {
+        self.inner.map_as_ref(|inner| {
+            inner
+                .next_entries_since(since_idx, max_size)
+                .and_then(|entries| {
+                    let entries = entries
+                        .into_iter()
+                        .map(|entry| Py_Entry_Owner { inner: entry })
+                        .collect::<Vec<_>>();
+
+                    Some(entries.into_py(py))
+                })
+        })
+    }
+
     pub fn append(&mut self, ents: &PyList) -> PyResult<u64> {
         self.inner.map_as_mut(|inner| {
             let mut entries = ents.extract::<Vec<Py_Entry_Mut>>().unwrap();

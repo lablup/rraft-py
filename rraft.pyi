@@ -1320,6 +1320,18 @@ class RaftLog__MemStorage_Ref:
         """
     def store(self) -> MemStorage_Ref:
         """ """
+    def next_entries(self, max_size: Optional[int]) -> List[Entry_Owner]:
+        """
+        Returns all the available entries for execution.
+        If applied is smaller than the index of snapshot, it returns all committed
+        entries after the index of snapshot.
+        """
+    def next_entries_since(
+        self, since_idx: int, max_size: Optional[int]
+    ) -> List[Entry_Owner]:
+        """
+        Returns committed and persisted entries since max(`since_idx` + 1, first_index).
+        """
     def has_next_entries(self) -> bool:
         """
         Returns whether there are new entries.
