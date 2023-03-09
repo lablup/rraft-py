@@ -4,8 +4,8 @@ use crate::eraftpb::{
 };
 use pyo3::prelude::*;
 use raft::raw_node::LightReady;
-use utils::unsafe_cast::make_mut;
 use utils::reference::RustRef;
+use utils::unsafe_cast::make_mut;
 
 #[pyclass(name = "LightReady_Owner")]
 pub struct Py_LightReady_Owner {

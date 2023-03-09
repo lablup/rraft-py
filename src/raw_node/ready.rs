@@ -13,10 +13,7 @@ use crate::{
     },
 };
 use raft::{raw_node::Ready, SoftState};
-use utils::{
-    reference::RustRef,
-    unsafe_cast::make_mut,
-};
+use utils::{reference::RustRef, unsafe_cast::make_mut};
 
 #[pyclass(name = "Ready_Owner")]
 pub struct Py_Ready_Owner {

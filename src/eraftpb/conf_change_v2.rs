@@ -1,9 +1,6 @@
 use pyo3::{prelude::*, pyclass::CompareOp, types::PyList};
 use raft::{eraftpb::ConfChangeV2, prelude::ConfChangeSingle};
-use utils::{
-    reference::RustRef,
-    unsafe_cast::make_mut,
-};
+use utils::{reference::RustRef, unsafe_cast::make_mut};
 
 use super::{
     conf_change_single::{Py_ConfChangeSingle_Mut, Py_ConfChangeSingle_Ref},

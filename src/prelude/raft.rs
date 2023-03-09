@@ -1,9 +1,5 @@
 use pyo3::{prelude::*, types::PyList};
-use utils::{
-    errors::to_pyresult,
-    reference::RustRef,
-    unsafe_cast::make_mut,
-};
+use utils::{errors::to_pyresult, reference::RustRef, unsafe_cast::make_mut};
 
 use raft::{
     prelude::{HardState, Message},

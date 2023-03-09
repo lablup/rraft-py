@@ -3,11 +3,7 @@ use std::ops::{Deref, DerefMut};
 use pyo3::prelude::*;
 
 use raft::{prelude::ConfState, storage::MemStorage, storage::Storage};
-use utils::{
-    errors::to_pyresult,
-    reference::RustRef,
-    unsafe_cast::make_mut,
-};
+use utils::{errors::to_pyresult, reference::RustRef, unsafe_cast::make_mut};
 
 use crate::eraftpb::{
     conf_state::Py_ConfState_Mut, entry::Py_Entry_Owner, snapshot::Py_Snapshot_Owner,

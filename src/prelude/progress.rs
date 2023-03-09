@@ -2,10 +2,7 @@ use pyo3::{prelude::*, pyclass::CompareOp};
 
 use raft::Progress;
 
-use utils::{
-    errors::to_pyresult,
-    reference::RustRef,
-};
+use utils::{errors::to_pyresult, reference::RustRef};
 
 use super::{
     inflights::{Py_Inflights_Mut, Py_Inflights_Ref},

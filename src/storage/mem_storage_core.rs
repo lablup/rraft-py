@@ -1,11 +1,7 @@
 use pyo3::{prelude::*, types::PyList};
 
 use raft::storage::MemStorageCore;
-use utils::{
-    errors::to_pyresult,
-    reference::RustRef,
-    unsafe_cast::make_mut,
-};
+use utils::{errors::to_pyresult, reference::RustRef, unsafe_cast::make_mut};
 
 use crate::eraftpb::{
     conf_state::Py_ConfState_Mut,

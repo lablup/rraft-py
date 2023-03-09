@@ -2,10 +2,7 @@ use pyo3::{prelude::*, pyclass::CompareOp};
 
 use raft::eraftpb::SnapshotMetadata;
 
-use utils::{
-    reference::RustRef,
-    unsafe_cast::make_mut,
-};
+use utils::{reference::RustRef, unsafe_cast::make_mut};
 
 use super::conf_state::{Py_ConfState_Mut, Py_ConfState_Ref};
 
