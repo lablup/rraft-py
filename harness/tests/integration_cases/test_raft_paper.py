@@ -401,7 +401,41 @@ def test_nonleaders_election_timeout_nonconfict(state: StateRole):
 # Also, it writes the new entry into stable storage.
 # Reference: section 5.3
 def test_leader_start_replication():
-    pass
+    l = default_logger()
+    s = new_storage()
+    r = new_test_raft(1, [1, 2, 3], 10, 1, s.make_ref(), l)
+    r.raft.make_ref().become_candidate()
+    r.raft.make_ref().become_leader()
+    commit_noop_entry(r, s.make_ref())
+    li = r.raft_log.last_index()
+
+    r.step(new_message(1, 1, MessageType.MsgPropose, 1))
+
+    assert r.raft_log.last_index() == li + 1
+    assert r.raft_log.get_committed() == li
+
+    msgs = r.read_messages()
+    msgs.sort(key=lambda m: str(m))
+    wents1, wents2 = [new_entry(1, li + 1, SOME_DATA)], [
+        new_entry(1, li + 1, SOME_DATA)
+    ]
+
+    def new_message_ext(f: int, to: int, ents: List[Entry_Owner]) -> Message_Owner:
+        m = new_message(f, to, MessageType.MsgAppend, 0)
+        m.make_ref().set_term(1)
+        m.make_ref().set_index(li)
+        m.make_ref().set_log_term(1)
+        m.make_ref().set_commit(li)
+        m.make_ref().set_entries(list(map(lambda x: x.make_ref(), ents)))
+        return m
+
+    excepted_msgs = [
+        new_message_ext(1, 2, wents1),
+        new_message_ext(1, 3, wents2),
+    ]
+
+    assert msgs == excepted_msgs
+    assert r.raft_log.unstable_entries() == wents1
 
 
 # test_leader_commit_entry tests that when the entry has been safely replicated,
