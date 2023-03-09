@@ -571,7 +571,58 @@ def test_leader_commit_preceding_entries():
 # is committed, it applies the entry to its local state machine (in log order).
 # Reference: section 5.3
 def test_follower_commit_entry():
-    pass
+    l = default_logger()
+
+    class Test:
+        def __init__(self, ents: List[Entry_Owner], commit: int):
+            self.ents = ents
+            self.commit = commit
+
+    tests = [
+        Test([new_entry(1, 1, SOME_DATA)], 1),
+        Test(
+            [
+                new_entry(1, 1, SOME_DATA),
+                new_entry(1, 2, "somedata2"),
+            ],
+            2,
+        ),
+        Test(
+            [
+                new_entry(1, 1, "somedata2"),
+                new_entry(1, 2, SOME_DATA),
+            ],
+            2,
+        ),
+        Test(
+            [
+                new_entry(1, 1, SOME_DATA),
+                new_entry(1, 2, "somedata2"),
+            ],
+            1,
+        ),
+    ]
+
+    for i, v in enumerate(tests):
+        ents, commit = v.ents, v.commit
+        storage = new_storage()
+        r = new_test_raft(1, [1, 2, 3], 10, 1, storage.make_ref(), l.make_ref())
+        r.raft.make_ref().become_follower(1, 2)
+
+        m = new_message(2, 1, MessageType.MsgAppend, 0)
+        m.make_ref().set_term(1)
+        m.make_ref().set_commit(commit)
+        m.make_ref().set_entries(list(map(lambda x: x.make_ref(), ents)))
+        r.step(m.make_ref())
+        r.persist()
+
+        assert (
+            r.raft_log.get_committed() == commit
+        ), f"#{i}: committed = {r.raft_log.get_committed()}, want {commit}"
+
+        wents = ents[:commit]
+        g = r.raft_log.next_entries(None)
+        assert g == wents, f"#{i}: next_wents = {g}, want {wents}"
 
 
 # test_follower_check_msg_append tests that if the follower does not find an
