@@ -1,6 +1,16 @@
 from typing import Dict, List
-from test_utils import new_message, new_storage, new_test_raft, empty_entry, hard_state
+from test_utils import (
+    new_message,
+    new_storage,
+    new_test_raft,
+    empty_entry,
+    hard_state,
+    new_entry,
+    SOME_DATA,
+)
 from rraft import (
+    Entry_Owner,
+    Entry_Ref,
     Logger_Ref,
     MemStorage_Ref,
     Message_Owner,
@@ -29,21 +39,24 @@ def commit_noop_entry(r: Interface, s: MemStorage_Ref):
         assert m.make_ref().get_msg_type() == MessageType.MsgAppend
         assert len(m.make_ref().get_entries()) == 1
         assert len(m.make_ref().get_entries()[0].get_data()) == 0
-        r.step(accept_and_reply(m.make_ref()))
+        reply = accept_and_reply(m.make_ref())
+        r.step(reply.make_ref())
 
     # ignore further messages to refresh followers' commit index
     r.read_messages()
     unstable = r.raft_log.unstable_entries()
-    e = unstable[-1]
-    last_idx, last_term = e.get_index(), e.get_term()
-    r.raft_log.stable_entries(last_idx, last_term)
-    s.wl(lambda core: core.append(unstable))
-    r.raft.make_ref().on_persist_entries(last_idx, last_term)
-    committed = r.raft_log.get_committed()
-    r.raft.make_ref().commit_apply(committed)
+
+    if unstable:
+        e = unstable[-1]
+        last_idx, last_term = e.get_index(), e.get_term()
+        r.raft_log.stable_entries(last_idx, last_term)
+        s.wl(lambda core: core.append(unstable))
+        r.raft.make_ref().on_persist_entries(last_idx, last_term)
+        committed = r.raft_log.get_committed()
+        r.raft.make_ref().commit_apply(committed)
 
 
-def accept_and_reply(m: Message_Ref) -> Message_Ref:
+def accept_and_reply(m: Message_Ref) -> Message_Owner:
     assert m.get_msg_type() == MessageType.MsgAppend
     reply = new_message(m.get_to(), m.get_from(), MessageType.MsgAppendResponse, 0)
     reply.make_ref().set_term(m.get_term())
