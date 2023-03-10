@@ -71,13 +71,13 @@ class Network:
     ) -> Any:
         nstorage = {}
         npeers = {}
-        peer_addrs = range(1, len(peers) + 1)
+        peer_addrs = list(range(1, len(peers) + 1))
 
-        for id, p in enumerate(peers):
+        for p, id in zip(peers, peer_addrs):
             if p is None:
                 cs_owner = ConfState_Owner(list(peer_addrs), [])
                 store_owner = MemStorage_Owner.new_with_conf_state(cs_owner.make_ref())
-                nstorage[id] = store_owner
+                nstorage[id] = store_owner.clone()
                 cfg = config.clone()
                 cfg.make_ref().set_id(id)
                 raft_owner = Raft__MemStorage_Owner(
@@ -86,15 +86,16 @@ class Network:
                 r = Interface(raft_owner)
                 npeers[id] = r
             else:
-                raft = p.raft.make_ref()
-                if raft:
-                    if raft.get_id() != id:
+                if p.raft:
+                    if raft := p.raft.make_ref():
                         assert (
-                            False
-                        ), f"peer {raft.get_id()} in peers has a wrong position"
-                    store = raft.get_raft_log().get_store().clone()
-                    nstorage[id] = store
-                npeers[id] = r
+                            raft.get_id() == id
+                        ), f"peer {p.raft.make_ref().get_id()} in peers has a wrong position"
+
+                        store = raft.get_raft_log().get_store().clone()
+                        nstorage[id] = store
+
+                npeers[id] = p
 
         return Network(npeers, nstorage, {}, {})
 
