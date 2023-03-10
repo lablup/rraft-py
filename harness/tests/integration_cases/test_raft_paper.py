@@ -1032,7 +1032,56 @@ def test_vote_request():
 # than that of the candidate.
 # Reference: section 5.4.1
 def test_voter():
-    pass
+    l = default_logger()
+
+    class Test:
+        def __init__(
+            self, ents: List[Entry_Owner], log_term: int, index: int, wreject: bool
+        ) -> None:
+            self.ents = ents
+            self.log_term = log_term
+            self.index = index
+            self.wreject = wreject
+
+    tests = [
+        # same logterm
+        Test([empty_entry(1, 1)], 1, 1, False),
+        Test([empty_entry(1, 1)], 1, 2, False),
+        Test([empty_entry(1, 1), empty_entry(1, 2)], 1, 1, True),
+        # candidate higher logterm
+        Test([empty_entry(1, 1)], 2, 1, False),
+        Test([empty_entry(1, 1)], 1, 2, False),
+        Test([empty_entry(1, 1), empty_entry(1, 2)], 2, 1, False),
+        # voter higher logterm
+        Test([empty_entry(2, 1)], 1, 1, True),
+        Test([empty_entry(2, 1)], 1, 2, True),
+        Test([empty_entry(2, 1), empty_entry(1, 2)], 1, 1, True),
+    ]
+
+    for i, v in enumerate(tests):
+        ents, log_term, index, wreject = (v.ents, v.log_term, v.index, v.wreject)
+        cs = ConfState_Owner([1, 2], [])
+        s = MemStorage_Owner.new_with_conf_state(cs.make_ref())
+        s.make_ref().wl(lambda core: core.append(ents))
+        cfg = new_test_config(1, 10, 1)
+        r = new_test_raft_with_config(cfg.make_ref(), s.make_ref(), l.make_ref())
+
+        m = new_message(2, 1, MessageType.MsgRequestVote, 0)
+        m.make_ref().set_term(3)
+        m.make_ref().set_log_term(log_term)
+        m.make_ref().set_index(index)
+        r.step(m)
+
+        msgs = r.read_messages()
+        assert len(msgs) == 1, f"#{i}: msg count = {len(msgs)}, want 1"
+
+        assert (
+            msgs[0].make_ref().get_msg_type() == MessageType.MsgRequestVoteResponse
+        ), f"#{i}: msg_type = {msgs[0].make_ref().get_msg_type()}, want {MessageType.MsgRequestVoteResponse}"
+
+        assert (
+            msgs[0].make_ref().get_reject() == wreject
+        ), f"#{i}: reject = {msgs[0].make_ref().get_reject()}, want {wreject}"
 
 
 # TestLeaderOnlyCommitsLogFromCurrentTerm tests that only log entries from the leader’s
