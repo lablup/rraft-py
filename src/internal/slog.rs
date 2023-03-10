@@ -31,6 +31,10 @@ impl From<OverflowStrategy> for Py_OverflowStrategy {
 
 #[pymethods]
 impl Py_OverflowStrategy {
+    pub fn __hash__(&self) -> u64 {
+        self.0 as u64
+    }
+
     #[classattr]
     pub fn Block() -> Self {
         Py_OverflowStrategy(OverflowStrategy::Block)

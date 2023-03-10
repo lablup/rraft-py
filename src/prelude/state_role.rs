@@ -37,6 +37,10 @@ impl Py_StateRole {
         })
     }
 
+    pub fn __hash__(&self) -> u64 {
+        self.0 as u64
+    }
+
     #[classattr]
     pub fn Candidate() -> Self {
         Py_StateRole(StateRole::Candidate)

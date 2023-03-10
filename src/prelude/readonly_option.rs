@@ -34,6 +34,10 @@ impl Py_ReadOnlyOption {
         })
     }
 
+    pub fn __hash__(&self) -> u64 {
+        self.0 as u64
+    }
+
     #[classattr]
     pub fn Safe() -> Self {
         Py_ReadOnlyOption(ReadOnlyOption::Safe)

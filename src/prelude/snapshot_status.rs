@@ -34,6 +34,10 @@ impl Py_SnapshotStatus {
         })
     }
 
+    pub fn __hash__(&self) -> u64 {
+        self.0 as u64
+    }
+
     #[classattr]
     pub fn Finish() -> Self {
         Py_SnapshotStatus(SnapshotStatus::Finish)
