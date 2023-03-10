@@ -115,7 +115,24 @@ def test_snapshot_succeed():
 
 
 def test_snapshot_abort():
-    pass
+    l = default_logger()
+    storage = new_storage()
+    sm = new_test_raft(1, [1, 2], 10, 1, storage.make_ref(), l.make_ref())
+    sm.raft.make_ref().restore(testing_snap())
+    sm.persist()
+
+    sm.raft.make_ref().become_candidate()
+    sm.raft.make_ref().become_leader()
+
+    sm.raft.make_ref().prs().get(2).set_next_idx(1)
+    sm.raft.make_ref().prs().get(2).become_snapshot(11)
+
+    m = new_message(2, 1, MessageType.MsgSnapStatus, 0)
+    m.make_ref().set_reject(False)
+    sm.step(m)
+
+    assert sm.raft.make_ref().prs().get(2).get_pending_snapshot() == 0
+    assert sm.raft.make_ref().prs().get(2).get_next_idx() == 12
 
 
 # Initialized storage should be at term 1 instead of 0. Otherwise the case will fail.
