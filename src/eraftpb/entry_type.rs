@@ -40,6 +40,14 @@ impl Py_EntryType {
         self.0 as u64
     }
 
+    pub fn __repr__(&self) -> String {
+        match self.0 {
+            EntryType::EntryConfChange => "EntryConfChange".to_string(),
+            EntryType::EntryConfChangeV2 => "EntryConfChangeV2".to_string(),
+            EntryType::EntryNormal => "EntryNormal".to_string(),
+        }
+    }
+
     #[classattr]
     pub fn EntryConfChange() -> Self {
         Py_EntryType(EntryType::EntryConfChange)

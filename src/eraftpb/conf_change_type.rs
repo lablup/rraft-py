@@ -40,6 +40,14 @@ impl Py_ConfChangeType {
         self.0 as u64
     }
 
+    pub fn __repr__(&self) -> String {
+        match self.0 {
+            ConfChangeType::AddNode => "AddNode".to_string(),
+            ConfChangeType::AddLearnerNode => "AddLearnerNode".to_string(),
+            ConfChangeType::RemoveNode => "RemoveNode".to_string(),
+        }
+    }
+
     #[classattr]
     pub fn AddNode() -> Self {
         Py_ConfChangeType(ConfChangeType::AddNode)

@@ -49,6 +49,13 @@ impl Py_HardState_Owner {
         }
     }
 
+    #[staticmethod]
+    pub fn default() -> Self {
+        Py_HardState_Owner {
+            inner: HardState::default(),
+        }
+    }
+
     pub fn make_ref(&mut self) -> Py_HardState_Ref {
         Py_HardState_Ref {
             inner: RustRef::new(&mut self.inner),

@@ -35,6 +35,15 @@ impl Py_OverflowStrategy {
         self.0 as u64
     }
 
+    pub fn __repr__(&self) -> String {
+        match self.0 {
+            OverflowStrategy::Block => "Block".to_string(),
+            OverflowStrategy::Drop => "Drop".to_string(),
+            OverflowStrategy::DropAndReport => "DropAndReport".to_string(),
+            _ => todo!(),
+        }
+    }
+
     #[classattr]
     pub fn Block() -> Self {
         Py_OverflowStrategy(OverflowStrategy::Block)

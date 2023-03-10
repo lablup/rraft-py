@@ -38,6 +38,13 @@ impl Py_ReadOnlyOption {
         self.0 as u64
     }
 
+    pub fn __repr__(&self) -> String {
+        match self.0 {
+            ReadOnlyOption::Safe => "Safe".to_string(),
+            ReadOnlyOption::LeaseBased => "LeaseBased".to_string(),
+        }
+    }
+
     #[classattr]
     pub fn Safe() -> Self {
         Py_ReadOnlyOption(ReadOnlyOption::Safe)

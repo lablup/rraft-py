@@ -44,6 +44,14 @@ impl Py_ConfChangeTransition {
         self.0 as u64
     }
 
+    pub fn __repr__(&self) -> String {
+        match self.0 {
+            ConfChangeTransition::Auto => "Auto".to_string(),
+            ConfChangeTransition::Explicit => "Explicit".to_string(),
+            ConfChangeTransition::Implicit => "Implicit".to_string(),
+        }
+    }
+
     #[classattr]
     pub fn Auto() -> Self {
         Py_ConfChangeTransition(ConfChangeTransition::Auto)

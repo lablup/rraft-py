@@ -41,6 +41,15 @@ impl Py_StateRole {
         self.0 as u64
     }
 
+    pub fn __repr__(&self) -> String {
+        match self.0 {
+            StateRole::Candidate => "Candidate".to_string(),
+            StateRole::Follower => "Follower".to_string(),
+            StateRole::Leader => "Leader".to_string(),
+            StateRole::PreCandidate => "PreCandidate".to_string(),
+        }
+    }
+
     #[classattr]
     pub fn Candidate() -> Self {
         Py_StateRole(StateRole::Candidate)

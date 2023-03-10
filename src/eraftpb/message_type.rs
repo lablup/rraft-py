@@ -76,6 +76,30 @@ impl Py_MessageType {
         self.0 as u64
     }
 
+    pub fn __repr__(&self) -> String {
+        match self.0 {
+            MessageType::MsgHup => "MsgHup".to_string(),
+            MessageType::MsgBeat => "MsgBeat".to_string(),
+            MessageType::MsgPropose => "MsgPropose".to_string(),
+            MessageType::MsgAppend => "MsgAppend".to_string(),
+            MessageType::MsgAppendResponse => "MsgAppendResponse".to_string(),
+            MessageType::MsgRequestVote => "MsgRequestVote".to_string(),
+            MessageType::MsgRequestVoteResponse => "MsgRequestVoteResponse".to_string(),
+            MessageType::MsgSnapshot => "MsgSnapshot".to_string(),
+            MessageType::MsgHeartbeat => "MsgHeartbeat".to_string(),
+            MessageType::MsgHeartbeatResponse => "MsgHeartbeatResponse".to_string(),
+            MessageType::MsgUnreachable => "MsgUnreachable".to_string(),
+            MessageType::MsgSnapStatus => "MsgSnapStatus".to_string(),
+            MessageType::MsgCheckQuorum => "MsgCheckQuorum".to_string(),
+            MessageType::MsgTransferLeader => "MsgTransferLeader".to_string(),
+            MessageType::MsgTimeoutNow => "MsgTimeoutNow".to_string(),
+            MessageType::MsgReadIndex => "MsgReadIndex".to_string(),
+            MessageType::MsgReadIndexResp => "MsgReadIndexResp".to_string(),
+            MessageType::MsgRequestPreVote => "MsgRequestPreVote".to_string(),
+            MessageType::MsgRequestPreVoteResponse => "MsgRequestPreVoteResponse".to_string(),
+        }
+    }
+
     #[classattr]
     pub fn MsgHup() -> Self {
         Py_MessageType(MessageType::MsgHup)

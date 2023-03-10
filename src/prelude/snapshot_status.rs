@@ -38,6 +38,13 @@ impl Py_SnapshotStatus {
         self.0 as u64
     }
 
+    pub fn __repr__(&self) -> String {
+        match self.0 {
+            SnapshotStatus::Finish => "Finish".to_string(),
+            SnapshotStatus::Failure => "Failure".to_string(),
+        }
+    }
+
     #[classattr]
     pub fn Finish() -> Self {
         Py_SnapshotStatus(SnapshotStatus::Finish)

@@ -36,6 +36,10 @@ impl Py_ProgressState {
         })
     }
 
+    pub fn __hash__(&self) -> u64 {
+        self.0 as u64
+    }
+
     #[classattr]
     pub fn Probe() -> Self {
         Py_ProgressState(ProgressState::Probe)
