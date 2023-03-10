@@ -1,5 +1,7 @@
 from typing import Dict, List
+
 from test_utils import (
+    ltoa,
     new_message,
     new_storage,
     new_test_raft,
@@ -32,6 +34,7 @@ import pytest
 parent_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "../src"))
 sys.path.append(parent_dir)
 from interface import Interface
+from network import Network
 
 
 def commit_noop_entry(r: Interface, s: MemStorage_Ref):
@@ -824,7 +827,143 @@ def test_follower_append_entries():
 # into consistency with its own.
 # Reference: section 5.3, figure 7
 def test_leader_sync_follower_log():
-    pass
+    l = default_logger()
+    ents = [
+        empty_entry(1, 1),
+        empty_entry(1, 2),
+        empty_entry(1, 3),
+        empty_entry(4, 4),
+        empty_entry(4, 5),
+        empty_entry(5, 6),
+        empty_entry(5, 7),
+        empty_entry(6, 8),
+        empty_entry(6, 9),
+        empty_entry(6, 10),
+    ]
+
+    term = 8
+    tests = [
+        [
+            empty_entry(1, 1),
+            empty_entry(1, 2),
+            empty_entry(1, 3),
+            empty_entry(4, 4),
+            empty_entry(4, 5),
+            empty_entry(5, 6),
+            empty_entry(5, 7),
+            empty_entry(6, 8),
+            empty_entry(6, 9),
+        ],
+        [
+            empty_entry(1, 1),
+            empty_entry(1, 2),
+            empty_entry(1, 3),
+            empty_entry(4, 4),
+        ],
+        [
+            empty_entry(1, 1),
+            empty_entry(1, 2),
+            empty_entry(1, 3),
+            empty_entry(4, 4),
+            empty_entry(4, 5),
+            empty_entry(5, 6),
+            empty_entry(5, 7),
+            empty_entry(6, 8),
+            empty_entry(6, 9),
+            empty_entry(6, 10),
+            empty_entry(6, 11),
+        ],
+        [
+            empty_entry(1, 1),
+            empty_entry(1, 2),
+            empty_entry(1, 3),
+            empty_entry(4, 4),
+            empty_entry(4, 5),
+            empty_entry(5, 6),
+            empty_entry(5, 7),
+            empty_entry(6, 8),
+            empty_entry(6, 9),
+            empty_entry(6, 10),
+            empty_entry(7, 11),
+            empty_entry(7, 12),
+        ],
+        [
+            empty_entry(1, 1),
+            empty_entry(1, 2),
+            empty_entry(1, 3),
+            empty_entry(4, 4),
+            empty_entry(4, 5),
+            empty_entry(4, 6),
+            empty_entry(4, 7),
+        ],
+        [
+            empty_entry(1, 1),
+            empty_entry(1, 2),
+            empty_entry(1, 3),
+            empty_entry(2, 4),
+            empty_entry(2, 5),
+            empty_entry(2, 6),
+            empty_entry(3, 7),
+            empty_entry(3, 8),
+            empty_entry(3, 9),
+            empty_entry(3, 10),
+            empty_entry(3, 11),
+        ],
+    ]
+
+    for i, tt in enumerate(tests):
+        lead_cs = ConfState_Owner([1, 2, 3], [])
+        lead_store = MemStorage_Owner.new_with_conf_state(lead_cs.make_ref())
+        lead_store.make_ref().wl(
+            lambda core: core.append(list(map(lambda e: e.make_ref(), ents)))
+        )
+        lead_cfg = new_test_config(1, 10, 1)
+        lead = new_test_raft_with_config(
+            lead_cfg.make_ref(), lead_store.make_ref(), l.make_ref()
+        )
+        last_index = lead.raft_log.last_index()
+        lead_hs = hard_state(term, last_index, 0)
+        lead.raft.make_ref().load_state(lead_hs.make_ref())
+
+        follower_cs = ConfState_Owner([1, 2, 3], [])
+        follower_store = MemStorage_Owner.new_with_conf_state(follower_cs.make_ref())
+        follower_store.make_ref().wl(
+            lambda core: core.append(list(map(lambda e: e.make_ref(), tt)))
+        )
+
+        follower_cfg = new_test_config(2, 10, 1)
+        follower = new_test_raft_with_config(
+            follower_cfg.make_ref(), follower_store.make_ref(), l.make_ref()
+        )
+        follower_hs = hard_state(term - 1, 0, 0)
+        follower.raft.make_ref().load_state(follower_hs.make_ref())
+
+        NOP_STEPPER = Interface(None)
+
+        # It is necessary to have a three-node cluster.
+        # The second may have more up-to-date log than the first one, so the
+        # first node needs the vote from the third node to become the leader.
+        n = Network.new([lead, follower, NOP_STEPPER], l.make_ref())
+        m = new_message(1, 1, MessageType.MsgHup, 0)
+        n.send([m])
+
+        # The election occurs in the term after the one we loaded with
+        # lead.load_state above.
+        m = new_message(3, 1, MessageType.MsgRequestVoteResponse, 0)
+        m.make_ref().set_term(term + 1)
+        n.send([m])
+
+        m = new_message(1, 1, MessageType.MsgPropose, 0)
+        e = Entry_Owner.default()
+        m.make_ref().set_entries([e.make_ref()])
+        n.send([m])
+
+        lead_str = ltoa(n.peers.get(1).raft_log)
+        follower_str = ltoa(n.peers.get(2).raft_log)
+
+        assert (
+            lead_str == follower_str
+        ), f"#{i}: lead str: {lead_str}, follower_str: {follower_str}"
 
 
 # test_vote_request tests that the vote request includes information about the candidate’s log
