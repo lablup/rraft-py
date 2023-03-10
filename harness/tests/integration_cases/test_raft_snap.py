@@ -15,6 +15,7 @@ from test_utils import (
     new_storage,
     new_test_raft,
     new_message,
+    new_test_raft_with_prevote,
     # Interface,
 )
 
@@ -137,7 +138,35 @@ def test_snapshot_abort():
 
 # Initialized storage should be at term 1 instead of 0. Otherwise the case will fail.
 def test_snapshot_with_min_term():
-    pass
+    l = default_logger()
+
+    def do_test(pre_vote: bool):
+        s1 = new_storage()
+        s1.make_ref().wl(lambda core: core.apply_snapshot(new_snapshot(1, 1, [1, 2])))
+
+        n1 = new_test_raft_with_prevote(
+            1, [1, 2], 10, 1, s1.make_ref(), pre_vote, l.make_ref()
+        )
+
+        s2 = new_storage()
+        n2 = new_test_raft_with_prevote(
+            2, [], 10, 1, s2.make_ref(), pre_vote, l.make_ref()
+        )
+
+        nt = Network.new([n1, n2], l.make_ref())
+
+        m = new_message(1, 1, MessageType.MsgHup, 0)
+
+        nt.send([m])
+
+        # print(n1.raft.make_ref().prs().get(1).get_next_idx())
+
+        # 1 will be elected as leader, and then send a snapshot and an empty entry to 2.
+        assert nt.peers.get(2).raft_log.first_index() == 2
+        assert nt.peers.get(2).raft_log.last_index() == 2
+
+    do_test(True)
+    do_test(False)
 
 
 def test_request_snapshot():
