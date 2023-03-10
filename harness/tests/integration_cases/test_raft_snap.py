@@ -70,7 +70,26 @@ def test_pending_snapshot_pause_replication():
 
 
 def test_snapshot_failure():
-    pass
+    l = default_logger()
+    storage = new_storage()
+    sm = new_test_raft(1, [1, 2], 10, 1, storage.make_ref(), l.make_ref())
+    sm.raft.make_ref().restore(testing_snap())
+    sm.persist()
+
+    sm.raft.make_ref().become_candidate()
+    sm.raft.make_ref().become_leader()
+
+    sm.raft.make_ref().prs().get(2).set_next_idx(1)
+    sm.raft.make_ref().prs().get(2).become_snapshot(11)
+
+    m = new_message(2, 1, MessageType.MsgSnapStatus, 0)
+    m.make_ref().set_reject(True)
+    sm.step(m)
+    voter_2 = sm.raft.make_ref().prs().get(2)
+
+    assert voter_2.get_pending_snapshot() == 0
+    assert voter_2.get_next_idx() == 1
+    assert voter_2.get_paused() == 1
 
 
 def test_snapshot_succeed():
