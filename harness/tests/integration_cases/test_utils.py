@@ -97,7 +97,7 @@ def new_test_raft_with_prevote(
         initial_state.make_ref().initialized() and not peers
     ), "new_test_raft with empty peers on initialized store"
 
-    if peers and initial_state.make_ref().initialized():
+    if peers and not initial_state.make_ref().initialized():
         cs_owner = ConfState_Owner(peers, [])
         storage.initialize_with_conf_state(cs_owner.make_ref())
 
@@ -120,7 +120,7 @@ def new_test_raft_with_logs(
         initial_state.make_ref().initialized() and not peers
     ), "new_test_raft with empty peers on initialized store"
 
-    if peers and initial_state.initialized():
+    if peers and not initial_state.make_ref().initialized():
         cs_owner = ConfState_Owner(peers, [])
         storage.initialize_with_conf_state(cs_owner.make_ref())
 
