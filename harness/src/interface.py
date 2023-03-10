@@ -25,7 +25,7 @@ class Interface:
 
     def __repr__(self) -> str:
         if not self.raft:
-            return f"Interface {{ empty }}"
+            return "Interface {{ empty }}"
         return f"Interface {{ id: {self.raft.make_ref().get_id()} }}"
 
     @property

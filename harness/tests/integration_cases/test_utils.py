@@ -87,15 +87,15 @@ def new_test_raft_with_prevote(
 ) -> Interface:
     config = new_test_config(id, election, heartbeat)
     config.make_ref().set_pre_vote(pre_vote)
-    raft_state_owner = storage.initial_state()
+    raft_state_owner = storage.make_ref().initial_state()
 
     if raft_state_owner.make_ref().initialized() and not peers:
         raise Exception("new_test_raft with empty peers on initialized store")
     if peers and raft_state_owner.make_ref().initialized():
         cs_owner = ConfState_Owner(peers, [])
-        storage.initialize_with_conf_state(cs_owner.make_ref())
+        storage.make_ref().initialize_with_conf_state(cs_owner.make_ref())
 
-    return new_test_raft_with_config(config.make_ref(), storage, logger)
+    return new_test_raft_with_config(config.make_ref(), storage.make_ref(), logger)
 
 
 def new_test_raft_with_logs(
