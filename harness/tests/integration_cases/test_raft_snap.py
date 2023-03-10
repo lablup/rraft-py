@@ -154,12 +154,8 @@ def test_snapshot_with_min_term():
         )
 
         nt = Network.new([n1, n2], l.make_ref())
-
         m = new_message(1, 1, MessageType.MsgHup, 0)
-
         nt.send([m])
-
-        # print(n1.raft.make_ref().prs().get(1).get_next_idx())
 
         # 1 will be elected as leader, and then send a snapshot and an empty entry to 2.
         assert nt.peers.get(2).raft_log.first_index() == 2
