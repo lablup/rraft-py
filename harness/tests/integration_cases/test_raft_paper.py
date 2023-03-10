@@ -1088,4 +1088,47 @@ def test_voter():
 # current term are committed by counting replicas.
 # Reference: section 5.4.2
 def test_leader_only_commits_log_from_current_term():
-    pass
+    l = default_logger()
+    ents = [empty_entry(1, 1), empty_entry(2, 2)]
+
+    class Test:
+        def __init__(self, index: int, wcommit: int) -> None:
+            self.index = index
+            self.wcommit = wcommit
+
+    tests = [
+        # do not commit log entries in previous terms
+        Test(1, 0),
+        Test(2, 0),
+        # commit log in current term
+        Test(3, 3),
+    ]
+
+    for i, v in enumerate(tests):
+        index, wcommit = (v.index, v.wcommit)
+        cs = ConfState_Owner([1, 2], [])
+        store = MemStorage_Owner.new_with_conf_state(cs.make_ref())
+        store.make_ref().wl(lambda core: core.append(ents))
+        cfg = new_test_config(1, 10, 1)
+        r = new_test_raft_with_config(cfg.make_ref(), store.make_ref(), l.make_ref())
+
+        hs = hard_state(2, 0, 0)
+        r.raft.make_ref().load_state(hs.make_ref())
+
+        # become leader at term 3
+        r.raft.make_ref().become_candidate()
+        r.raft.make_ref().become_leader()
+        r.read_messages()
+
+        # propose a entry to current term
+        r.step(new_message(1, 1, MessageType.MsgPropose, 1))
+        r.persist()
+
+        m = new_message(2, 1, MessageType.MsgAppendResponse, 0)
+        m.make_ref().set_term(r.raft.make_ref().get_term())
+        m.make_ref().set_index(index)
+        r.step(m)
+
+        assert (
+            r.raft_log.get_committed() == wcommit
+        ), f"#{i}: commit = {r.raft_log.get_committed()}, want {wcommit}"
