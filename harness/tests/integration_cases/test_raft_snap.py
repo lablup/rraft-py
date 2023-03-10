@@ -54,7 +54,19 @@ def test_sending_snapshot_set_pending_snapshot():
 
 
 def test_pending_snapshot_pause_replication():
-    pass
+    l = default_logger()
+    storage = new_storage()
+    sm = new_test_raft(1, [1, 2], 10, 1, storage.make_ref(), l.make_ref())
+    sm.raft.make_ref().restore(testing_snap())
+    sm.persist()
+
+    sm.raft.make_ref().become_candidate()
+    sm.raft.make_ref().become_leader()
+    sm.raft.make_ref().prs().get(2).become_snapshot(11)
+
+    sm.step(new_message(2, 1, MessageType.MsgPropose, 1))
+    msgs = sm.read_messages()
+    assert not msgs
 
 
 def test_snapshot_failure():
