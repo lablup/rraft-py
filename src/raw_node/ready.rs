@@ -27,8 +27,8 @@ pub struct Py_Ready_Ref {
 
 #[pymethods]
 impl Py_Ready_Owner {
-    #[new]
-    pub fn new() -> Self {
+    #[staticmethod]
+    pub fn default() -> Self {
         Py_Ready_Owner {
             inner: Ready::default(),
         }

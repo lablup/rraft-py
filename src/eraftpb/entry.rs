@@ -52,6 +52,13 @@ impl Py_Entry_Owner {
         }
     }
 
+    #[staticmethod]
+    pub fn default() -> Self {
+        Py_Entry_Owner {
+            inner: Entry::default(),
+        }
+    }
+
     pub fn make_ref(&mut self) -> Py_Entry_Ref {
         Py_Entry_Ref {
             inner: RustRef::new(&mut self.inner),

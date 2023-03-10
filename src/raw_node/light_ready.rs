@@ -19,8 +19,8 @@ pub struct Py_LightReady_Ref {
 
 #[pymethods]
 impl Py_LightReady_Owner {
-    #[new]
-    pub fn new() -> Self {
+    #[staticmethod]
+    pub fn default() -> Self {
         Py_LightReady_Owner {
             inner: LightReady::default(),
         }

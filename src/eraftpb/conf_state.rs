@@ -47,7 +47,7 @@ impl Py_ConfState_Owner {
     pub fn new(voters: Option<&PyList>, learners: Option<&PyList>) -> Self {
         if voters.and(learners).is_none() {
             Py_ConfState_Owner {
-                inner: ConfState::default(),
+                inner: ConfState::new_(),
             }
         } else if voters.or(learners).is_none() {
             // TODO: Improve below logic through throwing PyErr if possible
@@ -58,6 +58,13 @@ impl Py_ConfState_Owner {
             Py_ConfState_Owner {
                 inner: ConfState::from((voters, learners)),
             }
+        }
+    }
+
+    #[staticmethod]
+    pub fn default() -> Self {
+        Py_ConfState_Owner {
+            inner: ConfState::default(),
         }
     }
 

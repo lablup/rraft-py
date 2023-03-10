@@ -23,6 +23,11 @@ class Interface:
     def __init__(self, r: Raft__MemStorage_Owner) -> None:
         self.raft = r
 
+    def __repr__(self) -> str:
+        if not self.raft:
+            return f"Interface {{ empty }}"
+        return f"Interface {{ id: {self.raft.make_ref().get_id()} }}"
+
     @property
     def raft_log(self) -> RaftLog__MemStorage_Ref:
         return self.raft.make_ref().get_raft_log()

@@ -22,8 +22,8 @@ pub struct Py_MemStorageCore_Ref {
 
 #[pymethods]
 impl Py_MemStorageCore_Owner {
-    #[new]
-    pub fn new() -> Self {
+    #[staticmethod]
+    pub fn default() -> Self {
         Py_MemStorageCore_Owner {
             inner: MemStorageCore::default(),
         }

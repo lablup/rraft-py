@@ -52,6 +52,13 @@ impl Py_MemStorage_Owner {
     #[new]
     pub fn new() -> Self {
         Py_MemStorage_Owner {
+            inner: MemStorage::new(),
+        }
+    }
+
+    #[staticmethod]
+    pub fn default() -> Self {
+        Py_MemStorage_Owner {
             inner: MemStorage::default(),
         }
     }

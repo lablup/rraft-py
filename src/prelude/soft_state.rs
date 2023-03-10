@@ -18,8 +18,8 @@ pub struct Py_SoftState_Ref {
 
 #[pymethods]
 impl Py_SoftState_Owner {
-    #[new]
-    pub fn new() -> Self {
+    #[staticmethod]
+    pub fn default() -> Self {
         Py_SoftState_Owner {
             inner: SoftState::default(),
         }

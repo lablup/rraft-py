@@ -47,7 +47,14 @@ impl Into<RaftState> for &mut Py_RaftState_Mut<'_> {
 #[pymethods]
 impl Py_RaftState_Owner {
     #[new]
-    pub fn new() -> Self {
+    pub fn new(hard_state: Py_HardState_Mut, conf_state: Py_ConfState_Mut) -> Self {
+        Py_RaftState_Owner {
+            inner: RaftState::new(hard_state.into(), conf_state.into()),
+        }
+    }
+
+    #[staticmethod]
+    pub fn default() -> Self {
         Py_RaftState_Owner {
             inner: RaftState::default(),
         }
