@@ -1,4 +1,19 @@
+import os
+import sys
+import pytest
 from typing import Dict, List
+from rraft import (
+    ConfState_Owner,
+    Entry_Owner,
+    MemStorage_Owner,
+    MemStorage_Ref,
+    Message_Owner,
+    Message_Ref,
+    MessageType,
+    StateRole,
+    default_logger,
+    INVALID_ID,
+)
 
 from test_utils import (
     ltoa,
@@ -11,25 +26,9 @@ from test_utils import (
     SOME_DATA,
     new_test_config,
     new_test_raft_with_config,
+    # Interface,
+    # Network,
 )
-from rraft import (
-    ConfState_Owner,
-    Entry_Owner,
-    Entry_Ref,
-    Logger_Ref,
-    MemStorage_Owner,
-    MemStorage_Ref,
-    Message_Owner,
-    Message_Ref,
-    MessageType,
-    StateRole,
-    default_logger,
-    INVALID_ID,
-)
-
-import os
-import sys
-import pytest
 
 parent_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "../src"))
 sys.path.append(parent_dir)
@@ -40,6 +39,7 @@ from network import Network
 def commit_noop_entry(r: Interface, s: MemStorage_Ref):
     assert r.raft.make_ref().get_state() == StateRole.Leader
     r.raft.make_ref().bcast_append()
+
     # simulate the response of MsgAppend
     msgs = r.read_messages()
     for m in msgs:
@@ -970,7 +970,62 @@ def test_leader_sync_follower_log():
 # and are sent to all of the other nodes.
 # Reference: section 5.4.1
 def test_vote_request():
-    pass
+    l = default_logger()
+
+    class Test:
+        def __init__(self, ents: List[Entry_Owner], wterm: int) -> None:
+            self.ents = ents
+            self.wterm = wterm
+
+    tests = [
+        Test([empty_entry(1, 1)], 2),
+        Test([empty_entry(1, 1), empty_entry(2, 2)], 3),
+    ]
+
+    for j, v in enumerate(tests):
+        ents, wterm = (v.ents, v.wterm)
+
+        storage = new_storage()
+        r = new_test_raft(1, [1, 2, 3], 10, 1, storage.make_ref(), l.make_ref())
+        m = new_message(2, 1, MessageType.MsgAppend, 0)
+        m.make_ref().set_term(wterm - 1)
+        m.make_ref().set_log_term(0)
+        m.make_ref().set_index(0)
+        cloned_ents = list(map(lambda x: x.clone(), ents))
+        m.make_ref().set_entries(cloned_ents)
+        r.step(m.make_ref())
+        r.read_messages()
+
+        for _ in range(1, r.raft.make_ref().election_timeout() * 2):
+            r.raft.make_ref().tick_election()
+
+        msgs = r.read_messages()
+        msgs.sort(key=lambda m: str(m))
+        assert len(msgs) == 2, f"#{j}: msg count = {len(msgs)}, want 2"
+
+        for i, m in enumerate(msgs):
+            assert (
+                m.make_ref().get_msg_type() == MessageType.MsgRequestVote
+            ), f"#{j}.{i}: msg_type = {m.make_ref().get_msg_type()}, want {MessageType.MsgRequestVote}"
+
+            assert (
+                m.make_ref().get_to() == i + 2
+            ), f"#{j}.{i}: to = {m.make_ref().get_to()}, want {i + 2}"
+
+            assert (
+                m.make_ref().get_term() == wterm
+            ), f"#{j}.{i}: term = {m.make_ref().get_term()}, want {wterm}"
+
+            windex = ents[-1].make_ref().get_index()
+            wlogterm = ents[-1].make_ref().get_term()
+
+            assert (
+                m.make_ref().get_index() == windex
+            ), f"#{j}.{i}: index = {m.make_ref().get_index()}, want {windex}"
+
+            assert (
+                m.make_ref().get_log_term() == wlogterm
+            ), f"#{j}.{i}: log_term = {m.make_ref().get_log_term()}, want {wlogterm}"
 
 
 # test_voter tests the voter denies its vote if its own log is more up-to-date

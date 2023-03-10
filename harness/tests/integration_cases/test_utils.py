@@ -31,6 +31,7 @@ parent_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "../s
 sys.path.append(parent_dir)
 
 from interface import Interface
+# from harness.src.network import Network
 # from harness.src.interface import Interface
 
 
