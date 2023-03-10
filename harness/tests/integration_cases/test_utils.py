@@ -31,6 +31,7 @@ parent_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "../s
 sys.path.append(parent_dir)
 
 from interface import Interface
+
 # from harness.src.network import Network
 # from harness.src.interface import Interface
 
@@ -66,11 +67,13 @@ def new_test_raft(
     logger: Logger_Ref,
 ) -> Interface:
     config = new_test_config(id, election, heartbeat)
-    raft_state_owner = storage.initial_state()
+    initial_state = storage.initial_state()
 
-    if raft_state_owner.make_ref().initialized() and not peers:
-        raise Exception("new_test_raft with empty peers on initialized store")
-    if peers and not raft_state_owner.make_ref().initialized():
+    assert not (
+        initial_state.make_ref().initialized() and not peers
+    ), "new_test_raft with empty peers on initialized store"
+
+    if peers and not initial_state.make_ref().initialized():
         cs_owner = ConfState_Owner(peers, [])
         storage.initialize_with_conf_state(cs_owner.make_ref())
 
@@ -88,15 +91,17 @@ def new_test_raft_with_prevote(
 ) -> Interface:
     config = new_test_config(id, election, heartbeat)
     config.make_ref().set_pre_vote(pre_vote)
-    raft_state_owner = storage.make_ref().initial_state()
+    initial_state = storage.initial_state()
 
-    if raft_state_owner.make_ref().initialized() and not peers:
-        raise Exception("new_test_raft with empty peers on initialized store")
-    if peers and raft_state_owner.make_ref().initialized():
+    assert not (
+        initial_state.make_ref().initialized() and not peers
+    ), "new_test_raft with empty peers on initialized store"
+
+    if peers and initial_state.make_ref().initialized():
         cs_owner = ConfState_Owner(peers, [])
-        storage.make_ref().initialize_with_conf_state(cs_owner.make_ref())
+        storage.initialize_with_conf_state(cs_owner.make_ref())
 
-    return new_test_raft_with_config(config.make_ref(), storage.make_ref(), logger)
+    return new_test_raft_with_config(config.make_ref(), storage, logger)
 
 
 def new_test_raft_with_logs(
@@ -109,11 +114,13 @@ def new_test_raft_with_logs(
     logger: Logger_Ref,
 ) -> Interface:
     config = new_test_config(id, election, heartbeat)
-    raft_state_owner = storage.initial_state()
+    initial_state = storage.initial_state()
 
-    if raft_state_owner.initialized() and not peers:
-        raise Exception("new_test_raft with empty peers on initialized store")
-    if peers and raft_state_owner.initialized():
+    assert not (
+        initial_state.make_ref().initialized() and not peers
+    ), "new_test_raft with empty peers on initialized store"
+
+    if peers and initial_state.initialized():
         cs_owner = ConfState_Owner(peers, [])
         storage.initialize_with_conf_state(cs_owner.make_ref())
 
@@ -179,7 +186,7 @@ def new_entry(term: int, index: int, data: Optional[str]) -> Entry_Owner:
     if data:
         # TODO: Resolve below issue.
         # Maybe it would be better to pass 'bytes' itself or through 'memoryview' object instead of creating a new list.
-        e.make_ref().set_data(list(data.encode('utf-8')))
+        e.make_ref().set_data(list(data.encode("utf-8")))
     return e
 
 

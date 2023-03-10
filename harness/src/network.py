@@ -144,7 +144,6 @@ class Network:
                 p.persist()
                 resp = p.read_messages()
                 new_msgs.extend(self.filter_(resp))
-                print("new_msgs", new_msgs)
 
             msgs = []
             msgs.extend(new_msgs)
