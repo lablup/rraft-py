@@ -1690,6 +1690,11 @@ class Raft__MemStorage_Ref:
         """
         Resets the current node to a given term.
         """
+    def restore(self, snapshot: Snapshot_Ref) -> bool:
+        """
+        Recovers the state machine from a snapshot. It restores the log and the
+        configuration of state machine.
+        """
     def snap(self) -> Snapshot_Ref:
         """
         Grabs a reference to the snapshot

@@ -13,7 +13,7 @@ use crate::{
         entry::Py_Entry_Mut,
         hard_state::Py_HardState_Mut,
         message::{Py_Message_Mut, Py_Message_Owner, Py_Message_Ref},
-        snapshot::Py_Snapshot_Ref,
+        snapshot::{Py_Snapshot_Mut, Py_Snapshot_Ref},
     },
     internal::slog::Py_Logger_Mut,
     storage::{mem_storage::Py_MemStorage_Mut, storage::Py_Storage},
@@ -132,6 +132,10 @@ impl Py_Raft__MemStorage_Ref {
 
         self.inner
             .map_as_mut(|inner| inner.reduce_uncommitted_size(entries.as_slice()))
+    }
+
+    pub fn restore(&mut self, snap: Py_Snapshot_Mut) -> PyResult<bool> {
+        self.inner.map_as_mut(|inner| inner.restore(snap.into()))
     }
 
     pub fn bcast_append(&mut self) -> PyResult<()> {
