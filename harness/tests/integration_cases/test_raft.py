@@ -306,7 +306,30 @@ def test_progress_resume_by_heartbeat_resp():
 
 
 def test_progress_paused():
-    pass
+    l = default_logger()
+    storage = new_storage()
+    raft = new_test_raft(1, [1, 2], 5, 1, storage.make_ref(), l.make_ref())
+    raft.raft.make_ref().become_candidate()
+    raft.raft.make_ref().become_leader()
+
+    m = Message_Owner.default()
+    m.make_ref().set_from(1)
+    m.make_ref().set_to(1)
+    m.make_ref().set_msg_type(MessageType.MsgPropose)
+
+    e = Entry_Owner.default()
+    e.make_ref().set_data(list(b"some_data"))
+    m.make_ref().set_entries([e])
+
+    m2 = m.clone()
+    raft.step(m2)
+
+    m3 = m.clone()
+    raft.step(m3)
+
+    raft.step(m)
+    ms = read_messages(raft.raft)
+    assert len(ms) == 1
 
 
 def test_progress_flow_control():
