@@ -57,6 +57,13 @@ impl Py_Message_Owner {
         }
     }
 
+    #[staticmethod]
+    pub fn default() -> Self {
+        Py_Message_Owner {
+            inner: Message::default(),
+        }
+    }
+
     pub fn make_ref(&mut self) -> Py_Message_Ref {
         Py_Message_Ref {
             inner: RustRef::new(&mut self.inner),
