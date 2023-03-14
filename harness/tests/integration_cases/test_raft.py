@@ -6,6 +6,9 @@ from test_utils import (
     new_message,
     new_message_with_entries,
     new_test_raft,
+    new_test_config,
+    new_test_raft_with_config,
+    new_entry,
     # Interface,
     # Network,
 )
@@ -330,7 +333,71 @@ def test_progress_paused():
 
 
 def test_progress_flow_control():
-    pass
+    l = default_logger()
+    cfg = new_test_config(1, 5, 1)
+    cfg.make_ref().set_max_inflight_msgs(3)
+    cfg.make_ref().set_max_size_per_msg(2048)
+    cs = ConfState_Owner([1, 2], [])
+    s = MemStorage_Owner.new_with_conf_state(cs.make_ref())
+
+    r = new_test_raft_with_config(cfg.make_ref(), s.make_ref(), l.make_ref())
+    r.raft.make_ref().become_candidate()
+    r.raft.make_ref().become_leader()
+
+    # Throw away all the messages relating to the initial election.
+    r.read_messages()
+
+    # While node 2 is in probe state, propose a bunch of entries.
+    r.raft.make_ref().prs().get(2).become_probe()
+    data = "a" * 1000
+    for _ in range(0, 10):
+        msg = new_message_with_entries(
+            1, 1, MessageType.MsgPropose, [new_entry(0, 0, data)]
+        )
+        r.step(msg)
+
+    ms = r.read_messages()
+    # First append has two entries: the empty entry to confirm the
+    # election, and the first proposal (only one proposal gets sent
+    # because we're in probe state).
+    assert len(ms) == 1
+    assert ms[0].make_ref().get_msg_type() == MessageType.MsgAppend
+    assert len(ms[0].make_ref().get_entries()) == 2
+    assert len(ms[0].make_ref().get_entries()[0].get_data()) == 0
+    assert len(ms[0].make_ref().get_entries()[1].get_data()) == 1000
+
+    # When this append is acked, we change to replicate state and can
+    # send multiple messages at once.
+    msg = new_message(2, 1, MessageType.MsgAppendResponse, 0)
+    msg.make_ref().set_index(ms[0].make_ref().get_entries()[1].get_index())
+    r.step(msg)
+    ms = r.read_messages()
+    assert len(ms) == 3
+
+    for i, m in enumerate(ms):
+        assert (
+            m.make_ref().get_msg_type() == MessageType.MsgAppend
+        ), f"{i}: expected MsgAppend, got {m.make_ref().get_msg_type()}"
+
+        assert (
+            len(m.make_ref().get_entries()) == 2
+        ), f"{i}: expected 2 entries, got {len(m.make_ref().get_entries())}"
+
+    # Ack all three of those messages together and get the last two
+    # messages (containing three entries).
+    msg = new_message(2, 1, MessageType.MsgAppendResponse, 0)
+    msg.make_ref().set_index(ms[2].make_ref().get_entries()[1].get_index())
+    r.step(msg)
+    ms = r.read_messages()
+    assert len(ms) == 2
+
+    for i, m in enumerate(ms):
+        assert (
+            m.make_ref().get_msg_type() == MessageType.MsgAppend
+        ), f"{i}: expected MsgAppend, got {m.make_ref().get_msg_type()}"
+
+    assert len(ms[0].make_ref().get_entries()) == 2
+    assert len(ms[1].make_ref().get_entries()) == 1
 
 
 def test_leader_election():
