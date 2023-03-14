@@ -6,8 +6,11 @@ from typing import Dict, List
 
 from rraft import (
     MessageType,
+    ProgressState,
     Snapshot_Owner,
     default_logger,
+    INVALID_INDEX,
+    RaftError,
 )
 
 from test_utils import (
@@ -166,4 +169,70 @@ def test_snapshot_with_min_term():
 
 
 def test_request_snapshot():
-    pass
+    l = default_logger()
+    storage = new_storage()
+    sm = new_test_raft(1, [1, 2], 10, 1, storage.make_ref(), l.make_ref())
+    sm.raft.make_ref().restore(testing_snap())
+    sm.persist()
+
+    # Raft can not step request snapshot if there is no leader.
+    try:
+        sm.raft.make_ref().request_snapshot(INVALID_INDEX + 1)
+    except Exception as e:
+        # TODO: Inhance error check handling logic.
+        assert str(e) == "raft: request snapshot dropped"
+
+    sm.raft.make_ref().become_candidate()
+    sm.raft.make_ref().become_leader()
+
+    # Raft can not step request snapshot if itself is a leader.
+    try:
+        sm.raft.make_ref().request_snapshot(INVALID_INDEX + 1)
+    except Exception as e:
+        assert str(e) == "raft: request snapshot dropped"
+
+    m = new_message(2, 1, MessageType.MsgAppendResponse, 0)
+    m.make_ref().set_index(11)
+    sm.step(m)
+
+    assert sm.raft.make_ref().prs().get(2).get_state() == ProgressState.Replicate
+
+    request_snapshot_idx = sm.raft_log.get_committed()
+    m = new_message(2, 1, MessageType.MsgAppendResponse, 0)
+    m.make_ref().set_index(11)
+    m.make_ref().set_reject(True)
+    m.make_ref().set_reject_hint(INVALID_INDEX)
+    m.make_ref().set_request_snapshot(request_snapshot_idx)
+
+    # Ignore out of order request snapshot messages.
+    out_of_order = m.clone()
+    out_of_order.make_ref().set_index(9)
+    sm.step(out_of_order)
+    assert sm.raft.make_ref().prs().get(2).get_state() == ProgressState.Replicate
+
+    # Request snapshot.
+    sm.step(m)
+    assert sm.raft.make_ref().prs().get(2).get_state() == ProgressState.Snapshot
+    assert sm.raft.make_ref().prs().get(2).get_pending_snapshot() == 11
+    assert sm.raft.make_ref().prs().get(2).get_next_idx() == 12
+    assert sm.raft.make_ref().prs().get(2).is_paused()
+    snap = sm.raft.make_ref().get_msgs()[-1]
+    assert snap.get_msg_type() == MessageType.MsgSnapshot
+    assert snap.get_snapshot().get_metadata().get_index() == request_snapshot_idx
+
+    # Append/heartbeats does not set the state from snapshot to probe.
+    m = new_message(2, 1, MessageType.MsgAppendResponse, 0)
+    m.make_ref().set_index(11)
+    sm.step(m)
+    assert sm.raft.make_ref().prs().get(2).get_state() == ProgressState.Snapshot
+    assert sm.raft.make_ref().prs().get(2).get_pending_snapshot() == 11
+    assert sm.raft.make_ref().prs().get(2).get_next_idx() == 12
+    assert sm.raft.make_ref().prs().get(2).is_paused()
+
+    # However snapshot status report does set the stat to probe.
+    m = new_message(2, 1, MessageType.MsgSnapStatus, 0)
+    sm.step(m)
+    assert sm.raft.make_ref().prs().get(2).get_state() == ProgressState.Probe
+    assert sm.raft.make_ref().prs().get(2).get_pending_snapshot() == 0
+    assert sm.raft.make_ref().prs().get(2).get_next_idx() == 12
+    assert sm.raft.make_ref().prs().get(2).is_paused()
