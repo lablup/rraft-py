@@ -745,7 +745,38 @@ def test_single_node_commit():
 # when leader changes, no new proposal comes in and ChangeTerm proposal is
 # filtered.
 def test_cannot_commit_without_new_term_entry():
-    pass
+    l = default_logger()
+    tt = Network.new([None, None, None, None, None], l)
+    tt.send([new_message(1, 1, MessageType.MsgHup, 0)])
+
+    # 0 cannot reach 2, 3, 4
+    tt.cut(1, 3)
+    tt.cut(1, 4)
+    tt.cut(1, 5)
+
+    tt.send([new_message(1, 1, MessageType.MsgPropose, 1)])
+    tt.send([new_message(1, 1, MessageType.MsgPropose, 1)])
+
+    assert tt.peers.get(1).raft_log.get_committed() == 1
+
+    # network recovery
+    tt.recover()
+    # avoid committing ChangeTerm proposal
+    tt.ignore(MessageType.MsgAppend)
+
+    # elect 2 as the new leader with term 2
+    tt.send([new_message(2, 2, MessageType.MsgHup, 0)])
+
+    # no log entries from previous term should be committed
+    tt.peers.get(2).raft_log.get_committed() == 1
+
+    tt.recover()
+    # send heartbeat; reset wait
+    tt.send([new_message(2, 2, MessageType.MsgBeat, 0)])
+    # append an entry at current term
+    tt.send([new_message(2, 2, MessageType.MsgPropose, 1)])
+    # expect the committed to be advanced
+    assert tt.peers.get(2).raft_log.get_committed() == 5
 
 
 # test_commit_without_new_term_entry tests the entries could be committed
