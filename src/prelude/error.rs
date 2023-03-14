@@ -8,6 +8,25 @@ pub struct Py_StorageError(pub StorageError);
 
 #[pymethods]
 impl Py_StorageError {
+    pub fn __richcmp__(&mut self, rhs: &Py_StorageError, op: CompareOp) -> PyResult<bool> {
+        Ok(match op {
+            CompareOp::Eq => self.0 == rhs.0,
+            CompareOp::Ne => self.0 != rhs.0,
+            _ => panic!("Undefined operator"),
+        })
+    }
+
+    pub fn __repr__(&self) -> String {
+        match self.0 {
+            StorageError::Compacted => "Compacted".to_string(),
+            StorageError::SnapshotOutOfDate => "SnapshotOutOfDate".to_string(),
+            StorageError::SnapshotTemporarilyUnavailable => "SnapshotTemporarilyUnavailable".to_string(),
+            StorageError::Unavailable => "Unavailable".to_string(),
+            // StorageError::Other() => "Other".to_string(),
+            _ => todo!(),
+        }
+    }
+
     #[classattr]
     pub fn Compacted() -> Self {
         Py_StorageError(StorageError::Compacted)
@@ -46,6 +65,23 @@ impl Py_RaftError {
             CompareOp::Ne => self.0 != rhs.0,
             _ => panic!("Undefined operator"),
         })
+    }
+
+    pub fn __repr__(&self) -> String {
+        match self.0 {
+            Error::Exists { id, set } => format!("Exists {{ id: {}, set: {} }}", id, set),
+            Error::NotExists { id, set } => format!("NotExists {{ id: {}, set: {} }}", id, set),
+            Error::ConfChangeError(ref str) => format!("ConfChangeError {{ str: {} }}", str),
+            Error::ConfigInvalid(ref str) => format!("ConfigInvalid {{ str: {} }}", str),
+            Error::Io(ref err) => format!("Io {{ err: {} }}", err),
+            // Error::CodecError() => format!("CodecError"),
+            Error::Store(ref err) => format!("Store {{ err: {} }}", err),
+            Error::StepLocalMsg => format!("StepLocalMsg"),
+            Error::StepPeerNotFound => format!("StepPeerNotFound"),
+            Error::ProposalDropped => format!("ProposalDropped"),
+            Error::RequestSnapshotDropped => format!("RequestSnapshotDropped"),
+            _ => todo!(),
+        }
     }
 
     #[staticmethod]
