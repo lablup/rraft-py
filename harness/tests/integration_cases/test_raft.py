@@ -733,7 +733,12 @@ def test_log_replication():
 
 
 def test_single_node_commit():
-    pass
+    l = default_logger()
+    tt = Network.new([None], l)
+    tt.send([new_message(1, 1, MessageType.MsgHup, 0)])
+    tt.send([new_message(1, 1, MessageType.MsgPropose, 1)])
+    tt.send([new_message(1, 1, MessageType.MsgPropose, 1)])
+    assert tt.peers.get(1).raft_log.get_committed() == 3
 
 
 # test_cannot_commit_without_new_term_entry tests the entries cannot be committed
