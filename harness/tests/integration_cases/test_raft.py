@@ -1,7 +1,9 @@
 import os
 import sys
-from typing import List
+import pytest
+from typing import Any, List
 from test_utils import (
+    new_test_raft_with_prevote,
     new_storage,
     new_message,
     new_message_with_entries,
@@ -56,9 +58,7 @@ def ents_with_config(
         e.make_ref().set_term(term)
         store.make_ref().wl(lambda core: core.append([e]))
 
-    raft = new_test_learner_raft_with_prevote(
-        id, peers, 5, 1, store.make_ref(), pre_vote, l
-    )
+    raft = new_test_raft_with_prevote(id, peers, 5, 1, store.make_ref(), pre_vote, l)
     raft.raft.make_ref().reset(terms[-1])
     return raft
 
@@ -400,16 +400,98 @@ def test_progress_flow_control():
     assert len(ms[1].make_ref().get_entries()) == 1
 
 
-def test_leader_election():
-    pass
+# test_leader_election
+# test_leader_election_pre_vote
+@pytest.mark.parametrize("pre_vote", [True, False])
+def test_leader_election_with_config(pre_vote: bool):
+    l = default_logger()
+    config = Network.default_config()
+    config.make_ref().set_pre_vote(pre_vote)
 
+    class Test:
+        def __init__(self, network: Any, state: StateRole, term: int) -> None:
+            self.network = network
+            self.state = state
+            self.term = term
 
-def test_leader_election_pre_vote():
-    pass
+    NOP_STEPPER = Interface(None)
 
+    tests = [
+        Test(
+            Network.new_with_config([None, None, None], config.make_ref(), l),
+            StateRole.Leader,
+            1,
+        ),
+        Test(
+            Network.new_with_config([None, None, NOP_STEPPER], config.make_ref(), l),
+            StateRole.Leader,
+            1,
+        ),
+        Test(
+            Network.new_with_config(
+                [None, NOP_STEPPER, NOP_STEPPER], config.make_ref(), l
+            ),
+            StateRole.Candidate,
+            1,
+        ),
+        Test(
+            Network.new_with_config(
+                [None, NOP_STEPPER, NOP_STEPPER, None], config.make_ref(), l
+            ),
+            StateRole.Candidate,
+            1,
+        ),
+        Test(
+            Network.new_with_config(
+                [None, NOP_STEPPER, NOP_STEPPER, None, None], config.make_ref(), l
+            ),
+            StateRole.Leader,
+            1,
+        ),
+        # three logs further along than 0, but in the same term so rejection
+        # are returned instead of the votes being ignored.
+        Test(
+            Network.new_with_config(
+                [
+                    None,
+                    ents_with_config([1], pre_vote, 2, [1, 2, 3, 4, 5], l.make_ref()),
+                    ents_with_config([1], pre_vote, 3, [1, 2, 3, 4, 5], l.make_ref()),
+                    ents_with_config(
+                        [1, 1], pre_vote, 4, [1, 2, 3, 4, 5], l.make_ref()
+                    ),
+                    None,
+                ],
+                config.make_ref(),
+                l,
+            ),
+            StateRole.Follower,
+            1,
+        ),
+    ]
 
-def test_leader_election_with_config():
-    pass
+    for i, v in enumerate(tests):
+        network, state, term = v.network, v.state, v.term
+        m = Message_Owner.default()
+        m.make_ref().set_from(1)
+        m.make_ref().set_to(1)
+        m.make_ref().set_msg_type(MessageType.MsgHup)
+        network.send([m])
+        raft = network.peers.get(1)
+
+        exp_state, exp_term = state, term
+        if state == StateRole.Candidate and pre_vote:
+            # In pre-vote mode, an election that fails to complete
+            # leaves the node in pre-candidate state without advancing
+            # the term.
+            exp_state, exp_term = StateRole.PreCandidate, 0
+
+        assert (
+            raft.raft.make_ref().get_state() == exp_state
+        ), f"#{i}: state = {raft.raft.make_ref().get_state()}, want {exp_state}"
+
+        assert (
+            raft.raft.make_ref().get_term() == exp_term
+        ), f"#{i}: term = {raft.raft.make_ref().get_term()}, want {exp_term}"
 
 
 def test_leader_cycle():
