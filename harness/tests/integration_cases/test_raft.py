@@ -494,20 +494,37 @@ def test_leader_election_with_config(pre_vote: bool):
         ), f"#{i}: term = {raft.raft.make_ref().get_term()}, want {exp_term}"
 
 
-def test_leader_cycle():
-    pass
-
-
-def test_leader_cycle_pre_vote():
-    pass
-
-
 # test_leader_cycle verifies that each node in a cluster can campaign
 # and be elected in turn. This ensures that elections (including
 # pre-vote) work when not starting from a clean state (as they do in
 # test_leader_election)
-def test_leader_cycle_with_config():
-    pass
+#
+# test_leader_cycle
+# test_leader_cycle_pre_vote
+@pytest.mark.parametrize("pre_vote", [True, False])
+def test_leader_cycle_with_config(pre_vote: bool):
+    l = default_logger()
+    config = Network.default_config()
+    config.make_ref().set_pre_vote(pre_vote)
+
+    network = Network.new_with_config(
+        [None, None, None], config.make_ref(), l
+    )
+
+    for campaigner_id in range(1, 4):
+        network.send([new_message(campaigner_id, campaigner_id, MessageType.MsgHup, 0)])
+
+        for sm in network.peers.values():
+            assert not (
+                sm.raft.make_ref().get_id() == campaigner_id
+                and sm.raft.make_ref().get_state() != StateRole.Leader
+            ), f"pre_vote={pre_vote}: campaigning node {sm.raft.make_ref().get_id()} state = {sm.raft.make_ref().get_state()}, want Leader"
+
+            assert not (
+                sm.raft.make_ref().get_id() != campaigner_id
+                and sm.raft.make_ref().get_state() != StateRole.Follower
+            ), f"pre_vote={pre_vote}: after campaign of node {campaigner_id}, node {sm.raft.make_ref().get_id()} had state = {sm.raft.make_ref().get_state()}, want \
+                     Follower"
 
 
 def test_leader_election_overwrite_newer_logs():
