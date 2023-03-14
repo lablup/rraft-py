@@ -321,13 +321,10 @@ def test_progress_paused():
     e.make_ref().set_data(list(b"some_data"))
     m.make_ref().set_entries([e])
 
-    m2 = m.clone()
-    raft.step(m2)
-
-    m3 = m.clone()
-    raft.step(m3)
-
+    raft.step(m.clone())
+    raft.step(m.clone())
     raft.step(m)
+
     ms = read_messages(raft.raft)
     assert len(ms) == 1
 
