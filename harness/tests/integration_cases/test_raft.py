@@ -30,6 +30,8 @@ from rraft import (
     RaftLog__MemStorage_Ref,
     StateRole,
     default_logger,
+    vote_resp_msg_type,
+    INVALID_ID,
 )
 
 parent_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "../src"))
@@ -592,16 +594,87 @@ def test_leader_election_overwrite_newer_logs_with_config(pre_vote: bool):
         ), f"node {id}: term at index 2 == {entries[1].make_ref().get_term()}, want 3"
 
 
-def test_vote_from_any_state():
-    pass
+# test_vote_from_any_state
+# test_prevote_from_any_state
+@pytest.mark.parametrize(
+    "vt", [MessageType.MsgRequestVote, MessageType.MsgRequestPreVote]
+)
+def test_vote_from_any_state_for_type(vt: MessageType):
+    l = default_logger()
+    all_states = [
+        StateRole.Follower,
+        StateRole.Candidate,
+        StateRole.PreCandidate,
+        StateRole.Leader,
+    ]
 
+    for state in all_states:
+        storage = new_storage()
+        r = new_test_raft(1, [1, 2, 3], 10, 1, storage.make_ref(), l.make_ref())
+        r.raft.make_ref().set_term(1)
+        if state == StateRole.Follower:
+            term = r.raft.make_ref().get_term()
+            r.raft.make_ref().become_follower(term, 3)
+        elif state == StateRole.PreCandidate:
+            r.raft.make_ref().become_pre_candidate()
+        elif state == StateRole.Candidate:
+            r.raft.make_ref().become_candidate()
+        else:
+            r.raft.make_ref().become_candidate()
+            r.raft.make_ref().become_leader()
 
-def test_prevote_from_any_state():
-    pass
+        # Note that setting our state above may have advanced r.term
+        # past its initial value.
+        orig_term = r.raft.make_ref().get_term()
+        new_term = r.raft.make_ref().get_term() + 1
 
+        msg = new_message(2, 1, vt, 0)
+        msg.make_ref().set_term(new_term)
+        msg.make_ref().set_log_term(orig_term)
+        msg.make_ref().set_index(42)
+        r.step(msg.make_ref())
 
-def test_vote_from_any_state_for_type():
-    pass
+        assert (
+            len(r.raft.make_ref().get_msgs()) == 1
+        ), f"{vt},{state}: {len(r.raft.make_ref().get_msgs())} response messages, want 1: {r.raft.make_ref().get_msgs()}"
+
+        resp = r.raft.make_ref().get_msgs()[0]
+
+        assert resp.get_msg_type() == vote_resp_msg_type(
+            vt
+        ), f"{vt},{state}: response message is {resp.get_msg_type()}, want {vote_resp_msg_type(vt)}"
+
+        assert not resp.get_reject(), f"{vt},{state}: unexpected rejection"
+
+        # If this was a real vote, we reset our state and term.
+        if vt == MessageType.MsgRequestVote:
+            assert (
+                r.raft.make_ref().get_state() == StateRole.Follower
+            ), f"{vt},{state}, state is {r.raft.make_ref().get_state()}, want {StateRole.Follower}"
+
+            assert (
+                r.raft.make_ref().get_term() == new_term
+            ), f"{vt},{state}, term is {r.raft.make_ref().get_term()}, want {new_term}"
+
+            assert (
+                r.raft.make_ref().get_vote() == 2
+            ), f"{vt},{state}, vote {r.raft.make_ref().get_vote()}, want 2"
+        else:
+            # In a pre-vote, nothing changes.
+            assert (
+                r.raft.make_ref().get_state() == state
+            ), f"{vt},{state}, state {r.raft.make_ref().get_state()}, want {state}"
+
+            assert (
+                r.raft.make_ref().get_term() == orig_term
+            ), f"{vt},{state}, term {r.raft.make_ref().get_term()}, want {orig_term}"
+
+            # If state == Follower or PreCandidate, r hasn't voted yet.
+            # In Candidate or Leader, it's voted for itself.
+            assert (
+                r.raft.make_ref().get_vote() == INVALID_ID
+                or r.raft.make_ref().get_vote() == 1
+            ), f"{vt},{state}, vote {r.raft.make_ref().get_vote()}, want {INVALID_ID} or 1"
 
 
 def test_log_replication():
