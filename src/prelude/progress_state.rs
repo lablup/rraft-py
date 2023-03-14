@@ -28,6 +28,14 @@ impl From<ProgressState> for Py_ProgressState {
 
 #[pymethods]
 impl Py_ProgressState {
+    pub fn __repr__(&self) -> String {
+        match self.0 {
+            ProgressState::Probe => "Probe".to_string(),
+            ProgressState::Replicate => "Replicate".to_string(),
+            ProgressState::Snapshot => "Snapshot".to_string(),
+        }
+    }
+
     pub fn __richcmp__(&self, rhs: Py_ProgressState, op: CompareOp) -> PyResult<bool> {
         Ok(match op {
             CompareOp::Eq => self.0 == rhs.0,
