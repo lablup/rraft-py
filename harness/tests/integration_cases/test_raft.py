@@ -114,13 +114,14 @@ def voted_with_config(
 # Persist committed index and fetch next entries.
 def next_ents(r: Raft__MemStorage_Ref, s: MemStorage_Ref) -> List[Entry_Owner]:
     unstable_refs = r.get_raft_log().unstable_entries()
-    unstable = map(lambda e: e.clone(), unstable_refs)
+    unstable = list(map(lambda e: e.clone(), unstable_refs))
 
-    e = unstable[-1]
-    last_idx, last_term = e.make_ref().get_index(), e.make_ref().get_term()
-    r.get_raft_log().stable_entries(last_idx, last_term)
-    s.wl(lambda core: core.append(unstable))
-    r.on_persist_entries(last_idx, last_term)
+    if unstable:
+        e = unstable[-1]
+        last_idx, last_term = e.make_ref().get_index(), e.make_ref().get_term()
+        r.get_raft_log().stable_entries(last_idx, last_term)
+        s.wl(lambda core: core.append(unstable))
+        r.on_persist_entries(last_idx, last_term)
 
     ents = r.get_raft_log().next_entries(None)
     r.commit_apply(r.get_raft_log().get_committed())
@@ -678,11 +679,57 @@ def test_vote_from_any_state_for_type(vt: MessageType):
 
 
 def test_log_replication():
-    pass
+    l = default_logger()
 
+    class Test:
+        def __init__(
+            self, network: Network, msgs: List[Message_Owner], wcommitted: int
+        ) -> None:
+            self.network = network
+            self.msgs = msgs
+            self.wcommitted = wcommitted
 
-def test_log_replication():
-    pass
+    tests = [
+        Test(
+            Network.new([None, None, None], l),
+            [new_message(1, 1, MessageType.MsgPropose, 1)],
+            2,
+        ),
+        Test(
+            Network.new([None, None, None], l),
+            [
+                new_message(1, 1, MessageType.MsgPropose, 1),
+                new_message(1, 2, MessageType.MsgHup, 0),
+                new_message(1, 2, MessageType.MsgPropose, 1),
+            ],
+            4,
+        ),
+    ]
+
+    for i, v in enumerate(tests):
+        network, msgs, wcommitted = v.network, v.msgs, v.wcommitted
+        network.send([new_message(1, 1, MessageType.MsgHup, 0)])
+        for m in msgs:
+            network.send([m.clone()])
+
+        for j, x in network.peers.items():
+            assert (
+                x.raft_log.get_committed() == wcommitted
+            ), f"#{i}.{j}: committed = {x.raft_log.get_commited()}, want {wcommitted}"
+
+            ents = next_ents(x.raft.make_ref(), network.storage.get(j))
+            ents = list(filter(lambda x: len(x.make_ref().get_data()) != 0, ents))
+
+            for k, m in enumerate(
+                filter(
+                    lambda msg: msg.make_ref().get_msg_type() == MessageType.MsgPropose,
+                    msgs,
+                )
+            ):
+                assert (
+                    ents[k].make_ref().get_data()
+                    == m.make_ref().get_entries()[0].get_data()
+                ), f"#{i}.{j}: data = {ents[k].make_ref().get_data()}, want {m.make_ref().get_entries()[0].get_data()}"
 
 
 def test_single_node_commit():
