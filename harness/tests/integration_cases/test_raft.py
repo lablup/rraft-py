@@ -95,20 +95,16 @@ def voted_with_config(
     cs = ConfState_Owner(peers, [])
     store = MemStorage_Owner.new_with_conf_state(cs.make_ref())
 
-    def hard_state_set_vote(core: MemStorageCore_Ref, vote: int):
-        hs_ref = core.make_ref().get_hard_state()
-        hs_ref.make_ref().set_vote(vote)
+    def hard_state_set_vote(core: MemStorageCore_Ref):
+        core.hard_state().set_vote(vote)
 
-    def hard_state_set_term(core: MemStorageCore_Ref, term: int):
-        hs_ref = core.make_ref().get_hard_state()
-        hs_ref.make_ref().set_term(term)
+    def hard_state_set_term(core: MemStorageCore_Ref):
+        core.hard_state().set_term(term)
 
-    store.make_ref().wl(lambda core: hard_state_set_vote(core, vote))
-    store.make_ref().wl(lambda core: hard_state_set_term(core, term))
+    store.make_ref().wl(hard_state_set_vote)
+    store.make_ref().wl(hard_state_set_term)
 
-    raft = new_test_learner_raft_with_prevote(
-        id, peers, 5, 1, store.make_ref(), pre_vote, l
-    )
+    raft = new_test_raft_with_prevote(id, peers, 5, 1, store.make_ref(), pre_vote, l)
     raft.raft.make_ref().reset(term)
     return raft
 
@@ -507,9 +503,7 @@ def test_leader_cycle_with_config(pre_vote: bool):
     config = Network.default_config()
     config.make_ref().set_pre_vote(pre_vote)
 
-    network = Network.new_with_config(
-        [None, None, None], config.make_ref(), l
-    )
+    network = Network.new_with_config([None, None, None], config.make_ref(), l)
 
     for campaigner_id in range(1, 4):
         network.send([new_message(campaigner_id, campaigner_id, MessageType.MsgHup, 0)])
@@ -527,20 +521,75 @@ def test_leader_cycle_with_config(pre_vote: bool):
                      Follower"
 
 
-def test_leader_election_overwrite_newer_logs():
-    pass
-
-
-def test_leader_election_overwrite_newer_logs_pre_vote():
-    pass
-
-
 # test_leader_election_overwrite_newer_logs tests a scenario in which a
 # newly-elected leader does *not* have the newest (i.e. highest term)
 # log entries, and must overwrite higher-term log entries with
 # lower-term ones.
-def test_leader_election_overwrite_newer_logs_with_config():
-    pass
+#
+# test_leader_election_overwrite_newer_logs
+# test_leader_election_overwrite_newer_logs_pre_vote
+@pytest.mark.parametrize("pre_vote", [True, False])
+def test_leader_election_overwrite_newer_logs_with_config(pre_vote: bool):
+    # This network represents the results of the following sequence of
+    # events:
+    # - Node 1 won the election in term 1.
+    # - Node 1 replicated a log entry to node 2 but died before sending
+    #   it to other nodes.
+    # - Node 3 won the second election in term 2.
+    # - Node 3 wrote an entry to its logs but died without sending it
+    #   to any other nodes.
+    #
+    # At this point, nodes 1, 2, and 3 all have uncommitted entries in
+    # their logs and could win an election at term 3. The winner's log
+    # entry overwrites the loser's. (test_leader_sync_follower_log tests
+    # the case where older log entries are overwritten, so this test
+    # focuses on the case where the newer entries are lost).
+    l = default_logger()
+    peers = [1, 2, 3, 4, 5]
+    config = Network.default_config()
+    config.make_ref().set_pre_vote(pre_vote)
+    network = Network.new_with_config(
+        [
+            # Node 1: Won first election
+            ents_with_config([1], pre_vote, 1, peers, l.make_ref()),
+            # Node 2: Get logs from node 1
+            ents_with_config([1], pre_vote, 2, peers, l.make_ref()),
+            # Node 3: Won second election
+            ents_with_config([2], pre_vote, 3, peers, l.make_ref()),
+            # Node 4: Voted but didn't get logs
+            voted_with_config(3, 2, pre_vote, 4, peers, l.make_ref()),
+            # Node 5: Voted but didn't get logs
+            voted_with_config(3, 2, pre_vote, 5, peers, l.make_ref()),
+        ],
+        config.make_ref(),
+        l,
+    )
+
+    # Node 1 campaigns. The election fails because a quorum of nodes
+    # know about the election that already happened at term 2. Node 1's
+    # term is pushed ahead to 2.
+    network.send([new_message(1, 1, MessageType.MsgHup, 0)])
+    assert network.peers.get(1).raft.make_ref().get_state() == StateRole.Follower
+    assert network.peers.get(1).raft.make_ref().get_term() == 2
+
+    # Node 1 campaigns again with a higher term. this time it succeeds.
+    network.send([new_message(1, 1, MessageType.MsgHup, 0)])
+    assert network.peers.get(1).raft.make_ref().get_state() == StateRole.Leader
+    assert network.peers.get(1).raft.make_ref().get_term() == 3
+
+    # Now all nodes agree on a log entry with term 1 at index 1 (and
+    # term 3 at index 2).
+    for id, sm in network.peers.items():
+        entries = sm.raft_log.all_entries()
+        assert len(entries) == 2, f"node {id}: entries.len() == {len(entries)}, want 2"
+
+        assert (
+            entries[0].make_ref().get_term() == 1
+        ), f"node {id}: term at index 1 == {entries[0].make_ref().get_term()}, want 1"
+
+        assert (
+            entries[1].make_ref().get_term() == 3
+        ), f"node {id}: term at index 2 == {entries[1].make_ref().get_term()}, want 3"
 
 
 def test_vote_from_any_state():
