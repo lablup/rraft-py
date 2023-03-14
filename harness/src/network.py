@@ -4,6 +4,7 @@ from rraft import (
     Config_Owner,
     Config_Ref,
     ConfState_Owner,
+    Logger_Owner,
     Logger_Ref,
     MemStorage_Owner,
     Message_Owner,
@@ -64,14 +65,16 @@ class Network:
     # A `None` node will be replaced with a new Raft node, and its configuration will
     # be `peers`.
     @staticmethod
-    def new(peers: List[Optional[Interface]], l: Logger_Ref) -> Any:
+    def new(peers: List[Optional[Interface]], l: Logger_Owner | Logger_Ref) -> Any:
         cfg = Network.default_config()
         return Network.new_with_config(peers, cfg.make_ref(), l)
 
     # Initialize a network from `peers` with explicitly specified `config`.
     @staticmethod
     def new_with_config(
-        peers: List[Optional[Interface]], config: Config_Ref, l: Logger_Ref
+        peers: List[Optional[Interface]],
+        config: Config_Ref,
+        l: Logger_Owner | Logger_Ref,
     ) -> Any:
         nstorage = {}
         npeers = {}
@@ -79,11 +82,12 @@ class Network:
 
         for p, id in zip(peers, peer_addrs):
             if p is None:
-                cs_owner = ConfState_Owner(list(peer_addrs), [])
+                cs_owner = ConfState_Owner(peer_addrs, [])
                 store_owner = MemStorage_Owner.new_with_conf_state(cs_owner.make_ref())
                 nstorage[id] = store_owner.clone()
                 cfg = config.clone()
                 cfg.make_ref().set_id(id)
+
                 raft_owner = Raft__MemStorage_Owner(
                     cfg.make_ref(), store_owner.make_ref(), l
                 )
