@@ -1326,7 +1326,7 @@ class RaftLog__MemStorage_Ref:
         """
     def store(self) -> MemStorage_Ref:
         """ """
-    def next_entries(self, max_size: Optional[int]) -> List[Entry_Owner]:
+    def next_entries(self, max_size: Optional[int]) -> Optional[List[Entry_Owner]]:
         """
         Returns all the available entries for execution.
         If applied is smaller than the index of snapshot, it returns all committed
@@ -1744,6 +1744,8 @@ class Raft__MemStorage_Ref:
     def set_id(self, v: int) -> None:
         """ """
     def get_msgs(self) -> List[Message_Ref]:
+        """ """
+    def take_msgs(self) -> List[Message_Owner]:
         """ """
     def set_msgs(self, msgs: List[Message_Ref]) -> None:
         """ """

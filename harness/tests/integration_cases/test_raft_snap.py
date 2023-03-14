@@ -1,8 +1,6 @@
 import os
 import sys
 import warnings
-import pytest
-from typing import Dict, List
 
 from rraft import (
     MessageType,
@@ -10,7 +8,6 @@ from rraft import (
     Snapshot_Owner,
     default_logger,
     INVALID_INDEX,
-    RaftError,
 )
 
 from test_utils import (

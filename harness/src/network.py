@@ -13,12 +13,17 @@ from rraft import (
 )
 import random
 
+
 # A connection from one node to another.
 #
 # Used in by `Network` for determining drop rates on messages.
-
-
 class Connection:
+    def __hash__(self) -> int:
+        return hash((self.from_, self.to))
+
+    def __eq__(self, other) -> bool:
+        return self.from_ == other.from_ and self.to == other.to
+
     def __init__(self, from_: int, to: int) -> None:
         self.from_ = from_
         self.to = to

@@ -1,29 +1,264 @@
-def read_messages():
-    pass
+import os
+import sys
+from typing import List
+from test_utils import (
+    new_message,
+    new_message_with_entries,
+    # Interface,
+    # Network,
+)
+
+from rraft import (
+    ConfState_Owner,
+    Entry_Owner,
+    Logger_Ref,
+    MemStorage_Owner,
+    MemStorage_Ref,
+    MemStorageCore_Ref,
+    Message_Owner,
+    MessageType,
+    Raft__MemStorage_Owner,
+    Raft__MemStorage_Ref,
+    RaftLog__MemStorage_Ref,
+    StateRole,
+    default_logger,
+)
+
+parent_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "../src"))
+sys.path.append(parent_dir)
+from interface import Interface
+from network import Network
 
 
-def ents_with_config():
-    pass
+def read_messages(raft: Raft__MemStorage_Owner) -> List[Message_Owner]:
+    return raft.make_ref().take_msgs()
 
 
-def assert_raft_log():
-    pass
+def ents_with_config(
+    terms: List[int],
+    pre_vote: bool,
+    id: int,
+    peers: List[int],
+    l: Logger_Ref,
+) -> Interface:
+    cs = ConfState_Owner(peers, [])
+    store = MemStorage_Owner.new_with_conf_state(cs.make_ref())
+
+    for i, term in enumerate(terms):
+        e = Entry_Owner.default()
+        e.make_ref().set_index(i + 1)
+        e.make_ref().set_term(term)
+        store.make_ref().wl(lambda core: core.append([e]))
+
+    raft = new_test_learner_raft_with_prevote(
+        id, peers, 5, 1, store.make_ref(), pre_vote, l
+    )
+    raft.raft.make_ref().reset(terms[-1])
+    return raft
+
+
+def assert_raft_log(
+    prefix: str,
+    raft_log: RaftLog__MemStorage_Ref,
+    committed: int,
+    applied: int,
+    last: int,
+) -> None:
+    assert (
+        raft_log.get_committed() == committed
+    ), f"{prefix} committed = {raft_log.get_committed()}, want = {committed}"
+    assert (
+        raft_log.get_applied() == applied
+    ), f"{prefix} applied = {raft_log.get_applied()}, want = {applied}"
+    assert (
+        raft_log.last_index() == last
+    ), f"{prefix} last = {raft_log.last_index()}, want = {last}"
 
 
 # voted_with_config creates a raft state machine with vote and term set
 # to the given value but no log entries (indicating that it voted in
 # the given term but has not receive any logs).
-def voted_with_config():
-    pass
+def voted_with_config(
+    vote: int,
+    term: int,
+    pre_vote: bool,
+    id: int,
+    peers: List[int],
+    l: Logger_Ref,
+) -> Interface:
+    cs = ConfState_Owner(peers, [])
+    store = MemStorage_Owner.new_with_conf_state(cs.make_ref())
+
+    def hard_state_set_vote(core: MemStorageCore_Ref, vote: int):
+        hs_ref = core.make_ref().get_hard_state()
+        hs_ref.make_ref().set_vote(vote)
+
+    def hard_state_set_term(core: MemStorageCore_Ref, term: int):
+        hs_ref = core.make_ref().get_hard_state()
+        hs_ref.make_ref().set_term(term)
+
+    store.make_ref().wl(lambda core: hard_state_set_vote(core, vote))
+    store.make_ref().wl(lambda core: hard_state_set_term(core, term))
+
+    raft = new_test_learner_raft_with_prevote(
+        id, peers, 5, 1, store.make_ref(), pre_vote, l
+    )
+    raft.raft.make_ref().reset(term)
+    return raft
 
 
 # Persist committed index and fetch next entries.
-def next_ents():
-    pass
+def next_ents(r: Raft__MemStorage_Ref, s: MemStorage_Ref) -> List[Entry_Owner]:
+    unstable_refs = r.get_raft_log().unstable_entries()
+    unstable = map(lambda e: e.clone(), unstable_refs)
+
+    e = unstable[-1]
+    last_idx, last_term = e.make_ref().get_index(), e.make_ref().get_term()
+    r.get_raft_log().stable_entries(last_idx, last_term)
+    s.wl(lambda core: core.append(unstable))
+    r.on_persist_entries(last_idx, last_term)
+
+    ents = r.get_raft_log().next_entries(None)
+    r.commit_apply(r.get_raft_log().get_committed())
+
+    if ents is None:
+        return []
+
+    return ents
 
 
 def test_progress_committed_index():
-    pass
+    l = default_logger()
+    nt = Network.new([None, None, None], l)
+
+    # set node 1 as Leader
+    nt.send([new_message(1, 1, MessageType.MsgHup, 0)])
+    assert nt.peers.get(1).raft.make_ref().get_state() == StateRole.Leader
+
+    assert_raft_log("#1: ", nt.peers.get(1).raft.make_ref().get_raft_log(), 1, 0, 1)
+    assert_raft_log("#2: ", nt.peers.get(2).raft.make_ref().get_raft_log(), 1, 0, 1)
+    assert_raft_log("#3: ", nt.peers.get(3).raft.make_ref().get_raft_log(), 1, 0, 1)
+
+    assert nt.peers.get(1).raft.make_ref().prs().get(1).get_committed_index() == 1
+    assert nt.peers.get(1).raft.make_ref().prs().get(2).get_committed_index() == 1
+    assert nt.peers.get(1).raft.make_ref().prs().get(3).get_committed_index() == 1
+
+    # #1 test append entries
+    # append entries between 1 and 2
+    test_entries = Entry_Owner.default()
+    test_entries.make_ref().set_data(list(b"testdata"))
+    m = new_message_with_entries(1, 1, MessageType.MsgPropose, [test_entries])
+    nt.cut(1, 3)
+    nt.send([m.clone(), m])
+    nt.recover()
+
+    assert_raft_log("#1: ", nt.peers.get(1).raft_log, 3, 0, 3)
+    assert_raft_log("#2: ", nt.peers.get(2).raft_log, 3, 0, 3)
+    assert_raft_log("#3: ", nt.peers.get(3).raft_log, 1, 0, 1)
+
+    assert nt.peers.get(1).raft.make_ref().prs().get(1).get_committed_index() == 3
+    assert nt.peers.get(1).raft.make_ref().prs().get(2).get_committed_index() == 3
+    assert nt.peers.get(1).raft.make_ref().prs().get(3).get_committed_index() == 1
+
+    # #2 test heartbeat
+    heartbeat = new_message(1, 1, MessageType.MsgBeat, 0)
+    nt.send([heartbeat])
+
+    assert_raft_log("#1: ", nt.peers.get(1).raft_log, 3, 0, 3)
+    assert_raft_log("#2: ", nt.peers.get(2).raft_log, 3, 0, 3)
+    assert_raft_log("#3: ", nt.peers.get(3).raft_log, 3, 0, 3)
+
+    # set node 2 as Leader
+    nt.send([new_message(2, 2, MessageType.MsgHup, 0)])
+    assert nt.peers.get(2).raft.make_ref().get_state() == StateRole.Leader
+
+    assert_raft_log("#1: ", nt.peers.get(1).raft_log, 4, 0, 4)
+    assert_raft_log("#2: ", nt.peers.get(2).raft_log, 4, 0, 4)
+    assert_raft_log("#3: ", nt.peers.get(3).raft_log, 4, 0, 4)
+
+    assert nt.peers.get(2).raft.make_ref().prs().get(1).get_committed_index() == 4
+    assert nt.peers.get(2).raft.make_ref().prs().get(2).get_committed_index() == 4
+    assert nt.peers.get(2).raft.make_ref().prs().get(3).get_committed_index() == 4
+
+    # #3 test append entries rejection (fails to update committed index)
+    nt.isolate(2)
+    nt.send([new_message(2, 2, MessageType.MsgPropose, 2)])
+    nt.recover()
+    nt.dispatch([new_message(2, 2, MessageType.MsgPropose, 1)])
+
+    # [msg_type: MsgAppend to: 1 from: 2 term: 2 log_term: 2 index: 6 entries {term: 2 index: 7 data: "somedata"} commit: 4,
+    # msg_type: MsgAppend to: 3 from: 2 term: 2 log_term: 2 index: 6 entries {term: 2 index: 7 data: "somedata"} commit: 4]
+    msg_append = nt.read_messages()
+    nt.dispatch(msg_append)
+
+    # [msg_type: MsgAppendResponse to: 2 from: 1 term: 2 index: 6 commit: 4 reject: true reject_hint: 4,
+    # msg_type: MsgAppendResponse to: 2 from: 3 term: 2 index: 6 commit: 4 reject: true reject_hint: 4]
+    msg_append_response = nt.read_messages()
+    nt.dispatch(msg_append)
+
+    # [msg_type: MsgAppend to: 3 from: 2 term: 2 log_term: 2 index: 4 entries {term: 2 index: 5 data: "somedata"} entries {term: 2 index: 6 data: "somedata"} entries {term: 2 index: 7 data: "somedata"} commit: 4,
+    # msg_type: MsgAppend to: 1 from: 2 term: 2 log_term: 2 index: 4 entries {term: 2 index: 5 data: "somedata"} entries {term: 2 index: 6 data: "somedata"} entries {term: 2 index: 7 data: "somedata"} commit: 4]
+    msg_append = nt.read_messages()
+
+    # committed index remain the same
+    assert nt.peers.get(2).raft.make_ref().prs().get(1).get_committed_index() == 4
+    assert nt.peers.get(2).raft.make_ref().prs().get(2).get_committed_index() == 4
+    assert nt.peers.get(2).raft.make_ref().prs().get(3).get_committed_index() == 4
+
+    # resend append
+    nt.send(msg_append)
+
+    # log is up-to-date
+    assert nt.peers.get(2).raft.make_ref().prs().get(1).get_committed_index() == 7
+    assert nt.peers.get(2).raft.make_ref().prs().get(2).get_committed_index() == 7
+    assert nt.peers.get(2).raft.make_ref().prs().get(3).get_committed_index() == 7
+
+    # set node 1 as Leader again
+    nt.send([new_message(1, 1, MessageType.MsgHup, 0)])
+    assert nt.peers.get(1).raft.make_ref().get_state() == StateRole.Leader
+
+    assert_raft_log("#1: ", nt.peers.get(1).raft_log, 8, 0, 8)
+    assert_raft_log("#2: ", nt.peers.get(2).raft_log, 8, 0, 8)
+    assert_raft_log("#3: ", nt.peers.get(3).raft_log, 8, 0, 8)
+
+    # update to 8
+    assert nt.peers.get(1).raft.make_ref().prs().get(1).get_committed_index() == 8
+    assert nt.peers.get(1).raft.make_ref().prs().get(2).get_committed_index() == 8
+    assert nt.peers.get(1).raft.make_ref().prs().get(3).get_committed_index() == 8
+
+    # #4 pass a smaller committed index, it occurs when the append response delay
+    nt.dispatch(
+        [
+            new_message(1, 1, MessageType.MsgPropose, 1),
+            new_message(1, 1, MessageType.MsgPropose, 1),
+        ]
+    )
+
+    msg_append = nt.read_messages()
+    nt.dispatch(msg_append)
+    msg_append_response = nt.read_messages()
+    nt.dispatch(msg_append_response)
+    msg_append = nt.read_messages()
+    nt.dispatch(msg_append)
+    msg_append_response = nt.read_messages()
+    # m1: msg_type: MsgAppendResponse to: 1 from: 3 term: 3 index: 10 commit: 10
+    # m2: msg_type: MsgAppendResponse to: 1 from: 2 term: 3 index: 10 commit: 10
+    m1 = msg_append_response.pop(1)
+    m2 = msg_append_response.pop(2)
+    nt.send([m1, m2])
+
+    assert nt.peers.get(1).raft.make_ref().prs().get(1).get_committed_index() == 10
+    assert nt.peers.get(1).raft.make_ref().prs().get(2).get_committed_index() == 10
+    assert nt.peers.get(1).raft.make_ref().prs().get(3).get_committed_index() == 10
+
+    # committed index remain 10
+
+    # msg_type: MsgAppendResponse to: 1 from: 2 term: 3 index: 10 commit: 9,
+    # msg_type: MsgAppendResponse to: 1 from: 3 term: 3 index: 10 commit: 9
+    nt.send(msg_append_response)
+    assert nt.peers.get(1).raft.make_ref().prs().get(1).get_committed_index() == 10
+    assert nt.peers.get(1).raft.make_ref().prs().get(2).get_committed_index() == 10
+    assert nt.peers.get(1).raft.make_ref().prs().get(3).get_committed_index() == 10
 
 
 def test_progress_leader():
