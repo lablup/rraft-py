@@ -288,8 +288,21 @@ def test_progress_leader():
         raft.persist()
 
 
+# test_progress_resume_by_heartbeat_resp ensures raft.heartbeat reset progress.paused by
+# heartbeat response.
 def test_progress_resume_by_heartbeat_resp():
-    pass
+    l = default_logger()
+    storage = new_storage()
+    raft = new_test_raft(1, [1, 2], 5, 1, storage.make_ref(), l.make_ref())
+    raft.raft.make_ref().become_candidate()
+    raft.raft.make_ref().become_leader()
+    raft.raft.make_ref().prs().get(2).set_paused(True)
+
+    raft.step(new_message(1, 1, MessageType.MsgBeat, 0))
+    assert raft.raft.make_ref().prs().get(2).get_paused()
+    raft.raft.make_ref().prs().get(2).become_replicate()
+    raft.step(new_message(2, 1, MessageType.MsgHeartbeatResponse, 0))
+    assert not raft.raft.make_ref().prs().get(2).get_paused()
 
 
 def test_progress_paused():
