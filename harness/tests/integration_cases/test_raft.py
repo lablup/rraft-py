@@ -2,8 +2,10 @@ import os
 import sys
 from typing import List
 from test_utils import (
+    new_storage,
     new_message,
     new_message_with_entries,
+    new_test_raft,
     # Interface,
     # Network,
 )
@@ -17,6 +19,7 @@ from rraft import (
     MemStorageCore_Ref,
     Message_Owner,
     MessageType,
+    ProgressState,
     Raft__MemStorage_Owner,
     Raft__MemStorage_Ref,
     RaftLog__MemStorage_Ref,
@@ -262,7 +265,27 @@ def test_progress_committed_index():
 
 
 def test_progress_leader():
-    pass
+    l = default_logger()
+    storage = new_storage()
+    raft = new_test_raft(1, [1, 2], 5, 1, storage.make_ref(), l.make_ref())
+    raft.raft.make_ref().become_candidate()
+    raft.raft.make_ref().become_leader()
+    # For no-op entry
+    raft.persist()
+    raft.raft.make_ref().prs().get(2).become_replicate()
+
+    prop_msg = new_message(1, 1, MessageType.MsgPropose, 1)
+    for i in range(0, 5):
+        assert raft.raft.make_ref().prs().get(1).get_state() == ProgressState.Replicate
+
+        matched = raft.raft.make_ref().prs().get(1).get_matched()
+        next_idx = raft.raft.make_ref().prs().get(1).get_next_idx()
+        assert matched == i + 1
+        assert next_idx == matched + 1
+
+        # Should not throw exception
+        raft.step(prop_msg.clone())
+        raft.persist()
 
 
 def test_progress_resume_by_heartbeat_resp():
