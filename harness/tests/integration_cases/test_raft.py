@@ -1008,7 +1008,48 @@ def test_old_messages():
 
 
 def test_proposal():
-    pass
+    l = default_logger()
+
+    class Test:
+        def __init__(self, nw: Network, success: bool) -> None:
+            self.nw = nw
+            self.success = success
+
+    NOP_STEPPER = Interface(None)
+
+    tests = [
+        Test(Network.new([None, None, None], l), True),
+        Test(Network.new([None, None, NOP_STEPPER], l), True),
+        Test(Network.new([None, NOP_STEPPER, NOP_STEPPER], l), False),
+        Test(Network.new([None, NOP_STEPPER, NOP_STEPPER, None], l), False),
+        Test(Network.new([None, NOP_STEPPER, NOP_STEPPER, None, None], l), True),
+    ]
+
+    for j, v in enumerate(tests):
+        nw, success = v.nw, v.success
+
+        def send(nw: Network, m: Message_Owner) -> None:
+            try:
+                nw.send([m])
+                assert success
+            except Exception:
+                assert not success
+
+        # promote 0 the leader
+        send(nw, new_message(1, 1, MessageType.MsgHup, 0))
+        send(nw, new_message(1, 1, MessageType.MsgPropose, 1))
+        # committed index, applied index and last index.
+        want_log = (2, 0, 2) if success else (0, 0, 0)
+
+        for p in nw.peers.values():
+            if p.raft:
+                prefix = f"#{j}: "
+                assert_raft_log(
+                    prefix, p.raft_log, want_log[0], want_log[1], want_log[2]
+                )
+        assert (
+            nw.peers.get(1).raft.make_ref().get_term() == 1
+        ), f"#{j}: term = {nw.peers.get(1).raft.make_ref().get_term()}, want: {1}"
 
 
 def test_proposal_by_proxy():
