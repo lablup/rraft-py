@@ -1376,7 +1376,38 @@ def test_handle_heartbeat_resp():
 # ReadOnly read_index_queue and pending_read_index map.
 # related issue: https://github.com/coreos/etcd/issues/7571
 def test_raft_frees_read_only_mem():
-    pass
+    l = default_logger()
+    storage = new_storage()
+    sm = new_test_raft(1, [1, 2], 5, 1, storage.make_ref(), l.make_ref())
+
+    sm.raft.make_ref().become_candidate()
+    sm.raft.make_ref().become_leader()
+    last_index = sm.raft_log.last_index()
+    sm.raft_log.commit_to(last_index)
+
+    ctx = "ctx"
+    vec_ctx = list(bytes(ctx, "utf-8"))
+    # leader starts linearizable read request.
+    # more info: raft dissertation 6.4, step 2.
+    m = new_message_with_entries(2, 1, MessageType.MsgReadIndex, [new_entry(0, 0, ctx)])
+    sm.step(m)
+    msgs = sm.read_messages()
+    assert len(msgs) == 1
+    assert msgs[0].make_ref().get_msg_type() == MessageType.MsgHeartbeat
+    assert msgs[0].make_ref().get_context() == vec_ctx
+    assert len(sm.raft.make_ref().get_readonly_read_index_queue()) == 1
+    # TODO: Resolve below tests
+    # assert sm.raft.make_ref().get_read_only_pending_read_index() == 1
+
+    # heartbeat responses from majority of followers (1 in this case)
+    # acknowledge the authority of the leader.
+    # more info: raft dissertation 6.4, step 3.
+    m = new_message(2, 1, MessageType.MsgHeartbeatResponse, 0)
+    m.make_ref().set_context(vec_ctx)
+    sm.step(m)
+    assert len(sm.raft.make_ref().get_readonly_read_index_queue()) == 0
+    # TODO: Resolve below tests
+    # assert sm.raft.make_ref().get_read_only_pending_read_index() == 0
 
 
 # test_msg_append_response_wait_reset verifies the waitReset behavior of a leader
