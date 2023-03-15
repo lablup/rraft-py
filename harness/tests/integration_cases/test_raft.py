@@ -938,7 +938,33 @@ def test_dueling_pre_candidates():
 
 
 def test_candidate_concede():
-    pass
+    l = default_logger()
+    tt = Network.new([None, None, None], l)
+    tt.isolate(1)
+
+    tt.send([new_message(1, 1, MessageType.MsgHup, 0)])
+    tt.send([new_message(3, 3, MessageType.MsgHup, 0)])
+
+    # heal the partition
+    tt.recover()
+    # send heartbeat; reset wait
+    tt.send([new_message(3, 3, MessageType.MsgBeat, 0)])
+
+    # send a proposal to 3 to flush out a MsgAppend to 1
+    data = "force follower"
+    m = new_message(3, 3, MessageType.MsgPropose, 0)
+    m.make_ref().set_entries([new_entry(0, 0, data)])
+    tt.send([m])
+    # send heartbeat; flush out commit
+    tt.send([new_message(3, 3, MessageType.MsgBeat, 0)])
+
+    assert tt.peers.get(1).raft.make_ref().get_state() == StateRole.Follower
+    assert tt.peers.get(1).raft.make_ref().get_term() == 1
+
+    for p in tt.peers.values():
+        assert p.raft_log.get_committed() == 2
+        assert p.raft_log.get_applied() == 0
+        assert p.raft_log.last_index() == 2
 
 
 def test_single_node_candidate():
