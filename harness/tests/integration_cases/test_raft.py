@@ -1269,7 +1269,59 @@ def test_handle_msg_append():
 
 # test_handle_heartbeat ensures that the follower commits to the commit in the message.
 def test_handle_heartbeat():
-    pass
+    l = default_logger()
+    commit = 2
+
+    def nm(
+        f: int,
+        to: int,
+        term: int,
+        commit: int,
+    ) -> Message_Owner:
+        m = new_message(f, to, MessageType.MsgHeartbeat, 0)
+        m.make_ref().set_term(term)
+        m.make_ref().set_commit(commit)
+
+        return m
+
+    class Test:
+        def __init__(self, m: Message_Owner, w_commit: int) -> None:
+            self.m = m
+            self.w_commit = w_commit
+
+    tests = [
+        Test(nm(2, 1, 2, commit + 1), commit + 1),
+        Test(nm(2, 1, 2, commit - 1), commit),
+    ]
+
+    for i, v in enumerate(tests):
+        m, w_commit = v.m, v.w_commit
+        cs = ConfState_Owner([1, 2], [])
+        store = MemStorage_Owner.new_with_conf_state(cs.make_ref())
+        store.make_ref().wl(
+            lambda core: core.append(
+                [
+                    empty_entry(1, 1),
+                    empty_entry(2, 2),
+                    empty_entry(3, 3),
+                ]
+            )
+        )
+
+        cfg = new_test_config(1, 5, 1)
+        sm = new_test_raft_with_config(cfg.make_ref(), store.make_ref(), l.make_ref())
+        sm.raft.make_ref().become_follower(2, 2)
+        sm.raft_log.commit_to(commit)
+        sm.raft.make_ref().handle_heartbeat(m.make_ref())
+        assert (
+            sm.raft_log.get_committed() == w_commit
+        ), f"#{i}: committed = {sm.raft_log.get_committed()}, want {w_commit}"
+
+        m = sm.read_messages()
+        assert len(m) == 1, f"#{i}: msg count = {len(m)}, want 1"
+        assert (
+            m[0].make_ref().get_msg_type() == MessageType.MsgHeartbeatResponse
+        ), f"#{i}: msg type = {m[0].make_ref().get_msg_type()}, want {MessageType.MsgHeartbeatResponse}"
 
 
 # test_handle_heartbeat_resp ensures that we re-send log entries when we get a heartbeat response.

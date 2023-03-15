@@ -241,12 +241,12 @@ impl Py_Raft__MemStorage_Ref {
         self.inner.map_as_mut(|inner| inner.tick())
     }
 
-    pub fn promotable(&mut self) -> PyResult<bool> {
-        self.inner.map_as_mut(|inner| inner.promotable())
-    }
-
     pub fn tick_election(&mut self) -> PyResult<bool> {
         self.inner.map_as_mut(|inner| inner.tick_election())
+    }
+
+    pub fn promotable(&mut self) -> PyResult<bool> {
+        self.inner.map_as_mut(|inner| inner.promotable())
     }
 
     pub fn step(&mut self, msg: Py_Message_Mut) -> PyResult<()> {
