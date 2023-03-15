@@ -471,6 +471,23 @@ impl Py_Raft__MemStorage_Ref {
     pub fn set_check_quorum(&mut self, v: bool) -> PyResult<()> {
         self.inner.map_as_mut(|inner| inner.check_quorum = v)
     }
+
+    // Below function is exposed here because "ReadOnly" struct is not exposed in raft-rs.
+    pub fn get_readonly_read_index_queue(&self, py: Python) -> PyResult<PyObject> {
+        self.inner
+        .map_as_ref(|inner| PyList::new(py, inner.read_only.read_index_queue.clone()).into())
+    }
+
+    // Below function is exposed here because "ReadOnly" struct is not exposed in raft-rs.
+    pub fn get_read_only_pending_read_index(&self, py: Python) -> PyResult<PyObject> {
+        todo!()
+        // self.inner.map_as_ref(|inner| {
+        //     let dict = PyDict::new(py);
+        //     let pending_read_index = inner.read_only.pending_read_index.clone();
+
+        //     dict.into_py(py)
+        // })
+    }
 }
 
 #[pyclass(name = "Raft")]

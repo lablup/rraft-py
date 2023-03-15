@@ -1777,6 +1777,8 @@ class Raft__MemStorage_Ref:
         """ """
     def apply_conf_change(self, cc: ConfChangeV2_Ref) -> ConfChange_Ref:
         """ """
+    def get_readonly_read_index_queue(self) -> List[List[int]]:
+        """ """
 
 class Raft__MemStorage_Owner:
     """
