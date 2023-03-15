@@ -1550,7 +1550,67 @@ def test_recv_msg_request_vote_for_type(msg_type: MessageType):
 
 
 def test_state_transition():
-    pass
+    l = default_logger()
+
+    class Test:
+        def __init__(
+            self, from_: int, to: StateRole, wallow: bool, wterm: int, wlead: int
+        ) -> None:
+            self.from_ = from_
+            self.to = to
+            self.wallow = wallow
+            self.wterm = wterm
+            self.wlead = wlead
+
+    tests = [
+        Test(StateRole.Follower, StateRole.Follower, True, 1, INVALID_ID),
+        Test(StateRole.Follower, StateRole.PreCandidate, True, 0, INVALID_ID),
+        Test(StateRole.Follower, StateRole.Candidate, True, 1, INVALID_ID),
+        Test(StateRole.Follower, StateRole.Leader, False, 0, INVALID_ID),
+        Test(StateRole.PreCandidate, StateRole.Follower, True, 0, INVALID_ID),
+        Test(StateRole.PreCandidate, StateRole.PreCandidate, True, 0, INVALID_ID),
+        Test(StateRole.PreCandidate, StateRole.Candidate, True, 1, INVALID_ID),
+        Test(StateRole.PreCandidate, StateRole.Leader, True, 0, 1),
+        Test(StateRole.Candidate, StateRole.Follower, True, 0, INVALID_ID),
+        Test(StateRole.Candidate, StateRole.PreCandidate, True, 0, INVALID_ID),
+        Test(StateRole.Candidate, StateRole.Candidate, True, 1, INVALID_ID),
+        Test(StateRole.Candidate, StateRole.Leader, True, 0, 1),
+        Test(StateRole.Leader, StateRole.Follower, True, 1, INVALID_ID),
+        Test(StateRole.Leader, StateRole.PreCandidate, False, 1, INVALID_ID),
+        Test(StateRole.Leader, StateRole.Leader, True, 0, 1),
+    ]
+
+    for i, v in enumerate(tests):
+        from_, to, wallow, wterm, wlead = v.from_, v.to, v.wallow, v.wterm, v.wlead
+        storage = new_storage()
+        sm = new_test_raft(1, [1], 10, 1, storage.make_ref(), l.make_ref())
+        sm.raft.make_ref().set_state(from_)
+
+        is_ok = False
+
+        try:
+            if to == StateRole.Follower:
+                sm.make_ref().become_follower(wterm, wlead)
+            elif to == StateRole.PreCandidate:
+                sm.make_ref().become_pre_candidate()
+            elif to == StateRole.Candidate:
+                sm.make_ref().become_candidate()
+            elif to == StateRole.Leader:
+                sm.make_ref().become_leader()
+
+            is_ok = True
+        except Exception:
+            continue
+
+        assert is_ok ^ wallow, f"#{i}: allow = {is_ok}, want {wallow}"
+
+        assert (
+            sm.raft.make_ref().get_term() == wterm
+        ), f"#{i}: state = {sm.raft.make_ref().get_term()}, want {wterm}"
+
+        assert (
+            sm.raft.make_ref().get_leader_id() == wlead
+        ), f"#{i}: state = {sm.raft.make_ref().get_leader_id()}, want {wlead}"
 
 
 def test_all_server_stepdown():
