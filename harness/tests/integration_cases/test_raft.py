@@ -1009,6 +1009,7 @@ def test_old_messages():
 
 # test_old_messages_reply - optimization - reply with new term.
 
+
 def test_proposal():
     l = default_logger()
 
@@ -1055,7 +1056,28 @@ def test_proposal():
 
 
 def test_proposal_by_proxy():
-    pass
+    l = default_logger()
+
+    NOP_STEPPER = Interface(None)
+
+    tests = [
+        Network.new([None, None, None], l),
+        Network.new([None, None, NOP_STEPPER], l),
+    ]
+
+    for j, tt in enumerate(tests):
+        # promote 0 the leader
+        tt.send([new_message(1, 1, MessageType.MsgHup, 0)])
+        # propose via follower
+        tt.send([new_message(2, 2, MessageType.MsgPropose, 1)])
+
+        for p in tt.peers.values():
+            if p.raft:
+                prefix = f"#{j}: "
+                assert_raft_log(prefix, p.raft_log, 2, 0, 2)
+        assert (
+            tt.peers.get(1).raft.make_ref().get_term() == 1
+        ), f"#{j}: term = {tt.peers.get(1).raft.make_ref().get_term()}, want: {1}"
 
 
 def test_commit():
