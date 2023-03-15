@@ -1767,6 +1767,14 @@ class Raft__MemStorage_Ref:
         """ """
     def get_raft_log(self) -> RaftLog__MemStorage_Ref:
         """ """
+    def get_election_elapsed(self) -> int:
+        """ """
+    def set_election_elapsed(self, v: int) -> None:
+        """ """
+    def get_check_quorum(self) -> bool:
+        """ """
+    def set_check_quorum(self, v: bool) -> None:
+        """ """
     def apply_conf_change(self, cc: ConfChangeV2_Ref) -> ConfChange_Ref:
         """ """
 

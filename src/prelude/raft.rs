@@ -392,8 +392,8 @@ impl Py_Raft__MemStorage_Ref {
         self.inner.map_as_ref(|inner| inner.pending_conf_index)
     }
 
-    pub fn set_pending_conf_index(&self) -> PyResult<u64> {
-        todo!()
+    pub fn set_pending_conf_index(&mut self, v: u64) -> PyResult<()> {
+        self.inner.map_as_mut(|inner| inner.pending_conf_index = v)
     }
 
     pub fn get_pending_request_snapshot(&self) -> PyResult<u64> {
@@ -454,6 +454,22 @@ impl Py_Raft__MemStorage_Ref {
 
     pub fn set_state(&mut self, v: &Py_StateRole) -> PyResult<()> {
         self.inner.map_as_mut(|inner| inner.state = v.0)
+    }
+
+    pub fn get_election_elapsed(&self) -> PyResult<usize> {
+        self.inner.map_as_ref(|inner| inner.election_elapsed)
+    }
+
+    pub fn set_election_elapsed(&mut self, v: usize) -> PyResult<()> {
+        self.inner.map_as_mut(|inner| inner.election_elapsed = v)
+    }
+
+    pub fn get_check_quorum(&self) -> PyResult<bool> {
+        self.inner.map_as_ref(|inner| inner.check_quorum)
+    }
+
+    pub fn set_check_quorum(&mut self, v: bool) -> PyResult<()> {
+        self.inner.map_as_mut(|inner| inner.check_quorum = v)
     }
 }
 
