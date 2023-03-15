@@ -1970,7 +1970,9 @@ def test_non_promotable_voter_with_check_quorum():
     # otherwise it will introduce some uncertainty into this test case
     # we need to ensure randomizedElectionTimeout > electionTimeout here
     b_election_timeout = nt.peers.get(2).raft.make_ref().election_timeout()
-    nt.peers.get(2).raft.make_ref().set_randomized_election_timeout(b_election_timeout + 1)
+    nt.peers.get(2).raft.make_ref().set_randomized_election_timeout(
+        b_election_timeout + 1
+    )
 
     # Need to remove 2 again to make it a non-promotable node since newNetwork
     # overwritten some internal states
@@ -1993,7 +1995,88 @@ def test_non_promotable_voter_with_check_quorum():
 # to become a candidate with an increased term. Then, the
 # candiate's response to late leader heartbeat forces the leader
 def test_disruptive_follower():
-    pass
+    l = default_logger()
+    n1_storage = new_storage()
+    n1 = new_test_raft(1, [1, 2, 3], 10, 1, n1_storage.make_ref(), l.make_ref())
+    n2_storage = new_storage()
+    n2 = new_test_raft(2, [1, 2, 3], 10, 1, n2_storage.make_ref(), l.make_ref())
+    n3_storage = new_storage()
+    n3 = new_test_raft(3, [1, 2, 3], 10, 1, n3_storage.make_ref(), l.make_ref())
+
+    n1.raft.make_ref().set_check_quorum(True)
+    n2.raft.make_ref().set_check_quorum(True)
+    n3.raft.make_ref().set_check_quorum(True)
+
+    n1.raft.make_ref().become_follower(1, INVALID_ID)
+    n2.raft.make_ref().become_follower(1, INVALID_ID)
+    n3.raft.make_ref().become_follower(1, INVALID_ID)
+
+    nt = Network.new([n1, n2, n3], l)
+    nt.send([new_message(1, 1, MessageType.MsgHup, 0)])
+
+    # check state
+    assert nt.peers.get(1).raft.make_ref().get_state() == StateRole.Leader
+    assert nt.peers.get(2).raft.make_ref().get_state() == StateRole.Follower
+    assert nt.peers.get(3).raft.make_ref().get_state() == StateRole.Follower
+
+    # etcd server "advanceTicksForElection" on restart;
+    # this is to expedite campaign trigger when given larger
+    # election timeouts (e.g. multi-datacenter deploy)
+    # Or leader messages are being delayed while ticks elapse
+    timeout = nt.peers.get(3).raft.make_ref().election_timeout()
+    nt.peers.get(3).raft.make_ref().set_randomized_election_timeout(timeout + 2)
+    timeout = nt.peers.get(3).raft.make_ref().randomized_election_timeout()
+
+    for _ in range(0, timeout - 1):
+        nt.peers.get(3).raft.make_ref().tick()
+
+    # ideally, before last election tick elapses,
+    # the follower n3 receives "pb.MsgApp" or "pb.MsgHeartbeat"
+    # from leader n1, and then resets its "electionElapsed"
+    # however, last tick may elapse before receiving any
+    # messages from leader, thus triggering campaign
+    nt.peers.get(3).raft.make_ref().tick()
+
+    # n1 is still leader yet
+    # while its heartbeat to candidate n3 is being delayed
+    # check state
+    assert nt.peers.get(1).raft.make_ref().get_state() == StateRole.Leader
+    assert nt.peers.get(2).raft.make_ref().get_state() == StateRole.Follower
+    assert nt.peers.get(3).raft.make_ref().get_state() == StateRole.Candidate
+
+    # check term
+    # n1.Term == 2
+    # n2.Term == 2
+    # n3.Term == 3
+    assert nt.peers.get(1).raft.make_ref().get_term() == 2
+    assert nt.peers.get(2).raft.make_ref().get_term() == 2
+    assert nt.peers.get(3).raft.make_ref().get_term() == 3
+
+    # while outgoing vote requests are still queued in n3,
+    # leader heartbeat finally arrives at candidate n3
+    # however, due to delayed network from leader, leader
+    # heartbeat was sent with lower term than candidate's
+    msg = new_message(1, 3, MessageType.MsgHeartbeat, 0)
+    msg.make_ref().set_term(2)
+    nt.send([msg])
+
+    # then candidate n3 responds with "pb.MsgAppResp" of higher term
+    # and leader steps down from a message with higher term
+    # this is to disrupt the current leader, so that candidate
+    # with higher term can be freed with following election
+
+    # check state
+    assert nt.peers.get(1).raft.make_ref().get_state() == StateRole.Follower
+    assert nt.peers.get(2).raft.make_ref().get_state() == StateRole.Follower
+    assert nt.peers.get(3).raft.make_ref().get_state() == StateRole.Candidate
+
+    # check term
+    # n1.Term == 3
+    # n2.Term == 2
+    # n3.Term == 3
+    assert nt.peers.get(1).raft.make_ref().get_term() == 3
+    assert nt.peers.get(2).raft.make_ref().get_term() == 2
+    assert nt.peers.get(3).raft.make_ref().get_term() == 3
 
 
 # `test_disruptive_follower_pre_vote` tests isolated follower,
