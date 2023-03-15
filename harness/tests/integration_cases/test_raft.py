@@ -1,3 +1,4 @@
+import math
 import os
 import sys
 import pytest
@@ -1140,7 +1141,38 @@ def test_commit():
 
 
 def test_pass_election_timeout():
-    pass
+    l = default_logger()
+
+    class Test:
+        def __init__(self, elapse: int, wprobability: float, round: bool) -> None:
+            self.elapse = elapse
+            self.wprobability = wprobability
+            self.round = round
+
+    tests = [
+        Test(5, 0.0, False),
+        Test(10, 0.1, True),
+        Test(13, 0.4, True),
+        Test(15, 0.6, True),
+        Test(18, 0.9, True),
+        Test(20, 1.0, False),
+    ]
+
+    for i, v in enumerate(tests):
+        elapse, wprobability, round = v.elapse, v.wprobability, v.round
+        storage = new_storage()
+        sm = new_test_raft(1, [1], 10, 1, storage.make_ref(), l.make_ref())
+        sm.raft.make_ref().set_election_elapsed(elapse)
+        c = 0
+        for _ in range(0, 10000):
+            sm.raft.make_ref().reset_randomized_election_timeout()
+            if sm.raft.make_ref().pass_election_timeout():
+                c += 1
+        got = c / 10000.0
+        if round:
+            got = math.floor(got * 10.0 + 0.5) / 10.0
+        if got - wprobability > 0.000001:
+            assert False, f"#{i}: probability = {got}, want {wprobability}"
 
 
 # test_handle_msg_append ensures:
