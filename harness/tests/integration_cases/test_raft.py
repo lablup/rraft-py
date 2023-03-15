@@ -15,6 +15,7 @@ from test_utils import (
     new_entry,
     empty_entry,
     add_node,
+    remove_node,
     # Interface,
     # Network,
 )
@@ -1954,7 +1955,37 @@ def test_free_stuck_candidate_with_check_quorum():
 
 
 def test_non_promotable_voter_with_check_quorum():
-    pass
+    l = default_logger()
+    a_storage = new_storage()
+    a = new_test_raft(1, [1, 2], 10, 1, a_storage.make_ref(), l.make_ref())
+    b_storage = new_storage()
+    b = new_test_raft(2, [1], 10, 1, b_storage.make_ref(), l.make_ref())
+
+    a.raft.make_ref().set_check_quorum(True)
+    b.raft.make_ref().set_check_quorum(True)
+
+    nt = Network.new([a, b], l)
+
+    # we can not let system choosing the value of randomizedElectionTimeout
+    # otherwise it will introduce some uncertainty into this test case
+    # we need to ensure randomizedElectionTimeout > electionTimeout here
+    b_election_timeout = nt.peers.get(2).raft.make_ref().election_timeout()
+    nt.peers.get(2).raft.make_ref().set_randomized_election_timeout(b_election_timeout + 1)
+
+    # Need to remove 2 again to make it a non-promotable node since newNetwork
+    # overwritten some internal states
+    nt.peers.get(1).raft.make_ref().apply_conf_change(remove_node(2))
+
+    assert not nt.peers.get(2).raft.make_ref().promotable()
+
+    for _ in range(0, b_election_timeout):
+        nt.peers.get(2).raft.make_ref().tick()
+
+    nt.send([new_message(1, 1, MessageType.MsgHup, 0)])
+
+    assert nt.peers.get(1).raft.make_ref().get_state() == StateRole.Leader
+    assert nt.peers.get(2).raft.make_ref().get_state() == StateRole.Follower
+    assert nt.peers.get(1).raft.make_ref().get_leader_id() == 1
 
 
 # `test_disruptive_follower` tests isolated follower,
