@@ -1788,7 +1788,45 @@ def test_leader_stepdown_when_quorum_lost():
 
 
 def test_leader_superseding_with_check_quorum():
-    pass
+    l = default_logger()
+    a_storage = new_storage()
+    a = new_test_raft(1, [1, 2, 3], 10, 1, a_storage.make_ref(), l.make_ref())
+    b_storage = new_storage()
+    b = new_test_raft(2, [1, 2, 3], 10, 1, b_storage.make_ref(), l.make_ref())
+    c_storage = new_storage()
+    c = new_test_raft(3, [1, 2, 3], 10, 1, c_storage.make_ref(), l.make_ref())
+
+    a.raft.make_ref().set_check_quorum(True)
+    b.raft.make_ref().set_check_quorum(True)
+    c.raft.make_ref().set_check_quorum(True)
+
+    nt = Network.new([a, b, c], l)
+    b_election_timeout = nt.peers.get(2).raft.make_ref().election_timeout()
+
+    # prevent campaigning from b
+    nt.peers.get(2).raft.make_ref().set_randomized_election_timeout(
+        b_election_timeout + 1
+    )
+
+    for _ in range(0, b_election_timeout):
+        nt.peers.get(2).raft.make_ref().tick()
+
+    nt.send([new_message(1, 1, MessageType.MsgHup, 0)])
+
+    assert nt.peers.get(1).raft.make_ref().get_state() == StateRole.Leader
+    assert nt.peers.get(3).raft.make_ref().get_state() == StateRole.Follower
+
+    nt.send([new_message(3, 3, MessageType.MsgHup, 0)])
+    # Peer b rejected c's vote since its electionElapsed had not reached to electionTimeout
+
+    assert nt.peers.get(3).raft.make_ref().get_state() == StateRole.Candidate
+
+    # Letting b's electionElapsed reach to electionTimeout
+    for _ in range(0, b_election_timeout):
+        nt.peers.get(2).raft.make_ref().tick()
+
+    nt.send([new_message(3, 3, MessageType.MsgHup, 0)])
+    assert nt.peers.get(3).raft.make_ref().get_state() == StateRole.Leader
 
 
 def test_leader_election_with_check_quorum():
