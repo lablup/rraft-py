@@ -1684,7 +1684,7 @@ class Raft__MemStorage_Ref:
         """
     def handle_heartbeat(self, msg: Message_Ref) -> None:
         """ """
-    def handle_snapshot(self, msg: Message_Ref) -> None:
+    def handle_append_entries(self, msg: Message_Ref) -> None:
         """ """
     def request_snapshot(self, request_index: int) -> None:
         """

@@ -274,7 +274,7 @@ impl Py_Raft__MemStorage_Ref {
             .map_as_mut(|inner| inner.handle_heartbeat(msg.into()))
     }
 
-    pub fn handle_snapshot(&mut self, msg: Py_Message_Mut) -> PyResult<()> {
+    pub fn handle_append_entries(&mut self, msg: Py_Message_Mut) -> PyResult<()> {
         self.inner
             .map_as_mut(|inner| inner.handle_append_entries(&msg.into()))
     }
