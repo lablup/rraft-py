@@ -1890,7 +1890,67 @@ def test_leader_election_with_check_quorum():
 # can disrupt the leader even if the leader still "officially" holds the lease, The
 # leader is expected to step down and adopt the candidate's term
 def test_free_stuck_candidate_with_check_quorum():
-    pass
+    l = default_logger()
+    a_storage = new_storage()
+    a = new_test_raft(1, [1, 2, 3], 10, 1, a_storage.make_ref(), l.make_ref())
+    b_storage = new_storage()
+    b = new_test_raft(2, [1, 2, 3], 10, 1, b_storage.make_ref(), l.make_ref())
+    c_storage = new_storage()
+    c = new_test_raft(3, [1, 2, 3], 10, 1, c_storage.make_ref(), l.make_ref())
+
+    a.raft.make_ref().set_check_quorum(True)
+    b.raft.make_ref().set_check_quorum(True)
+    c.raft.make_ref().set_check_quorum(True)
+
+    nt = Network.new([a, b, c], l)
+
+    # we can not let system choosing the value of randomizedElectionTimeout
+    # otherwise it will introduce some uncertainty into this test case
+    # we need to ensure randomizedElectionTimeout > electionTimeout here
+    b_election_timeout = nt.peers.get(2).raft.make_ref().election_timeout()
+    nt.peers.get(2).raft.make_ref().set_randomized_election_timeout(
+        b_election_timeout + 1
+    )
+
+    for _ in range(0, b_election_timeout):
+        nt.peers.get(2).raft.make_ref().tick()
+
+    nt.send([new_message(1, 1, MessageType.MsgHup, 0)])
+    nt.isolate(1)
+    nt.send([new_message(3, 3, MessageType.MsgHup, 0)])
+
+    assert nt.peers.get(2).raft.make_ref().get_state() == StateRole.Follower
+    assert nt.peers.get(3).raft.make_ref().get_state() == StateRole.Candidate
+    assert (
+        nt.peers.get(3).raft.make_ref().get_term()
+        == nt.peers.get(2).raft.make_ref().get_term() + 1
+    )
+
+    # Vote again for safety
+    nt.send([new_message(3, 3, MessageType.MsgHup, 0)])
+
+    assert nt.peers.get(2).raft.make_ref().get_state() == StateRole.Follower
+    assert nt.peers.get(3).raft.make_ref().get_state() == StateRole.Candidate
+    assert (
+        nt.peers.get(3).raft.make_ref().get_term()
+        == nt.peers.get(2).raft.make_ref().get_term() + 2
+    )
+
+    nt.recover()
+    msg = new_message(1, 3, MessageType.MsgHeartbeat, 0)
+    msg.make_ref().set_term(nt.peers.get(3).raft.make_ref().get_term())
+    nt.send([msg])
+
+    # Disrupt the leader so that the stuck peer is freed
+    assert nt.peers.get(1).raft.make_ref().get_state() == StateRole.Follower
+    assert (
+        nt.peers.get(3).raft.make_ref().get_term()
+        == nt.peers.get(1).raft.make_ref().get_term()
+    )
+
+    # Vote again, should become leader this time
+    nt.send([new_message(3, 3, MessageType.MsgHup, 0)])
+    assert nt.peers.get(3).raft.make_ref().get_state() == StateRole.Leader
 
 
 def test_non_promotable_voter_with_check_quorum():
