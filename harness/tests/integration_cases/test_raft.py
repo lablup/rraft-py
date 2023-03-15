@@ -2,7 +2,7 @@ import math
 import os
 import sys
 import pytest
-from typing import Any, List, Tuple
+from typing import Any, List, Optional, Tuple
 from test_utils import (
     new_test_raft_with_prevote,
     new_storage,
@@ -11,6 +11,7 @@ from test_utils import (
     new_test_raft,
     new_test_config,
     new_test_raft_with_config,
+    new_test_raft_with_logs,
     new_entry,
     empty_entry,
     add_node,
@@ -1182,7 +1183,88 @@ def test_pass_election_timeout():
 #    log.
 # 3. If leaderCommit > commitIndex, set commitIndex = min(leaderCommit, index of last new entry).
 def test_handle_msg_append():
-    pass
+    l = default_logger()
+
+    def nm(
+        term: int,
+        log_term: int,
+        index: int,
+        commit: int,
+        ents: Optional[List[Tuple[int, int]]],
+    ) -> Message_Owner:
+        m = Message_Owner.default()
+        m.make_ref().set_msg_type(MessageType.MsgAppend)
+        m.make_ref().set_term(term)
+        m.make_ref().set_log_term(log_term)
+        m.make_ref().set_index(index)
+        m.make_ref().set_commit(commit)
+
+        if ents:
+            print("ents", ents)
+            ents = list(map(lambda item: empty_entry(item[1], item[0]), ents))
+            m.make_ref().set_entries(ents)
+        return m
+
+    class Test:
+        def __init__(
+            self, m: Message_Owner, w_index: bool, w_commit: int, w_reject: int
+        ) -> None:
+            self.m = m
+            self.w_index = w_index
+            self.w_commit = w_commit
+            self.w_reject = w_reject
+
+    tests = [
+        # Ensure 1: previous log mismatch
+        Test(nm(2, 3, 2, 3, None), 2, 0, True),
+        # Ensure 1: previous log non-exist
+        Test(nm(2, 3, 3, 3, None), 2, 0, True),
+        # Ensure 2
+        Test(nm(2, 1, 1, 1, None), 2, 1, False),
+        Test(nm(2, 0, 0, 1, [(1, 2)]), 1, 1, False),
+        Test(nm(2, 2, 2, 3, [(3, 2), (4, 2)]), 4, 3, False),
+        Test(nm(2, 2, 2, 4, [(3, 2)]), 3, 3, False),
+        Test(nm(2, 1, 1, 4, [(2, 2)]), 2, 2, False),
+        # Ensure 3: match entry 1, commit up to last new entry 1
+        Test(nm(1, 1, 1, 3, None), 2, 1, False),
+        # Ensure 3: match entry 1, commit up to last new
+        Test(nm(1, 1, 1, 3, [(2, 2)]), 2, 2, False),
+        # entry 2: match entry 2, commit up to last new entry 2
+        Test(nm(2, 2, 2, 3, None), 2, 2, False),
+        # entry 2: commit up to log.last()
+        Test(nm(2, 2, 2, 4, None), 2, 2, False),
+    ]
+
+    for j, v in enumerate(tests):
+        m, w_index, w_commit, w_reject = v.m, v.w_index, v.w_commit, v.w_reject
+        storage = MemStorage_Owner()
+        sm = new_test_raft_with_logs(
+            1,
+            [1],
+            10,
+            1,
+            storage.make_ref(),
+            [empty_entry(1, 1), empty_entry(2, 2)],
+            l.make_ref(),
+        )
+
+        sm.raft.make_ref().become_follower(2, INVALID_ID)
+        sm.raft.make_ref().handle_append_entries(m.make_ref())
+
+        assert (
+            sm.raft_log.last_index() == w_index
+        ), f"#{j}: last_index = {sm.raft_log.last_index()}, want {w_index}"
+
+        assert (
+            sm.raft_log.get_committed() == w_commit
+        ), f"#{j}: committed = {sm.raft_log.get_committed()}, want {w_commit}"
+
+        m = sm.read_messages()
+        assert len(m) == 1, f"#{j}: msg count = {len(m)}, want 1"
+
+        assert (
+            m[0].make_ref().get_reject() == w_reject
+        ), f"#{j}: reject = {m[0].make_ref().get_reject()}, want {w_reject}"
 
 
 # test_handle_heartbeat ensures that the follower commits to the commit in the message.
