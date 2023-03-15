@@ -1774,7 +1774,17 @@ def test_leader_stepdown_when_quorum_active():
 
 
 def test_leader_stepdown_when_quorum_lost():
-    pass
+    l = default_logger()
+    storage = new_storage()
+    sm = new_test_raft(1, [1, 2, 3], 5, 1, storage.make_ref(), l.make_ref())
+    sm.raft.make_ref().set_check_quorum(True)
+    sm.raft.make_ref().become_candidate()
+    sm.raft.make_ref().become_leader()
+
+    for _ in range(0, sm.raft.make_ref().election_timeout()):
+        sm.raft.make_ref().tick()
+
+    assert sm.raft.make_ref().get_state() == StateRole.Follower
 
 
 def test_leader_superseding_with_check_quorum():
