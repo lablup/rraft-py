@@ -53,6 +53,13 @@ impl Py_ConfChange_Owner {
         }
     }
 
+    #[staticmethod]
+    pub fn default() -> Self {
+        Py_ConfChange_Owner {
+            inner: ConfChange::default(),
+        }
+    }
+
     pub fn make_ref(&mut self) -> Py_ConfChange_Ref {
         Py_ConfChange_Ref {
             inner: RustRef::new(&mut self.inner),
