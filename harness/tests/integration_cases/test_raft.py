@@ -1460,12 +1460,93 @@ def test_msg_append_response_wait_reset():
     assert msgs[0].make_ref().get_entries()[0].get_index() == 2
 
 
-def test_recv_msg_request_vote():
-    pass
+# test_recv_msg_request_vote
+@pytest.mark.parametrize("msg_type", [MessageType.MsgRequestVote])
+def test_recv_msg_request_vote_for_type(msg_type: MessageType):
+    l = default_logger()
 
+    class Test:
+        def __init__(
+            self,
+            state: StateRole,
+            index: int,
+            log_term: int,
+            vote_for: int,
+            w_reject: bool,
+        ) -> None:
+            self.state = state
+            self.index = index
+            self.log_term = log_term
+            self.vote_for = vote_for
+            self.w_reject = w_reject
 
-def test_recv_msg_request_vote_for_type():
-    pass
+    tests = [
+        Test(StateRole.Follower, 0, 0, INVALID_ID, True),
+        Test(StateRole.Follower, 0, 1, INVALID_ID, True),
+        Test(StateRole.Follower, 0, 2, INVALID_ID, True),
+        Test(StateRole.Follower, 0, 3, INVALID_ID, False),
+        Test(StateRole.Follower, 1, 0, INVALID_ID, True),
+        Test(StateRole.Follower, 1, 1, INVALID_ID, True),
+        Test(StateRole.Follower, 1, 2, INVALID_ID, True),
+        Test(StateRole.Follower, 1, 3, INVALID_ID, False),
+        Test(StateRole.Follower, 2, 0, INVALID_ID, True),
+        Test(StateRole.Follower, 2, 1, INVALID_ID, True),
+        Test(StateRole.Follower, 2, 2, INVALID_ID, False),
+        Test(StateRole.Follower, 2, 3, INVALID_ID, False),
+        Test(StateRole.Follower, 3, 0, INVALID_ID, True),
+        Test(StateRole.Follower, 3, 1, INVALID_ID, True),
+        Test(StateRole.Follower, 3, 2, INVALID_ID, False),
+        Test(StateRole.Follower, 3, 3, INVALID_ID, False),
+        Test(StateRole.Follower, 3, 2, 2, False),
+        Test(StateRole.Follower, 3, 2, 1, True),
+        Test(StateRole.Leader, 3, 3, 1, True),
+        Test(StateRole.PreCandidate, 3, 3, 1, True),
+        Test(StateRole.Candidate, 3, 3, 1, True),
+    ]
+
+    for j, v in enumerate(tests):
+        state, index, log_term, vote_for, w_reject = (
+            v.state,
+            v.index,
+            v.log_term,
+            v.vote_for,
+            v.w_reject,
+        )
+        cs = ConfState_Owner([1], [])
+        store = MemStorage_Owner.new_with_conf_state(cs.make_ref())
+        ents = [empty_entry(2, 1), empty_entry(2, 2)]
+        store.make_ref().wl(lambda core: core.append(ents))
+
+        sm = new_test_raft(1, [1], 10, 1, store.make_ref(), l.make_ref())
+        sm.raft.make_ref().set_state(state)
+        sm.raft.make_ref().set_vote(vote_for)
+
+        m = new_message(2, 0, msg_type, 0)
+        m.make_ref().set_index(index)
+        m.make_ref().set_log_term(log_term)
+        # raft.Term is greater than or equal to raft.raftLog.lastTerm. In this
+        # test we're only testing MsgVote responses when the campaigning node
+        # has a different raft log compared to the recipient node.
+        # Additionally we're verifying behaviour when the recipient node has
+        # already given out its vote for its current term. We're not testing
+        # what the recipient node does when receiving a message with a
+        # different term number, so we simply initialize both term numbers to
+        # be the same.
+        term = max(sm.raft_log.last_term(), log_term)
+        m.make_ref().set_term(term)
+        sm.raft.make_ref().set_term(term)
+        sm.step(m)
+
+        msgs = sm.read_messages()
+        assert len(msgs) == 1, f"#{j}: msgs count = {len(msgs)}, want 1"
+
+        assert msgs[0].make_ref().get_msg_type() == vote_resp_msg_type(
+            msg_type
+        ), f"#{j}: m.type = {msgs[0].make_ref().get_msg_type()}, want {vote_resp_msg_type(msg_type)}"
+
+        assert (
+            msgs[0].make_ref().get_reject() == w_reject
+        ), f"#{j}: m.reject = {msgs[0].make_ref().get_reject()}, want {w_reject}"
 
 
 def test_state_transition():
