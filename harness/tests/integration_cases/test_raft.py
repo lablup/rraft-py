@@ -968,7 +968,11 @@ def test_candidate_concede():
 
 
 def test_single_node_candidate():
-    pass
+    l = default_logger()
+    tt = Network.new([None], l)
+    tt.send([new_message(1, 1, MessageType.MsgHup, 0)])
+
+    assert tt.peers.get(1).raft.make_ref().get_state() == StateRole.Leader
 
 
 def test_sinle_node_pre_candidate():
