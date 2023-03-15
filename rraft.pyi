@@ -875,6 +875,7 @@ class HardState_Owner:
     def __init__(self) -> None: ...
     def make_ref(self) -> HardState_Ref: ...
     def clone(self) -> HardState_Owner: ...
+    def default(self) -> HardState_Owner: ...
 
 # src/eraftpb/entry.rs
 class Entry_Ref:
@@ -1666,6 +1667,11 @@ class Raft__MemStorage_Ref:
 
         This method can be false positive.
         """
+    def promotable(self) -> bool:
+        """
+        Indicates whether state machine can be promoted to leader,
+        which is true when it's a voter and its own id is in progress list.
+        """
     def post_conf_change(self) -> ConfState_Ref:
         """
         Updates the in-memory state and, when necessary, carries out additional actions
@@ -1759,6 +1765,8 @@ class Raft__MemStorage_Ref:
     def set_state(self, v: StateRole) -> None:
         """ """
     def get_raft_log(self) -> RaftLog__MemStorage_Ref:
+        """ """
+    def apply_conf_change(self, cc: ConfChangeV2_Ref) -> ConfChange_Ref:
         """ """
 
 class Raft__MemStorage_Owner:

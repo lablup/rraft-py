@@ -9,6 +9,7 @@ use raft::{
 
 use crate::{
     eraftpb::{
+        conf_change_v2::Py_ConfChangeV2_Mut,
         conf_state::Py_ConfState_Ref,
         entry::Py_Entry_Mut,
         hard_state::Py_HardState_Mut,
@@ -224,8 +225,24 @@ impl Py_Raft__MemStorage_Ref {
         self.inner.map_as_mut(|inner| inner.ping())
     }
 
+    pub fn apply_conf_change(&mut self, cc: Py_ConfChangeV2_Mut) -> PyResult<Py_ConfState_Ref> {
+        self.inner.map_as_mut(|inner| {
+            let result = inner
+                .apply_conf_change(&cc.into())
+                .map(|cs| Py_ConfState_Ref {
+                    inner: RustRef::new(unsafe { make_mut(&cs) }),
+                })
+                .unwrap();
+            result
+        })
+    }
+
     pub fn tick(&mut self) -> PyResult<bool> {
         self.inner.map_as_mut(|inner| inner.tick())
+    }
+
+    pub fn promotable(&mut self) -> PyResult<bool> {
+        self.inner.map_as_mut(|inner| inner.promotable())
     }
 
     pub fn tick_election(&mut self) -> PyResult<bool> {

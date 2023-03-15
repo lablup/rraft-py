@@ -20,7 +20,9 @@ impl Py_StorageError {
         match self.0 {
             StorageError::Compacted => "Compacted".to_string(),
             StorageError::SnapshotOutOfDate => "SnapshotOutOfDate".to_string(),
-            StorageError::SnapshotTemporarilyUnavailable => "SnapshotTemporarilyUnavailable".to_string(),
+            StorageError::SnapshotTemporarilyUnavailable => {
+                "SnapshotTemporarilyUnavailable".to_string()
+            }
             StorageError::Unavailable => "Unavailable".to_string(),
             // StorageError::Other() => "Other".to_string(),
             _ => todo!(),
