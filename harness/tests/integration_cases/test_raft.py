@@ -2144,7 +2144,76 @@ def test_disruptive_follower_pre_vote():
 
 
 def test_read_only_option_safe():
-    pass
+    l = default_logger()
+
+    storage_a = new_storage()
+    a = new_test_raft(1, [1, 2, 3], 10, 1, storage_a.make_ref(), l.make_ref())
+    storage_b = new_storage()
+    b = new_test_raft(2, [1, 2, 3], 10, 1, storage_b.make_ref(), l.make_ref())
+    storage_c = new_storage()
+    c = new_test_raft(3, [1, 2, 3], 10, 1, storage_c.make_ref(), l.make_ref())
+
+    nt = Network.new([a, b, c], l)
+
+    # we can not let system choose the value of randomizedElectionTimeout
+    # otherwise it will introduce some uncertainty into this test case
+    # we need to ensure randomizedElectionTimeout > electionTimeout here
+    b_election_timeout = b.raft.make_ref().election_timeout()
+    nt.peers.get(2).raft.make_ref().set_randomized_election_timeout(
+        b_election_timeout + 1
+    )
+
+    for _ in range(0, b_election_timeout):
+        nt.peers.get(2).raft.make_ref().tick()
+
+    nt.send([new_message(1, 1, MessageType.MsgHup, 0)])
+
+    assert nt.peers.get(1).raft.make_ref().get_state() == StateRole.Leader
+
+    class Test:
+        def __init__(
+            self, id: int, proposals: int, wri: int, wctx: List[str], pending: bool
+        ) -> None:
+            self.id = id
+            self.proposals = proposals
+            self.wri = wri
+            self.wctx = wctx
+            self.pending = pending
+
+    tests = [
+        Test(1, 10, 11, ["ctx1", "ctx11"], False),
+        Test(2, 10, 21, ["ctx2", "ctx22"], False),
+        Test(3, 10, 31, ["ctx3", "ctx33"], False),
+        Test(1, 10, 41, ["ctx4", "ctx44"], True),
+        Test(2, 10, 51, ["ctx5", "ctx55"], True),
+        Test(3, 10, 61, ["ctx6", "ctx66"], True),
+    ]
+
+    for i, v in enumerate(tests):
+        id, proposals, wri, wctx, pending = v.id, v.proposals, v.wri, v.wctx, v.pending
+        for _ in range(0, proposals):
+            nt.send([new_message(1, 1, MessageType.MsgPropose, 1)])
+
+        msg1 = new_message_with_entries(
+            id, id, MessageType.MsgReadIndex, [new_entry(0, 0, wctx[0])]
+        )
+        msg2 = new_message_with_entries(
+            id, id, MessageType.MsgReadIndex, [new_entry(0, 0, wctx[1])]
+        )
+
+        # `pending` indicates that a `ReadIndex` request will not get through quorum checking immediately
+        # so that it remains in the `read_index_queue`
+        if pending:
+            nt.ignore(MessageType.MsgHeartbeatResponse)
+            nt.send([msg1.clone(), msg1.clone(), msg2.clone()])
+            nt.recover()
+            # send a ReadIndex request with the last ctx to notify leader to handle pending read requests
+            nt.send([msg2.clone()])
+        else:
+            nt.send([msg1.clone(), msg1.clone(), msg2.clone()])
+
+        # TODO: Resolve `ReadState` not exposed issue and write remaining test codes.
+        # read_states = nt.peers.get(id).raft.make_ref().get_read_states()
 
 
 def test_read_only_with_learner():
