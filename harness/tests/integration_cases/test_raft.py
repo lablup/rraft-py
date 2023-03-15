@@ -11,6 +11,7 @@ from test_utils import (
     new_test_config,
     new_test_raft_with_config,
     new_entry,
+    empty_entry,
     # Interface,
     # Network,
 )
@@ -986,7 +987,24 @@ def test_sinle_node_pre_candidate():
 
 
 def test_old_messages():
-    pass
+    l = default_logger()
+    tt = Network.new([None, None, None], l)
+    # make 0 leader @ term 3
+    tt.send([new_message(1, 1, MessageType.MsgHup, 0)])
+    tt.send([new_message(2, 2, MessageType.MsgHup, 0)])
+    tt.send([new_message(1, 1, MessageType.MsgHup, 0)])
+    # pretend we're an old leader trying to make progress; this entry is expected to be ignored.
+    m = new_message(2, 1, MessageType.MsgPropose, 0)
+    m.make_ref().set_term(2)
+    m.make_ref().set_entries([empty_entry(2, 3)])
+    tt.send([m])
+    # commit a new entry
+    tt.send([new_message(1, 1, MessageType.MsgPropose, 1)])
+
+    for p in tt.peers.values():
+        assert p.raft_log.get_committed() == 4
+        assert p.raft_log.get_applied() == 0
+        assert p.raft_log.last_index() == 4
 
 
 def test_proposal():
