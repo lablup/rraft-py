@@ -873,7 +873,68 @@ def test_dueling_candidates():
 
 
 def test_dueling_pre_candidates():
-    pass
+    l = default_logger()
+    a_storage = new_storage()
+    a = new_test_raft_with_prevote(
+        1, [1, 2, 3], 10, 1, a_storage.make_ref(), True, l.make_ref()
+    )
+    b_storage = new_storage()
+    b = new_test_raft_with_prevote(
+        2, [1, 2, 3], 10, 1, b_storage.make_ref(), True, l.make_ref()
+    )
+    c_storage = new_storage()
+    c = new_test_raft_with_prevote(
+        3, [1, 2, 3], 10, 1, c_storage.make_ref(), True, l.make_ref()
+    )
+
+    config = Network.default_config()
+    config.make_ref().set_pre_vote(True)
+    nt = Network.new_with_config([a, b, c], config.make_ref(), l.make_ref())
+    nt.cut(1, 3)
+    nt.send([new_message(1, 1, MessageType.MsgHup, 0)])
+    nt.send([new_message(3, 3, MessageType.MsgHup, 0)])
+
+    # 1 becomes leader since it receives votes from 1 and 2
+    assert nt.peers.get(1).raft.make_ref().get_state() == StateRole.Leader
+
+    # 3 campaigns then reverts to follower when its pre_vote is rejected
+    assert nt.peers.get(3).raft.make_ref().get_state() == StateRole.Follower
+
+    nt.recover()
+
+    # Candidate 3 now increases its term and tries to vote again.
+    # With pre-vote, it does not disrupt the leader.
+    nt.send([new_message(3, 3, MessageType.MsgHup, 0)])
+
+    class Test:
+        def __init__(
+            self, id: int, state: StateRole, term: int, raft_log: Tuple[int, int, int]
+        ) -> None:
+            self.id = id
+            self.state = state
+            self.term = term
+            self.raft_log = raft_log
+
+    tests = [
+        Test(1, StateRole.Leader, 1, (1, 0, 1)),
+        Test(2, StateRole.Follower, 1, (1, 0, 1)),
+        Test(3, StateRole.Follower, 1, (0, 0, 0)),
+    ]
+
+    for i, v in enumerate(tests):
+        id, state, term, raft_log = v.id, v.state, v.term, v.raft_log
+        assert (
+            nt.peers.get(id).raft.make_ref().get_state() == state
+        ), f"#{i}: state = {nt.peers.get(id).raft.make_ref().get_state()}, want {state}"
+
+        assert (
+            nt.peers.get(id).raft.make_ref().get_term() == term
+        ), f"#{i}: term = {nt.peers.get(id).raft.make_ref().get_term()}, want {term}"
+
+        prefix = f"#{i}: "
+        assert_raft_log(
+            prefix, nt.peers.get(id).raft_log, raft_log[0], raft_log[1], raft_log[2]
+        )
 
 
 def test_candidate_concede():
