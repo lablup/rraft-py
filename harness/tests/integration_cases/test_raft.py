@@ -1697,19 +1697,63 @@ def test_all_server_stepdown():
             ), f"{i}.{j} lead = {sm.raft.make_ref().get_leader_id()}, want {INVALID_ID}"
 
 
-def test_candidate_reset_term_msg_heartbeat():
-    pass
-
-
-def test_candidate_reset_term_msg_append():
-    pass
-
-
 # test_candidate_reset_term tests when a candidate receives a
 # MsgHeartbeat or MsgAppend from leader, "step" resets the term
 # with leader's and reverts back to follower.
-def test_candidate_reset_term():
-    pass
+#
+# test_candidate_reset_term_msg_heartbeat
+# test_candidate_reset_term_msg_append
+@pytest.mark.parametrize(
+    "message_type", [MessageType.MsgHeartbeat, MessageType.MsgAppend]
+)
+def test_candidate_reset_term(message_type: MessageType):
+    l = default_logger()
+    a_storage = new_storage()
+    a = new_test_raft(1, [1, 2, 3], 10, 1, a_storage.make_ref(), l.make_ref())
+    b_storage = new_storage()
+    b = new_test_raft(2, [1, 2, 3], 10, 1, b_storage.make_ref(), l.make_ref())
+    c_storage = new_storage()
+    c = new_test_raft(3, [1, 2, 3], 10, 1, c_storage.make_ref(), l.make_ref())
+
+    nt = Network.new([a, b, c], l)
+    nt.send([new_message(1, 1, MessageType.MsgHup, 0)])
+
+    assert nt.peers.get(1).raft.make_ref().get_state() == StateRole.Leader
+    assert nt.peers.get(2).raft.make_ref().get_state() == StateRole.Follower
+    assert nt.peers.get(3).raft.make_ref().get_state() == StateRole.Follower
+
+    # isolate 3 and increase term in rest
+    nt.isolate(3)
+    nt.send([new_message(2, 2, MessageType.MsgHup, 0)])
+    nt.send([new_message(1, 1, MessageType.MsgHup, 0)])
+
+    assert nt.peers.get(1).raft.make_ref().get_state() == StateRole.Leader
+    assert nt.peers.get(2).raft.make_ref().get_state() == StateRole.Follower
+    assert nt.peers.get(3).raft.make_ref().get_state() == StateRole.Follower
+
+    # trigger campaign in isolated c
+    nt.peers.get(3).raft.make_ref().reset_randomized_election_timeout()
+    timeout = nt.peers.get(3).raft.make_ref().randomized_election_timeout()
+    for _ in range(0, timeout):
+        nt.peers.get(3).raft.make_ref().tick()
+
+    assert nt.peers.get(3).raft.make_ref().get_state() == StateRole.Candidate
+
+    nt.recover()
+
+    # leader sends to isolated candidate
+    # and expects candidate to revert to follower
+    msg = new_message(1, 3, message_type, 0)
+    msg.make_ref().set_term(nt.peers.get(1).raft.make_ref().get_term())
+    nt.send([msg])
+
+    assert nt.peers.get(3).raft.make_ref().get_state() == StateRole.Follower
+
+    # follower c term is reset with leader's
+    assert (
+        nt.peers.get(3).raft.make_ref().get_term()
+        == nt.peers.get(1).raft.make_ref().get_term()
+    ), f"follower term expected same term as leader's {nt.peers.get(1).raft.make_ref().get_term()}, got {nt.peers.get(3).raft.make_ref().get_term()}"
 
 
 def test_leader_stepdown_when_quorum_active():
