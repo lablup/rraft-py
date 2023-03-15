@@ -2085,7 +2085,62 @@ def test_disruptive_follower():
 # Then pre-vote phase prevents this isolated node from forcing
 # current leader to step down, thus less disruptions.
 def test_disruptive_follower_pre_vote():
-    pass
+    l = default_logger()
+    n1_storage = new_storage()
+    n1 = new_test_raft_with_prevote(
+        1, [1, 2, 3], 10, 1, n1_storage.make_ref(), True, l.make_ref()
+    )
+    n2_storage = new_storage()
+    n2 = new_test_raft_with_prevote(
+        2, [1, 2, 3], 10, 1, n2_storage.make_ref(), True, l.make_ref()
+    )
+    n3_storage = new_storage()
+    n3 = new_test_raft_with_prevote(
+        3, [1, 2, 3], 10, 1, n3_storage.make_ref(), True, l.make_ref()
+    )
+
+    n1.raft.make_ref().set_check_quorum(True)
+    n2.raft.make_ref().set_check_quorum(True)
+    n3.raft.make_ref().set_check_quorum(True)
+
+    n1.raft.make_ref().become_follower(1, INVALID_ID)
+    n2.raft.make_ref().become_follower(1, INVALID_ID)
+    n3.raft.make_ref().become_follower(1, INVALID_ID)
+
+    nt = Network.new([n1, n2, n3], l)
+    nt.send([new_message(1, 1, MessageType.MsgHup, 0)])
+
+    # check state
+    assert nt.peers.get(1).raft.make_ref().get_state() == StateRole.Leader
+    assert nt.peers.get(2).raft.make_ref().get_state() == StateRole.Follower
+    assert nt.peers.get(3).raft.make_ref().get_state() == StateRole.Follower
+
+    nt.isolate(3)
+    nt.send([new_message(1, 1, MessageType.MsgPropose, 1)])
+    nt.send([new_message(1, 1, MessageType.MsgPropose, 1)])
+    nt.send([new_message(1, 1, MessageType.MsgPropose, 1)])
+
+    nt.recover()
+    nt.send([new_message(3, 3, MessageType.MsgHup, 0)])
+
+    # check state
+    assert nt.peers.get(1).raft.make_ref().get_state() == StateRole.Leader
+    assert nt.peers.get(2).raft.make_ref().get_state() == StateRole.Follower
+    assert nt.peers.get(3).raft.make_ref().get_state() == StateRole.PreCandidate
+
+    # check term
+    # n1.Term == 2
+    # n2.Term == 2
+    # n3.Term == 2
+    assert nt.peers.get(1).raft.make_ref().get_term() == 2
+    assert nt.peers.get(2).raft.make_ref().get_term() == 2
+    assert nt.peers.get(3).raft.make_ref().get_term() == 2
+
+    # delayed leader heartbeat does not force current leader to step down
+    msg = new_message(1, 3, MessageType.MsgHeartbeat, 0)
+    msg.make_ref().set_term(nt.peers.get(1).raft.make_ref().get_term())
+    nt.send([msg])
+    assert nt.peers.get(1).raft.make_ref().get_state() == StateRole.Leader
 
 
 def test_read_only_option_safe():
