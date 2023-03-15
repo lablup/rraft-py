@@ -976,7 +976,13 @@ def test_single_node_candidate():
 
 
 def test_sinle_node_pre_candidate():
-    pass
+    l = default_logger()
+    config = Network.default_config()
+    config.make_ref().set_pre_vote(True)
+    tt = Network.new_with_config([None], config.make_ref(), l)
+    tt.send([new_message(1, 1, MessageType.MsgHup, 0)])
+
+    assert tt.peers.get(1).raft.make_ref().get_state() == StateRole.Leader
 
 
 def test_old_messages():
