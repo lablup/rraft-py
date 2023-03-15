@@ -2216,20 +2216,24 @@ def test_read_only_option_safe():
         # read_states = nt.peers.get(id).raft.make_ref().get_read_states()
 
 
+# TODO: Resolve `ReadState` not exposed issue and write remaining test codes.
 def test_read_only_with_learner():
     pass
 
 
+# TODO: Resolve `ReadState` not exposed issue and write remaining test codes.
 def test_read_only_option_lease():
     pass
 
 
+# TODO: Resolve `ReadState` not exposed issue and write remaining test codes.
 def test_read_only_option_lease_without_check_quorum():
     pass
 
 
 # `test_read_only_for_new_leader` ensures that a leader only accepts MsgReadIndex message
 # when it commits at least one log entry at it term.
+# TODO: Resolve `ReadState` not exposed issue and write remaining test codes.
 def test_read_only_for_new_leader():
     pass
 
@@ -2241,7 +2245,86 @@ def test_advance_commit_index_by_read_index_response():
 
 
 def test_leader_append_response():
-    pass
+    l = default_logger()
+    # Initial progress: match = 0, next = 4 on followers.
+
+    class Test:
+        def __init__(
+            self,
+            index: int,
+            reject: bool,
+            wmatch: int,
+            wnext: int,
+            wmsg_num: int,
+            windex: int,
+            wcommitted: int,
+        ) -> None:
+            self.index = index
+            self.reject = reject
+            self.wmatch = wmatch
+            self.wnext = wnext
+            self.wmsg_num = wmsg_num
+            self.windex = windex
+            self.wcommitted = wcommitted
+
+    tests = [
+        # Stale resp; no replies.
+        Test(3, True, 0, 3, 0, 0, 0),
+        # Denied resp; decrease next and send probing message.
+        Test(2, True, 0, 2, 1, 1, 0),
+        # Accepted resp; leader commits; broadcast with committed index.
+        Test(2, False, 2, 4, 2, 2, 2),
+        Test(0, False, 0, 3, 0, 0, 0),
+    ]
+
+    for i, v in enumerate(tests):
+        index, reject, wmatch, wnext, wmsg_num, windex, wcommitted = (
+            v.index,
+            v.reject,
+            v.wmatch,
+            v.wnext,
+            v.wmsg_num,
+            v.windex,
+            v.wcommitted,
+        )
+        # Initial raft logs: last index = 3, committed = 1.
+        cs = ConfState_Owner([1, 2, 3], [])
+        store = MemStorage_Owner.new_with_conf_state(cs.make_ref())
+        ents = [empty_entry(0, 1), empty_entry(1, 2)]
+        store.make_ref().wl(lambda core: core.append(ents))
+        sm = new_test_raft(1, [1, 2, 3], 10, 1, store.make_ref(), l.make_ref())
+        # sm term is 2 after it becomes the leader.
+
+        sm.raft.make_ref().become_candidate()
+        sm.raft.make_ref().become_leader()
+        sm.read_messages()
+
+        m = new_message(2, 0, MessageType.MsgAppendResponse, 0)
+        m.make_ref().set_index(index)
+        m.make_ref().set_term(sm.raft.make_ref().get_term())
+        m.make_ref().set_reject(reject)
+        m.make_ref().set_reject_hint(index)
+        sm.step(m)
+
+        assert (
+            sm.raft.make_ref().prs().get(2).get_matched() == wmatch
+        ), f"#{i}: match = {sm.raft.make_ref().prs().get(2).get_matched()}, want {wmatch}"
+
+        assert (
+            sm.raft.make_ref().prs().get(2).get_next_idx() == wnext
+        ), f"#{i}: match = {sm.raft.make_ref().prs().get(2).get_next_idx()}, want {wnext}"
+
+        msgs = sm.read_messages()
+        assert len(msgs) == wmsg_num, f"#{i} msg_num = {len(msgs)}, want {wmsg_num}"
+
+        for j, msg in enumerate(msgs):
+            assert (
+                msg.make_ref().get_index() == windex
+            ), f"#{i}.{j} index = {msg.make_ref().get_index()}, want {windex}"
+
+            assert (
+                msg.make_ref().get_commit() == wcommitted
+            ), f"#{i}.{j} commit = {msg.make_ref().get_commit()}, want {wcommitted}"
 
 
 # When the leader receives a heartbeat tick, it should
