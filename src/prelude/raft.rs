@@ -189,6 +189,11 @@ impl Py_Raft__MemStorage_Ref {
             .map_as_ref(|inner| inner.randomized_election_timeout())
     }
 
+    pub fn set_randomized_election_timeout(&mut self, t: usize) -> PyResult<()> {
+        self.inner
+            .map_as_mut(|inner| inner.set_randomized_election_timeout(t))
+    }
+
     pub fn reset_randomized_election_timeout(&mut self) -> PyResult<()> {
         self.inner
             .map_as_mut(|inner| inner.reset_randomized_election_timeout())

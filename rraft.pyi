@@ -1613,6 +1613,10 @@ class Raft__MemStorage_Ref:
         """
         Return the length of the current randomized election timeout.
         """
+    def set_randomized_election_timeout(self, t: int) -> None:
+        """
+        For testing leader lease
+        """
     def reset_randomized_election_timeout(self) -> None:
         """
         Regenerates and stores the election timeout.
