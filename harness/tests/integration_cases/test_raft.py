@@ -1007,6 +1007,8 @@ def test_old_messages():
         assert p.raft_log.last_index() == 4
 
 
+# test_old_messages_reply - optimization - reply with new term.
+
 def test_proposal():
     l = default_logger()
 
