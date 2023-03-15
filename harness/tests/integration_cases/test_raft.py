@@ -1614,7 +1614,87 @@ def test_state_transition():
 
 
 def test_all_server_stepdown():
-    pass
+    l = default_logger()
+
+    class Test:
+        def __init__(
+            self,
+            state: StateRole,
+            wstate: StateRole,
+            wterm: int,
+            windex: int,
+            entries: int,
+        ):
+            self.state = state
+            self.wstate = wstate
+            self.wterm = wterm
+            self.windex = windex
+            self.entries = entries
+
+    tests = [
+        # state, want_state, term, last_index, entry count.
+        Test(StateRole.Follower, StateRole.Follower, 3, 0, 0),
+        Test(StateRole.PreCandidate, StateRole.Follower, 3, 0, 0),
+        Test(StateRole.Candidate, StateRole.Follower, 3, 0, 0),
+        Test(StateRole.Leader, StateRole.Follower, 3, 1, 1),
+    ]
+
+    tmsg_types = [
+        MessageType.MsgRequestVote,
+        MessageType.MsgAppend,
+    ]
+
+    tterm = 3
+
+    for i, v in enumerate(tests):
+        state, wstate, wterm, windex, entries = (
+            v.state,
+            v.wstate,
+            v.wterm,
+            v.windex,
+            v.entries,
+        )
+        storage = new_storage()
+        sm = new_test_raft(1, [1, 2, 3], 10, 1, storage.make_ref(), l.make_ref())
+
+        if state == StateRole.Follower:
+            sm.raft.make_ref().become_follower(1, INVALID_ID)
+        elif state == StateRole.PreCandidate:
+            sm.raft.make_ref().become_pre_candidate()
+        elif state == StateRole.Candidate:
+            sm.raft.make_ref().become_candidate()
+        elif state == StateRole.Leader:
+            sm.raft.make_ref().become_candidate()
+            sm.raft.make_ref().become_leader()
+
+        for j, msg_type in enumerate(tmsg_types):
+            m = new_message(2, 0, msg_type, 0)
+            m.make_ref().set_term(tterm)
+            m.make_ref().set_log_term(tterm)
+            sm.step(m)
+
+            assert (
+                sm.raft.make_ref().get_state() == wstate
+            ), f"{i}.{j} state = {sm.raft.make_ref().get_state()}, want {wstate}"
+
+            assert (
+                sm.raft.make_ref().get_term() == wterm
+            ), f"{i}.{j} term = {sm.raft.make_ref().get_term()}, want {wterm}"
+
+            assert (
+                sm.raft_log.last_index() == windex
+            ), f"{i}.{j} index = {sm.raft_log.last_index()}, want {windex}"
+
+            entry_count = len(sm.raft_log.all_entries())
+            assert (
+                entry_count == entries
+            ), f"{i}.{j} entries = {entry_count}, want {entries}"
+
+            wlead = INVALID_ID if msg_type == MessageType.MsgRequestVote else 2
+
+            assert (
+                sm.raft.make_ref().get_leader_id() == wlead
+            ), f"{i}.{j} lead = {sm.raft.make_ref().get_leader_id()}, want {INVALID_ID}"
 
 
 def test_candidate_reset_term_msg_heartbeat():
