@@ -12,6 +12,7 @@ from test_utils import (
     new_test_raft_with_config,
     new_entry,
     empty_entry,
+    add_node,
     # Interface,
     # Network,
 )
@@ -19,6 +20,7 @@ from test_utils import (
 from rraft import (
     ConfState_Owner,
     Entry_Owner,
+    HardState_Owner,
     Logger_Ref,
     MemStorage_Owner,
     MemStorage_Ref,
@@ -1081,7 +1083,60 @@ def test_proposal_by_proxy():
 
 
 def test_commit():
-    pass
+    l = default_logger()
+
+    class Test:
+        def __init__(
+            self, matches: List[int], logs: List[Entry_Owner], sm_term: int, w: int
+        ) -> None:
+            self.matches = matches
+            self.logs = logs
+            self.sm_term = sm_term
+            self.w = w
+
+    tests = [
+        # single
+        Test([1], [empty_entry(1, 1)], 1, 1),
+        Test([1], [empty_entry(1, 1)], 2, 0),
+        Test([2], [empty_entry(1, 1), empty_entry(2, 2)], 2, 2),
+        Test([1], [empty_entry(2, 1)], 2, 1),
+        # odd
+        Test([2, 1, 1], [empty_entry(1, 1), empty_entry(2, 2)], 1, 1),
+        Test([2, 1, 1], [empty_entry(1, 1), empty_entry(1, 2)], 2, 0),
+        Test([2, 1, 2], [empty_entry(1, 1), empty_entry(2, 2)], 2, 2),
+        Test([2, 1, 2], [empty_entry(1, 1), empty_entry(1, 2)], 2, 0),
+        # even
+        Test([2, 1, 1, 1], [empty_entry(1, 1), empty_entry(2, 2)], 1, 1),
+        Test([2, 1, 1, 1], [empty_entry(1, 1), empty_entry(1, 2)], 2, 0),
+        Test([2, 1, 1, 2], [empty_entry(1, 1), empty_entry(2, 2)], 1, 1),
+        Test([2, 1, 1, 2], [empty_entry(1, 1), empty_entry(1, 2)], 2, 0),
+        Test([2, 1, 2, 2], [empty_entry(1, 1), empty_entry(2, 2)], 2, 2),
+        Test([2, 1, 2, 2], [empty_entry(1, 1), empty_entry(1, 2)], 2, 0),
+    ]
+
+    for i, v in enumerate(tests):
+        matches, logs, sm_term, w = v.matches, v.logs, v.sm_term, v.w
+        cs = ConfState_Owner([1], [])
+        store = MemStorage_Owner.new_with_conf_state(cs.make_ref())
+        store.make_ref().wl(lambda core: core.append(logs))
+        hs = HardState_Owner.default()
+        hs.make_ref().set_term(sm_term)
+        store.make_ref().wl(lambda core: core.set_hardstate(hs.make_ref()))
+        cfg = new_test_config(1, 5, 1)
+        sm = new_test_raft_with_config(cfg.make_ref(), store.make_ref(), l.make_ref())
+
+        for j, v in enumerate(matches):
+            id = j + 1
+            if not sm.raft.make_ref().prs().get(id):
+                sm.raft.make_ref().apply_conf_change(add_node(id))
+                pr = sm.raft.make_ref().prs().get(id)
+                pr.set_matched(v)
+                pr.set_next_idx(v + 1)
+
+        sm.raft.make_ref().maybe_commit()
+        assert (
+            sm.raft_log.get_committed() == w
+        ), f"#{i}: committed = {sm.raft_log.get_committed()}, want {w}"
 
 
 def test_pass_election_timeout():
