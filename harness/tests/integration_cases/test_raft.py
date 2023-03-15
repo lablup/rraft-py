@@ -1326,7 +1326,50 @@ def test_handle_heartbeat():
 
 # test_handle_heartbeat_resp ensures that we re-send log entries when we get a heartbeat response.
 def test_handle_heartbeat_resp():
-    pass
+    l = default_logger()
+    store = new_storage()
+    store.make_ref().wl(
+        lambda core: core.append(
+            [
+                empty_entry(1, 1),
+                empty_entry(2, 2),
+                empty_entry(3, 3),
+            ]
+        )
+    )
+
+    sm = new_test_raft(1, [1, 2], 5, 1, store.make_ref(), l.make_ref())
+    sm.raft.make_ref().become_candidate()
+    sm.raft.make_ref().become_leader()
+
+    last_index = sm.raft_log.last_index()
+    sm.raft_log.commit_to(last_index)
+
+    # A heartbeat response from a node that is behind; re-send MsgApp
+    sm.step(new_message(2, 0, MessageType.MsgHeartbeatResponse, 0))
+    msgs = sm.read_messages()
+    assert len(msgs) == 1
+    assert msgs[0].make_ref().get_msg_type() == MessageType.MsgAppend
+
+    # A second heartbeat response generates another MsgApp re-send
+    sm.step(new_message(2, 0, MessageType.MsgHeartbeatResponse, 0))
+    msgs = sm.read_messages()
+    assert len(msgs) == 1
+    assert msgs[0].make_ref().get_msg_type() == MessageType.MsgAppend
+
+    # Once we have an MsgAppResp, heartbeats no longer send MsgApp.
+    m = new_message(2, 0, MessageType.MsgAppendResponse, 0)
+    m.make_ref().set_index(
+        msgs[0].make_ref().get_index() + len(msgs[0].make_ref().get_entries())
+    )
+
+    sm.step(m)
+    # Consume the message sent in response to MsgAppResp
+    sm.read_messages()
+
+    sm.step(new_message(2, 0, MessageType.MsgHeartbeatResponse, 0))
+    msgs = sm.read_messages()
+    assert not msgs
 
 
 # test_raft_frees_read_only_mem ensures raft will free read request from
