@@ -1413,7 +1413,51 @@ def test_raft_frees_read_only_mem():
 # test_msg_append_response_wait_reset verifies the waitReset behavior of a leader
 # MsgAppResp.
 def test_msg_append_response_wait_reset():
-    pass
+    l = default_logger()
+    storage = new_storage()
+    sm = new_test_raft(1, [1, 2, 3], 5, 1, storage.make_ref(), l.make_ref())
+    sm.raft.make_ref().become_candidate()
+    sm.raft.make_ref().become_leader()
+    # For no-op entry
+    sm.persist()
+    # The new leader has just emitted a new Term 4 entry; consume those messages
+    # from the outgoing queue.
+    sm.raft.make_ref().bcast_append()
+    sm.read_messages()
+
+    # Node 2 acks the first entry, making it committed.
+    m = new_message(2, 1, MessageType.MsgAppendResponse, 0)
+    m.make_ref().set_index(1)
+    sm.step(m)
+    assert sm.raft_log.get_committed() == 1
+    # Also consume the MsgApp messages that update Commit on the followers.
+    sm.read_messages()
+
+    # A new command is now proposed on node 1.
+    m = new_message(1, 1, MessageType.MsgPropose, 0)
+    m.make_ref().set_entries([empty_entry(0, 0)])
+    sm.step(m)
+    sm.persist()
+
+    # The command is broadcast to all nodes not in the wait state.
+    # Node 2 left the wait state due to its MsgAppResp, but node 3 is still waiting.
+    msgs = sm.read_messages()
+    assert len(msgs) == 1
+    assert msgs[0].make_ref().get_msg_type() == MessageType.MsgAppend
+    assert msgs[0].make_ref().get_to() == 2
+    assert len(msgs[0].make_ref().get_entries()) == 1
+    assert msgs[0].make_ref().get_entries()[0].get_index() == 2
+
+    # Now Node 3 acks the first entry. This releases the wait and entry 2 is sent.
+    m = new_message(3, 0, MessageType.MsgAppendResponse, 0)
+    m.make_ref().set_index(1)
+    sm.step(m)
+    msgs = sm.read_messages()
+    assert len(msgs) == 1
+    assert msgs[0].make_ref().get_msg_type() == MessageType.MsgAppend
+    assert msgs[0].make_ref().get_to() == 3
+    assert len(msgs[0].make_ref().get_entries()) == 1
+    assert msgs[0].make_ref().get_entries()[0].get_index() == 2
 
 
 def test_recv_msg_request_vote():
