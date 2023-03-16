@@ -2803,7 +2803,29 @@ def test_add_node():
 
 
 def test_add_node_check_quorum():
-    pass
+    l = default_logger()
+    storage = new_storage()
+    r = new_test_raft(1, [1], 10, 1, storage.make_ref(), l.make_ref())
+    r.raft.make_ref().set_check_quorum(True)
+    r.raft.make_ref().become_candidate()
+    r.raft.make_ref().become_leader()
+    for _ in range(0, r.raft.make_ref().election_timeout() - 1):
+        r.raft.make_ref().tick()
+
+    r.raft.make_ref().apply_conf_change(add_node(2))
+
+    # This tick will reach electionTimeout, which triggers a quorum check.
+    r.raft.make_ref().tick()
+
+    # Node 1 should still be the leader after a single tick.
+    assert r.raft.make_ref().get_state() == StateRole.Leader
+
+    # After another electionTimeout ticks without hearing from node 2,
+    # node 1 should step down.
+    for _ in range(0, r.raft.make_ref().election_timeout()):
+        r.raft.make_ref().tick()
+
+    assert r.raft.make_ref().get_state() == StateRole.Follower
 
 
 # test_remove_node tests that removeNode could update pendingConf, nodes and
