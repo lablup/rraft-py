@@ -2726,8 +2726,33 @@ def test_step_config():
     assert r.raft_log.last_index() == index + 1
 
 
+# test_step_ignore_config tests that if raft step the second msgProp in
+# EntryConfChange type when the first one is uncommitted, the node will set
+# the proposal to noop and keep its original state.
 def test_step_ignore_config():
-    pass
+    l = default_logger()
+    s = new_storage()
+    # a raft that cannot make progress
+    r = new_test_raft(1, [1, 2], 10, 1, s.make_ref(), l.make_ref())
+    r.raft.make_ref().become_candidate()
+    r.raft.make_ref().become_leader()
+    assert not r.raft.make_ref().has_pending_conf()
+    m = new_message(1, 1, MessageType.MsgPropose, 0)
+    e = Entry_Owner.default()
+    e.make_ref().set_entry_type(EntryType.EntryConfChange)
+    m.make_ref().set_entries([*m.make_ref().get_entries(), e])
+    assert not r.raft.make_ref().has_pending_conf()
+    r.step(m)
+    assert r.raft.make_ref().has_pending_conf()
+    index = r.raft_log.last_index()
+    pending_conf_index = r.raft.make_ref().get_pending_conf_index()
+    r.step(m)
+    we = empty_entry(1, 3)
+    we.make_ref().set_entry_type(EntryType.EntryNormal)
+    wents = [we]
+    entries = r.raft_log.entries(index + 1, None)
+    assert entries == wents
+    assert r.raft.make_ref().get_pending_conf_index() == pending_conf_index
 
 
 # test_new_leader_pending_config tests that new leader sets its pending_conf_index
