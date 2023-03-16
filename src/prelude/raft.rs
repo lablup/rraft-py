@@ -309,17 +309,13 @@ impl Py_Raft__MemStorage_Ref {
     }
 
     pub fn snap(&self) -> PyResult<Option<Py_Snapshot_Ref>> {
-        let result = self
-            .inner
-            .map_as_ref(|inner| match inner.snap() {
-                Some(snapshot) => Some(Py_Snapshot_Ref {
+        self.inner.map_as_ref(|inner| {
+            inner.snap().and_then(|snapshot| {
+                Some(Py_Snapshot_Ref {
                     inner: RustRef::new(unsafe { make_mut(snapshot) }),
-                }),
-                None => None,
+                })
             })
-            .unwrap();
-
-        Ok(result)
+        })
     }
 
     pub fn on_persist_snap(&mut self, index: u64) -> PyResult<()> {
@@ -421,15 +417,14 @@ impl Py_Raft__MemStorage_Ref {
 
     pub fn get_msgs(&mut self, py: Python) -> PyResult<PyObject> {
         self.inner.map_as_mut(|inner| {
-            let msgs = inner
+            inner
                 .msgs
                 .iter_mut()
                 .map(|msg| Py_Message_Ref {
                     inner: RustRef::new(msg),
                 })
-                .collect::<Vec<_>>();
-
-            msgs.into_py(py)
+                .collect::<Vec<_>>()
+                .into_py(py)
         })
     }
 
