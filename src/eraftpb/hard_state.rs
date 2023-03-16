@@ -101,10 +101,10 @@ impl Py_HardState_Ref {
         })
     }
 
-    pub fn clone(&self) -> Py_HardState_Owner {
-        Py_HardState_Owner {
-            inner: self.inner.map_as_ref(|x| x.clone()).unwrap(),
-        }
+    pub fn clone(&self) -> PyResult<Py_HardState_Owner> {
+        Ok(Py_HardState_Owner {
+            inner: self.inner.map_as_ref(|x| x.clone())?,
+        })
     }
 
     pub fn get_commit(&self) -> PyResult<u64> {

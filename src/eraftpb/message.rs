@@ -109,10 +109,10 @@ impl Py_Message_Ref {
         })
     }
 
-    pub fn clone(&self) -> Py_Message_Owner {
-        Py_Message_Owner {
-            inner: self.inner.map_as_ref(|x| x.clone()).unwrap(),
-        }
+    pub fn clone(&self) -> PyResult<Py_Message_Owner> {
+        Ok(Py_Message_Owner {
+            inner: self.inner.map_as_ref(|x| x.clone())?,
+        })
     }
 
     pub fn get_commit(&self) -> PyResult<u64> {
@@ -205,8 +205,8 @@ impl Py_Message_Ref {
     }
 
     pub fn set_context(&mut self, context: &PyList) -> PyResult<()> {
-        self.inner
-            .map_as_mut(|inner| inner.set_context(context.extract::<Vec<u8>>().unwrap()))
+        let v = context.extract::<Vec<u8>>()?;
+        self.inner.map_as_mut(|inner| inner.set_context(v))
     }
 
     pub fn clear_context(&mut self) -> PyResult<()> {

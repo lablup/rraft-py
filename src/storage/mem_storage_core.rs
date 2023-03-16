@@ -40,10 +40,17 @@ impl Py_MemStorageCore_Owner {
 impl Py_MemStorageCore_Ref {
     pub fn append(&mut self, ents: &PyList) -> PyResult<()> {
         let mut entries = ents.extract::<Vec<Py_Entry_Mut>>()?;
-        let entries = entries.iter_mut().map(|x| x.into()).collect::<Vec<_>>();
 
         self.inner
-            .map_as_mut(|inner| inner.append(entries.as_slice()))
+            .map_as_mut(|inner| {
+                inner.append(
+                    entries
+                        .iter_mut()
+                        .map(|x| x.into())
+                        .collect::<Vec<_>>()
+                        .as_slice(),
+                )
+            })
             .and_then(to_pyresult)
     }
 

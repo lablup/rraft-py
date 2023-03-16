@@ -85,10 +85,10 @@ impl Py_MemStorage_Owner {
 
 #[pymethods]
 impl Py_MemStorage_Ref {
-    pub fn clone(&mut self) -> Py_MemStorage_Owner {
-        Py_MemStorage_Owner {
-            inner: self.inner.map_as_mut(|x| x.clone()).unwrap(),
-        }
+    pub fn clone(&mut self) -> PyResult<Py_MemStorage_Owner> {
+        Ok(Py_MemStorage_Owner {
+            inner: self.inner.map_as_mut(|x| x.clone())?,
+        })
     }
 
     pub fn initialize_with_conf_state(&mut self, cs: Py_ConfState_Mut) -> PyResult<()> {

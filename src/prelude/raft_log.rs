@@ -102,19 +102,21 @@ impl Py_RaftLog__MemStorage_Ref {
             inner
                 .next_entries_since(since_idx, max_size)
                 .and_then(|entries| {
-                    let entries = entries
-                        .into_iter()
-                        .map(|entry| Py_Entry_Owner { inner: entry })
-                        .collect::<Vec<_>>();
-
-                    Some(entries.into_py(py))
+                    Some(
+                        entries
+                            .into_iter()
+                            .map(|entry| Py_Entry_Owner { inner: entry })
+                            .collect::<Vec<_>>()
+                            .into_py(py),
+                    )
                 })
         })
     }
 
     pub fn append(&mut self, ents: &PyList) -> PyResult<u64> {
+        let mut entries = ents.extract::<Vec<Py_Entry_Mut>>()?;
+
         self.inner.map_as_mut(|inner| {
-            let mut entries = ents.extract::<Vec<Py_Entry_Mut>>().unwrap();
             inner.append(
                 entries
                     .iter_mut()
@@ -130,9 +132,9 @@ impl Py_RaftLog__MemStorage_Ref {
     }
 
     pub fn find_conflict(&self, ents: &PyList) -> PyResult<u64> {
-        self.inner.map_as_ref(|inner| {
-            let mut entries = ents.extract::<Vec<Py_Entry_Mut>>().unwrap();
+        let mut entries = ents.extract::<Vec<Py_Entry_Mut>>()?;
 
+        self.inner.map_as_ref(|inner| {
             inner.find_conflict(
                 entries
                     .iter_mut()
@@ -192,9 +194,9 @@ impl Py_RaftLog__MemStorage_Ref {
         committed: u64,
         ents: &PyList,
     ) -> PyResult<Option<(u64, u64)>> {
-        self.inner.map_as_mut(|inner| {
-            let mut entries = ents.extract::<Vec<Py_Entry_Mut>>().unwrap();
+        let mut entries = ents.extract::<Vec<Py_Entry_Mut>>()?;
 
+        self.inner.map_as_mut(|inner| {
             inner.maybe_append(
                 idx,
                 term,

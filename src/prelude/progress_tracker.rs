@@ -81,10 +81,10 @@ impl Py_ProgressTracker_Owner {
 
 #[pymethods]
 impl Py_ProgressTracker_Ref {
-    pub fn clone(&self) -> Py_ProgressTracker_Owner {
-        Py_ProgressTracker_Owner {
-            inner: self.inner.map_as_ref(|x| x.clone()).unwrap(),
-        }
+    pub fn clone(&self) -> PyResult<Py_ProgressTracker_Owner> {
+        Ok(Py_ProgressTracker_Owner {
+            inner: self.inner.map_as_ref(|x| x.clone())?,
+        })
     }
 
     pub fn __getitem__(&self, id: u64) -> PyResult<Option<Py_Progress_Ref>> {

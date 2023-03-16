@@ -94,10 +94,10 @@ impl Py_Inflights_Ref {
         })
     }
 
-    pub fn clone(&self) -> Py_Inflights_Owner {
-        Py_Inflights_Owner {
-            inner: self.inner.map_as_ref(|inner| inner.clone()).unwrap(),
-        }
+    pub fn clone(&self) -> PyResult<Py_Inflights_Owner> {
+        Ok(Py_Inflights_Owner {
+            inner: self.inner.map_as_ref(|inner| inner.clone())?,
+        })
     }
 
     pub fn add(&mut self, inflight: u64) -> PyResult<()> {

@@ -105,10 +105,10 @@ impl Py_ConfChange_Ref {
         })
     }
 
-    pub fn clone(&mut self) -> Py_ConfChange_Owner {
-        Py_ConfChange_Owner {
-            inner: self.inner.map_as_ref(|inner| inner.clone()).unwrap(),
-        }
+    pub fn clone(&mut self) -> PyResult<Py_ConfChange_Owner> {
+        Ok(Py_ConfChange_Owner {
+            inner: self.inner.map_as_ref(|inner| inner.clone())?,
+        })
     }
 
     pub fn get_id(&self) -> PyResult<u64> {
@@ -154,9 +154,8 @@ impl Py_ConfChange_Ref {
     }
 
     pub fn set_context(&mut self, context: &PyList) -> PyResult<()> {
-        self.inner.map_as_mut(|inner| {
-            inner.set_context(context.extract::<Vec<u8>>().unwrap());
-        })
+        let context = context.extract::<Vec<u8>>()?;
+        self.inner.map_as_mut(|inner| inner.set_context(context))
     }
 
     pub fn clear_context(&mut self) -> PyResult<()> {

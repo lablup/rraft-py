@@ -94,10 +94,10 @@ impl Py_ReadState_Ref {
         })
     }
 
-    pub fn clone(&self) -> Py_ReadState_Owner {
-        Py_ReadState_Owner {
-            inner: self.inner.map_as_ref(|x| x.clone()).unwrap(),
-        }
+    pub fn clone(&self) -> PyResult<Py_ReadState_Owner> {
+        Ok(Py_ReadState_Owner {
+            inner: self.inner.map_as_ref(|x| x.clone())?,
+        })
     }
 
     pub fn get_index(&self) -> PyResult<u64> {
@@ -114,7 +114,7 @@ impl Py_ReadState_Ref {
     }
 
     pub fn set_request_ctx(&mut self, request_ctx: &PyList) -> PyResult<()> {
-        self.inner
-            .map_as_mut(|inner| inner.request_ctx = request_ctx.extract().unwrap())
+        let v = request_ctx.extract()?;
+        self.inner.map_as_mut(|inner| inner.request_ctx = v)
     }
 }

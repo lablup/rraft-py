@@ -103,8 +103,7 @@ impl Py_Status__MemStorage_Ref {
     pub fn set_ss(&mut self, ss: &mut Py_SoftState_Ref) -> PyResult<()> {
         let ss = ss
             .inner
-            .map_as_mut(|ss| std::mem::replace(ss, SoftState::default()))
-            .unwrap();
+            .map_as_mut(|ss| std::mem::replace(ss, SoftState::default()))?;
 
         self.inner.map_as_mut(|inner| inner.ss = ss)
     }

@@ -108,10 +108,10 @@ impl Py_Snapshot_Ref {
         self.inner.map_as_ref(|inner| !inner.is_empty())
     }
 
-    pub fn clone(&self) -> Py_Snapshot_Owner {
-        Py_Snapshot_Owner {
-            inner: self.inner.map_as_ref(|inner| inner.clone()).unwrap(),
-        }
+    pub fn clone(&self) -> PyResult<Py_Snapshot_Owner> {
+        Ok(Py_Snapshot_Owner {
+            inner: self.inner.map_as_ref(|inner| inner.clone())?,
+        })
     }
 
     pub fn get_data(&self, py: Python) -> PyResult<Py<PyList>> {

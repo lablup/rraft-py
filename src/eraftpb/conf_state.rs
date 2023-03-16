@@ -113,10 +113,10 @@ impl Py_ConfState_Ref {
         })
     }
 
-    pub fn clone(&self) -> Py_ConfState_Owner {
-        Py_ConfState_Owner {
-            inner: self.inner.map_as_ref(|inner| inner.clone()).unwrap(),
-        }
+    pub fn clone(&self) -> PyResult<Py_ConfState_Owner> {
+        Ok(Py_ConfState_Owner {
+            inner: self.inner.map_as_ref(|inner| inner.clone())?,
+        })
     }
 
     pub fn get_auto_leave(&self) -> PyResult<bool> {
@@ -143,8 +143,8 @@ impl Py_ConfState_Ref {
     }
 
     pub fn set_voters(&mut self, list: &PyList) -> PyResult<()> {
-        self.inner
-            .map_as_mut(|inner| inner.set_voters(list.extract::<Vec<u64>>().unwrap()))
+        let v = list.extract::<Vec<u64>>()?;
+        self.inner.map_as_mut(|inner| inner.set_voters(v))
     }
 
     pub fn clear_voters(&mut self) -> PyResult<()> {
@@ -163,8 +163,8 @@ impl Py_ConfState_Ref {
     }
 
     pub fn set_voters_outgoing(&mut self, list: &PyList) -> PyResult<()> {
-        self.inner
-            .map_as_mut(|inner| inner.set_voters_outgoing(list.extract::<Vec<u64>>().unwrap()))
+        let v = list.extract::<Vec<u64>>()?;
+        self.inner.map_as_mut(|inner| inner.set_voters_outgoing(v))
     }
 
     pub fn clear_voters_outgoing(&mut self) -> PyResult<()> {
@@ -183,8 +183,8 @@ impl Py_ConfState_Ref {
     }
 
     pub fn set_learners(&mut self, list: &PyList) -> PyResult<()> {
-        self.inner
-            .map_as_mut(|inner| inner.set_learners(list.extract::<Vec<u64>>().unwrap()))
+        let v = list.extract::<Vec<u64>>()?;
+        self.inner.map_as_mut(|inner| inner.set_learners(v))
     }
 
     pub fn clear_learners(&mut self) -> PyResult<()> {
@@ -203,8 +203,8 @@ impl Py_ConfState_Ref {
     }
 
     pub fn set_learners_next(&mut self, list: &PyList) -> PyResult<()> {
-        self.inner
-            .map_as_mut(|inner| inner.set_learners_next(list.extract::<Vec<u64>>().unwrap()))
+        let v = list.extract::<Vec<u64>>()?;
+        self.inner.map_as_mut(|inner| inner.set_learners_next(v))
     }
 
     pub fn clear_learners_next(&mut self) -> PyResult<()> {

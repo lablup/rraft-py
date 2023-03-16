@@ -99,10 +99,10 @@ impl Py_Progress_Ref {
         })
     }
 
-    pub fn clone(&self) -> Py_Progress_Owner {
-        Py_Progress_Owner {
-            inner: self.inner.map_as_ref(|x| x.clone()).unwrap(),
-        }
+    pub fn clone(&self) -> PyResult<Py_Progress_Owner> {
+        Ok(Py_Progress_Owner {
+            inner: self.inner.map_as_ref(|x| x.clone())?,
+        })
     }
 
     pub fn become_probe(&mut self) -> PyResult<()> {

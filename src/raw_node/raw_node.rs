@@ -163,24 +163,20 @@ impl Py_RawNode__MemStorage_Ref {
     }
 
     pub fn propose(&mut self, context: &PyList, data: &PyList) -> PyResult<()> {
-        self.inner
-            .map_as_mut(|inner| {
-                let context = context.extract::<Vec<u8>>().unwrap();
-                let data = data.extract::<Vec<u8>>().unwrap();
+        let context = context.extract::<Vec<u8>>()?;
+        let data = data.extract::<Vec<u8>>()?;
 
-                inner.propose(context, data)
-            })
+        self.inner
+            .map_as_mut(|inner| inner.propose(context, data))
             .and_then(to_pyresult)
     }
 
     pub fn propose_conf_change(&mut self, context: &PyList, cc: Py_ConfChange_Mut) -> PyResult<()> {
-        self.inner
-            .map_as_mut(|inner| {
-                let context = context.extract::<Vec<u8>>().unwrap();
-                let cc: ConfChange = cc.into();
+        let context = context.extract::<Vec<u8>>()?;
+        let cc: ConfChange = cc.into();
 
-                inner.propose_conf_change(context, cc)
-            })
+        self.inner
+            .map_as_mut(|inner| inner.propose_conf_change(context, cc))
             .and_then(to_pyresult)
     }
 
@@ -189,13 +185,11 @@ impl Py_RawNode__MemStorage_Ref {
         context: &PyList,
         cc: Py_ConfChangeV2_Mut,
     ) -> PyResult<()> {
-        self.inner
-            .map_as_mut(|inner| {
-                let context = context.extract::<Vec<u8>>().unwrap();
-                let cc: ConfChangeV2 = cc.into();
+        let context = context.extract::<Vec<u8>>()?;
+        let cc: ConfChangeV2 = cc.into();
 
-                inner.propose_conf_change(context, cc)
-            })
+        self.inner
+            .map_as_mut(|inner| inner.propose_conf_change(context, cc))
             .and_then(to_pyresult)
     }
 
@@ -210,8 +204,7 @@ impl Py_RawNode__MemStorage_Ref {
     }
 
     pub fn apply_conf_change(&mut self, cc: Py_ConfChange_Mut) -> PyResult<Py_ConfState_Owner> {
-        let result = self
-            .inner
+        self.inner
             .map_as_mut(|inner| {
                 let cc: ConfChange = cc.into();
                 let cs = inner.apply_conf_change(&cc);
@@ -220,20 +213,14 @@ impl Py_RawNode__MemStorage_Ref {
                     Err(e) => Err(e),
                 }
             })
-            .unwrap();
-
-        match result {
-            Ok(result) => Ok(result),
-            Err(_e) => Err(PyRuntimeError::new_err("unexpected error")),
-        }
+            .and_then(to_pyresult)
     }
 
     pub fn apply_conf_change_v2(
         &mut self,
         cc: Py_ConfChangeV2_Mut,
     ) -> PyResult<Py_ConfState_Owner> {
-        let result = self
-            .inner
+        self.inner
             .map_as_mut(|inner| {
                 let cc: ConfChangeV2 = cc.into();
                 let cs = inner.apply_conf_change(&cc);
@@ -242,12 +229,7 @@ impl Py_RawNode__MemStorage_Ref {
                     Err(e) => Err(e),
                 }
             })
-            .unwrap();
-
-        match result {
-            Ok(result) => Ok(result),
-            Err(_e) => Err(PyRuntimeError::new_err("unexpected error")),
-        }
+            .and_then(to_pyresult)
     }
 
     pub fn on_persist_ready(&mut self, number: u64) -> PyResult<()> {
@@ -256,10 +238,8 @@ impl Py_RawNode__MemStorage_Ref {
     }
 
     pub fn read_index(&mut self, rctx: &PyList) -> PyResult<()> {
-        self.inner.map_as_mut(|inner| {
-            let rctx = rctx.extract().unwrap();
-            inner.read_index(rctx)
-        })
+        let rctx = rctx.extract()?;
+        self.inner.map_as_mut(|inner| inner.read_index(rctx))
     }
 
     pub fn get_raft(&mut self) -> PyResult<Py_Raft__MemStorage_Ref> {

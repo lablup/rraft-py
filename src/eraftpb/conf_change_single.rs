@@ -102,10 +102,10 @@ impl Py_ConfChangeSingle_Ref {
         })
     }
 
-    pub fn clone(&self) -> Py_ConfChangeSingle_Owner {
-        Py_ConfChangeSingle_Owner {
-            inner: self.inner.map_as_ref(|x| x.clone()).unwrap(),
-        }
+    pub fn clone(&self) -> PyResult<Py_ConfChangeSingle_Owner> {
+        Ok(Py_ConfChangeSingle_Owner {
+            inner: self.inner.map_as_ref(|x| x.clone())?,
+        })
     }
 
     pub fn get_node_id(&self) -> PyResult<u64> {
@@ -122,7 +122,7 @@ impl Py_ConfChangeSingle_Ref {
 
     pub fn get_change_type(&self) -> PyResult<Py_ConfChangeType> {
         self.inner
-            .map_as_ref(|inner| Py_ConfChangeType(inner.get_change_type().to_owned()))
+            .map_as_ref(|inner| Py_ConfChangeType(inner.get_change_type()))
     }
 
     pub fn set_change_type(&mut self, v: &Py_ConfChangeType) -> PyResult<()> {

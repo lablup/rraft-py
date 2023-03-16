@@ -104,10 +104,10 @@ impl Py_Entry_Ref {
         })
     }
 
-    pub fn clone(&self) -> Py_Entry_Owner {
-        Py_Entry_Owner {
-            inner: self.inner.map_as_ref(|x| x.clone()).unwrap(),
-        }
+    pub fn clone(&self) -> PyResult<Py_Entry_Owner> {
+        Ok(Py_Entry_Owner {
+            inner: self.inner.map_as_ref(|x| x.clone())?,
+        })
     }
 
     pub fn get_context(&self, py: Python) -> PyResult<Py<PyList>> {
@@ -116,8 +116,8 @@ impl Py_Entry_Ref {
     }
 
     pub fn set_context(&mut self, byte_arr: &PyList) -> PyResult<()> {
-        self.inner
-            .map_as_mut(|inner| inner.set_context(byte_arr.extract::<Vec<u8>>().unwrap()))
+        let v = byte_arr.extract::<Vec<u8>>()?;
+        self.inner.map_as_mut(|inner| inner.set_context(v))
     }
 
     pub fn clear_context(&mut self) -> PyResult<()> {
@@ -130,8 +130,8 @@ impl Py_Entry_Ref {
     }
 
     pub fn set_data(&mut self, byte_arr: &PyList) -> PyResult<()> {
-        self.inner
-            .map_as_mut(|inner| inner.set_data(byte_arr.extract::<Vec<u8>>().unwrap()))
+        let v = byte_arr.extract::<Vec<u8>>()?;
+        self.inner.map_as_mut(|inner| inner.set_data(v))
     }
 
     pub fn clear_data(&mut self) -> PyResult<()> {

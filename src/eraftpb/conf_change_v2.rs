@@ -104,10 +104,10 @@ impl Py_ConfChangeV2_Ref {
         })
     }
 
-    pub fn clone(&self) -> Py_ConfChangeV2_Owner {
-        Py_ConfChangeV2_Owner {
-            inner: self.inner.map_as_ref(|x| x.clone()).unwrap(),
-        }
+    pub fn clone(&self) -> PyResult<Py_ConfChangeV2_Owner> {
+        Ok(Py_ConfChangeV2_Owner {
+            inner: self.inner.map_as_ref(|x| x.clone())?,
+        })
     }
 
     pub fn get_changes(&self, py: Python) -> PyResult<PyObject> {

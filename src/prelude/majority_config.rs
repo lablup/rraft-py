@@ -113,10 +113,10 @@ impl Py_MajorityConfig_Ref {
         self.inner.map_as_ref(|inner| inner.len())
     }
 
-    pub fn clone(&self) -> Py_MajorityConfig_Owner {
-        Py_MajorityConfig_Owner {
-            inner: self.inner.map_as_ref(|inner| inner.clone()).unwrap(),
-        }
+    pub fn clone(&self) -> PyResult<Py_MajorityConfig_Owner> {
+        Ok(Py_MajorityConfig_Owner {
+            inner: self.inner.map_as_ref(|inner| inner.clone())?,
+        })
     }
 
     pub fn capacity(&self) -> PyResult<usize> {

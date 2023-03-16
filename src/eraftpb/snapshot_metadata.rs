@@ -96,10 +96,10 @@ impl Py_SnapshotMetadata_Ref {
         })
     }
 
-    pub fn clone(&self) -> Py_SnapshotMetadata_Owner {
-        Py_SnapshotMetadata_Owner {
-            inner: self.inner.map_as_ref(|inner| inner.clone()).unwrap(),
-        }
+    pub fn clone(&self) -> PyResult<Py_SnapshotMetadata_Owner> {
+        Ok(Py_SnapshotMetadata_Owner {
+            inner: self.inner.map_as_ref(|inner| inner.clone())?,
+        })
     }
 
     pub fn get_index(&self) -> PyResult<u64> {

@@ -67,14 +67,14 @@ impl Py_Unstable_Ref {
 
     pub fn slice(&self, lo: u64, hi: u64, py: Python) -> PyResult<PyObject> {
         self.inner.map_as_ref(|inner| {
-            let entries = inner
+            inner
                 .slice(lo, hi)
                 .iter()
                 .map(|entry| Py_Entry_Ref {
                     inner: RustRef::new(unsafe { make_mut(entry) }),
                 })
-                .collect::<Vec<_>>();
-            entries.into_py(py)
+                .collect::<Vec<_>>()
+                .into_py(py)
         })
     }
 
@@ -92,11 +92,16 @@ impl Py_Unstable_Ref {
     }
 
     pub fn truncate_and_append(&mut self, ents: &PyList) -> PyResult<()> {
-        self.inner.map_as_mut(|inner| {
-            let mut entries = ents.extract::<Vec<Py_Entry_Mut>>().unwrap();
-            let entries = entries.iter_mut().map(|x| x.into()).collect::<Vec<_>>();
+        let mut entries = ents.extract::<Vec<Py_Entry_Mut>>()?;
 
-            inner.truncate_and_append(entries.as_slice())
+        self.inner.map_as_mut(|inner| {
+            inner.truncate_and_append(
+                entries
+                    .iter_mut()
+                    .map(|x| x.into())
+                    .collect::<Vec<_>>()
+                    .as_slice(),
+            )
         })
     }
 
@@ -119,22 +124,22 @@ impl Py_Unstable_Ref {
 
     pub fn get_entries(&mut self, py: Python) -> PyResult<PyObject> {
         self.inner.map_as_mut(|inner| {
-            let entries = inner
+            inner
                 .entries
                 .iter_mut()
                 .map(|entry| Py_Entry_Ref {
                     inner: RustRef::new(entry),
                 })
-                .collect::<Vec<_>>();
-            entries.into_py(py)
+                .collect::<Vec<_>>()
+                .into_py(py)
         })
     }
 
     pub fn set_entries(&mut self, ents: &PyList) -> PyResult<()> {
+        let mut entries = ents.extract::<Vec<Py_Entry_Mut>>()?;
+
         self.inner.map_as_mut(|inner| {
-            let mut entries = ents.extract::<Vec<Py_Entry_Mut>>().unwrap();
-            let entries = entries.iter_mut().map(|x| x.into()).collect::<Vec<_>>();
-            inner.entries = entries;
+            inner.entries = entries.iter_mut().map(|x| x.into()).collect::<Vec<_>>();
         })
     }
 
@@ -158,10 +163,7 @@ impl Py_Unstable_Ref {
 
     pub fn set_snapshot(&mut self, snapshot: Option<Py_Snapshot_Mut>) -> PyResult<()> {
         self.inner.map_as_mut(|inner| match snapshot {
-            Some(snapshot) => {
-                let snapshot: Snapshot = snapshot.into();
-                inner.snapshot = Some(snapshot.into())
-            }
+            Some(snapshot) => inner.snapshot = Some(snapshot.into()),
             None => inner.snapshot = None,
         })
     }

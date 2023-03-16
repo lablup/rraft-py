@@ -88,8 +88,7 @@ impl Py_Ready_Ref {
 
     pub fn committed_entries(&self, py: Python) -> PyResult<PyObject> {
         self.inner.map_as_ref(|inner| {
-            let entries = unsafe { make_mut(inner.committed_entries()) };
-            entries
+            unsafe { make_mut(inner.committed_entries()) }
                 .iter_mut()
                 .map(|entry| Py_Entry_Ref {
                     inner: RustRef::new(entry),
@@ -112,9 +111,7 @@ impl Py_Ready_Ref {
 
     pub fn entries(&self, py: Python) -> PyResult<PyObject> {
         self.inner.map_as_ref(|inner| {
-            let entries = unsafe { make_mut(inner.entries()) };
-
-            entries
+            unsafe { make_mut(inner.entries()) }
                 .iter_mut()
                 .map(|entry| Py_Entry_Ref {
                     inner: RustRef::new(entry),

@@ -152,10 +152,10 @@ impl Py_Config_Ref {
         self.inner.map_as_ref(|inner| format_config(inner.clone()))
     }
 
-    pub fn clone(&self) -> Py_Config_Owner {
-        Py_Config_Owner {
-            inner: self.inner.map_as_ref(|inner| inner.clone()).unwrap(),
-        }
+    pub fn clone(&self) -> PyResult<Py_Config_Owner> {
+        Ok(Py_Config_Owner {
+            inner: self.inner.map_as_ref(|inner| inner.clone())?,
+        })
     }
 
     pub fn min_election_tick(&self) -> PyResult<usize> {
@@ -167,7 +167,9 @@ impl Py_Config_Ref {
     }
 
     pub fn validate(&self) -> PyResult<()> {
-        self.inner.map_as_ref(|inner| inner.validate().unwrap())
+        self.inner
+            .map_as_ref(|inner| inner.validate())
+            .and_then(to_pyresult)
     }
 
     pub fn get_read_only_option(&self) -> PyResult<Py_ReadOnlyOption> {

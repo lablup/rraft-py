@@ -83,10 +83,10 @@ impl Py_RaftState_Ref {
         self.inner.map_as_ref(|inner| format!("{:?}", inner))
     }
 
-    pub fn clone(&self) -> Py_RaftState_Owner {
-        Py_RaftState_Owner {
-            inner: self.inner.map_as_ref(|x| x.clone()).unwrap(),
-        }
+    pub fn clone(&self) -> PyResult<Py_RaftState_Owner> {
+        Ok(Py_RaftState_Owner {
+            inner: self.inner.map_as_ref(|x| x.clone())?,
+        })
     }
 
     pub fn initialized(&self) -> PyResult<bool> {

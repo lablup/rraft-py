@@ -109,10 +109,10 @@ impl Py_JointConfig_Ref {
         self.inner.map_as_ref(|inner| inner.contains(id))
     }
 
-    pub fn clone(&self) -> Py_JointConfig_Owner {
-        Py_JointConfig_Owner {
-            inner: self.inner.map_as_ref(|inner| inner.clone()).unwrap(),
-        }
+    pub fn clone(&self) -> PyResult<Py_JointConfig_Owner> {
+        Ok(Py_JointConfig_Owner {
+            inner: self.inner.map_as_ref(|inner| inner.clone())?,
+        })
     }
 
     pub fn clear(&mut self) -> PyResult<()> {

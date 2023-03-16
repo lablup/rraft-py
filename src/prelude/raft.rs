@@ -70,10 +70,16 @@ impl Py_Raft__MemStorage_Ref {
 
     pub fn append_entry(&mut self, ents: &PyList) -> PyResult<bool> {
         let mut entries = ents.extract::<Vec<Py_Entry_Mut>>()?;
-        let mut entries = entries.iter_mut().map(|x| x.into()).collect::<Vec<_>>();
 
-        self.inner
-            .map_as_mut(|inner| inner.append_entry(entries.as_mut_slice()))
+        self.inner.map_as_mut(|inner| {
+            inner.append_entry(
+                entries
+                    .iter_mut()
+                    .map(|x| x.into())
+                    .collect::<Vec<_>>()
+                    .as_mut_slice(),
+            )
+        })
     }
 
     pub fn send_append(&mut self, to: u64) -> PyResult<()> {
@@ -128,18 +134,30 @@ impl Py_Raft__MemStorage_Ref {
 
     pub fn maybe_increase_uncommitted_size(&mut self, ents: &PyList) -> PyResult<bool> {
         let mut entries = ents.extract::<Vec<Py_Entry_Mut>>()?;
-        let entries = entries.iter_mut().map(|x| x.into()).collect::<Vec<_>>();
 
-        self.inner
-            .map_as_mut(|inner| inner.maybe_increase_uncommitted_size(entries.as_slice()))
+        self.inner.map_as_mut(|inner| {
+            inner.maybe_increase_uncommitted_size(
+                entries
+                    .iter_mut()
+                    .map(|x| x.into())
+                    .collect::<Vec<_>>()
+                    .as_slice(),
+            )
+        })
     }
 
     pub fn reduce_uncommitted_size(&mut self, ents: &PyList) -> PyResult<()> {
         let mut entries = ents.extract::<Vec<Py_Entry_Mut>>()?;
-        let entries = entries.iter_mut().map(|x| x.into()).collect::<Vec<_>>();
 
-        self.inner
-            .map_as_mut(|inner| inner.reduce_uncommitted_size(entries.as_slice()))
+        self.inner.map_as_mut(|inner| {
+            inner.reduce_uncommitted_size(
+                entries
+                    .iter_mut()
+                    .map(|x| x.into())
+                    .collect::<Vec<_>>()
+                    .as_slice(),
+            )
+        })
     }
 
     pub fn restore(&mut self, snap: Py_Snapshot_Mut) -> PyResult<bool> {
@@ -429,9 +447,10 @@ impl Py_Raft__MemStorage_Ref {
 
     pub fn set_msgs(&mut self, msgs: &PyList) -> PyResult<()> {
         let mut msgs = msgs.extract::<Vec<Py_Message_Mut>>()?;
-        let msgs = msgs.iter_mut().map(|msg| msg.into()).collect::<Vec<_>>();
 
-        self.inner.map_as_mut(|inner| inner.msgs = msgs)
+        self.inner.map_as_mut(|inner| {
+            inner.msgs = msgs.iter_mut().map(|msg| msg.into()).collect::<Vec<_>>()
+        })
     }
 
     pub fn take_msgs(&mut self, py: Python) -> PyResult<PyObject> {
