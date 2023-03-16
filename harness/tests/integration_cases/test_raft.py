@@ -2758,7 +2758,35 @@ def test_step_ignore_config():
 # test_new_leader_pending_config tests that new leader sets its pending_conf_index
 # based on uncommitted entries.
 def test_new_leader_pending_config():
-    pass
+    l = default_logger()
+
+    class Test:
+        def __init__(self, add_entry: bool, wpending_index: int):
+            self.add_entry = add_entry
+            self.wpending_index = wpending_index
+
+    tests = [
+        Test(False, 0),
+        Test(True, 1),
+    ]
+
+    for i, v in enumerate(tests):
+        add_entry, wpending_index = v.add_entry, v.wpending_index
+        storage = new_storage()
+        r = new_test_raft(1, [1, 2], 10, 1, storage.make_ref(), l.make_ref())
+        e = Entry_Owner.default()
+        if add_entry:
+            e.make_ref().set_entry_type(EntryType.EntryNormal)
+            r.raft.make_ref().append_entry([e])
+            r.persist()
+        r.raft.make_ref().become_candidate()
+        r.raft.make_ref().become_leader()
+
+        assert (
+            r.raft.make_ref().get_pending_conf_index() == wpending_index
+        ), f"#{i}: pending_conf_index = {r.raft.make_ref().get_pending_conf_index}, want {wpending_index}"
+
+        assert r.raft.make_ref().has_pending_conf() == add_entry, f"#{i}: "
 
 
 # test_add_node tests that add_node could update nodes correctly.
