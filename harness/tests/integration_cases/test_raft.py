@@ -17,6 +17,7 @@ from test_utils import (
     add_node,
     remove_node,
     new_snapshot,
+    SOME_DATA,
     # Interface,
     # Network,
 )
@@ -2465,7 +2466,49 @@ def test_leader_increase_next():
 
 
 def test_send_append_for_progress_probe():
-    pass
+    l = default_logger()
+    storage = new_storage()
+    r = new_test_raft(1, [1, 2], 10, 1, storage.make_ref(), l.make_ref())
+    r.raft.make_ref().become_candidate()
+    r.raft.make_ref().become_leader()
+    r.read_messages()
+    r.raft.make_ref().prs().get(2).become_probe()
+
+    # each round is a heartbeat
+    for i in range(0, 3):
+        if i == 0:
+            # we expect that raft will only send out one msgAPP on the first
+            # loop. After that, the follower is paused until a heartbeat response is
+            # received.
+            r.raft.make_ref().append_entry([new_entry(0, 0, SOME_DATA)])
+            r.raft.make_ref().send_append(2)
+            msg = r.read_messages()
+            assert len(msg) == 1
+            assert msg[0].make_ref().get_index() == 0
+
+        assert r.raft.make_ref().prs().get(2).get_paused()
+        for _ in range(0, 10):
+            r.raft.make_ref().append_entry([new_entry(0, 0, SOME_DATA)])
+            r.raft.make_ref().send_append(2)
+            assert not r.read_messages()
+
+        # do a heartbeat
+        for _ in range(0, r.raft.make_ref().heartbeat_timeout()):
+            r.step(new_message(1, 1, MessageType.MsgBeat, 0))
+
+        assert r.raft.make_ref().prs().get(2).get_paused()
+
+        # consume the heartbeat
+        msg = r.read_messages()
+        assert len(msg) == 1
+        assert msg[0].make_ref().get_msg_type() == MessageType.MsgHeartbeat
+
+    # a heartbeat response will allow another message to be sent
+    r.step(new_message(2, 1, MessageType.MsgHeartbeatResponse, 0))
+    msg = r.read_messages()
+    assert len(msg) == 1
+    assert msg[0].make_ref().get_index() == 0
+    assert r.raft.make_ref().prs().get(2).get_paused()
 
 
 def test_send_append_for_progress_replicate():
