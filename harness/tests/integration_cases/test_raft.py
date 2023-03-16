@@ -25,6 +25,7 @@ from test_utils import (
 from rraft import (
     ConfState_Owner,
     Entry_Owner,
+    EntryType,
     HardState_Owner,
     Logger_Ref,
     MemStorage_Owner,
@@ -2710,7 +2711,19 @@ def test_slow_node_restore():
 # test_step_config tests that when raft step msgProp in EntryConfChange type,
 # it appends the entry to log and sets pendingConf to be true.
 def test_step_config():
-    pass
+    l = default_logger()
+    # a raft that cannot make progress
+    s = new_storage()
+    r = new_test_raft(1, [1, 2], 10, 1, s.make_ref(), l.make_ref())
+    r.raft.make_ref().become_candidate()
+    r.raft.make_ref().become_leader()
+    index = r.raft_log.last_index()
+    m = new_message(1, 1, MessageType.MsgPropose, 0)
+    e = Entry_Owner.default()
+    e.make_ref().set_entry_type(EntryType.EntryConfChange)
+    m.make_ref().set_entries([*m.make_ref().get_entries(), e])
+    r.step(m)
+    assert r.raft_log.last_index() == index + 1
 
 
 def test_step_ignore_config():
