@@ -2608,7 +2608,28 @@ def test_restore_ignore_snapshot():
 
 
 def test_provide_snap():
-    pass
+    l = default_logger()
+    # restore the state machine from a snapshot so it has a compacted log and a snapshot
+    s = new_snapshot(11, 11, [1, 2])
+
+    storage = new_storage()
+    sm = new_test_raft(1, [1, 2], 10, 1, storage.make_ref(), l.make_ref())
+    sm.raft.make_ref().restore(s.clone())
+    sm.persist()
+
+    sm.raft.make_ref().become_candidate()
+    sm.raft.make_ref().become_leader()
+
+    # force set the next of node 2, so that node 2 needs a snapshot
+    sm.raft.make_ref().prs().get(2).set_next_idx(sm.raft_log.first_index())
+    m = new_message(2, 1, MessageType.MsgAppendResponse, 0)
+    m.make_ref().set_index(sm.raft.make_ref().prs().get(2).get_next_idx() - 1)
+    m.make_ref().set_reject(True)
+    sm.step(m)
+
+    msgs = sm.read_messages()
+    assert len(msgs) == 1
+    assert msgs[0].make_ref().get_msg_type() == MessageType.MsgSnapshot
 
 
 def test_ignore_providing_snapshot():
