@@ -1,5 +1,9 @@
 use pyo3::{prelude::*, types::PyList};
-use utils::{errors::to_pyresult, reference::RustRef, unsafe_cast::make_mut};
+use utils::{
+    errors::{runtime_error, to_pyresult},
+    reference::RustRef,
+    unsafe_cast::make_mut,
+};
 
 use raft::{
     prelude::{HardState, Message},
@@ -235,15 +239,15 @@ impl Py_Raft__MemStorage_Ref {
     }
 
     pub fn apply_conf_change(&mut self, cc: Py_ConfChangeV2_Mut) -> PyResult<Py_ConfState_Ref> {
-        self.inner.map_as_mut(|inner| {
-            let result = inner
-                .apply_conf_change(&cc.into())
-                .map(|cs| Py_ConfState_Ref {
-                    inner: RustRef::new(unsafe { make_mut(&cs) }),
-                })
-                .unwrap();
-            result
-        })
+        self.inner
+            .map_as_mut(|inner| {
+                inner
+                    .apply_conf_change(&cc.into())
+                    .map(|cs| Py_ConfState_Ref {
+                        inner: RustRef::new(unsafe { make_mut(&cs) }),
+                    })
+            })
+            .and_then(to_pyresult)
     }
 
     pub fn tick(&mut self) -> PyResult<bool> {
