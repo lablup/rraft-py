@@ -2655,7 +2655,19 @@ def test_ignore_providing_snapshot():
 
 
 def test_restore_from_snap_msg():
-    pass
+    l = default_logger()
+    s = new_snapshot(11, 11, [1, 2])
+    storage = new_storage()
+    sm = new_test_raft(2, [1, 2], 10, 1, storage.make_ref(), l.make_ref())
+    m = new_message(1, 0, MessageType.MsgSnapshot, 0)
+    m.make_ref().set_term(2)
+    m.make_ref().set_snapshot(s)
+
+    sm.step(m)
+
+    assert sm.raft_log.get_leader_id() == 1
+
+    # raft-rs's TODO: port the remaining if upstream completed this test.
 
 
 def test_slow_node_restore():
