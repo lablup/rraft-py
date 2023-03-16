@@ -72,6 +72,10 @@ impl Py_Raft__MemStorage_Ref {
             .map_as_mut(|inner| inner.append_entry(entries.as_mut_slice()))
     }
 
+    pub fn send_append(&mut self, to: u64) -> PyResult<()> {
+        self.inner.map_as_mut(|inner| inner.send_append(to))
+    }
+
     pub fn apply_to_current_term(&self) -> PyResult<bool> {
         self.inner.map_as_ref(|inner| inner.apply_to_current_term())
     }
@@ -480,7 +484,7 @@ impl Py_Raft__MemStorage_Ref {
     // Below function is exposed here because "ReadOnly" struct is not exposed in raft-rs.
     pub fn get_readonly_read_index_queue(&self, py: Python) -> PyResult<PyObject> {
         self.inner
-        .map_as_ref(|inner| PyList::new(py, inner.read_only.read_index_queue.clone()).into())
+            .map_as_ref(|inner| PyList::new(py, inner.read_only.read_index_queue.clone()).into())
     }
 
     // Below function is exposed here because "ReadOnly" struct is not exposed in raft-rs.

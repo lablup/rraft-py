@@ -1476,6 +1476,11 @@ class Raft__MemStorage_Ref:
         The entries are updated to match the current index and term.
         Only called by leader currently
         """
+    def send_append(self, to: int) -> None:
+        """
+        Sends an append RPC with new entries (if any) and the current commit index to the given
+        peer.
+        """
     def on_persist_entries(self, index: int, term: int) -> None:
         """
         Notifies that these raft logs have been persisted.
