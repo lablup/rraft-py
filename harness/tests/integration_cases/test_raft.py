@@ -2542,7 +2542,24 @@ def test_send_append_for_progress_snapshot():
 
 
 def test_recv_msg_unreachable():
-    pass
+    l = default_logger()
+    previous_ents = [empty_entry(1, 1), empty_entry(1, 2), empty_entry(1, 3)]
+    s = new_storage()
+    s.make_ref().wl(lambda core: core.append(previous_ents))
+    r = new_test_raft(1, [1, 2], 10, 1, s.make_ref(), l.make_ref())
+    r.raft.make_ref().become_candidate()
+    r.raft.make_ref().become_leader()
+    r.read_messages()
+    # set node 2 to state replicate
+    r.raft.make_ref().prs().get(2).set_matched(3)
+    r.raft.make_ref().prs().get(2).become_replicate()
+    r.raft.make_ref().prs().get(2).optimistic_update(5)
+
+    r.step(new_message(2, 1, MessageType.MsgUnreachable, 0))
+
+    peer_2 = r.raft.make_ref().prs().get(2)
+    assert peer_2.get_state() == ProgressState.Probe
+    assert peer_2.get_matched() + 1 == peer_2.get_next_idx()
 
 
 def test_restore():
