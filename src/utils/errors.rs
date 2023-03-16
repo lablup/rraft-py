@@ -6,7 +6,7 @@ pub fn runtime_error(msg: &str) -> PyErr {
 }
 
 #[inline]
-pub fn to_pyresult<T: Copy, E: std::fmt::Display>(res: Result<T, E>) -> PyResult<T> {
+pub fn to_pyresult<T, E: std::fmt::Display>(res: Result<T, E>) -> PyResult<T> {
     match res {
         Ok(x) => Ok(x),
         Err(err) => Err(PyRuntimeError::new_err(err.to_string())),
