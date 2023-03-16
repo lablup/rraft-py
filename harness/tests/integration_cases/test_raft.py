@@ -2527,7 +2527,18 @@ def test_send_append_for_progress_replicate():
 
 
 def test_send_append_for_progress_snapshot():
-    pass
+    l = default_logger()
+    storage = new_storage()
+    r = new_test_raft(1, [1, 2], 10, 1, storage.make_ref(), l.make_ref())
+    r.raft.make_ref().become_candidate()
+    r.raft.make_ref().become_leader()
+    r.read_messages()
+    r.raft.make_ref().prs().get(2).become_snapshot(10)
+
+    for _ in range(0, 10):
+        r.raft.make_ref().append_entry([new_entry(0, 0, SOME_DATA)])
+        r.raft.make_ref().send_append(2)
+        assert not r.read_messages()
 
 
 def test_recv_msg_unreachable():
