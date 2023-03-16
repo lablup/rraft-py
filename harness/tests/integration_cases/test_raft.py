@@ -2430,7 +2430,38 @@ def test_recv_msg_beat():
 
 
 def test_leader_increase_next():
-    pass
+    l = default_logger()
+    previous_ents = [empty_entry(1, 1), empty_entry(1, 2), empty_entry(1, 3)]
+
+    class Test:
+        def __init__(self, state: ProgressState, next_idx: int, wnext: int) -> None:
+            self.state = state
+            self.next_idx = next_idx
+            self.wnext = wnext
+
+    tests = [
+        # state replicate; optimistically increase next
+        # previous entries + noop entry + propose + 1
+        Test(ProgressState.Replicate, 2, len(previous_ents) + 1 + 1 + 1),
+        # state probe, not optimistically increase next
+        Test(ProgressState.Probe, 2, 2),
+    ]
+
+    for i, v in enumerate(tests):
+        state, next_idx, wnext = v.state, v.next_idx, v.wnext
+        storage = new_storage()
+        sm = new_test_raft(1, [1, 2], 10, 1, storage.make_ref(), l.make_ref())
+        sm.raft_log.append(previous_ents)
+        sm.persist()
+        sm.raft.make_ref().become_candidate()
+        sm.raft.make_ref().become_leader()
+        sm.raft.make_ref().prs().get(2).set_state(state)
+        sm.raft.make_ref().prs().get(2).set_next_idx(next_idx)
+        sm.step(new_message(1, 1, MessageType.MsgPropose, 1))
+
+        assert (
+            sm.raft.make_ref().prs().get(2).get_next_idx() == wnext
+        ), f"#{i}: next = {sm.raft.make_ref().prs().get(2).get_next_idx()}, want {wnext}"
 
 
 def test_send_append_for_progress_probe():
