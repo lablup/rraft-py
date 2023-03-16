@@ -108,11 +108,10 @@ impl Py_Raft__MemStorage_Ref {
     }
 
     pub fn assign_commit_groups(&mut self, ids: &PyList) -> PyResult<()> {
-        let ids = ids.extract::<Vec<(u64, u64)>>().unwrap();
-        let ids = ids.as_slice();
+        let ids = ids.extract::<Vec<(u64, u64)>>()?;
 
         self.inner
-            .map_as_mut(|inner| inner.assign_commit_groups(ids))
+            .map_as_mut(|inner| inner.assign_commit_groups(ids.as_slice()))
     }
 
     pub fn commit_apply(&mut self, applied: u64) -> PyResult<()> {
@@ -224,8 +223,8 @@ impl Py_Raft__MemStorage_Ref {
     }
 
     pub fn load_state(&mut self, hs: Py_HardState_Mut) -> PyResult<()> {
-        let mut hs: HardState = hs.into();
-        self.inner.map_as_mut(|inner| inner.load_state(&mut hs))
+        self.inner
+            .map_as_mut(|inner| inner.load_state(&mut hs.into()))
     }
 
     pub fn soft_state(&self) -> PyResult<Py_SoftState_Ref> {

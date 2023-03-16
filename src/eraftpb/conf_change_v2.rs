@@ -112,29 +112,24 @@ impl Py_ConfChangeV2_Ref {
 
     pub fn get_changes(&self, py: Python) -> PyResult<PyObject> {
         self.inner.map_as_ref(|inner| {
-            let changes = inner
+            inner
                 .get_changes()
                 .iter()
                 .map(|cs| Py_ConfChangeSingle_Ref {
                     inner: RustRef::new(unsafe { make_mut(cs) }),
                 })
-                .collect::<Vec<_>>();
-
-            changes.into_py(py)
+                .collect::<Vec<_>>()
+                .into_py(py)
         })
     }
 
     pub fn set_changes(&mut self, v: &PyList) -> PyResult<()> {
         self.inner.map_as_mut(|inner| {
-            let changes = v
-                .iter()
-                .map(|cs| {
-                    let cs = cs.extract::<Py_ConfChangeSingle_Mut>().unwrap();
-                    cs.into()
-                })
-                .collect::<Vec<_>>();
-
-            inner.set_changes(changes)
+            inner.set_changes(
+                v.iter()
+                    .map(|cs| cs.extract::<Py_ConfChangeSingle_Mut>().unwrap().into())
+                    .collect::<Vec<_>>(),
+            )
         })
     }
 
@@ -148,10 +143,8 @@ impl Py_ConfChangeV2_Ref {
     }
 
     pub fn set_context(&mut self, v: &PyList) -> PyResult<()> {
-        self.inner.map_as_mut(|inner| {
-            let context = v.extract::<Vec<u8>>().unwrap();
-            inner.set_context(context)
-        })
+        let context = v.extract::<Vec<u8>>()?;
+        self.inner.map_as_mut(|inner| inner.set_context(context))
     }
 
     pub fn clear_context(&mut self) -> PyResult<()> {
