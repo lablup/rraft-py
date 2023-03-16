@@ -2671,7 +2671,40 @@ def test_restore_from_snap_msg():
 
 
 def test_slow_node_restore():
-    pass
+    l = default_logger()
+    nt = Network.new([None, None, None], l)
+    nt.send([new_message(1, 1, MessageType.MsgHup, 0)])
+    nt.isolate(3)
+    for _ in range(0, 100):
+        nt.send([new_message(1, 1, MessageType.MsgPropose, 1)])
+
+    next_ents(nt.peers.get(1).raft.make_ref(), nt.storage.get(1))
+
+    nt.storage.get(1).make_ref().wl(
+        lambda core: core.commit_to(nt.peers.get(1).raft_log.get_applied())
+    )
+    nt.storage.get(1).make_ref().wl(
+        lambda core: core.compact(nt.peers.get(1).raft_log.get_applied())
+    )
+
+    nt.recover()
+
+    # send heartbeats so that the leader can learn everyone is active.
+    # node 3 will only be considered as active when node 1 receives a reply from it.
+    while True:
+        nt.send([new_message(1, 1, MessageType.MsgBeat, 0)])
+        if nt.peers.get(1).raft.make_ref().prs().get(3).get_recent_active():
+            break
+
+    # trigger a snapshot
+    nt.send([new_message(1, 1, MessageType.MsgPropose, 1)])
+
+    # trigger a commit
+    nt.send([new_message(1, 1, MessageType.MsgPropose, 1)])
+    assert (
+        nt.peers.get(3).raft_log.get_committed()
+        == nt.peers.get(1).raft_log.get_committed()
+    )
 
 
 # test_step_config tests that when raft step msgProp in EntryConfChange type,
