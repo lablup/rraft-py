@@ -2633,7 +2633,25 @@ def test_provide_snap():
 
 
 def test_ignore_providing_snapshot():
-    pass
+    l = default_logger()
+    # restore the state machine from a snapshot so it has a compacted log and a snapshot
+    s = new_snapshot(11, 11, [1, 2])
+    storage = new_storage()
+    sm = new_test_raft(1, [1], 10, 1, storage.make_ref(), l.make_ref())
+    sm.raft.make_ref().restore(s)
+    sm.persist()
+
+    sm.raft.make_ref().become_candidate()
+    sm.raft.make_ref().become_leader()
+
+    # force set the next of node 2, so that node 2 needs a snapshot
+    # change node 2 to be inactive, expect node 1 ignore sending snapshot to 2
+    sm.raft.make_ref().prs().get(2).set_next_idx(sm.raft_log.first_index() - 1)
+    sm.raft.make_ref().prs().get(2).set_recent_active(False)
+
+    sm.step(new_message(1, 1, MessageType.MsgAppendResponse, 1))
+
+    assert not sm.read_messages()
 
 
 def test_restore_from_snap_msg():
