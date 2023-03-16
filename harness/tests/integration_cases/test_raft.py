@@ -2831,7 +2831,22 @@ def test_add_node_check_quorum():
 # test_remove_node tests that removeNode could update pendingConf, nodes and
 # and removed list correctly.
 def test_remove_node():
-    pass
+    l = default_logger()
+    storage = new_storage()
+    r = new_test_raft(1, [1, 2], 10, 1, storage.make_ref(), l.make_ref())
+    r.raft.make_ref().apply_conf_change(remove_node(2))
+
+    # TODO: Resolve below `assert_iter_eq` through exposing `conf` method of progress_tracker
+    # assert_iter_eq!(o r.prs().conf().voters().ids(), vec![1]);
+
+    # Removing all voters is not allowed.
+    try:
+        r.raft.make_ref().apply_conf_change(remove_node(1))
+    except Exception:
+        pass
+
+    # TODO: Resolve below `assert_iter_eq` through exposing `conf` method of progress_tracker
+    # assert_iter_eq!(o r.prs().conf().voters().ids(), vec![1]);
 
 
 def test_remove_node_itself():
