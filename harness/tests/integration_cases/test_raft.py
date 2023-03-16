@@ -2665,7 +2665,7 @@ def test_restore_from_snap_msg():
 
     sm.step(m)
 
-    assert sm.raft_log.get_leader_id() == 1
+    assert sm.raft.make_ref().get_leader_id() == 1
 
     # raft-rs's TODO: port the remaining if upstream completed this test.
 
