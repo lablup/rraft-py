@@ -164,7 +164,12 @@ impl Py_ProgressTracker_Ref {
     // }
 
     // pub fn conf(&mut self) {
-    //     self.inner.conf()
+    //     self.inner.map_as_mut(|inner| {
+    //         let k = inner.conf();
+    //         let k = k.voters();
+    //         let k = k.ids();
+    //         k.
+    //     })
     // }
 
     // pub fn apply_conf(&mut self, conf: Configuration, changes: MapChange, next_idx: u64) -> bool {

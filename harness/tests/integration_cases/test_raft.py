@@ -2563,7 +2563,27 @@ def test_recv_msg_unreachable():
 
 
 def test_restore():
-    pass
+    l = default_logger()
+    # magic number
+    s = new_snapshot(11, 11, [1, 2, 3])
+
+    storage = new_storage()
+    sm = new_test_raft(1, [1, 2], 10, 1, storage.make_ref(), l.make_ref())
+    sm.raft.make_ref().restore(s.clone())
+    assert sm.raft_log.last_index() == s.make_ref().get_metadata().get_index()
+    assert (
+        sm.raft_log.term(s.make_ref().get_metadata().get_index())
+        == s.make_ref().get_metadata().get_term()
+    )
+
+    # TODO: Resolve below `assert_iter_eq` through exposing `conf` method of progress_tracker
+    # assert_iter_eq!(
+    #     o sm.prs().conf().voters().ids(),
+    #     s.get_metadata()
+    #         .get_conf_state()
+    #         .voters
+    # );
+    assert not sm.raft.make_ref().restore(s)
 
 
 def test_restore_ignore_snapshot():
