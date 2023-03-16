@@ -16,6 +16,7 @@ from test_utils import (
     empty_entry,
     add_node,
     remove_node,
+    new_snapshot,
     # Interface,
     # Network,
 )
@@ -2324,13 +2325,72 @@ def test_leader_append_response():
 
             assert (
                 msg.make_ref().get_commit() == wcommitted
-            ), f"#{i}.{j} commit = {msg.make_ref().get_commit()}, want {wcommitted}"
+            ), f"#{i}.{j} commit = {msg.make_ref().get_committed()}, want {wcommitted}"
 
 
 # When the leader receives a heartbeat tick, it should
 # send a MsgApp with m.Index = 0, m.LogTerm=0 and empty entries.
 def test_bcast_beat():
-    pass
+    l = default_logger()
+    # make a state machine with log.offset = 1000
+    offset = 1000
+    s = new_snapshot(offset, 1, [1, 2, 3])
+    store = new_storage()
+    store.make_ref().wl(lambda core: core.apply_snapshot(s))
+    sm = new_test_raft(1, [1, 2, 3], 10, 1, store.make_ref(), l.make_ref())
+    sm.raft.make_ref().set_term(1)
+
+    sm.raft.make_ref().become_candidate()
+    sm.raft.make_ref().become_leader()
+    for i in range(0, 10):
+        sm.raft.make_ref().append_entry([empty_entry(0, offset + i + 1)])
+    sm.persist()
+
+    # slow follower
+    def mut_pr(sm: Interface, n: int, matched: int, next_idx: int):
+        m = sm.raft.make_ref().prs().get(n)
+        m.set_matched(matched)
+        m.set_next_idx(next_idx)
+
+    # slow follower
+    mut_pr(sm, 2, offset + 5, offset + 6)
+    # normal follower
+    last_index = sm.raft_log.last_index()
+    mut_pr(sm, 3, last_index, last_index + 1)
+
+    sm.step(new_message(0, 0, MessageType.MsgBeat, 0))
+    msgs = sm.read_messages()
+    assert len(msgs) == 2
+
+    want_commit_map = {}
+    want_commit_map[2] = min(
+        sm.raft_log.get_committed(), sm.raft.make_ref().prs().get(2).get_matched()
+    )
+    want_commit_map[3] = min(
+        sm.raft_log.get_committed(), sm.raft.make_ref().prs().get(3).get_matched()
+    )
+    for i, m in enumerate(msgs):
+        assert (
+            m.make_ref().get_msg_type() == MessageType.MsgHeartbeat
+        ), f"#{i}: type = {m.make_ref().get_msg_type()}, want = {MessageType.MsgHeartbeat}"
+
+        assert (
+            m.make_ref().get_index() == 0
+        ), f"#{i}: prev_index = {m.make_ref().get_index()}, want = 0"
+
+        assert (
+            want_commit_map[m.make_ref().get_to()] != 0
+        ), f"#{i}: unexpected to {m.make_ref().get_to()}"
+
+        assert (
+            m.make_ref().get_commit() == want_commit_map[m.make_ref().get_to()]
+        ), f"#{i}: commit = {m.make_ref().get_commit()}, want {want_commit_map[m.make_ref().get_to()]}"
+
+        want_commit_map.pop(m.make_ref().get_to())
+
+        assert not (
+            m.make_ref().get_entries()
+        ), f"#{i}: entries count = {len(m.make_ref().get_entries())}, want 0"
 
 
 # tests the output of the statemachine when receiving MsgBeat
