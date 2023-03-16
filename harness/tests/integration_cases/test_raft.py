@@ -2587,7 +2587,24 @@ def test_restore():
 
 
 def test_restore_ignore_snapshot():
-    pass
+    l = default_logger()
+    previous_ents = [empty_entry(1, 1), empty_entry(1, 2), empty_entry(1, 3)]
+    commit = 1
+    storage = new_storage()
+    sm = new_test_raft(1, [1, 2], 10, 1, storage.make_ref(), l.make_ref())
+    sm.raft_log.append(previous_ents)
+    sm.raft_log.commit_to(commit)
+
+    s = new_snapshot(commit, 1, [1, 2])
+
+    # ingore snapshot
+    assert not sm.raft.make_ref().restore(s)
+    assert sm.raft_log.get_committed() == commit
+
+    # ignore snapshot and fast forward commit
+    s.make_ref().get_metadata().set_index(commit + 1)
+    assert not sm.raft.make_ref().restore(s)
+    assert sm.raft_log.get_committed() == commit + 1
 
 
 def test_provide_snap():
