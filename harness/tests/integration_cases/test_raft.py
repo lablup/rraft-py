@@ -2791,6 +2791,14 @@ def test_new_leader_pending_config():
 
 # test_add_node tests that add_node could update nodes correctly.
 def test_add_node():
+    l = default_logger()
+    storage = new_storage()
+    r = new_test_raft(1, [1], 10, 1, storage.make_ref(), l.make_ref())
+    r.raft.make_ref().apply_conf_change(add_node(2))
+    # TODO: Resolve below `assert_iter_eq` through exposing `conf` method of progress_tracker
+    # assert_iter_eq!(o r.prs().conf().voters().ids(),
+    # vec![1, 2]
+    # );
     pass
 
 
