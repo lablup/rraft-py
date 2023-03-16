@@ -2395,7 +2395,38 @@ def test_bcast_beat():
 
 # tests the output of the statemachine when receiving MsgBeat
 def test_recv_msg_beat():
-    pass
+    l = default_logger()
+
+    class Test:
+        def __init__(self, state: StateRole, w_msg: int) -> None:
+            self.state = state
+            self.w_msg = w_msg
+
+    tests = [
+        Test(StateRole.Leader, 2),
+        # candidate and follower should ignore MsgBeat
+        Test(StateRole.Candidate, 0),
+        Test(StateRole.Follower, 0),
+    ]
+
+    for i, v in enumerate(tests):
+        state, w_msg = v.state, v.w_msg
+        cs = ConfState_Owner([1, 2, 3], [])
+        store = MemStorage_Owner.new_with_conf_state(cs.make_ref())
+        ents = [empty_entry(0, 1), empty_entry(1, 2)]
+        store.make_ref().wl(lambda core: core.append(ents))
+
+        sm = new_test_raft(1, [1, 2, 3], 10, 1, store.make_ref(), l.make_ref())
+        sm.raft.make_ref().set_state(state)
+        sm.step(new_message(1, 1, MessageType.MsgBeat, 0))
+
+        msgs = sm.read_messages()
+        assert len(msgs) == w_msg, f"#{i}: msg count = {len(msgs)}, want {w_msg}"
+
+        for m in msgs:
+            assert (
+                m.make_ref().get_msg_type() == MessageType.MsgHeartbeat
+            ), f"#{i}: msg.type = {m.make_ref().get_msg_type()}, want {MessageType.MsgHeartbeat}"
 
 
 def test_leader_increase_next():
