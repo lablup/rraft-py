@@ -5,8 +5,7 @@ from rraft import (
     ConfChangeType,
     ConfChangeV2_Owner,
     ConfState_Owner,
-    Config_Owner,
-    Config_Ref,
+    Config,
     Entry_Owner,
     Entry_Ref,
     HardState_Owner,
@@ -48,8 +47,8 @@ def new_storage() -> MemStorage_Owner:
     return MemStorage_Owner()
 
 
-def new_test_config(id: int, election_tick: int, heartbeat_size: int) -> Config_Owner:
-    return Config_Owner(
+def new_test_config(id: int, election_tick: int, heartbeat_size: int) -> Config:
+    return Config(
         id=id,
         election_tick=election_tick,
         heartbeat_tick=heartbeat_size,
@@ -130,7 +129,7 @@ def new_test_raft_with_logs(
 
 
 def new_test_raft_with_config(
-    config: Config_Ref,
+    config: Config,
     storage: MemStorage_Ref,
     logger: Logger_Ref,
 ) -> Interface:

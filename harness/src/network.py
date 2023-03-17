@@ -1,8 +1,7 @@
 from typing import Any, Dict, List, Optional
 from interface import Interface
 from rraft import (
-    Config_Owner,
-    Config_Ref,
+    Config,
     ConfState_Owner,
     Logger_Owner,
     Logger_Ref,
@@ -50,8 +49,8 @@ class Network:
 
     # Get a base config. Calling `Network::new` will initialize peers with this config.
     @staticmethod
-    def default_config() -> Config_Owner:
-        cfg = Config_Owner()
+    def default_config() -> Config:
+        cfg = Config()
         cfg.make_ref().set_election_tick(10)
         cfg.make_ref().set_heartbeat_tick(1)
         cfg.make_ref().set_max_size_per_msg(NO_LIMIT)
@@ -73,7 +72,7 @@ class Network:
     @staticmethod
     def new_with_config(
         peers: List[Optional[Interface]],
-        config: Config_Ref,
+        config: Config,
         l: Logger_Owner | Logger_Ref,
     ) -> Any:
         nstorage = {}

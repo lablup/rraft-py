@@ -7,7 +7,7 @@ from rraft import (
     ConfChange_Ref,
     ConfChangeType,
     ConfState_Owner,
-    Config_Owner,
+    Config,
     Logger_Owner,
     MemStorage_Owner,
     OverflowStrategy,
@@ -19,8 +19,8 @@ from rraft import (
 channel_vec = [Queue()] * 5
 
 
-def example_config() -> Config_Owner:
-    return Config_Owner(
+def example_config() -> Config:
+    return Config(
         election_tick=10,
         heartbeat_tick=3,
     )

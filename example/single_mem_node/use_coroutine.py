@@ -3,7 +3,7 @@ from asyncio import Queue
 from datetime import datetime, timezone
 from typing import Callable, Dict, List
 from rraft import (
-    Config_Owner,
+    Config,
     ConfState_Owner,
     EntryType,
     Entry_Ref,
@@ -135,7 +135,7 @@ async def main():
     storage_owner = MemStorage_Owner.new_with_conf_state(cs_owner.make_ref())
 
     # Create the configuration for the Raft node.
-    cfg_owner = Config_Owner(
+    cfg_owner = Config(
         # The unique ID for the Raft node.
         id=1,
         # Election tick is for how long the follower may campaign again after

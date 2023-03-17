@@ -597,7 +597,7 @@ class RawNode__MemStorage_Owner:
     """
 
     def __init__(
-        self, cfg: Config_Ref, store: MemStorage_Ref, logger: Logger_Ref
+        self, cfg: Config, store: MemStorage_Ref, logger: Logger_Ref
     ) -> None: ...
     def make_ref(self) -> RawNode__MemStorage_Ref: ...
 
@@ -1796,7 +1796,7 @@ class Raft__MemStorage_Owner:
     """
 
     def __init__(
-        self, cfg: Config_Ref, store: MemStorage_Ref, logger: Logger_Ref
+        self, cfg: Config, store: MemStorage_Ref, logger: Logger_Ref
     ) -> None: ...
     def make_ref(self) -> Raft__MemStorage_Ref: ...
 
@@ -2070,73 +2070,7 @@ class Inflights_Owner:
     def make_ref(self) -> Inflights_Ref: ...
     def clone(self) -> Inflights_Owner: ...
 
-# src/prelude/config.rs
-class Config_Ref:
-    """
-    Reference type of :class:`Config_Owner`.
-    """
-
-    def clone(self) -> Config_Owner: ...
-    def min_election_tick(self) -> int:
-        """The minimum number of ticks before an election."""
-    def max_election_tick(self) -> int:
-        """The maximum number of ticks before an election."""
-    def validate(self) -> None:
-        """Runs validations against the config."""
-    def get_read_only_option(self) -> ReadOnlyOption:
-        """"""
-    def set_read_only_option(self, read_only_option: ReadOnlyOption) -> None:
-        """"""
-    def get_id(self) -> int:
-        """"""
-    def set_id(self, id: int) -> None:
-        """"""
-    def get_election_tick(self) -> int:
-        """"""
-    def set_election_tick(self, election_tick: int) -> None:
-        """"""
-    def get_heartbeat_tick(self) -> int:
-        """"""
-    def set_heartbeat_tick(self, heartbeat_tick: int) -> None:
-        """"""
-    def get_max_size_per_msg(self) -> int:
-        """"""
-    def set_max_size_per_msg(self, max_size_per_msg: int) -> None:
-        """"""
-    def get_max_inflight_msgs(self) -> int:
-        """"""
-    def set_max_inflight_msgs(self, max_inflight_msgs: int) -> None:
-        """"""
-    def get_applied(self) -> int:
-        """"""
-    def set_applied(self, applied: int) -> None:
-        """"""
-    def get_check_quorum(self) -> bool:
-        """"""
-    def set_check_quorum(self, check_quorum: bool) -> None:
-        """"""
-    def get_pre_vote(self) -> bool:
-        """"""
-    def set_pre_vote(self, pre_vote: bool) -> None:
-        """"""
-    def get_batch_append(self) -> bool:
-        """"""
-    def set_batch_append(self, batch_append: bool) -> None:
-        """"""
-    def get_skip_bcast_commit(self) -> bool:
-        """"""
-    def set_skip_bcast_commit(self, v: bool) -> None:
-        """"""
-    def get_priority(self) -> int:
-        """"""
-    def set_priority(self, priority: int) -> None:
-        """"""
-    def get_max_uncommitted_size(self) -> int:
-        """"""
-    def set_max_uncommitted_size(self, max_uncommitted_size: int) -> None:
-        """"""
-
-class Config_Owner:
+class Config:
     """
     Config contains the parameters to start a raft.
     """
@@ -2214,5 +2148,62 @@ class Config_Owner:
 
         :param max_committed_size_per_ready: Max size for committed entries in a `Ready`.
         """
-    def make_ref(self) -> Config_Ref: ...
-    def clone(self) -> Config_Owner: ...
+    def clone(self) -> Config: ...
+    def min_election_tick(self) -> int:
+        """The minimum number of ticks before an election."""
+    def max_election_tick(self) -> int:
+        """The maximum number of ticks before an election."""
+    def validate(self) -> None:
+        """Runs validations against the config."""
+    def get_read_only_option(self) -> ReadOnlyOption:
+        """"""
+    def set_read_only_option(self, read_only_option: ReadOnlyOption) -> None:
+        """"""
+    def get_id(self) -> int:
+        """"""
+    def set_id(self, id: int) -> None:
+        """"""
+    def get_election_tick(self) -> int:
+        """"""
+    def set_election_tick(self, election_tick: int) -> None:
+        """"""
+    def get_heartbeat_tick(self) -> int:
+        """"""
+    def set_heartbeat_tick(self, heartbeat_tick: int) -> None:
+        """"""
+    def get_max_size_per_msg(self) -> int:
+        """"""
+    def set_max_size_per_msg(self, max_size_per_msg: int) -> None:
+        """"""
+    def get_max_inflight_msgs(self) -> int:
+        """"""
+    def set_max_inflight_msgs(self, max_inflight_msgs: int) -> None:
+        """"""
+    def get_applied(self) -> int:
+        """"""
+    def set_applied(self, applied: int) -> None:
+        """"""
+    def get_check_quorum(self) -> bool:
+        """"""
+    def set_check_quorum(self, check_quorum: bool) -> None:
+        """"""
+    def get_pre_vote(self) -> bool:
+        """"""
+    def set_pre_vote(self, pre_vote: bool) -> None:
+        """"""
+    def get_batch_append(self) -> bool:
+        """"""
+    def set_batch_append(self, batch_append: bool) -> None:
+        """"""
+    def get_skip_bcast_commit(self) -> bool:
+        """"""
+    def set_skip_bcast_commit(self, v: bool) -> None:
+        """"""
+    def get_priority(self) -> int:
+        """"""
+    def set_priority(self, priority: int) -> None:
+        """"""
+    def get_max_uncommitted_size(self) -> int:
+        """"""
+    def set_max_uncommitted_size(self, max_uncommitted_size: int) -> None:
+        """"""
