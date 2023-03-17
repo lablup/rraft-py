@@ -135,7 +135,7 @@ async def main():
     storage_owner = MemStorage_Owner.new_with_conf_state(cs_owner.make_ref())
 
     # Create the configuration for the Raft node.
-    cfg_owner = Config(
+    cfg = Config(
         # The unique ID for the Raft node.
         id=1,
         # Election tick is for how long the follower may campaign again after
@@ -160,7 +160,7 @@ async def main():
 
     # Create the Raft node.
     raw_node_owner = RawNode__MemStorage_Owner(
-        cfg_owner.make_ref(), storage_owner.make_ref(), logger_owner.make_ref()
+        cfg, storage_owner.make_ref(), logger_owner.make_ref()
     )
 
     raw_node_ref = raw_node_owner.make_ref()
