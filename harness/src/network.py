@@ -51,10 +51,10 @@ class Network:
     @staticmethod
     def default_config() -> Config:
         cfg = Config()
-        cfg.make_ref().set_election_tick(10)
-        cfg.make_ref().set_heartbeat_tick(1)
-        cfg.make_ref().set_max_size_per_msg(NO_LIMIT)
-        cfg.make_ref().set_max_inflight_msgs(256)
+        cfg.set_election_tick(10)
+        cfg.set_heartbeat_tick(1)
+        cfg.set_max_size_per_msg(NO_LIMIT)
+        cfg.set_max_inflight_msgs(256)
         return cfg
 
     # Initializes a network from `peers`.
@@ -88,7 +88,7 @@ class Network:
                 cfg.make_ref().set_id(id)
 
                 raft_owner = Raft__MemStorage_Owner(
-                    cfg.make_ref(), store_owner.make_ref(), l
+                    cfg, store_owner.make_ref(), l
                 )
                 r = Interface(raft_owner)
                 npeers[id] = r
