@@ -144,6 +144,11 @@ impl Py_Config_Owner {
     pub fn __repr__(&self) -> String {
         format_config(self.inner.clone())
     }
+
+    fn __getattr__(this: PyObject, py: Python<'_>, attr: &str) -> PyResult<PyObject> {
+        let reference = this.call_method0(py, "make_ref")?;
+        reference.getattr(py, attr)
+    }
 }
 
 #[pymethods]

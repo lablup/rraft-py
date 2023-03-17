@@ -414,7 +414,7 @@ def test_progress_flow_control():
 def test_leader_election_with_config(pre_vote: bool):
     l = default_logger()
     config = Network.default_config()
-    config.make_ref().set_pre_vote(pre_vote)
+    config.set_pre_vote(pre_vote)
 
     class Test:
         def __init__(self, network: Any, state: StateRole, term: int) -> None:
@@ -513,7 +513,7 @@ def test_leader_election_with_config(pre_vote: bool):
 def test_leader_cycle_with_config(pre_vote: bool):
     l = default_logger()
     config = Network.default_config()
-    config.make_ref().set_pre_vote(pre_vote)
+    config.set_pre_vote(pre_vote)
 
     network = Network.new_with_config([None, None, None], config.make_ref(), l)
 
@@ -559,7 +559,7 @@ def test_leader_election_overwrite_newer_logs_with_config(pre_vote: bool):
     l = default_logger()
     peers = [1, 2, 3, 4, 5]
     config = Network.default_config()
-    config.make_ref().set_pre_vote(pre_vote)
+    config.set_pre_vote(pre_vote)
     network = Network.new_with_config(
         [
             # Node 1: Won first election
@@ -897,7 +897,7 @@ def test_dueling_pre_candidates():
     )
 
     config = Network.default_config()
-    config.make_ref().set_pre_vote(True)
+    config.set_pre_vote(True)
     nt = Network.new_with_config([a, b, c], config.make_ref(), l.make_ref())
     nt.cut(1, 3)
     nt.send([new_message(1, 1, MessageType.MsgHup, 0)])
@@ -987,7 +987,7 @@ def test_single_node_candidate():
 def test_sinle_node_pre_candidate():
     l = default_logger()
     config = Network.default_config()
-    config.make_ref().set_pre_vote(True)
+    config.set_pre_vote(True)
     tt = Network.new_with_config([None], config.make_ref(), l)
     tt.send([new_message(1, 1, MessageType.MsgHup, 0)])
 
