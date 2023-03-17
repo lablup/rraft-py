@@ -135,12 +135,6 @@ impl Py_Config_Owner {
         }
     }
 
-    pub fn clone(&self) -> Py_Config_Owner {
-        Py_Config_Owner {
-            inner: self.inner.clone(),
-        }
-    }
-
     pub fn __repr__(&self) -> String {
         format_config(self.inner.clone())
     }
