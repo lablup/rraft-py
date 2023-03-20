@@ -9,7 +9,7 @@ from rraft import (
     MemStorage_Owner,
     ConfState_Owner,
     EntryType,
-    Config,
+    Config_Owner,
     Logger_Owner,
     Message_Ref,
     RawNode__MemStorage_Owner,
@@ -145,7 +145,7 @@ if __name__ == "__main__":
     storage_owner = MemStorage_Owner.new_with_conf_state(cs_owner.make_ref())
 
     # Create the configuration for the Raft node.
-    cfg = Config(
+    cfg = Config_Owner(
         # The unique ID for the Raft node.
         id=1,
         # Election tick is for how long the follower may campaign again after
