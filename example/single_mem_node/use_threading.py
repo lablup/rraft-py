@@ -24,11 +24,11 @@ def now() -> int:
     return int(datetime.now(tz=timezone.utc).timestamp() * 1000)
 
 
-def send_propose(logger_ref: Logger_Ref) -> None:
+def send_propose(logger: Logger_Ref) -> None:
     def _send_propose():
         # Wait some time and send the request to the Raft.
         sleep(10)
-        logger_ref.info("propose a request")
+        logger.info("propose a request")
 
         raft_chan = Queue()
 
@@ -45,7 +45,7 @@ def send_propose(logger_ref: Logger_Ref) -> None:
 
         n = raft_chan.get(block=True)
         assert n == 0
-        logger_ref.info("receive the propose callback")
+        logger.info("receive the propose callback")
 
         channel.put(
             {
@@ -79,9 +79,7 @@ def on_ready(raft_group_ref: RawNode__MemStorage_Ref, cbs: Dict[str, Callable]) 
     if ready_ref.snapshot():
         # This is a snapshot, we need to apply the snapshot at first.
         cloned_ready_owner = raft_group_ref.ready()
-        store_ref.wl(
-            lambda core: core.apply_snapshot(cloned_ready_owner.make_ref().snapshot())
-        )
+        store_ref.wl(lambda core: core.apply_snapshot(cloned_ready_owner.snapshot()))
 
     _last_apply_index = 0
 
@@ -120,7 +118,7 @@ def on_ready(raft_group_ref: RawNode__MemStorage_Ref, cbs: Dict[str, Callable]) 
 
     # Advance the Raft.
     light_rd_owner = raft_group_ref.advance(ready_ref)
-    light_rd_ref = light_rd_owner.make_ref()
+    light_rd_ref = light_rd_owner
     # TODO: Check if below code can prevent circular reference.
     ready_ref = None
 
@@ -141,8 +139,9 @@ if __name__ == "__main__":
     # Create a storage for Raft, and here we just use a simple memory storage.
     # You need to build your own persistent storage in your production.
     # Please check the Storage trait in src/storage.rs to see how to implement one.
-    cs_owner = ConfState_Owner(voters=[1], learners=[])
-    storage_owner = MemStorage_Owner.new_with_conf_state(cs_owner.make_ref())
+    storage = MemStorage_Owner.new_with_conf_state(
+        ConfState_Owner(voters=[1], learners=[])
+    )
 
     # Create the configuration for the Raft node.
     cfg = Config_Owner(
@@ -164,19 +163,14 @@ if __name__ == "__main__":
         applied=0,
     )
 
-    logger_owner = Logger_Owner(
-        chan_size=4096, overflow_strategy=OverflowStrategy.Block
-    )
+    logger = Logger_Owner(chan_size=4096, overflow_strategy=OverflowStrategy.Block)
 
     # Create the Raft node.
-    raw_node_owner = RawNode__MemStorage_Owner(
-        cfg, storage_owner.make_ref(), logger_owner.make_ref()
-    )
-
-    raw_node_ref = raw_node_owner.make_ref()
+    raw_node_owner = RawNode__MemStorage_Owner(cfg, storage, logger)
+    raw_node_ref = raw_node_owner
 
     # Use another thread to propose a Raft request.
-    send_propose(logger_owner.make_ref())
+    send_propose(logger)
 
     t = now()
     timeout = 100

@@ -23,10 +23,10 @@ def now() -> int:
     return int(datetime.now(tz=timezone.utc).timestamp() * 1000)
 
 
-async def send_propose(logger_ref: Logger_Ref) -> None:
+async def send_propose(logger: Logger_Ref) -> None:
     # Wait some time and send the request to the Raft.
     await asyncio.sleep(10)
-    logger_ref.info("propose a request")
+    logger.info("propose a request")
 
     # Send a command to the Raft, wait for the Raft to apply it
     # and get the result.
@@ -42,7 +42,7 @@ async def send_propose(logger_ref: Logger_Ref) -> None:
 
     n = await raft_chan.get()
     assert n == 0
-    logger_ref.info("receive the propose callback")
+    logger.info("receive the propose callback")
 
     await channel.put({"msg_type": "DISCONNECTED"})
 
@@ -71,14 +71,12 @@ async def on_ready(
     if ready_ref.snapshot():
         # This is a snapshot, we need to apply the snapshot at first.
         cloned_ready_owner = raft_group_ref.ready()
-        store_ref.wl(
-            lambda core: core.apply_snapshot(cloned_ready_owner.make_ref().snapshot())
-        )
+        store_ref.wl(lambda core: core.apply_snapshot(cloned_ready_owner.snapshot()))
 
     _last_apply_index = 0
 
-    async def handle_committed_entries(committed_entry_refs: List[Entry_Ref]):
-        for entry_ref in committed_entry_refs:
+    async def handle_committed_entries(committed_entries: List[Entry_Ref]):
+        for entry_ref in committed_entries:
             # Mostly, you need to save the last apply index to resume applying
             # after restart. Here we just ignore this because we use a Memory storage.
             nonlocal _last_apply_index
@@ -112,7 +110,7 @@ async def on_ready(
 
     # Advance the Raft.
     light_rd_owner = raft_group_ref.advance(ready_ref)
-    light_rd_ref = light_rd_owner.make_ref()
+    light_rd_ref = light_rd_owner
     ready_ref = None
 
     # Update commit index.
@@ -131,8 +129,9 @@ async def main():
     # Create a storage for Raft, and here we just use a simple memory storage.
     # You need to build your own persistent storage in your production.
     # Please check the Storage trait in src/storage.rs to see how to implement one.
-    cs_owner = ConfState_Owner(voters=[1], learners=[])
-    storage_owner = MemStorage_Owner.new_with_conf_state(cs_owner.make_ref())
+    storage = MemStorage_Owner.new_with_conf_state(
+        ConfState_Owner(voters=[1], learners=[])
+    )
 
     # Create the configuration for the Raft node.
     cfg = Config_Owner(
@@ -154,19 +153,14 @@ async def main():
         applied=0,
     )
 
-    logger_owner = Logger_Owner(
-        chan_size=4096, overflow_strategy=OverflowStrategy.Block
-    )
+    logger = Logger_Owner(chan_size=4096, overflow_strategy=OverflowStrategy.Block)
 
     # Create the Raft node.
-    raw_node_owner = RawNode__MemStorage_Owner(
-        cfg, storage_owner.make_ref(), logger_owner.make_ref()
-    )
-
-    raw_node_ref = raw_node_owner.make_ref()
+    raw_node_owner = RawNode__MemStorage_Owner(cfg, storage, logger)
+    raw_node_ref = raw_node_owner
 
     # Use another task to propose a Raft request.
-    asyncio.create_task(send_propose(logger_owner.make_ref()))
+    asyncio.create_task(send_propose(logger))
 
     t = now()
     timeout = 100
