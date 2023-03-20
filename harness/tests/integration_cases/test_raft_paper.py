@@ -549,7 +549,7 @@ def test_leader_commit_preceding_entries():
         store = MemStorage_Owner.new_with_conf_state(cs_owner.make_ref())
         store.make_ref().wl(lambda core: core.append(tt))
         cfg = new_test_config(1, 10, 1)
-        r = new_test_raft_with_config(cfg.make_ref(), store.make_ref(), l.make_ref())
+        r = new_test_raft_with_config(cfg, store.make_ref(), l.make_ref())
 
         hs = hard_state(2, 0, 0)
         r.raft.make_ref().load_state(hs.make_ref())
@@ -723,7 +723,7 @@ def test_follower_check_msg_append():
         store: MemStorage_Owner = MemStorage_Owner.new_with_conf_state(cs.make_ref())
         store.make_ref().wl(lambda core: core.append(ents))
         cfg = new_test_config(1, 10, 1)
-        r = new_test_raft_with_config(cfg.make_ref(), store.make_ref(), l.make_ref())
+        r = new_test_raft_with_config(cfg, store.make_ref(), l.make_ref())
 
         hs = hard_state(0, 1, 0)
         r.raft.make_ref().load_state(hs.make_ref())
@@ -806,7 +806,7 @@ def test_follower_append_entries():
             lambda core: core.append([empty_entry(1, 1), empty_entry(2, 2)])
         )
         cfg = new_test_config(1, 10, 1)
-        r = new_test_raft_with_config(cfg.make_ref(), store.make_ref(), l.make_ref())
+        r = new_test_raft_with_config(cfg, store.make_ref(), l.make_ref())
         r.raft.make_ref().become_follower(2, 2)
 
         m = new_message(2, 1, MessageType.MsgAppend, 0)
@@ -919,7 +919,7 @@ def test_leader_sync_follower_log():
         )
         lead_cfg = new_test_config(1, 10, 1)
         lead = new_test_raft_with_config(
-            lead_cfg.make_ref(), lead_store.make_ref(), l.make_ref()
+            lead_cfg, lead_store.make_ref(), l.make_ref()
         )
         last_index = lead.raft_log.last_index()
         lead_hs = hard_state(term, last_index, 0)
@@ -933,7 +933,7 @@ def test_leader_sync_follower_log():
 
         follower_cfg = new_test_config(2, 10, 1)
         follower = new_test_raft_with_config(
-            follower_cfg.make_ref(), follower_store.make_ref(), l.make_ref()
+            follower_cfg, follower_store.make_ref(), l.make_ref()
         )
         follower_hs = hard_state(term - 1, 0, 0)
         follower.raft.make_ref().load_state(follower_hs.make_ref())
@@ -1064,7 +1064,7 @@ def test_voter():
         s = MemStorage_Owner.new_with_conf_state(cs.make_ref())
         s.make_ref().wl(lambda core: core.append(ents))
         cfg = new_test_config(1, 10, 1)
-        r = new_test_raft_with_config(cfg.make_ref(), s.make_ref(), l.make_ref())
+        r = new_test_raft_with_config(cfg, s.make_ref(), l.make_ref())
 
         m = new_message(2, 1, MessageType.MsgRequestVote, 0)
         m.make_ref().set_term(3)
@@ -1110,7 +1110,7 @@ def test_leader_only_commits_log_from_current_term():
         store = MemStorage_Owner.new_with_conf_state(cs.make_ref())
         store.make_ref().wl(lambda core: core.append(ents))
         cfg = new_test_config(1, 10, 1)
-        r = new_test_raft_with_config(cfg.make_ref(), store.make_ref(), l.make_ref())
+        r = new_test_raft_with_config(cfg, store.make_ref(), l.make_ref())
 
         hs = hard_state(2, 0, 0)
         r.raft.make_ref().load_state(hs.make_ref())

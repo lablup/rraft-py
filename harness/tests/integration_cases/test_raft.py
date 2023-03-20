@@ -343,12 +343,12 @@ def test_progress_paused():
 def test_progress_flow_control():
     l = default_logger()
     cfg = new_test_config(1, 5, 1)
-    cfg.make_ref().set_max_inflight_msgs(3)
-    cfg.make_ref().set_max_size_per_msg(2048)
+    cfg.set_max_inflight_msgs(3)
+    cfg.set_max_size_per_msg(2048)
     cs = ConfState_Owner([1, 2], [])
     s = MemStorage_Owner.new_with_conf_state(cs.make_ref())
 
-    r = new_test_raft_with_config(cfg.make_ref(), s.make_ref(), l.make_ref())
+    r = new_test_raft_with_config(cfg, s.make_ref(), l.make_ref())
     r.raft.make_ref().become_candidate()
     r.raft.make_ref().become_leader()
 
@@ -1129,7 +1129,7 @@ def test_commit():
         hs.make_ref().set_term(sm_term)
         store.make_ref().wl(lambda core: core.set_hardstate(hs.make_ref()))
         cfg = new_test_config(1, 5, 1)
-        sm = new_test_raft_with_config(cfg.make_ref(), store.make_ref(), l.make_ref())
+        sm = new_test_raft_with_config(cfg, store.make_ref(), l.make_ref())
 
         for j, v in enumerate(matches):
             id = j + 1
@@ -1313,7 +1313,7 @@ def test_handle_heartbeat():
         )
 
         cfg = new_test_config(1, 5, 1)
-        sm = new_test_raft_with_config(cfg.make_ref(), store.make_ref(), l.make_ref())
+        sm = new_test_raft_with_config(cfg, store.make_ref(), l.make_ref())
         sm.raft.make_ref().become_follower(2, 2)
         sm.raft_log.commit_to(commit)
         sm.raft.make_ref().handle_heartbeat(m.make_ref())
