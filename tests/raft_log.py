@@ -139,7 +139,7 @@ def test_append():
     ]
 
     tests = [
-        # Test([], 2, [new_entry(1, 1), new_entry(2, 2)], 3),
+        Test([], 2, [new_entry(1, 1), new_entry(2, 2)], 3),
         Test(
             [new_entry(3, 2)], 3, [new_entry(1, 1), new_entry(2, 2), new_entry(3, 2)], 3
         ),
@@ -163,8 +163,6 @@ def test_append():
         assert index == windex, f"#{i}: index = {index}, want {windex}"
 
         g = raft_log.entries(1, None)
-        wents = list(map(lambda x: x, wents))
-        # TODO: Handle errors properly here.
         assert g == wents, f"#{i}: logEnts = {g}, want {wents}"
 
 

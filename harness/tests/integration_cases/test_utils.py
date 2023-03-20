@@ -174,7 +174,7 @@ def new_message(from_: int, to: int, t: MessageType, n: int) -> Message_Owner:
         for _ in range(0, n):
             ents.append(new_entry(0, 0, SOME_DATA))
 
-        m.set_entries(list(map(lambda x: x, ents)))
+        m.set_entries(ents)
     return m
 
 

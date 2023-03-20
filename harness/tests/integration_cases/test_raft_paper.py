@@ -431,7 +431,7 @@ def test_leader_start_replication():
         m.set_index(li)
         m.set_log_term(1)
         m.set_commit(li)
-        m.set_entries(list(map(lambda x: x, ents)))
+        m.set_entries(ents)
         return m
 
     excepted_msgs = [
@@ -561,7 +561,7 @@ def test_leader_commit_preceding_entries():
         li = len(tt)
         tt.extend([empty_entry(3, li + 1), new_entry(3, li + 2, SOME_DATA)])
         g = r.raft_log.next_entries(None)
-        wg = list(map(lambda x: x, tt))
+        wg = tt
 
         assert g == wg, f"#{i}: ents = {g}, want {wg}"
 
@@ -611,7 +611,7 @@ def test_follower_commit_entry():
         m = new_message(2, 1, MessageType.MsgAppend, 0)
         m.set_term(1)
         m.set_commit(commit)
-        m.set_entries(list(map(lambda x: x, ents)))
+        m.set_entries(ents)
         r.step(m)
         r.persist()
 
@@ -807,7 +807,7 @@ def test_follower_append_entries():
         m.set_term(2)
         m.set_log_term(term)
         m.set_index(index)
-        m.set_entries(list(map(lambda e: e, ents)))
+        m.set_entries(ents)
         r.step(m)
 
         g = r.raft_log.all_entries()
@@ -908,7 +908,7 @@ def test_leader_sync_follower_log():
     for i, tt in enumerate(tests):
         lead_cs = ConfState_Owner([1, 2, 3], [])
         lead_store = MemStorage_Owner.new_with_conf_state(lead_cs)
-        lead_store.wl(lambda core: core.append(list(map(lambda e: e, ents))))
+        lead_store.wl(lambda core: core.append(ents))
         lead_cfg = new_test_config(1, 10, 1)
         lead = new_test_raft_with_config(lead_cfg, lead_store, l)
         last_index = lead.raft_log.last_index()
@@ -917,7 +917,7 @@ def test_leader_sync_follower_log():
 
         follower_cs = ConfState_Owner([1, 2, 3], [])
         follower_store = MemStorage_Owner.new_with_conf_state(follower_cs)
-        follower_store.wl(lambda core: core.append(list(map(lambda e: e, tt))))
+        follower_store.wl(lambda core: core.append(tt))
 
         follower_cfg = new_test_config(2, 10, 1)
         follower = new_test_raft_with_config(follower_cfg, follower_store, l)
