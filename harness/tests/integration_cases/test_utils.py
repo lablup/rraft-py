@@ -69,14 +69,14 @@ def new_test_raft(
     initial_state = storage.initial_state()
 
     assert not (
-        initial_state.make_ref().initialized() and not peers
+        initial_state.initialized() and not peers
     ), "new_test_raft with empty peers on initialized store"
 
-    if peers and not initial_state.make_ref().initialized():
+    if peers and not initial_state.initialized():
         cs_owner = ConfState_Owner(peers, [])
-        storage.initialize_with_conf_state(cs_owner.make_ref())
+        storage.initialize_with_conf_state(cs_owner)
 
-    return new_test_raft_with_config(config.make_ref(), storage, logger)
+    return new_test_raft_with_config(config, storage, logger)
 
 
 def new_test_raft_with_prevote(
@@ -89,18 +89,18 @@ def new_test_raft_with_prevote(
     logger: Logger_Ref,
 ) -> Interface:
     config = new_test_config(id, election, heartbeat)
-    config.make_ref().set_pre_vote(pre_vote)
+    config.set_pre_vote(pre_vote)
     initial_state = storage.initial_state()
 
     assert not (
-        initial_state.make_ref().initialized() and not peers
+        initial_state.initialized() and not peers
     ), "new_test_raft with empty peers on initialized store"
 
-    if peers and not initial_state.make_ref().initialized():
+    if peers and not initial_state.initialized():
         cs_owner = ConfState_Owner(peers, [])
-        storage.initialize_with_conf_state(cs_owner.make_ref())
+        storage.initialize_with_conf_state(cs_owner)
 
-    return new_test_raft_with_config(config.make_ref(), storage, logger)
+    return new_test_raft_with_config(config, storage, logger)
 
 
 def new_test_raft_with_logs(
@@ -116,16 +116,16 @@ def new_test_raft_with_logs(
     initial_state = storage.initial_state()
 
     assert not (
-        initial_state.make_ref().initialized() and not peers
+        initial_state.initialized() and not peers
     ), "new_test_raft with empty peers on initialized store"
 
-    if peers and not initial_state.make_ref().initialized():
+    if peers and not initial_state.initialized():
         cs_owner = ConfState_Owner(peers, [])
-        storage.initialize_with_conf_state(cs_owner.make_ref())
+        storage.initialize_with_conf_state(cs_owner)
 
     storage.wl(lambda core: core.append(logs))
 
-    return new_test_raft_with_config(config.make_ref(), storage, logger)
+    return new_test_raft_with_config(config, storage, logger)
 
 
 def new_test_raft_with_config(
@@ -138,16 +138,16 @@ def new_test_raft_with_config(
 
 def hard_state(term: int, commit: int, vote: int) -> HardState_Owner:
     hs = HardState_Owner()
-    hs.make_ref().set_term(term)
-    hs.make_ref().set_commit(commit)
-    hs.make_ref().set_vote(vote)
+    hs.set_term(term)
+    hs.set_commit(commit)
+    hs.set_vote(vote)
     return hs
 
 
 def soft_state(leader_id: int, raft_state: StateRole) -> SoftState_Owner:
     ss = SoftState_Owner()
-    ss.make_ref().set_leader_id(leader_id)
-    ss.make_ref().set_raft_state(raft_state)
+    ss.set_leader_id(leader_id)
+    ss.set_raft_state(raft_state)
     return ss
 
 
@@ -158,12 +158,12 @@ def new_message_with_entries(
     from_: int, to: int, t: MessageType, ents: List[Entry_Owner]
 ) -> Message_Owner:
     m = Message_Owner()
-    m.make_ref().set_from(from_)
-    m.make_ref().set_to(to)
-    m.make_ref().set_msg_type(t)
+    m.set_from(from_)
+    m.set_to(to)
+    m.set_msg_type(t)
 
     if ents:
-        m.make_ref().set_entries(ents)
+        m.set_entries(ents)
     return m
 
 
@@ -174,18 +174,18 @@ def new_message(from_: int, to: int, t: MessageType, n: int) -> Message_Owner:
         for _ in range(0, n):
             ents.append(new_entry(0, 0, SOME_DATA))
 
-        m.make_ref().set_entries(list(map(lambda x: x.make_ref(), ents)))
+        m.set_entries(list(map(lambda x: x, ents)))
     return m
 
 
 def new_entry(term: int, index: int, data: Optional[str]) -> Entry_Owner:
     e = Entry_Owner()
-    e.make_ref().set_index(index)
-    e.make_ref().set_term(term)
+    e.set_index(index)
+    e.set_term(term)
     if data:
         # TODO: Resolve below issue.
         # Maybe it would be better to pass 'bytes' itself or through 'memoryview' object instead of creating a new list.
-        e.make_ref().set_data(list(data.encode("utf-8")))
+        e.set_data(list(data.encode("utf-8")))
     return e
 
 
@@ -196,41 +196,41 @@ def empty_entry(term: int, index: int) -> Entry_Owner:
 def new_snapshot(index: int, term: int, voters: List[int]) -> Snapshot_Owner:
     s = Snapshot_Owner()
     meta = SnapshotMetadata_Owner()
-    meta.make_ref().set_index(index)
-    meta.make_ref().set_term(term)
-    cs_ref = meta.make_ref().get_conf_state()
+    meta.set_index(index)
+    meta.set_term(term)
+    cs_ref = meta.get_conf_state()
     cs_ref.set_voters(voters)
 
-    s.make_ref().set_metadata(meta.make_ref())
+    s.set_metadata(meta)
     return s
 
 
 def conf_change(ty: ConfChangeType, node_id: int) -> ConfChange_Owner:
     cc = ConfChange_Owner()
-    cc.make_ref().set_change_type(ty)
-    cc.make_ref().set_node_id(node_id)
+    cc.set_change_type(ty)
+    cc.set_node_id(node_id)
     return cc
 
 
 def remove_node(node_id: int) -> ConfChangeV2_Owner:
     cc = conf_change(ConfChangeType.RemoveNode, node_id)
-    return cc.make_ref().into_v2()
+    return cc.into_v2()
 
 
 def add_node(node_id: int) -> ConfChangeV2_Owner:
     cc = conf_change(ConfChangeType.AddNode, node_id)
-    return cc.make_ref().into_v2()
+    return cc.into_v2()
 
 
 def add_learner(node_id: int) -> ConfChangeV2_Owner:
     cc = conf_change(ConfChangeType.AddLearnerNode, node_id)
-    return cc.make_ref().into_v2()
+    return cc.into_v2()
 
 
 def conf_state(voters: List[int], learners: List[int]) -> ConfState_Owner:
     cs = ConfState_Owner()
-    cs.make_ref().set_voters(voters)
-    cs.make_ref().set_learners(learners)
+    cs.set_voters(voters)
+    cs.set_learners(learners)
     return cs
 
 
@@ -242,13 +242,13 @@ def conf_state_v2(
     auto_leave: bool,
 ) -> ConfState_Owner:
     cs = conf_state(voters, learners)
-    cs.make_ref().set_voters_outgoing(voters_outgoing)
-    cs.make_ref().set_learners_next(learners_next)
-    cs.make_ref().set_auto_leave(auto_leave)
+    cs.set_voters_outgoing(voters_outgoing)
+    cs.set_learners_next(learners_next)
+    cs.set_auto_leave(auto_leave)
     return cs
 
 
 def conf_change_v2(steps: List[ConfChangeSingle_Owner]) -> ConfChangeV2_Owner:
     cc = ConfChangeV2_Owner()
-    cc.make_ref().set_changes(steps)
+    cc.set_changes(steps)
     return cc

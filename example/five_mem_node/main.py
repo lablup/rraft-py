@@ -56,11 +56,11 @@ class Proposal:
 def add_all_followers(proposals: Deque[Proposal]):
     for i in range(2, 65):
         conf_change_owner = ConfChange_Owner()
-        conf_change_owner.make_ref().set_node_id(i)
-        conf_change_owner.make_ref().set_change_type(ConfChangeType.AddNode)
+        conf_change_owner.set_node_id(i)
+        conf_change_owner.set_change_type(ConfChangeType.AddNode)
 
         while True:
-            proposal, rx = Proposal.conf_change(conf_change_owner.make_ref())
+            proposal, rx = Proposal.conf_change(conf_change_owner)
             proposals.append(proposal)
 
             sleep(0.1)
@@ -75,7 +75,7 @@ if __name__ == "__main__":
     # You need to build your own persistent storage in your production.
     # Please check the Storage trait in src/storage.rs to see how to implement one.
     cs_owner = ConfState_Owner(voters=[1], learners=[])
-    storage_owner = MemStorage_Owner.new_with_conf_state(cs_owner.make_ref())
+    storage_owner = MemStorage_Owner.new_with_conf_state(cs_owner)
 
     logger_owner = Logger_Owner(
         chan_size=4096, overflow_strategy=OverflowStrategy.Block

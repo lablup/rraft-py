@@ -19,7 +19,7 @@ def new_snapshot(index: int, term: int) -> Snapshot_Owner:
     meta = SnapshotMetadata_Owner()
     meta.set_term(term)
     meta.set_index(index)
-    snap.set_metadata(meta.make_ref())
+    snap.set_metadata(meta)
     return snap
 
 
