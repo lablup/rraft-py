@@ -8,13 +8,13 @@ use utils::reference::RustRef;
 use super::readonly_option::Py_ReadOnlyOption;
 
 #[derive(Clone)]
-#[pyclass(name = "Config")]
+#[pyclass(name = "Config_Owner")]
 pub struct Py_Config_Owner {
     pub inner: Config,
 }
 
 #[derive(Clone)]
-#[pyclass(name = "__Config_Ref")]
+#[pyclass(name = "Config_Ref")]
 pub struct Py_Config_Ref {
     pub inner: RustRef<Config>,
 }

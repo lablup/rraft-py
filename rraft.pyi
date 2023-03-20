@@ -2070,7 +2070,7 @@ class Inflights_Owner:
     def make_ref(self) -> Inflights_Ref: ...
     def clone(self) -> Inflights_Owner: ...
 
-class Config:
+class Config_Ref:
     """
     Config contains the parameters to start a raft.
     """
@@ -2148,7 +2148,7 @@ class Config:
 
         :param max_committed_size_per_ready: Max size for committed entries in a `Ready`.
         """
-    def clone(self) -> Config: ...
+    def clone(self) -> Config_Owner: ...
     def min_election_tick(self) -> int:
         """The minimum number of ticks before an election."""
     def max_election_tick(self) -> int:
@@ -2207,3 +2207,8 @@ class Config:
         """"""
     def set_max_uncommitted_size(self, max_uncommitted_size: int) -> None:
         """"""
+
+class Config_Owner:
+    def __init__(self) -> None: ...
+    def make_ref(self) -> Config_Ref: ...
+    def clone(self) -> Config_Owner: ...
