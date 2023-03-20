@@ -13,24 +13,24 @@ def test_msg_app_flow_control_full():
         peers=[1, 2],
         election=5,
         heartbeat=1,
-        storage=storage.make_ref(),
-        logger=l.make_ref(),
+        storage=storage,
+        logger=l,
     )
 
-    r.raft.make_ref().become_candidate()
-    r.raft.make_ref().become_leader()
+    r.raft.become_candidate()
+    r.raft.become_leader()
 
     # force the progress to be in replicate state
-    r.raft.make_ref().prs().get(2).become_replicate()
+    r.raft.prs().get(2).become_replicate()
 
     # fill in the inflights window
-    for i in range(0, r.raft.make_ref().get_max_inflight()):
-        r.raft.make_ref().step(new_message(1, 1, MessageType.MsgPropose, 1))
+    for i in range(0, r.raft.get_max_inflight()):
+        r.raft.step(new_message(1, 1, MessageType.MsgPropose, 1))
         ms = r.read_messages()
         assert len(ms) == 1, f"#{i}: ms count = {ms.len()}, want 1"
 
     # ensure 1
-    assert r.raft.make_ref().prs().get(2).get_ins().full()
+    assert r.raft.prs().get(2).get_ins().full()
 
     # ensure 2
     for i in range(0, 10):
@@ -51,26 +51,26 @@ def test_msg_app_flow_control_move_forward():
         peers=[1, 2],
         election=5,
         heartbeat=1,
-        storage=storage.make_ref(),
-        logger=l.make_ref(),
+        storage=storage,
+        logger=l,
     )
 
-    r.raft.make_ref().become_candidate()
-    r.raft.make_ref().become_leader()
+    r.raft.become_candidate()
+    r.raft.become_leader()
 
     # force the progress to be in replicate state
-    r.raft.make_ref().prs().get(2).become_replicate()
+    r.raft.prs().get(2).become_replicate()
 
     # fill in the inflights window
-    for i in range(0, r.raft.make_ref().get_max_inflight()):
-        r.raft.make_ref().step(new_message(1, 1, MessageType.MsgPropose, 1))
+    for i in range(0, r.raft.get_max_inflight()):
+        r.raft.step(new_message(1, 1, MessageType.MsgPropose, 1))
         r.read_messages()
 
     # 1 is noop, 2 is the first proposal we just sent.
     # so we start with 2.
-    for tt in range(2, r.raft.make_ref().get_max_inflight()):
+    for tt in range(2, r.raft.get_max_inflight()):
         m = new_message(2, 1, MessageType.MsgAppendResponse, 0)
-        m.make_ref().set_index(tt)
+        m.set_index(tt)
         r.step(m)
         r.read_messages()
 
@@ -80,16 +80,16 @@ def test_msg_app_flow_control_move_forward():
         assert len(ms) == 1, f"#{tt}: ms count = {len(ms)}, want 1"
 
         # ensure 1
-        assert r.raft.make_ref().prs().get(2).get_ins().full()
+        assert r.raft.prs().get(2).get_ins().full()
 
         # ensure 2
         for i in range(0, tt):
             m = new_message(2, 1, MessageType.MsgAppendResponse, 0)
-            m.make_ref().set_index(i)
+            m.set_index(i)
             r.step(m)
             assert (
-                r.raft.make_ref().prs().get(2).get_ins().full()
-            ), f"#{tt}: inflights.full = {r.raft.make_ref().prs().get(2).get_ins().full()}, want true"
+                r.raft.prs().get(2).get_ins().full()
+            ), f"#{tt}: inflights.full = {r.raft.prs().get(2).get_ins().full()}, want true"
 
 
 # test_msg_app_flow_control_recv_heartbeat ensures a heartbeat response
@@ -102,24 +102,24 @@ def test_msg_app_flow_control_recv_heartbeat():
         peers=[1, 2],
         election=5,
         heartbeat=1,
-        storage=storage.make_ref(),
-        logger=l.make_ref(),
+        storage=storage,
+        logger=l,
     )
 
-    r.raft.make_ref().become_candidate()
-    r.raft.make_ref().become_leader()
+    r.raft.become_candidate()
+    r.raft.become_leader()
 
     # force the progress to be in replicate state
-    r.raft.make_ref().prs().get(2).become_replicate()
+    r.raft.prs().get(2).become_replicate()
 
     # fill in the inflights window
-    for _ in range(0, r.raft.make_ref().get_max_inflight()):
+    for _ in range(0, r.raft.get_max_inflight()):
         r.step(new_message(1, 1, MessageType.MsgPropose, 1))
         r.read_messages()
 
     for tt in range(1, 5):
         assert (
-            r.raft.make_ref().prs().get(2).get_ins().full()
+            r.raft.prs().get(2).get_ins().full()
         ), f"#{tt}: inflights.full = False, want True"
 
         # recv tt MsgHeartbeatResp and expect one free slot
@@ -127,7 +127,7 @@ def test_msg_app_flow_control_recv_heartbeat():
             r.step(new_message(2, 1, MessageType.MsgHeartbeatResponse, 0))
             r.read_messages()
             assert (
-                not r.raft.make_ref().prs().get(2).get_ins().full()
+                not r.raft.prs().get(2).get_ins().full()
             ), f"#{tt}.{i}: inflights.full = True, want False"
 
         # one slot

@@ -82,22 +82,22 @@ class Network:
         for p, id in zip(peers, peer_addrs):
             if p is None:
                 cs_owner = ConfState_Owner(peer_addrs, [])
-                store_owner = MemStorage_Owner.new_with_conf_state(cs_owner.make_ref())
+                store_owner = MemStorage_Owner.new_with_conf_state(cs_owner)
                 nstorage[id] = store_owner.clone()
                 cfg = config.clone()
                 cfg.set_id(id)
 
                 raft_owner = Raft__MemStorage_Owner(
-                    cfg, store_owner.make_ref(), l
+                    cfg, store_owner, l
                 )
                 r = Interface(raft_owner)
                 npeers[id] = r
             else:
                 if p.raft:
-                    if raft := p.raft.make_ref():
+                    if raft := p.raft:
                         assert (
                             raft.get_id() == id
-                        ), f"peer {p.raft.make_ref().get_id()} in peers has a wrong position"
+                        ), f"peer {p.raft.get_id()} in peers has a wrong position"
 
                         store = raft.get_raft_log().get_store().clone()
                         nstorage[id] = store
@@ -113,16 +113,16 @@ class Network:
     # Filter out messages that should be dropped according to rules set by `ignore` or `drop`.
     def filter_(self, msgs: List[Message_Owner]) -> List[Message_Owner]:
         def should_be_filtered(m: Message_Owner):
-            if self.ignorem.get(m.make_ref().get_msg_type()):
+            if self.ignorem.get(m.get_msg_type()):
                 return False
 
             # hups never go over the network, so don't drop them but panic
             assert (
-                m.make_ref().get_msg_type() != MessageType.MsgHup
+                m.get_msg_type() != MessageType.MsgHup
             ), "unexpected msgHup"
 
             perc = self.dropm.get(
-                Connection(m.make_ref().get_from(), m.make_ref().get_to()), 0.0
+                Connection(m.get_from(), m.get_to()), 0.0
             )
 
             return random.random() >= perc
@@ -146,8 +146,8 @@ class Network:
             new_msgs: List[Message_Owner] = []
 
             for m in msgs:
-                p = self.peers.get(m.make_ref().get_to())
-                p.step(m.make_ref())
+                p = self.peers.get(m.get_to())
+                p.step(m)
                 # The unstable data should be persisted before sending msg.
                 p.persist()
                 resp = p.read_messages()
@@ -165,7 +165,7 @@ class Network:
     # Unlike `send` this does not gather and send any responses. It also does not ignore errors.
     def dispatch(self, messages: List[Message_Owner]) -> None:
         for message in self.filter_(messages):
-            to = message.make_ref().get_to()
+            to = message.get_to()
             peer = self.peers[to]
             peer.step(message)
 

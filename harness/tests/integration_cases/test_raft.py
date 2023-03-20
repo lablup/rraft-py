@@ -50,7 +50,7 @@ from network import Network
 
 
 def read_messages(raft: Raft__MemStorage_Owner) -> List[Message_Owner]:
-    return raft.make_ref().take_msgs()
+    return raft.take_msgs()
 
 
 def ents_with_config(
@@ -61,16 +61,16 @@ def ents_with_config(
     l: Logger_Ref,
 ) -> Interface:
     cs = ConfState_Owner(peers, [])
-    store = MemStorage_Owner.new_with_conf_state(cs.make_ref())
+    store = MemStorage_Owner.new_with_conf_state(cs)
 
     for i, term in enumerate(terms):
         e = Entry_Owner.default()
-        e.make_ref().set_index(i + 1)
-        e.make_ref().set_term(term)
-        store.make_ref().wl(lambda core: core.append([e]))
+        e.set_index(i + 1)
+        e.set_term(term)
+        store.wl(lambda core: core.append([e]))
 
-    raft = new_test_raft_with_prevote(id, peers, 5, 1, store.make_ref(), pre_vote, l)
-    raft.raft.make_ref().reset(terms[-1])
+    raft = new_test_raft_with_prevote(id, peers, 5, 1, store, pre_vote, l)
+    raft.raft.reset(terms[-1])
     return raft
 
 
@@ -104,7 +104,7 @@ def voted_with_config(
     l: Logger_Ref,
 ) -> Interface:
     cs = ConfState_Owner(peers, [])
-    store = MemStorage_Owner.new_with_conf_state(cs.make_ref())
+    store = MemStorage_Owner.new_with_conf_state(cs)
 
     def hard_state_set_vote(core: MemStorageCore_Ref):
         core.hard_state().set_vote(vote)
@@ -112,11 +112,11 @@ def voted_with_config(
     def hard_state_set_term(core: MemStorageCore_Ref):
         core.hard_state().set_term(term)
 
-    store.make_ref().wl(hard_state_set_vote)
-    store.make_ref().wl(hard_state_set_term)
+    store.wl(hard_state_set_vote)
+    store.wl(hard_state_set_term)
 
-    raft = new_test_raft_with_prevote(id, peers, 5, 1, store.make_ref(), pre_vote, l)
-    raft.raft.make_ref().reset(term)
+    raft = new_test_raft_with_prevote(id, peers, 5, 1, store, pre_vote, l)
+    raft.raft.reset(term)
     return raft
 
 
@@ -127,7 +127,7 @@ def next_ents(r: Raft__MemStorage_Ref, s: MemStorage_Ref) -> List[Entry_Owner]:
 
     if unstable:
         e = unstable[-1]
-        last_idx, last_term = e.make_ref().get_index(), e.make_ref().get_term()
+        last_idx, last_term = e.get_index(), e.get_term()
         r.get_raft_log().stable_entries(last_idx, last_term)
         s.wl(lambda core: core.append(unstable))
         r.on_persist_entries(last_idx, last_term)
@@ -147,20 +147,20 @@ def test_progress_committed_index():
 
     # set node 1 as Leader
     nt.send([new_message(1, 1, MessageType.MsgHup, 0)])
-    assert nt.peers.get(1).raft.make_ref().get_state() == StateRole.Leader
+    assert nt.peers.get(1).raft.get_state() == StateRole.Leader
 
-    assert_raft_log("#1: ", nt.peers.get(1).raft.make_ref().get_raft_log(), 1, 0, 1)
-    assert_raft_log("#2: ", nt.peers.get(2).raft.make_ref().get_raft_log(), 1, 0, 1)
-    assert_raft_log("#3: ", nt.peers.get(3).raft.make_ref().get_raft_log(), 1, 0, 1)
+    assert_raft_log("#1: ", nt.peers.get(1).raft.get_raft_log(), 1, 0, 1)
+    assert_raft_log("#2: ", nt.peers.get(2).raft.get_raft_log(), 1, 0, 1)
+    assert_raft_log("#3: ", nt.peers.get(3).raft.get_raft_log(), 1, 0, 1)
 
-    assert nt.peers.get(1).raft.make_ref().prs().get(1).get_committed_index() == 1
-    assert nt.peers.get(1).raft.make_ref().prs().get(2).get_committed_index() == 1
-    assert nt.peers.get(1).raft.make_ref().prs().get(3).get_committed_index() == 1
+    assert nt.peers.get(1).raft.prs().get(1).get_committed_index() == 1
+    assert nt.peers.get(1).raft.prs().get(2).get_committed_index() == 1
+    assert nt.peers.get(1).raft.prs().get(3).get_committed_index() == 1
 
     # #1 test append entries
     # append entries between 1 and 2
     test_entries = Entry_Owner.default()
-    test_entries.make_ref().set_data(list(b"testdata"))
+    test_entries.set_data(list(b"testdata"))
     m = new_message_with_entries(1, 1, MessageType.MsgPropose, [test_entries])
     nt.cut(1, 3)
     nt.send([m.clone(), m])
@@ -170,9 +170,9 @@ def test_progress_committed_index():
     assert_raft_log("#2: ", nt.peers.get(2).raft_log, 3, 0, 3)
     assert_raft_log("#3: ", nt.peers.get(3).raft_log, 1, 0, 1)
 
-    assert nt.peers.get(1).raft.make_ref().prs().get(1).get_committed_index() == 3
-    assert nt.peers.get(1).raft.make_ref().prs().get(2).get_committed_index() == 3
-    assert nt.peers.get(1).raft.make_ref().prs().get(3).get_committed_index() == 1
+    assert nt.peers.get(1).raft.prs().get(1).get_committed_index() == 3
+    assert nt.peers.get(1).raft.prs().get(2).get_committed_index() == 3
+    assert nt.peers.get(1).raft.prs().get(3).get_committed_index() == 1
 
     # #2 test heartbeat
     heartbeat = new_message(1, 1, MessageType.MsgBeat, 0)
@@ -184,15 +184,15 @@ def test_progress_committed_index():
 
     # set node 2 as Leader
     nt.send([new_message(2, 2, MessageType.MsgHup, 0)])
-    assert nt.peers.get(2).raft.make_ref().get_state() == StateRole.Leader
+    assert nt.peers.get(2).raft.get_state() == StateRole.Leader
 
     assert_raft_log("#1: ", nt.peers.get(1).raft_log, 4, 0, 4)
     assert_raft_log("#2: ", nt.peers.get(2).raft_log, 4, 0, 4)
     assert_raft_log("#3: ", nt.peers.get(3).raft_log, 4, 0, 4)
 
-    assert nt.peers.get(2).raft.make_ref().prs().get(1).get_committed_index() == 4
-    assert nt.peers.get(2).raft.make_ref().prs().get(2).get_committed_index() == 4
-    assert nt.peers.get(2).raft.make_ref().prs().get(3).get_committed_index() == 4
+    assert nt.peers.get(2).raft.prs().get(1).get_committed_index() == 4
+    assert nt.peers.get(2).raft.prs().get(2).get_committed_index() == 4
+    assert nt.peers.get(2).raft.prs().get(3).get_committed_index() == 4
 
     # #3 test append entries rejection (fails to update committed index)
     nt.isolate(2)
@@ -215,30 +215,30 @@ def test_progress_committed_index():
     msg_append = nt.read_messages()
 
     # committed index remain the same
-    assert nt.peers.get(2).raft.make_ref().prs().get(1).get_committed_index() == 4
-    assert nt.peers.get(2).raft.make_ref().prs().get(2).get_committed_index() == 4
-    assert nt.peers.get(2).raft.make_ref().prs().get(3).get_committed_index() == 4
+    assert nt.peers.get(2).raft.prs().get(1).get_committed_index() == 4
+    assert nt.peers.get(2).raft.prs().get(2).get_committed_index() == 4
+    assert nt.peers.get(2).raft.prs().get(3).get_committed_index() == 4
 
     # resend append
     nt.send(msg_append)
 
     # log is up-to-date
-    assert nt.peers.get(2).raft.make_ref().prs().get(1).get_committed_index() == 7
-    assert nt.peers.get(2).raft.make_ref().prs().get(2).get_committed_index() == 7
-    assert nt.peers.get(2).raft.make_ref().prs().get(3).get_committed_index() == 7
+    assert nt.peers.get(2).raft.prs().get(1).get_committed_index() == 7
+    assert nt.peers.get(2).raft.prs().get(2).get_committed_index() == 7
+    assert nt.peers.get(2).raft.prs().get(3).get_committed_index() == 7
 
     # set node 1 as Leader again
     nt.send([new_message(1, 1, MessageType.MsgHup, 0)])
-    assert nt.peers.get(1).raft.make_ref().get_state() == StateRole.Leader
+    assert nt.peers.get(1).raft.get_state() == StateRole.Leader
 
     assert_raft_log("#1: ", nt.peers.get(1).raft_log, 8, 0, 8)
     assert_raft_log("#2: ", nt.peers.get(2).raft_log, 8, 0, 8)
     assert_raft_log("#3: ", nt.peers.get(3).raft_log, 8, 0, 8)
 
     # update to 8
-    assert nt.peers.get(1).raft.make_ref().prs().get(1).get_committed_index() == 8
-    assert nt.peers.get(1).raft.make_ref().prs().get(2).get_committed_index() == 8
-    assert nt.peers.get(1).raft.make_ref().prs().get(3).get_committed_index() == 8
+    assert nt.peers.get(1).raft.prs().get(1).get_committed_index() == 8
+    assert nt.peers.get(1).raft.prs().get(2).get_committed_index() == 8
+    assert nt.peers.get(1).raft.prs().get(3).get_committed_index() == 8
 
     # #4 pass a smaller committed index, it occurs when the append response delay
     nt.dispatch(
@@ -261,36 +261,36 @@ def test_progress_committed_index():
     m2 = msg_append_response.pop(2)
     nt.send([m1, m2])
 
-    assert nt.peers.get(1).raft.make_ref().prs().get(1).get_committed_index() == 10
-    assert nt.peers.get(1).raft.make_ref().prs().get(2).get_committed_index() == 10
-    assert nt.peers.get(1).raft.make_ref().prs().get(3).get_committed_index() == 10
+    assert nt.peers.get(1).raft.prs().get(1).get_committed_index() == 10
+    assert nt.peers.get(1).raft.prs().get(2).get_committed_index() == 10
+    assert nt.peers.get(1).raft.prs().get(3).get_committed_index() == 10
 
     # committed index remain 10
 
     # msg_type: MsgAppendResponse to: 1 from: 2 term: 3 index: 10 commit: 9,
     # msg_type: MsgAppendResponse to: 1 from: 3 term: 3 index: 10 commit: 9
     nt.send(msg_append_response)
-    assert nt.peers.get(1).raft.make_ref().prs().get(1).get_committed_index() == 10
-    assert nt.peers.get(1).raft.make_ref().prs().get(2).get_committed_index() == 10
-    assert nt.peers.get(1).raft.make_ref().prs().get(3).get_committed_index() == 10
+    assert nt.peers.get(1).raft.prs().get(1).get_committed_index() == 10
+    assert nt.peers.get(1).raft.prs().get(2).get_committed_index() == 10
+    assert nt.peers.get(1).raft.prs().get(3).get_committed_index() == 10
 
 
 def test_progress_leader():
     l = default_logger()
     storage = new_storage()
-    raft = new_test_raft(1, [1, 2], 5, 1, storage.make_ref(), l.make_ref())
-    raft.raft.make_ref().become_candidate()
-    raft.raft.make_ref().become_leader()
+    raft = new_test_raft(1, [1, 2], 5, 1, storage, l)
+    raft.raft.become_candidate()
+    raft.raft.become_leader()
     # For no-op entry
     raft.persist()
-    raft.raft.make_ref().prs().get(2).become_replicate()
+    raft.raft.prs().get(2).become_replicate()
 
     prop_msg = new_message(1, 1, MessageType.MsgPropose, 1)
     for i in range(0, 5):
-        assert raft.raft.make_ref().prs().get(1).get_state() == ProgressState.Replicate
+        assert raft.raft.prs().get(1).get_state() == ProgressState.Replicate
 
-        matched = raft.raft.make_ref().prs().get(1).get_matched()
-        next_idx = raft.raft.make_ref().prs().get(1).get_next_idx()
+        matched = raft.raft.prs().get(1).get_matched()
+        next_idx = raft.raft.prs().get(1).get_next_idx()
         assert matched == i + 1
         assert next_idx == matched + 1
 
@@ -304,33 +304,33 @@ def test_progress_leader():
 def test_progress_resume_by_heartbeat_resp():
     l = default_logger()
     storage = new_storage()
-    raft = new_test_raft(1, [1, 2], 5, 1, storage.make_ref(), l.make_ref())
-    raft.raft.make_ref().become_candidate()
-    raft.raft.make_ref().become_leader()
-    raft.raft.make_ref().prs().get(2).set_paused(True)
+    raft = new_test_raft(1, [1, 2], 5, 1, storage, l)
+    raft.raft.become_candidate()
+    raft.raft.become_leader()
+    raft.raft.prs().get(2).set_paused(True)
 
     raft.step(new_message(1, 1, MessageType.MsgBeat, 0))
-    assert raft.raft.make_ref().prs().get(2).get_paused()
-    raft.raft.make_ref().prs().get(2).become_replicate()
+    assert raft.raft.prs().get(2).get_paused()
+    raft.raft.prs().get(2).become_replicate()
     raft.step(new_message(2, 1, MessageType.MsgHeartbeatResponse, 0))
-    assert not raft.raft.make_ref().prs().get(2).get_paused()
+    assert not raft.raft.prs().get(2).get_paused()
 
 
 def test_progress_paused():
     l = default_logger()
     storage = new_storage()
-    raft = new_test_raft(1, [1, 2], 5, 1, storage.make_ref(), l.make_ref())
-    raft.raft.make_ref().become_candidate()
-    raft.raft.make_ref().become_leader()
+    raft = new_test_raft(1, [1, 2], 5, 1, storage, l)
+    raft.raft.become_candidate()
+    raft.raft.become_leader()
 
     m = Message_Owner.default()
-    m.make_ref().set_from(1)
-    m.make_ref().set_to(1)
-    m.make_ref().set_msg_type(MessageType.MsgPropose)
+    m.set_from(1)
+    m.set_to(1)
+    m.set_msg_type(MessageType.MsgPropose)
 
     e = Entry_Owner.default()
-    e.make_ref().set_data(list(b"some_data"))
-    m.make_ref().set_entries([e])
+    e.set_data(list(b"some_data"))
+    m.set_entries([e])
 
     raft.step(m.clone())
     raft.step(m.clone())
@@ -346,17 +346,17 @@ def test_progress_flow_control():
     cfg.set_max_inflight_msgs(3)
     cfg.set_max_size_per_msg(2048)
     cs = ConfState_Owner([1, 2], [])
-    s = MemStorage_Owner.new_with_conf_state(cs.make_ref())
+    s = MemStorage_Owner.new_with_conf_state(cs)
 
-    r = new_test_raft_with_config(cfg, s.make_ref(), l.make_ref())
-    r.raft.make_ref().become_candidate()
-    r.raft.make_ref().become_leader()
+    r = new_test_raft_with_config(cfg, s, l)
+    r.raft.become_candidate()
+    r.raft.become_leader()
 
     # Throw away all the messages relating to the initial election.
     r.read_messages()
 
     # While node 2 is in probe state, propose a bunch of entries.
-    r.raft.make_ref().prs().get(2).become_probe()
+    r.raft.prs().get(2).become_probe()
     data = "a" * 1000
     for _ in range(0, 10):
         msg = new_message_with_entries(
@@ -369,43 +369,43 @@ def test_progress_flow_control():
     # election, and the first proposal (only one proposal gets sent
     # because we're in probe state).
     assert len(ms) == 1
-    assert ms[0].make_ref().get_msg_type() == MessageType.MsgAppend
-    assert len(ms[0].make_ref().get_entries()) == 2
-    assert len(ms[0].make_ref().get_entries()[0].get_data()) == 0
-    assert len(ms[0].make_ref().get_entries()[1].get_data()) == 1000
+    assert ms[0].get_msg_type() == MessageType.MsgAppend
+    assert len(ms[0].get_entries()) == 2
+    assert len(ms[0].get_entries()[0].get_data()) == 0
+    assert len(ms[0].get_entries()[1].get_data()) == 1000
 
     # When this append is acked, we change to replicate state and can
     # send multiple messages at once.
     msg = new_message(2, 1, MessageType.MsgAppendResponse, 0)
-    msg.make_ref().set_index(ms[0].make_ref().get_entries()[1].get_index())
+    msg.set_index(ms[0].get_entries()[1].get_index())
     r.step(msg)
     ms = r.read_messages()
     assert len(ms) == 3
 
     for i, m in enumerate(ms):
         assert (
-            m.make_ref().get_msg_type() == MessageType.MsgAppend
-        ), f"{i}: expected MsgAppend, got {m.make_ref().get_msg_type()}"
+            m.get_msg_type() == MessageType.MsgAppend
+        ), f"{i}: expected MsgAppend, got {m.get_msg_type()}"
 
         assert (
-            len(m.make_ref().get_entries()) == 2
-        ), f"{i}: expected 2 entries, got {len(m.make_ref().get_entries())}"
+            len(m.get_entries()) == 2
+        ), f"{i}: expected 2 entries, got {len(m.get_entries())}"
 
     # Ack all three of those messages together and get the last two
     # messages (containing three entries).
     msg = new_message(2, 1, MessageType.MsgAppendResponse, 0)
-    msg.make_ref().set_index(ms[2].make_ref().get_entries()[1].get_index())
+    msg.set_index(ms[2].get_entries()[1].get_index())
     r.step(msg)
     ms = r.read_messages()
     assert len(ms) == 2
 
     for i, m in enumerate(ms):
         assert (
-            m.make_ref().get_msg_type() == MessageType.MsgAppend
-        ), f"{i}: expected MsgAppend, got {m.make_ref().get_msg_type()}"
+            m.get_msg_type() == MessageType.MsgAppend
+        ), f"{i}: expected MsgAppend, got {m.get_msg_type()}"
 
-    assert len(ms[0].make_ref().get_entries()) == 2
-    assert len(ms[1].make_ref().get_entries()) == 1
+    assert len(ms[0].get_entries()) == 2
+    assert len(ms[1].get_entries()) == 1
 
 
 # test_leader_election
@@ -426,32 +426,28 @@ def test_leader_election_with_config(pre_vote: bool):
 
     tests = [
         Test(
-            Network.new_with_config([None, None, None], config.make_ref(), l),
+            Network.new_with_config([None, None, None], config, l),
             StateRole.Leader,
             1,
         ),
         Test(
-            Network.new_with_config([None, None, NOP_STEPPER], config.make_ref(), l),
+            Network.new_with_config([None, None, NOP_STEPPER], config, l),
             StateRole.Leader,
             1,
         ),
         Test(
-            Network.new_with_config(
-                [None, NOP_STEPPER, NOP_STEPPER], config.make_ref(), l
-            ),
+            Network.new_with_config([None, NOP_STEPPER, NOP_STEPPER], config, l),
+            StateRole.Candidate,
+            1,
+        ),
+        Test(
+            Network.new_with_config([None, NOP_STEPPER, NOP_STEPPER, None], config, l),
             StateRole.Candidate,
             1,
         ),
         Test(
             Network.new_with_config(
-                [None, NOP_STEPPER, NOP_STEPPER, None], config.make_ref(), l
-            ),
-            StateRole.Candidate,
-            1,
-        ),
-        Test(
-            Network.new_with_config(
-                [None, NOP_STEPPER, NOP_STEPPER, None, None], config.make_ref(), l
+                [None, NOP_STEPPER, NOP_STEPPER, None, None], config, l
             ),
             StateRole.Leader,
             1,
@@ -462,14 +458,12 @@ def test_leader_election_with_config(pre_vote: bool):
             Network.new_with_config(
                 [
                     None,
-                    ents_with_config([1], pre_vote, 2, [1, 2, 3, 4, 5], l.make_ref()),
-                    ents_with_config([1], pre_vote, 3, [1, 2, 3, 4, 5], l.make_ref()),
-                    ents_with_config(
-                        [1, 1], pre_vote, 4, [1, 2, 3, 4, 5], l.make_ref()
-                    ),
+                    ents_with_config([1], pre_vote, 2, [1, 2, 3, 4, 5], l),
+                    ents_with_config([1], pre_vote, 3, [1, 2, 3, 4, 5], l),
+                    ents_with_config([1, 1], pre_vote, 4, [1, 2, 3, 4, 5], l),
                     None,
                 ],
-                config.make_ref(),
+                config,
                 l,
             ),
             StateRole.Follower,
@@ -480,9 +474,9 @@ def test_leader_election_with_config(pre_vote: bool):
     for i, v in enumerate(tests):
         network, state, term = v.network, v.state, v.term
         m = Message_Owner.default()
-        m.make_ref().set_from(1)
-        m.make_ref().set_to(1)
-        m.make_ref().set_msg_type(MessageType.MsgHup)
+        m.set_from(1)
+        m.set_to(1)
+        m.set_msg_type(MessageType.MsgHup)
         network.send([m])
         raft = network.peers.get(1)
 
@@ -494,12 +488,12 @@ def test_leader_election_with_config(pre_vote: bool):
             exp_state, exp_term = StateRole.PreCandidate, 0
 
         assert (
-            raft.raft.make_ref().get_state() == exp_state
-        ), f"#{i}: state = {raft.raft.make_ref().get_state()}, want {exp_state}"
+            raft.raft.get_state() == exp_state
+        ), f"#{i}: state = {raft.raft.get_state()}, want {exp_state}"
 
         assert (
-            raft.raft.make_ref().get_term() == exp_term
-        ), f"#{i}: term = {raft.raft.make_ref().get_term()}, want {exp_term}"
+            raft.raft.get_term() == exp_term
+        ), f"#{i}: term = {raft.raft.get_term()}, want {exp_term}"
 
 
 # test_leader_cycle verifies that each node in a cluster can campaign
@@ -515,21 +509,21 @@ def test_leader_cycle_with_config(pre_vote: bool):
     config = Network.default_config()
     config.set_pre_vote(pre_vote)
 
-    network = Network.new_with_config([None, None, None], config.make_ref(), l)
+    network = Network.new_with_config([None, None, None], config, l)
 
     for campaigner_id in range(1, 4):
         network.send([new_message(campaigner_id, campaigner_id, MessageType.MsgHup, 0)])
 
         for sm in network.peers.values():
             assert not (
-                sm.raft.make_ref().get_id() == campaigner_id
-                and sm.raft.make_ref().get_state() != StateRole.Leader
-            ), f"pre_vote={pre_vote}: campaigning node {sm.raft.make_ref().get_id()} state = {sm.raft.make_ref().get_state()}, want Leader"
+                sm.raft.get_id() == campaigner_id
+                and sm.raft.get_state() != StateRole.Leader
+            ), f"pre_vote={pre_vote}: campaigning node {sm.raft.get_id()} state = {sm.raft.get_state()}, want Leader"
 
             assert not (
-                sm.raft.make_ref().get_id() != campaigner_id
-                and sm.raft.make_ref().get_state() != StateRole.Follower
-            ), f"pre_vote={pre_vote}: after campaign of node {campaigner_id}, node {sm.raft.make_ref().get_id()} had state = {sm.raft.make_ref().get_state()}, want \
+                sm.raft.get_id() != campaigner_id
+                and sm.raft.get_state() != StateRole.Follower
+            ), f"pre_vote={pre_vote}: after campaign of node {campaigner_id}, node {sm.raft.get_id()} had state = {sm.raft.get_state()}, want \
                      Follower"
 
 
@@ -563,17 +557,17 @@ def test_leader_election_overwrite_newer_logs_with_config(pre_vote: bool):
     network = Network.new_with_config(
         [
             # Node 1: Won first election
-            ents_with_config([1], pre_vote, 1, peers, l.make_ref()),
+            ents_with_config([1], pre_vote, 1, peers, l),
             # Node 2: Get logs from node 1
-            ents_with_config([1], pre_vote, 2, peers, l.make_ref()),
+            ents_with_config([1], pre_vote, 2, peers, l),
             # Node 3: Won second election
-            ents_with_config([2], pre_vote, 3, peers, l.make_ref()),
+            ents_with_config([2], pre_vote, 3, peers, l),
             # Node 4: Voted but didn't get logs
-            voted_with_config(3, 2, pre_vote, 4, peers, l.make_ref()),
+            voted_with_config(3, 2, pre_vote, 4, peers, l),
             # Node 5: Voted but didn't get logs
-            voted_with_config(3, 2, pre_vote, 5, peers, l.make_ref()),
+            voted_with_config(3, 2, pre_vote, 5, peers, l),
         ],
-        config.make_ref(),
+        config,
         l,
     )
 
@@ -581,13 +575,13 @@ def test_leader_election_overwrite_newer_logs_with_config(pre_vote: bool):
     # know about the election that already happened at term 2. Node 1's
     # term is pushed ahead to 2.
     network.send([new_message(1, 1, MessageType.MsgHup, 0)])
-    assert network.peers.get(1).raft.make_ref().get_state() == StateRole.Follower
-    assert network.peers.get(1).raft.make_ref().get_term() == 2
+    assert network.peers.get(1).raft.get_state() == StateRole.Follower
+    assert network.peers.get(1).raft.get_term() == 2
 
     # Node 1 campaigns again with a higher term. this time it succeeds.
     network.send([new_message(1, 1, MessageType.MsgHup, 0)])
-    assert network.peers.get(1).raft.make_ref().get_state() == StateRole.Leader
-    assert network.peers.get(1).raft.make_ref().get_term() == 3
+    assert network.peers.get(1).raft.get_state() == StateRole.Leader
+    assert network.peers.get(1).raft.get_term() == 3
 
     # Now all nodes agree on a log entry with term 1 at index 1 (and
     # term 3 at index 2).
@@ -596,12 +590,12 @@ def test_leader_election_overwrite_newer_logs_with_config(pre_vote: bool):
         assert len(entries) == 2, f"node {id}: entries.len() == {len(entries)}, want 2"
 
         assert (
-            entries[0].make_ref().get_term() == 1
-        ), f"node {id}: term at index 1 == {entries[0].make_ref().get_term()}, want 1"
+            entries[0].get_term() == 1
+        ), f"node {id}: term at index 1 == {entries[0].get_term()}, want 1"
 
         assert (
-            entries[1].make_ref().get_term() == 3
-        ), f"node {id}: term at index 2 == {entries[1].make_ref().get_term()}, want 3"
+            entries[1].get_term() == 3
+        ), f"node {id}: term at index 2 == {entries[1].get_term()}, want 3"
 
 
 # test_vote_from_any_state
@@ -620,35 +614,35 @@ def test_vote_from_any_state_for_type(vt: MessageType):
 
     for state in all_states:
         storage = new_storage()
-        r = new_test_raft(1, [1, 2, 3], 10, 1, storage.make_ref(), l.make_ref())
-        r.raft.make_ref().set_term(1)
+        r = new_test_raft(1, [1, 2, 3], 10, 1, storage, l)
+        r.raft.set_term(1)
         if state == StateRole.Follower:
-            term = r.raft.make_ref().get_term()
-            r.raft.make_ref().become_follower(term, 3)
+            term = r.raft.get_term()
+            r.raft.become_follower(term, 3)
         elif state == StateRole.PreCandidate:
-            r.raft.make_ref().become_pre_candidate()
+            r.raft.become_pre_candidate()
         elif state == StateRole.Candidate:
-            r.raft.make_ref().become_candidate()
+            r.raft.become_candidate()
         else:
-            r.raft.make_ref().become_candidate()
-            r.raft.make_ref().become_leader()
+            r.raft.become_candidate()
+            r.raft.become_leader()
 
         # Note that setting our state above may have advanced r.term
         # past its initial value.
-        orig_term = r.raft.make_ref().get_term()
-        new_term = r.raft.make_ref().get_term() + 1
+        orig_term = r.raft.get_term()
+        new_term = r.raft.get_term() + 1
 
         msg = new_message(2, 1, vt, 0)
-        msg.make_ref().set_term(new_term)
-        msg.make_ref().set_log_term(orig_term)
-        msg.make_ref().set_index(42)
-        r.step(msg.make_ref())
+        msg.set_term(new_term)
+        msg.set_log_term(orig_term)
+        msg.set_index(42)
+        r.step(msg)
 
         assert (
-            len(r.raft.make_ref().get_msgs()) == 1
-        ), f"{vt},{state}: {len(r.raft.make_ref().get_msgs())} response messages, want 1: {r.raft.make_ref().get_msgs()}"
+            len(r.raft.get_msgs()) == 1
+        ), f"{vt},{state}: {len(r.raft.get_msgs())} response messages, want 1: {r.raft.get_msgs()}"
 
-        resp = r.raft.make_ref().get_msgs()[0]
+        resp = r.raft.get_msgs()[0]
 
         assert resp.get_msg_type() == vote_resp_msg_type(
             vt
@@ -659,32 +653,31 @@ def test_vote_from_any_state_for_type(vt: MessageType):
         # If this was a real vote, we reset our state and term.
         if vt == MessageType.MsgRequestVote:
             assert (
-                r.raft.make_ref().get_state() == StateRole.Follower
-            ), f"{vt},{state}, state is {r.raft.make_ref().get_state()}, want {StateRole.Follower}"
+                r.raft.get_state() == StateRole.Follower
+            ), f"{vt},{state}, state is {r.raft.get_state()}, want {StateRole.Follower}"
 
             assert (
-                r.raft.make_ref().get_term() == new_term
-            ), f"{vt},{state}, term is {r.raft.make_ref().get_term()}, want {new_term}"
+                r.raft.get_term() == new_term
+            ), f"{vt},{state}, term is {r.raft.get_term()}, want {new_term}"
 
             assert (
-                r.raft.make_ref().get_vote() == 2
-            ), f"{vt},{state}, vote {r.raft.make_ref().get_vote()}, want 2"
+                r.raft.get_vote() == 2
+            ), f"{vt},{state}, vote {r.raft.get_vote()}, want 2"
         else:
             # In a pre-vote, nothing changes.
             assert (
-                r.raft.make_ref().get_state() == state
-            ), f"{vt},{state}, state {r.raft.make_ref().get_state()}, want {state}"
+                r.raft.get_state() == state
+            ), f"{vt},{state}, state {r.raft.get_state()}, want {state}"
 
             assert (
-                r.raft.make_ref().get_term() == orig_term
-            ), f"{vt},{state}, term {r.raft.make_ref().get_term()}, want {orig_term}"
+                r.raft.get_term() == orig_term
+            ), f"{vt},{state}, term {r.raft.get_term()}, want {orig_term}"
 
             # If state == Follower or PreCandidate, r hasn't voted yet.
             # In Candidate or Leader, it's voted for itself.
             assert (
-                r.raft.make_ref().get_vote() == INVALID_ID
-                or r.raft.make_ref().get_vote() == 1
-            ), f"{vt},{state}, vote {r.raft.make_ref().get_vote()}, want {INVALID_ID} or 1"
+                r.raft.get_vote() == INVALID_ID or r.raft.get_vote() == 1
+            ), f"{vt},{state}, vote {r.raft.get_vote()}, want {INVALID_ID} or 1"
 
 
 def test_log_replication():
@@ -726,19 +719,18 @@ def test_log_replication():
                 x.raft_log.get_committed() == wcommitted
             ), f"#{i}.{j}: committed = {x.raft_log.get_commited()}, want {wcommitted}"
 
-            ents = next_ents(x.raft.make_ref(), network.storage.get(j))
-            ents = list(filter(lambda x: len(x.make_ref().get_data()) != 0, ents))
+            ents = next_ents(x.raft, network.storage.get(j))
+            ents = list(filter(lambda x: len(x.get_data()) != 0, ents))
 
             for k, m in enumerate(
                 filter(
-                    lambda msg: msg.make_ref().get_msg_type() == MessageType.MsgPropose,
+                    lambda msg: msg.get_msg_type() == MessageType.MsgPropose,
                     msgs,
                 )
             ):
                 assert (
-                    ents[k].make_ref().get_data()
-                    == m.make_ref().get_entries()[0].get_data()
-                ), f"#{i}.{j}: data = {ents[k].make_ref().get_data()}, want {m.make_ref().get_entries()[0].get_data()}"
+                    ents[k].get_data() == m.get_entries()[0].get_data()
+                ), f"#{i}.{j}: data = {ents[k].get_data()}, want {m.get_entries()[0].get_data()}"
 
 
 def test_single_node_commit():
@@ -819,11 +811,11 @@ def test_commit_without_new_term_entry():
 def test_dueling_candidates():
     l = default_logger()
     storage_a = new_storage()
-    a = new_test_raft(1, [1, 2, 3], 10, 1, storage_a.make_ref(), l.make_ref())
+    a = new_test_raft(1, [1, 2, 3], 10, 1, storage_a, l)
     storage_b = new_storage()
-    b = new_test_raft(2, [1, 2, 3], 10, 1, storage_b.make_ref(), l.make_ref())
+    b = new_test_raft(2, [1, 2, 3], 10, 1, storage_b, l)
     storage_c = new_storage()
-    c = new_test_raft(3, [1, 2, 3], 10, 1, storage_c.make_ref(), l.make_ref())
+    c = new_test_raft(3, [1, 2, 3], 10, 1, storage_c, l)
 
     nt = Network.new([a, b, c], l)
     nt.cut(1, 3)
@@ -831,10 +823,10 @@ def test_dueling_candidates():
     nt.send([new_message(3, 3, MessageType.MsgHup, 0)])
 
     # 1 becomes leader since it receives votes from 1 and 2
-    assert nt.peers.get(1).raft.make_ref().get_state() == StateRole.Leader
+    assert nt.peers.get(1).raft.get_state() == StateRole.Leader
 
     # 3 stays as candidate since it receives a vote from 3 and a rejection from 2
-    assert nt.peers.get(3).raft.make_ref().get_state() == StateRole.Candidate
+    assert nt.peers.get(3).raft.get_state() == StateRole.Candidate
 
     nt.recover()
 
@@ -864,12 +856,12 @@ def test_dueling_candidates():
         id = i + 1
 
         assert (
-            nt.peers.get(id).raft.make_ref().get_state() == state
-        ), f"#{i}: state = {nt.peers.get(id).raft.make_ref().get_state()}, want {state}"
+            nt.peers.get(id).raft.get_state() == state
+        ), f"#{i}: state = {nt.peers.get(id).raft.get_state()}, want {state}"
 
         assert (
-            nt.peers.get(id).raft.make_ref().get_term() == term
-        ), f"#{i}: term = {nt.peers.get(id).raft.make_ref().get_term()}, want {term}"
+            nt.peers.get(id).raft.get_term() == term
+        ), f"#{i}: term = {nt.peers.get(id).raft.get_term()}, want {term}"
 
         prefix = f"#{i}: "
         assert_raft_log(
@@ -884,30 +876,24 @@ def test_dueling_candidates():
 def test_dueling_pre_candidates():
     l = default_logger()
     a_storage = new_storage()
-    a = new_test_raft_with_prevote(
-        1, [1, 2, 3], 10, 1, a_storage.make_ref(), True, l.make_ref()
-    )
+    a = new_test_raft_with_prevote(1, [1, 2, 3], 10, 1, a_storage, True, l)
     b_storage = new_storage()
-    b = new_test_raft_with_prevote(
-        2, [1, 2, 3], 10, 1, b_storage.make_ref(), True, l.make_ref()
-    )
+    b = new_test_raft_with_prevote(2, [1, 2, 3], 10, 1, b_storage, True, l)
     c_storage = new_storage()
-    c = new_test_raft_with_prevote(
-        3, [1, 2, 3], 10, 1, c_storage.make_ref(), True, l.make_ref()
-    )
+    c = new_test_raft_with_prevote(3, [1, 2, 3], 10, 1, c_storage, True, l)
 
     config = Network.default_config()
     config.set_pre_vote(True)
-    nt = Network.new_with_config([a, b, c], config.make_ref(), l.make_ref())
+    nt = Network.new_with_config([a, b, c], config, l)
     nt.cut(1, 3)
     nt.send([new_message(1, 1, MessageType.MsgHup, 0)])
     nt.send([new_message(3, 3, MessageType.MsgHup, 0)])
 
     # 1 becomes leader since it receives votes from 1 and 2
-    assert nt.peers.get(1).raft.make_ref().get_state() == StateRole.Leader
+    assert nt.peers.get(1).raft.get_state() == StateRole.Leader
 
     # 3 campaigns then reverts to follower when its pre_vote is rejected
-    assert nt.peers.get(3).raft.make_ref().get_state() == StateRole.Follower
+    assert nt.peers.get(3).raft.get_state() == StateRole.Follower
 
     nt.recover()
 
@@ -933,12 +919,12 @@ def test_dueling_pre_candidates():
     for i, v in enumerate(tests):
         id, state, term, raft_log = v.id, v.state, v.term, v.raft_log
         assert (
-            nt.peers.get(id).raft.make_ref().get_state() == state
-        ), f"#{i}: state = {nt.peers.get(id).raft.make_ref().get_state()}, want {state}"
+            nt.peers.get(id).raft.get_state() == state
+        ), f"#{i}: state = {nt.peers.get(id).raft.get_state()}, want {state}"
 
         assert (
-            nt.peers.get(id).raft.make_ref().get_term() == term
-        ), f"#{i}: term = {nt.peers.get(id).raft.make_ref().get_term()}, want {term}"
+            nt.peers.get(id).raft.get_term() == term
+        ), f"#{i}: term = {nt.peers.get(id).raft.get_term()}, want {term}"
 
         prefix = f"#{i}: "
         assert_raft_log(
@@ -962,13 +948,13 @@ def test_candidate_concede():
     # send a proposal to 3 to flush out a MsgAppend to 1
     data = "force follower"
     m = new_message(3, 3, MessageType.MsgPropose, 0)
-    m.make_ref().set_entries([new_entry(0, 0, data)])
+    m.set_entries([new_entry(0, 0, data)])
     tt.send([m])
     # send heartbeat; flush out commit
     tt.send([new_message(3, 3, MessageType.MsgBeat, 0)])
 
-    assert tt.peers.get(1).raft.make_ref().get_state() == StateRole.Follower
-    assert tt.peers.get(1).raft.make_ref().get_term() == 1
+    assert tt.peers.get(1).raft.get_state() == StateRole.Follower
+    assert tt.peers.get(1).raft.get_term() == 1
 
     for p in tt.peers.values():
         assert p.raft_log.get_committed() == 2
@@ -981,17 +967,17 @@ def test_single_node_candidate():
     tt = Network.new([None], l)
     tt.send([new_message(1, 1, MessageType.MsgHup, 0)])
 
-    assert tt.peers.get(1).raft.make_ref().get_state() == StateRole.Leader
+    assert tt.peers.get(1).raft.get_state() == StateRole.Leader
 
 
 def test_sinle_node_pre_candidate():
     l = default_logger()
     config = Network.default_config()
     config.set_pre_vote(True)
-    tt = Network.new_with_config([None], config.make_ref(), l)
+    tt = Network.new_with_config([None], config, l)
     tt.send([new_message(1, 1, MessageType.MsgHup, 0)])
 
-    assert tt.peers.get(1).raft.make_ref().get_state() == StateRole.Leader
+    assert tt.peers.get(1).raft.get_state() == StateRole.Leader
 
 
 def test_old_messages():
@@ -1003,8 +989,8 @@ def test_old_messages():
     tt.send([new_message(1, 1, MessageType.MsgHup, 0)])
     # pretend we're an old leader trying to make progress; this entry is expected to be ignored.
     m = new_message(2, 1, MessageType.MsgPropose, 0)
-    m.make_ref().set_term(2)
-    m.make_ref().set_entries([empty_entry(2, 3)])
+    m.set_term(2)
+    m.set_entries([empty_entry(2, 3)])
     tt.send([m])
     # commit a new entry
     tt.send([new_message(1, 1, MessageType.MsgPropose, 1)])
@@ -1059,8 +1045,8 @@ def test_proposal():
                     prefix, p.raft_log, want_log[0], want_log[1], want_log[2]
                 )
         assert (
-            nw.peers.get(1).raft.make_ref().get_term() == 1
-        ), f"#{j}: term = {nw.peers.get(1).raft.make_ref().get_term()}, want: {1}"
+            nw.peers.get(1).raft.get_term() == 1
+        ), f"#{j}: term = {nw.peers.get(1).raft.get_term()}, want: {1}"
 
 
 def test_proposal_by_proxy():
@@ -1084,8 +1070,8 @@ def test_proposal_by_proxy():
                 prefix = f"#{j}: "
                 assert_raft_log(prefix, p.raft_log, 2, 0, 2)
         assert (
-            tt.peers.get(1).raft.make_ref().get_term() == 1
-        ), f"#{j}: term = {tt.peers.get(1).raft.make_ref().get_term()}, want: {1}"
+            tt.peers.get(1).raft.get_term() == 1
+        ), f"#{j}: term = {tt.peers.get(1).raft.get_term()}, want: {1}"
 
 
 def test_commit():
@@ -1123,23 +1109,23 @@ def test_commit():
     for i, v in enumerate(tests):
         matches, logs, sm_term, w = v.matches, v.logs, v.sm_term, v.w
         cs = ConfState_Owner([1], [])
-        store = MemStorage_Owner.new_with_conf_state(cs.make_ref())
-        store.make_ref().wl(lambda core: core.append(logs))
+        store = MemStorage_Owner.new_with_conf_state(cs)
+        store.wl(lambda core: core.append(logs))
         hs = HardState_Owner.default()
-        hs.make_ref().set_term(sm_term)
-        store.make_ref().wl(lambda core: core.set_hardstate(hs.make_ref()))
+        hs.set_term(sm_term)
+        store.wl(lambda core: core.set_hardstate(hs))
         cfg = new_test_config(1, 5, 1)
-        sm = new_test_raft_with_config(cfg, store.make_ref(), l.make_ref())
+        sm = new_test_raft_with_config(cfg, store, l)
 
         for j, v in enumerate(matches):
             id = j + 1
-            if not sm.raft.make_ref().prs().get(id):
-                sm.raft.make_ref().apply_conf_change(add_node(id))
-                pr = sm.raft.make_ref().prs().get(id)
+            if not sm.raft.prs().get(id):
+                sm.raft.apply_conf_change(add_node(id))
+                pr = sm.raft.prs().get(id)
                 pr.set_matched(v)
                 pr.set_next_idx(v + 1)
 
-        sm.raft.make_ref().maybe_commit()
+        sm.raft.maybe_commit()
         assert (
             sm.raft_log.get_committed() == w
         ), f"#{i}: committed = {sm.raft_log.get_committed()}, want {w}"
@@ -1166,12 +1152,12 @@ def test_pass_election_timeout():
     for i, v in enumerate(tests):
         elapse, wprobability, round = v.elapse, v.wprobability, v.round
         storage = new_storage()
-        sm = new_test_raft(1, [1], 10, 1, storage.make_ref(), l.make_ref())
-        sm.raft.make_ref().set_election_elapsed(elapse)
+        sm = new_test_raft(1, [1], 10, 1, storage, l)
+        sm.raft.set_election_elapsed(elapse)
         c = 0
         for _ in range(0, 10000):
-            sm.raft.make_ref().reset_randomized_election_timeout()
-            if sm.raft.make_ref().pass_election_timeout():
+            sm.raft.reset_randomized_election_timeout()
+            if sm.raft.pass_election_timeout():
                 c += 1
         got = c / 10000.0
         if round:
@@ -1197,16 +1183,16 @@ def test_handle_msg_append():
         ents: Optional[List[Tuple[int, int]]],
     ) -> Message_Owner:
         m = Message_Owner.default()
-        m.make_ref().set_msg_type(MessageType.MsgAppend)
-        m.make_ref().set_term(term)
-        m.make_ref().set_log_term(log_term)
-        m.make_ref().set_index(index)
-        m.make_ref().set_commit(commit)
+        m.set_msg_type(MessageType.MsgAppend)
+        m.set_term(term)
+        m.set_log_term(log_term)
+        m.set_index(index)
+        m.set_commit(commit)
 
         if ents:
             print("ents", ents)
             ents = list(map(lambda item: empty_entry(item[1], item[0]), ents))
-            m.make_ref().set_entries(ents)
+            m.set_entries(ents)
         return m
 
     class Test:
@@ -1247,13 +1233,13 @@ def test_handle_msg_append():
             [1],
             10,
             1,
-            storage.make_ref(),
+            storage,
             [empty_entry(1, 1), empty_entry(2, 2)],
-            l.make_ref(),
+            l,
         )
 
-        sm.raft.make_ref().become_follower(2, INVALID_ID)
-        sm.raft.make_ref().handle_append_entries(m.make_ref())
+        sm.raft.become_follower(2, INVALID_ID)
+        sm.raft.handle_append_entries(m)
 
         assert (
             sm.raft_log.last_index() == w_index
@@ -1267,8 +1253,8 @@ def test_handle_msg_append():
         assert len(m) == 1, f"#{j}: msg count = {len(m)}, want 1"
 
         assert (
-            m[0].make_ref().get_reject() == w_reject
-        ), f"#{j}: reject = {m[0].make_ref().get_reject()}, want {w_reject}"
+            m[0].get_reject() == w_reject
+        ), f"#{j}: reject = {m[0].get_reject()}, want {w_reject}"
 
 
 # test_handle_heartbeat ensures that the follower commits to the commit in the message.
@@ -1283,8 +1269,8 @@ def test_handle_heartbeat():
         commit: int,
     ) -> Message_Owner:
         m = new_message(f, to, MessageType.MsgHeartbeat, 0)
-        m.make_ref().set_term(term)
-        m.make_ref().set_commit(commit)
+        m.set_term(term)
+        m.set_commit(commit)
 
         return m
 
@@ -1301,8 +1287,8 @@ def test_handle_heartbeat():
     for i, v in enumerate(tests):
         m, w_commit = v.m, v.w_commit
         cs = ConfState_Owner([1, 2], [])
-        store = MemStorage_Owner.new_with_conf_state(cs.make_ref())
-        store.make_ref().wl(
+        store = MemStorage_Owner.new_with_conf_state(cs)
+        store.wl(
             lambda core: core.append(
                 [
                     empty_entry(1, 1),
@@ -1313,10 +1299,10 @@ def test_handle_heartbeat():
         )
 
         cfg = new_test_config(1, 5, 1)
-        sm = new_test_raft_with_config(cfg, store.make_ref(), l.make_ref())
-        sm.raft.make_ref().become_follower(2, 2)
+        sm = new_test_raft_with_config(cfg, store, l)
+        sm.raft.become_follower(2, 2)
         sm.raft_log.commit_to(commit)
-        sm.raft.make_ref().handle_heartbeat(m.make_ref())
+        sm.raft.handle_heartbeat(m)
         assert (
             sm.raft_log.get_committed() == w_commit
         ), f"#{i}: committed = {sm.raft_log.get_committed()}, want {w_commit}"
@@ -1324,15 +1310,15 @@ def test_handle_heartbeat():
         m = sm.read_messages()
         assert len(m) == 1, f"#{i}: msg count = {len(m)}, want 1"
         assert (
-            m[0].make_ref().get_msg_type() == MessageType.MsgHeartbeatResponse
-        ), f"#{i}: msg type = {m[0].make_ref().get_msg_type()}, want {MessageType.MsgHeartbeatResponse}"
+            m[0].get_msg_type() == MessageType.MsgHeartbeatResponse
+        ), f"#{i}: msg type = {m[0].get_msg_type()}, want {MessageType.MsgHeartbeatResponse}"
 
 
 # test_handle_heartbeat_resp ensures that we re-send log entries when we get a heartbeat response.
 def test_handle_heartbeat_resp():
     l = default_logger()
     store = new_storage()
-    store.make_ref().wl(
+    store.wl(
         lambda core: core.append(
             [
                 empty_entry(1, 1),
@@ -1342,9 +1328,9 @@ def test_handle_heartbeat_resp():
         )
     )
 
-    sm = new_test_raft(1, [1, 2], 5, 1, store.make_ref(), l.make_ref())
-    sm.raft.make_ref().become_candidate()
-    sm.raft.make_ref().become_leader()
+    sm = new_test_raft(1, [1, 2], 5, 1, store, l)
+    sm.raft.become_candidate()
+    sm.raft.become_leader()
 
     last_index = sm.raft_log.last_index()
     sm.raft_log.commit_to(last_index)
@@ -1353,19 +1339,17 @@ def test_handle_heartbeat_resp():
     sm.step(new_message(2, 0, MessageType.MsgHeartbeatResponse, 0))
     msgs = sm.read_messages()
     assert len(msgs) == 1
-    assert msgs[0].make_ref().get_msg_type() == MessageType.MsgAppend
+    assert msgs[0].get_msg_type() == MessageType.MsgAppend
 
     # A second heartbeat response generates another MsgApp re-send
     sm.step(new_message(2, 0, MessageType.MsgHeartbeatResponse, 0))
     msgs = sm.read_messages()
     assert len(msgs) == 1
-    assert msgs[0].make_ref().get_msg_type() == MessageType.MsgAppend
+    assert msgs[0].get_msg_type() == MessageType.MsgAppend
 
     # Once we have an MsgAppResp, heartbeats no longer send MsgApp.
     m = new_message(2, 0, MessageType.MsgAppendResponse, 0)
-    m.make_ref().set_index(
-        msgs[0].make_ref().get_index() + len(msgs[0].make_ref().get_entries())
-    )
+    m.set_index(msgs[0].get_index() + len(msgs[0].get_entries()))
 
     sm.step(m)
     # Consume the message sent in response to MsgAppResp
@@ -1382,10 +1366,10 @@ def test_handle_heartbeat_resp():
 def test_raft_frees_read_only_mem():
     l = default_logger()
     storage = new_storage()
-    sm = new_test_raft(1, [1, 2], 5, 1, storage.make_ref(), l.make_ref())
+    sm = new_test_raft(1, [1, 2], 5, 1, storage, l)
 
-    sm.raft.make_ref().become_candidate()
-    sm.raft.make_ref().become_leader()
+    sm.raft.become_candidate()
+    sm.raft.become_leader()
     last_index = sm.raft_log.last_index()
     sm.raft_log.commit_to(last_index)
 
@@ -1397,21 +1381,21 @@ def test_raft_frees_read_only_mem():
     sm.step(m)
     msgs = sm.read_messages()
     assert len(msgs) == 1
-    assert msgs[0].make_ref().get_msg_type() == MessageType.MsgHeartbeat
-    assert msgs[0].make_ref().get_context() == vec_ctx
-    assert len(sm.raft.make_ref().get_readonly_read_index_queue()) == 1
+    assert msgs[0].get_msg_type() == MessageType.MsgHeartbeat
+    assert msgs[0].get_context() == vec_ctx
+    assert len(sm.raft.get_readonly_read_index_queue()) == 1
     # TODO: Resolve below tests
-    # assert sm.raft.make_ref().get_read_only_pending_read_index() == 1
+    # assert sm.raft.get_read_only_pending_read_index() == 1
 
     # heartbeat responses from majority of followers (1 in this case)
     # acknowledge the authority of the leader.
     # more info: raft dissertation 6.4, step 3.
     m = new_message(2, 1, MessageType.MsgHeartbeatResponse, 0)
-    m.make_ref().set_context(vec_ctx)
+    m.set_context(vec_ctx)
     sm.step(m)
-    assert len(sm.raft.make_ref().get_readonly_read_index_queue()) == 0
+    assert len(sm.raft.get_readonly_read_index_queue()) == 0
     # TODO: Resolve below tests
-    # assert sm.raft.make_ref().get_read_only_pending_read_index() == 0
+    # assert sm.raft.get_read_only_pending_read_index() == 0
 
 
 # test_msg_append_response_wait_reset verifies the waitReset behavior of a leader
@@ -1419,19 +1403,19 @@ def test_raft_frees_read_only_mem():
 def test_msg_append_response_wait_reset():
     l = default_logger()
     storage = new_storage()
-    sm = new_test_raft(1, [1, 2, 3], 5, 1, storage.make_ref(), l.make_ref())
-    sm.raft.make_ref().become_candidate()
-    sm.raft.make_ref().become_leader()
+    sm = new_test_raft(1, [1, 2, 3], 5, 1, storage, l)
+    sm.raft.become_candidate()
+    sm.raft.become_leader()
     # For no-op entry
     sm.persist()
     # The new leader has just emitted a new Term 4 entry; consume those messages
     # from the outgoing queue.
-    sm.raft.make_ref().bcast_append()
+    sm.raft.bcast_append()
     sm.read_messages()
 
     # Node 2 acks the first entry, making it committed.
     m = new_message(2, 1, MessageType.MsgAppendResponse, 0)
-    m.make_ref().set_index(1)
+    m.set_index(1)
     sm.step(m)
     assert sm.raft_log.get_committed() == 1
     # Also consume the MsgApp messages that update Commit on the followers.
@@ -1439,7 +1423,7 @@ def test_msg_append_response_wait_reset():
 
     # A new command is now proposed on node 1.
     m = new_message(1, 1, MessageType.MsgPropose, 0)
-    m.make_ref().set_entries([empty_entry(0, 0)])
+    m.set_entries([empty_entry(0, 0)])
     sm.step(m)
     sm.persist()
 
@@ -1447,21 +1431,21 @@ def test_msg_append_response_wait_reset():
     # Node 2 left the wait state due to its MsgAppResp, but node 3 is still waiting.
     msgs = sm.read_messages()
     assert len(msgs) == 1
-    assert msgs[0].make_ref().get_msg_type() == MessageType.MsgAppend
-    assert msgs[0].make_ref().get_to() == 2
-    assert len(msgs[0].make_ref().get_entries()) == 1
-    assert msgs[0].make_ref().get_entries()[0].get_index() == 2
+    assert msgs[0].get_msg_type() == MessageType.MsgAppend
+    assert msgs[0].get_to() == 2
+    assert len(msgs[0].get_entries()) == 1
+    assert msgs[0].get_entries()[0].get_index() == 2
 
     # Now Node 3 acks the first entry. This releases the wait and entry 2 is sent.
     m = new_message(3, 0, MessageType.MsgAppendResponse, 0)
-    m.make_ref().set_index(1)
+    m.set_index(1)
     sm.step(m)
     msgs = sm.read_messages()
     assert len(msgs) == 1
-    assert msgs[0].make_ref().get_msg_type() == MessageType.MsgAppend
-    assert msgs[0].make_ref().get_to() == 3
-    assert len(msgs[0].make_ref().get_entries()) == 1
-    assert msgs[0].make_ref().get_entries()[0].get_index() == 2
+    assert msgs[0].get_msg_type() == MessageType.MsgAppend
+    assert msgs[0].get_to() == 3
+    assert len(msgs[0].get_entries()) == 1
+    assert msgs[0].get_entries()[0].get_index() == 2
 
 
 # test_recv_msg_request_vote
@@ -1517,17 +1501,17 @@ def test_recv_msg_request_vote_for_type(msg_type: MessageType):
             v.w_reject,
         )
         cs = ConfState_Owner([1], [])
-        store = MemStorage_Owner.new_with_conf_state(cs.make_ref())
+        store = MemStorage_Owner.new_with_conf_state(cs)
         ents = [empty_entry(2, 1), empty_entry(2, 2)]
-        store.make_ref().wl(lambda core: core.append(ents))
+        store.wl(lambda core: core.append(ents))
 
-        sm = new_test_raft(1, [1], 10, 1, store.make_ref(), l.make_ref())
-        sm.raft.make_ref().set_state(state)
-        sm.raft.make_ref().set_vote(vote_for)
+        sm = new_test_raft(1, [1], 10, 1, store, l)
+        sm.raft.set_state(state)
+        sm.raft.set_vote(vote_for)
 
         m = new_message(2, 0, msg_type, 0)
-        m.make_ref().set_index(index)
-        m.make_ref().set_log_term(log_term)
+        m.set_index(index)
+        m.set_log_term(log_term)
         # raft.Term is greater than or equal to raft.raftLog.lastTerm. In this
         # test we're only testing MsgVote responses when the campaigning node
         # has a different raft log compared to the recipient node.
@@ -1537,20 +1521,20 @@ def test_recv_msg_request_vote_for_type(msg_type: MessageType):
         # different term number, so we simply initialize both term numbers to
         # be the same.
         term = max(sm.raft_log.last_term(), log_term)
-        m.make_ref().set_term(term)
-        sm.raft.make_ref().set_term(term)
+        m.set_term(term)
+        sm.raft.set_term(term)
         sm.step(m)
 
         msgs = sm.read_messages()
         assert len(msgs) == 1, f"#{j}: msgs count = {len(msgs)}, want 1"
 
-        assert msgs[0].make_ref().get_msg_type() == vote_resp_msg_type(
+        assert msgs[0].get_msg_type() == vote_resp_msg_type(
             msg_type
-        ), f"#{j}: m.type = {msgs[0].make_ref().get_msg_type()}, want {vote_resp_msg_type(msg_type)}"
+        ), f"#{j}: m.type = {msgs[0].get_msg_type()}, want {vote_resp_msg_type(msg_type)}"
 
         assert (
-            msgs[0].make_ref().get_reject() == w_reject
-        ), f"#{j}: m.reject = {msgs[0].make_ref().get_reject()}, want {w_reject}"
+            msgs[0].get_reject() == w_reject
+        ), f"#{j}: m.reject = {msgs[0].get_reject()}, want {w_reject}"
 
 
 def test_state_transition():
@@ -1587,20 +1571,20 @@ def test_state_transition():
     for i, v in enumerate(tests):
         from_, to, wallow, wterm, wlead = v.from_, v.to, v.wallow, v.wterm, v.wlead
         storage = new_storage()
-        sm = new_test_raft(1, [1], 10, 1, storage.make_ref(), l.make_ref())
-        sm.raft.make_ref().set_state(from_)
+        sm = new_test_raft(1, [1], 10, 1, storage, l)
+        sm.raft.set_state(from_)
 
         is_ok = False
 
         try:
             if to == StateRole.Follower:
-                sm.make_ref().become_follower(wterm, wlead)
+                sm.become_follower(wterm, wlead)
             elif to == StateRole.PreCandidate:
-                sm.make_ref().become_pre_candidate()
+                sm.become_pre_candidate()
             elif to == StateRole.Candidate:
-                sm.make_ref().become_candidate()
+                sm.become_candidate()
             elif to == StateRole.Leader:
-                sm.make_ref().become_leader()
+                sm.become_leader()
 
             is_ok = True
         except Exception:
@@ -1609,12 +1593,12 @@ def test_state_transition():
         assert is_ok ^ wallow, f"#{i}: allow = {is_ok}, want {wallow}"
 
         assert (
-            sm.raft.make_ref().get_term() == wterm
-        ), f"#{i}: state = {sm.raft.make_ref().get_term()}, want {wterm}"
+            sm.raft.get_term() == wterm
+        ), f"#{i}: state = {sm.raft.get_term()}, want {wterm}"
 
         assert (
-            sm.raft.make_ref().get_leader_id() == wlead
-        ), f"#{i}: state = {sm.raft.make_ref().get_leader_id()}, want {wlead}"
+            sm.raft.get_leader_id() == wlead
+        ), f"#{i}: state = {sm.raft.get_leader_id()}, want {wlead}"
 
 
 def test_all_server_stepdown():
@@ -1659,31 +1643,31 @@ def test_all_server_stepdown():
             v.entries,
         )
         storage = new_storage()
-        sm = new_test_raft(1, [1, 2, 3], 10, 1, storage.make_ref(), l.make_ref())
+        sm = new_test_raft(1, [1, 2, 3], 10, 1, storage, l)
 
         if state == StateRole.Follower:
-            sm.raft.make_ref().become_follower(1, INVALID_ID)
+            sm.raft.become_follower(1, INVALID_ID)
         elif state == StateRole.PreCandidate:
-            sm.raft.make_ref().become_pre_candidate()
+            sm.raft.become_pre_candidate()
         elif state == StateRole.Candidate:
-            sm.raft.make_ref().become_candidate()
+            sm.raft.become_candidate()
         elif state == StateRole.Leader:
-            sm.raft.make_ref().become_candidate()
-            sm.raft.make_ref().become_leader()
+            sm.raft.become_candidate()
+            sm.raft.become_leader()
 
         for j, msg_type in enumerate(tmsg_types):
             m = new_message(2, 0, msg_type, 0)
-            m.make_ref().set_term(tterm)
-            m.make_ref().set_log_term(tterm)
+            m.set_term(tterm)
+            m.set_log_term(tterm)
             sm.step(m)
 
             assert (
-                sm.raft.make_ref().get_state() == wstate
-            ), f"{i}.{j} state = {sm.raft.make_ref().get_state()}, want {wstate}"
+                sm.raft.get_state() == wstate
+            ), f"{i}.{j} state = {sm.raft.get_state()}, want {wstate}"
 
             assert (
-                sm.raft.make_ref().get_term() == wterm
-            ), f"{i}.{j} term = {sm.raft.make_ref().get_term()}, want {wterm}"
+                sm.raft.get_term() == wterm
+            ), f"{i}.{j} term = {sm.raft.get_term()}, want {wterm}"
 
             assert (
                 sm.raft_log.last_index() == windex
@@ -1697,8 +1681,8 @@ def test_all_server_stepdown():
             wlead = INVALID_ID if msg_type == MessageType.MsgRequestVote else 2
 
             assert (
-                sm.raft.make_ref().get_leader_id() == wlead
-            ), f"{i}.{j} lead = {sm.raft.make_ref().get_leader_id()}, want {INVALID_ID}"
+                sm.raft.get_leader_id() == wlead
+            ), f"{i}.{j} lead = {sm.raft.get_leader_id()}, want {INVALID_ID}"
 
 
 # test_candidate_reset_term tests when a candidate receives a
@@ -1713,181 +1697,170 @@ def test_all_server_stepdown():
 def test_candidate_reset_term(message_type: MessageType):
     l = default_logger()
     a_storage = new_storage()
-    a = new_test_raft(1, [1, 2, 3], 10, 1, a_storage.make_ref(), l.make_ref())
+    a = new_test_raft(1, [1, 2, 3], 10, 1, a_storage, l)
     b_storage = new_storage()
-    b = new_test_raft(2, [1, 2, 3], 10, 1, b_storage.make_ref(), l.make_ref())
+    b = new_test_raft(2, [1, 2, 3], 10, 1, b_storage, l)
     c_storage = new_storage()
-    c = new_test_raft(3, [1, 2, 3], 10, 1, c_storage.make_ref(), l.make_ref())
+    c = new_test_raft(3, [1, 2, 3], 10, 1, c_storage, l)
 
     nt = Network.new([a, b, c], l)
     nt.send([new_message(1, 1, MessageType.MsgHup, 0)])
 
-    assert nt.peers.get(1).raft.make_ref().get_state() == StateRole.Leader
-    assert nt.peers.get(2).raft.make_ref().get_state() == StateRole.Follower
-    assert nt.peers.get(3).raft.make_ref().get_state() == StateRole.Follower
+    assert nt.peers.get(1).raft.get_state() == StateRole.Leader
+    assert nt.peers.get(2).raft.get_state() == StateRole.Follower
+    assert nt.peers.get(3).raft.get_state() == StateRole.Follower
 
     # isolate 3 and increase term in rest
     nt.isolate(3)
     nt.send([new_message(2, 2, MessageType.MsgHup, 0)])
     nt.send([new_message(1, 1, MessageType.MsgHup, 0)])
 
-    assert nt.peers.get(1).raft.make_ref().get_state() == StateRole.Leader
-    assert nt.peers.get(2).raft.make_ref().get_state() == StateRole.Follower
-    assert nt.peers.get(3).raft.make_ref().get_state() == StateRole.Follower
+    assert nt.peers.get(1).raft.get_state() == StateRole.Leader
+    assert nt.peers.get(2).raft.get_state() == StateRole.Follower
+    assert nt.peers.get(3).raft.get_state() == StateRole.Follower
 
     # trigger campaign in isolated c
-    nt.peers.get(3).raft.make_ref().reset_randomized_election_timeout()
-    timeout = nt.peers.get(3).raft.make_ref().randomized_election_timeout()
+    nt.peers.get(3).raft.reset_randomized_election_timeout()
+    timeout = nt.peers.get(3).raft.randomized_election_timeout()
     for _ in range(0, timeout):
-        nt.peers.get(3).raft.make_ref().tick()
+        nt.peers.get(3).raft.tick()
 
-    assert nt.peers.get(3).raft.make_ref().get_state() == StateRole.Candidate
+    assert nt.peers.get(3).raft.get_state() == StateRole.Candidate
 
     nt.recover()
 
     # leader sends to isolated candidate
     # and expects candidate to revert to follower
     msg = new_message(1, 3, message_type, 0)
-    msg.make_ref().set_term(nt.peers.get(1).raft.make_ref().get_term())
+    msg.set_term(nt.peers.get(1).raft.get_term())
     nt.send([msg])
 
-    assert nt.peers.get(3).raft.make_ref().get_state() == StateRole.Follower
+    assert nt.peers.get(3).raft.get_state() == StateRole.Follower
 
     # follower c term is reset with leader's
     assert (
-        nt.peers.get(3).raft.make_ref().get_term()
-        == nt.peers.get(1).raft.make_ref().get_term()
-    ), f"follower term expected same term as leader's {nt.peers.get(1).raft.make_ref().get_term()}, got {nt.peers.get(3).raft.make_ref().get_term()}"
+        nt.peers.get(3).raft.get_term() == nt.peers.get(1).raft.get_term()
+    ), f"follower term expected same term as leader's {nt.peers.get(1).raft.get_term()}, got {nt.peers.get(3).raft.get_term()}"
 
 
 def test_leader_stepdown_when_quorum_active():
     l = default_logger()
     storage = new_storage()
-    sm = new_test_raft(1, [1, 2, 3], 5, 1, storage.make_ref(), l.make_ref())
-    sm.raft.make_ref().set_check_quorum(True)
-    sm.raft.make_ref().become_candidate()
-    sm.raft.make_ref().become_leader()
+    sm = new_test_raft(1, [1, 2, 3], 5, 1, storage, l)
+    sm.raft.set_check_quorum(True)
+    sm.raft.become_candidate()
+    sm.raft.become_leader()
 
-    for _ in range(0, sm.raft.make_ref().election_timeout()):
+    for _ in range(0, sm.raft.election_timeout()):
         m = new_message(2, 0, MessageType.MsgHeartbeatResponse, 0)
-        m.make_ref().set_term(sm.raft.make_ref().get_term())
+        m.set_term(sm.raft.get_term())
         sm.step(m)
-        sm.raft.make_ref().tick()
+        sm.raft.tick()
 
-    assert sm.raft.make_ref().get_state() == StateRole.Leader
+    assert sm.raft.get_state() == StateRole.Leader
 
 
 def test_leader_stepdown_when_quorum_lost():
     l = default_logger()
     storage = new_storage()
-    sm = new_test_raft(1, [1, 2, 3], 5, 1, storage.make_ref(), l.make_ref())
-    sm.raft.make_ref().set_check_quorum(True)
-    sm.raft.make_ref().become_candidate()
-    sm.raft.make_ref().become_leader()
+    sm = new_test_raft(1, [1, 2, 3], 5, 1, storage, l)
+    sm.raft.set_check_quorum(True)
+    sm.raft.become_candidate()
+    sm.raft.become_leader()
 
-    for _ in range(0, sm.raft.make_ref().election_timeout()):
-        sm.raft.make_ref().tick()
+    for _ in range(0, sm.raft.election_timeout()):
+        sm.raft.tick()
 
-    assert sm.raft.make_ref().get_state() == StateRole.Follower
+    assert sm.raft.get_state() == StateRole.Follower
 
 
 def test_leader_superseding_with_check_quorum():
     l = default_logger()
     a_storage = new_storage()
-    a = new_test_raft(1, [1, 2, 3], 10, 1, a_storage.make_ref(), l.make_ref())
+    a = new_test_raft(1, [1, 2, 3], 10, 1, a_storage, l)
     b_storage = new_storage()
-    b = new_test_raft(2, [1, 2, 3], 10, 1, b_storage.make_ref(), l.make_ref())
+    b = new_test_raft(2, [1, 2, 3], 10, 1, b_storage, l)
     c_storage = new_storage()
-    c = new_test_raft(3, [1, 2, 3], 10, 1, c_storage.make_ref(), l.make_ref())
+    c = new_test_raft(3, [1, 2, 3], 10, 1, c_storage, l)
 
-    a.raft.make_ref().set_check_quorum(True)
-    b.raft.make_ref().set_check_quorum(True)
-    c.raft.make_ref().set_check_quorum(True)
+    a.raft.set_check_quorum(True)
+    b.raft.set_check_quorum(True)
+    c.raft.set_check_quorum(True)
 
     nt = Network.new([a, b, c], l)
-    b_election_timeout = nt.peers.get(2).raft.make_ref().election_timeout()
+    b_election_timeout = nt.peers.get(2).raft.election_timeout()
 
     # prevent campaigning from b
-    nt.peers.get(2).raft.make_ref().set_randomized_election_timeout(
-        b_election_timeout + 1
-    )
+    nt.peers.get(2).raft.set_randomized_election_timeout(b_election_timeout + 1)
 
     for _ in range(0, b_election_timeout):
-        nt.peers.get(2).raft.make_ref().tick()
+        nt.peers.get(2).raft.tick()
 
     nt.send([new_message(1, 1, MessageType.MsgHup, 0)])
 
-    assert nt.peers.get(1).raft.make_ref().get_state() == StateRole.Leader
-    assert nt.peers.get(3).raft.make_ref().get_state() == StateRole.Follower
+    assert nt.peers.get(1).raft.get_state() == StateRole.Leader
+    assert nt.peers.get(3).raft.get_state() == StateRole.Follower
 
     nt.send([new_message(3, 3, MessageType.MsgHup, 0)])
     # Peer b rejected c's vote since its electionElapsed had not reached to electionTimeout
 
-    assert nt.peers.get(3).raft.make_ref().get_state() == StateRole.Candidate
+    assert nt.peers.get(3).raft.get_state() == StateRole.Candidate
 
     # Letting b's electionElapsed reach to electionTimeout
     for _ in range(0, b_election_timeout):
-        nt.peers.get(2).raft.make_ref().tick()
+        nt.peers.get(2).raft.tick()
 
     nt.send([new_message(3, 3, MessageType.MsgHup, 0)])
-    assert nt.peers.get(3).raft.make_ref().get_state() == StateRole.Leader
+    assert nt.peers.get(3).raft.get_state() == StateRole.Leader
 
 
 def test_leader_election_with_check_quorum():
     l = default_logger()
     a_storage = new_storage()
-    a = new_test_raft(1, [1, 2, 3], 10, 1, a_storage.make_ref(), l.make_ref())
+    a = new_test_raft(1, [1, 2, 3], 10, 1, a_storage, l)
     b_storage = new_storage()
-    b = new_test_raft(2, [1, 2, 3], 10, 1, b_storage.make_ref(), l.make_ref())
+    b = new_test_raft(2, [1, 2, 3], 10, 1, b_storage, l)
     c_storage = new_storage()
-    c = new_test_raft(3, [1, 2, 3], 10, 1, c_storage.make_ref(), l.make_ref())
+    c = new_test_raft(3, [1, 2, 3], 10, 1, c_storage, l)
 
-    a.raft.make_ref().set_check_quorum(True)
-    b.raft.make_ref().set_check_quorum(True)
-    c.raft.make_ref().set_check_quorum(True)
+    a.raft.set_check_quorum(True)
+    b.raft.set_check_quorum(True)
+    c.raft.set_check_quorum(True)
 
     nt = Network.new([a, b, c], l)
 
     # we can not let system choosing the value of randomizedElectionTimeout
     # otherwise it will introduce some uncertainty into this test case
     # we need to ensure randomizedElectionTimeout > electionTimeout here
-    a_election_timeout = nt.peers.get(1).raft.make_ref().election_timeout()
-    b_election_timeout = nt.peers.get(2).raft.make_ref().election_timeout()
-    nt.peers.get(1).raft.make_ref().set_randomized_election_timeout(
-        a_election_timeout + 1
-    )
-    nt.peers.get(2).raft.make_ref().set_randomized_election_timeout(
-        b_election_timeout + 2
-    )
+    a_election_timeout = nt.peers.get(1).raft.election_timeout()
+    b_election_timeout = nt.peers.get(2).raft.election_timeout()
+    nt.peers.get(1).raft.set_randomized_election_timeout(a_election_timeout + 1)
+    nt.peers.get(2).raft.set_randomized_election_timeout(b_election_timeout + 2)
 
     # Immediately after creation, votes are cast regardless of the election timeout
 
     nt.send([new_message(1, 1, MessageType.MsgHup, 0)])
 
-    assert nt.peers.get(1).raft.make_ref().get_state() == StateRole.Leader
-    assert nt.peers.get(3).raft.make_ref().get_state() == StateRole.Follower
+    assert nt.peers.get(1).raft.get_state() == StateRole.Leader
+    assert nt.peers.get(3).raft.get_state() == StateRole.Follower
 
     # need to reset randomizedElectionTimeout larger than electionTimeout again,
     # because the value might be reset to electionTimeout since the last state changes
-    a_election_timeout = nt.peers.get(1).raft.make_ref().election_timeout()
-    b_election_timeout = nt.peers.get(2).raft.make_ref().election_timeout()
-    nt.peers.get(1).raft.make_ref().set_randomized_election_timeout(
-        a_election_timeout + 1
-    )
-    nt.peers.get(2).raft.make_ref().set_randomized_election_timeout(
-        b_election_timeout + 2
-    )
+    a_election_timeout = nt.peers.get(1).raft.election_timeout()
+    b_election_timeout = nt.peers.get(2).raft.election_timeout()
+    nt.peers.get(1).raft.set_randomized_election_timeout(a_election_timeout + 1)
+    nt.peers.get(2).raft.set_randomized_election_timeout(b_election_timeout + 2)
 
     for _ in range(0, a_election_timeout):
-        nt.peers.get(1).raft.make_ref().tick()
+        nt.peers.get(1).raft.tick()
 
     for _ in range(0, b_election_timeout):
-        nt.peers.get(2).raft.make_ref().tick()
+        nt.peers.get(2).raft.tick()
 
     nt.send([new_message(3, 3, MessageType.MsgHup, 0)])
 
-    assert nt.peers.get(1).raft.make_ref().get_state() == StateRole.Follower
-    assert nt.peers.get(3).raft.make_ref().get_state() == StateRole.Leader
+    assert nt.peers.get(1).raft.get_state() == StateRole.Follower
+    assert nt.peers.get(3).raft.get_state() == StateRole.Leader
 
 
 # test_free_stuck_candidate_with_check_quorum ensures that a candidate with a higher term
@@ -1896,101 +1869,88 @@ def test_leader_election_with_check_quorum():
 def test_free_stuck_candidate_with_check_quorum():
     l = default_logger()
     a_storage = new_storage()
-    a = new_test_raft(1, [1, 2, 3], 10, 1, a_storage.make_ref(), l.make_ref())
+    a = new_test_raft(1, [1, 2, 3], 10, 1, a_storage, l)
     b_storage = new_storage()
-    b = new_test_raft(2, [1, 2, 3], 10, 1, b_storage.make_ref(), l.make_ref())
+    b = new_test_raft(2, [1, 2, 3], 10, 1, b_storage, l)
     c_storage = new_storage()
-    c = new_test_raft(3, [1, 2, 3], 10, 1, c_storage.make_ref(), l.make_ref())
+    c = new_test_raft(3, [1, 2, 3], 10, 1, c_storage, l)
 
-    a.raft.make_ref().set_check_quorum(True)
-    b.raft.make_ref().set_check_quorum(True)
-    c.raft.make_ref().set_check_quorum(True)
+    a.raft.set_check_quorum(True)
+    b.raft.set_check_quorum(True)
+    c.raft.set_check_quorum(True)
 
     nt = Network.new([a, b, c], l)
 
     # we can not let system choosing the value of randomizedElectionTimeout
     # otherwise it will introduce some uncertainty into this test case
     # we need to ensure randomizedElectionTimeout > electionTimeout here
-    b_election_timeout = nt.peers.get(2).raft.make_ref().election_timeout()
-    nt.peers.get(2).raft.make_ref().set_randomized_election_timeout(
-        b_election_timeout + 1
-    )
+    b_election_timeout = nt.peers.get(2).raft.election_timeout()
+    nt.peers.get(2).raft.set_randomized_election_timeout(b_election_timeout + 1)
 
     for _ in range(0, b_election_timeout):
-        nt.peers.get(2).raft.make_ref().tick()
+        nt.peers.get(2).raft.tick()
 
     nt.send([new_message(1, 1, MessageType.MsgHup, 0)])
     nt.isolate(1)
     nt.send([new_message(3, 3, MessageType.MsgHup, 0)])
 
-    assert nt.peers.get(2).raft.make_ref().get_state() == StateRole.Follower
-    assert nt.peers.get(3).raft.make_ref().get_state() == StateRole.Candidate
-    assert (
-        nt.peers.get(3).raft.make_ref().get_term()
-        == nt.peers.get(2).raft.make_ref().get_term() + 1
-    )
+    assert nt.peers.get(2).raft.get_state() == StateRole.Follower
+    assert nt.peers.get(3).raft.get_state() == StateRole.Candidate
+    assert nt.peers.get(3).raft.get_term() == nt.peers.get(2).raft.get_term() + 1
 
     # Vote again for safety
     nt.send([new_message(3, 3, MessageType.MsgHup, 0)])
 
-    assert nt.peers.get(2).raft.make_ref().get_state() == StateRole.Follower
-    assert nt.peers.get(3).raft.make_ref().get_state() == StateRole.Candidate
-    assert (
-        nt.peers.get(3).raft.make_ref().get_term()
-        == nt.peers.get(2).raft.make_ref().get_term() + 2
-    )
+    assert nt.peers.get(2).raft.get_state() == StateRole.Follower
+    assert nt.peers.get(3).raft.get_state() == StateRole.Candidate
+    assert nt.peers.get(3).raft.get_term() == nt.peers.get(2).raft.get_term() + 2
 
     nt.recover()
     msg = new_message(1, 3, MessageType.MsgHeartbeat, 0)
-    msg.make_ref().set_term(nt.peers.get(3).raft.make_ref().get_term())
+    msg.set_term(nt.peers.get(3).raft.get_term())
     nt.send([msg])
 
     # Disrupt the leader so that the stuck peer is freed
-    assert nt.peers.get(1).raft.make_ref().get_state() == StateRole.Follower
-    assert (
-        nt.peers.get(3).raft.make_ref().get_term()
-        == nt.peers.get(1).raft.make_ref().get_term()
-    )
+    assert nt.peers.get(1).raft.get_state() == StateRole.Follower
+    assert nt.peers.get(3).raft.get_term() == nt.peers.get(1).raft.get_term()
 
     # Vote again, should become leader this time
     nt.send([new_message(3, 3, MessageType.MsgHup, 0)])
-    assert nt.peers.get(3).raft.make_ref().get_state() == StateRole.Leader
+    assert nt.peers.get(3).raft.get_state() == StateRole.Leader
 
 
 def test_non_promotable_voter_with_check_quorum():
     l = default_logger()
     a_storage = new_storage()
-    a = new_test_raft(1, [1, 2], 10, 1, a_storage.make_ref(), l.make_ref())
+    a = new_test_raft(1, [1, 2], 10, 1, a_storage, l)
     b_storage = new_storage()
-    b = new_test_raft(2, [1], 10, 1, b_storage.make_ref(), l.make_ref())
+    b = new_test_raft(2, [1], 10, 1, b_storage, l)
 
-    a.raft.make_ref().set_check_quorum(True)
-    b.raft.make_ref().set_check_quorum(True)
+    a.raft.set_check_quorum(True)
+    b.raft.set_check_quorum(True)
 
     nt = Network.new([a, b], l)
 
     # we can not let system choosing the value of randomizedElectionTimeout
     # otherwise it will introduce some uncertainty into this test case
     # we need to ensure randomizedElectionTimeout > electionTimeout here
-    b_election_timeout = nt.peers.get(2).raft.make_ref().election_timeout()
-    nt.peers.get(2).raft.make_ref().set_randomized_election_timeout(
-        b_election_timeout + 1
-    )
+    b_election_timeout = nt.peers.get(2).raft.election_timeout()
+    nt.peers.get(2).raft.set_randomized_election_timeout(b_election_timeout + 1)
 
     # Need to remove 2 again to make it a non-promotable node since newNetwork
     # overwritten some internal states
-    nt.peers.get(1).raft.make_ref().apply_conf_change(remove_node(2))
+    nt.peers.get(1).raft.apply_conf_change(remove_node(2))
 
-    assert not nt.peers.get(2).raft.make_ref().promotable()
+    assert not nt.peers.get(2).raft.promotable()
 
     for _ in range(0, b_election_timeout):
-        nt.peers.get(2).raft.make_ref().tick()
+        nt.peers.get(2).raft.tick()
 
     nt.send([new_message(1, 1, MessageType.MsgHup, 0)])
 
-    assert nt.peers.get(1).raft.make_ref().get_state() == StateRole.Leader
-    assert nt.peers.get(2).raft.make_ref().get_state() == StateRole.Follower
-    assert nt.peers.get(1).raft.make_ref().get_leader_id() == 1
+    assert nt.peers.get(1).raft.get_state() == StateRole.Leader
+    assert nt.peers.get(2).raft.get_state() == StateRole.Follower
+    assert nt.peers.get(1).raft.get_leader_id() == 1
 
 
 # `test_disruptive_follower` tests isolated follower,
@@ -2000,67 +1960,67 @@ def test_non_promotable_voter_with_check_quorum():
 def test_disruptive_follower():
     l = default_logger()
     n1_storage = new_storage()
-    n1 = new_test_raft(1, [1, 2, 3], 10, 1, n1_storage.make_ref(), l.make_ref())
+    n1 = new_test_raft(1, [1, 2, 3], 10, 1, n1_storage, l)
     n2_storage = new_storage()
-    n2 = new_test_raft(2, [1, 2, 3], 10, 1, n2_storage.make_ref(), l.make_ref())
+    n2 = new_test_raft(2, [1, 2, 3], 10, 1, n2_storage, l)
     n3_storage = new_storage()
-    n3 = new_test_raft(3, [1, 2, 3], 10, 1, n3_storage.make_ref(), l.make_ref())
+    n3 = new_test_raft(3, [1, 2, 3], 10, 1, n3_storage, l)
 
-    n1.raft.make_ref().set_check_quorum(True)
-    n2.raft.make_ref().set_check_quorum(True)
-    n3.raft.make_ref().set_check_quorum(True)
+    n1.raft.set_check_quorum(True)
+    n2.raft.set_check_quorum(True)
+    n3.raft.set_check_quorum(True)
 
-    n1.raft.make_ref().become_follower(1, INVALID_ID)
-    n2.raft.make_ref().become_follower(1, INVALID_ID)
-    n3.raft.make_ref().become_follower(1, INVALID_ID)
+    n1.raft.become_follower(1, INVALID_ID)
+    n2.raft.become_follower(1, INVALID_ID)
+    n3.raft.become_follower(1, INVALID_ID)
 
     nt = Network.new([n1, n2, n3], l)
     nt.send([new_message(1, 1, MessageType.MsgHup, 0)])
 
     # check state
-    assert nt.peers.get(1).raft.make_ref().get_state() == StateRole.Leader
-    assert nt.peers.get(2).raft.make_ref().get_state() == StateRole.Follower
-    assert nt.peers.get(3).raft.make_ref().get_state() == StateRole.Follower
+    assert nt.peers.get(1).raft.get_state() == StateRole.Leader
+    assert nt.peers.get(2).raft.get_state() == StateRole.Follower
+    assert nt.peers.get(3).raft.get_state() == StateRole.Follower
 
     # etcd server "advanceTicksForElection" on restart;
     # this is to expedite campaign trigger when given larger
     # election timeouts (e.g. multi-datacenter deploy)
     # Or leader messages are being delayed while ticks elapse
-    timeout = nt.peers.get(3).raft.make_ref().election_timeout()
-    nt.peers.get(3).raft.make_ref().set_randomized_election_timeout(timeout + 2)
-    timeout = nt.peers.get(3).raft.make_ref().randomized_election_timeout()
+    timeout = nt.peers.get(3).raft.election_timeout()
+    nt.peers.get(3).raft.set_randomized_election_timeout(timeout + 2)
+    timeout = nt.peers.get(3).raft.randomized_election_timeout()
 
     for _ in range(0, timeout - 1):
-        nt.peers.get(3).raft.make_ref().tick()
+        nt.peers.get(3).raft.tick()
 
     # ideally, before last election tick elapses,
     # the follower n3 receives "pb.MsgApp" or "pb.MsgHeartbeat"
     # from leader n1, and then resets its "electionElapsed"
     # however, last tick may elapse before receiving any
     # messages from leader, thus triggering campaign
-    nt.peers.get(3).raft.make_ref().tick()
+    nt.peers.get(3).raft.tick()
 
     # n1 is still leader yet
     # while its heartbeat to candidate n3 is being delayed
     # check state
-    assert nt.peers.get(1).raft.make_ref().get_state() == StateRole.Leader
-    assert nt.peers.get(2).raft.make_ref().get_state() == StateRole.Follower
-    assert nt.peers.get(3).raft.make_ref().get_state() == StateRole.Candidate
+    assert nt.peers.get(1).raft.get_state() == StateRole.Leader
+    assert nt.peers.get(2).raft.get_state() == StateRole.Follower
+    assert nt.peers.get(3).raft.get_state() == StateRole.Candidate
 
     # check term
     # n1.Term == 2
     # n2.Term == 2
     # n3.Term == 3
-    assert nt.peers.get(1).raft.make_ref().get_term() == 2
-    assert nt.peers.get(2).raft.make_ref().get_term() == 2
-    assert nt.peers.get(3).raft.make_ref().get_term() == 3
+    assert nt.peers.get(1).raft.get_term() == 2
+    assert nt.peers.get(2).raft.get_term() == 2
+    assert nt.peers.get(3).raft.get_term() == 3
 
     # while outgoing vote requests are still queued in n3,
     # leader heartbeat finally arrives at candidate n3
     # however, due to delayed network from leader, leader
     # heartbeat was sent with lower term than candidate's
     msg = new_message(1, 3, MessageType.MsgHeartbeat, 0)
-    msg.make_ref().set_term(2)
+    msg.set_term(2)
     nt.send([msg])
 
     # then candidate n3 responds with "pb.MsgAppResp" of higher term
@@ -2069,17 +2029,17 @@ def test_disruptive_follower():
     # with higher term can be freed with following election
 
     # check state
-    assert nt.peers.get(1).raft.make_ref().get_state() == StateRole.Follower
-    assert nt.peers.get(2).raft.make_ref().get_state() == StateRole.Follower
-    assert nt.peers.get(3).raft.make_ref().get_state() == StateRole.Candidate
+    assert nt.peers.get(1).raft.get_state() == StateRole.Follower
+    assert nt.peers.get(2).raft.get_state() == StateRole.Follower
+    assert nt.peers.get(3).raft.get_state() == StateRole.Candidate
 
     # check term
     # n1.Term == 3
     # n2.Term == 2
     # n3.Term == 3
-    assert nt.peers.get(1).raft.make_ref().get_term() == 3
-    assert nt.peers.get(2).raft.make_ref().get_term() == 2
-    assert nt.peers.get(3).raft.make_ref().get_term() == 3
+    assert nt.peers.get(1).raft.get_term() == 3
+    assert nt.peers.get(2).raft.get_term() == 2
+    assert nt.peers.get(3).raft.get_term() == 3
 
 
 # `test_disruptive_follower_pre_vote` tests isolated follower,
@@ -2090,33 +2050,27 @@ def test_disruptive_follower():
 def test_disruptive_follower_pre_vote():
     l = default_logger()
     n1_storage = new_storage()
-    n1 = new_test_raft_with_prevote(
-        1, [1, 2, 3], 10, 1, n1_storage.make_ref(), True, l.make_ref()
-    )
+    n1 = new_test_raft_with_prevote(1, [1, 2, 3], 10, 1, n1_storage, True, l)
     n2_storage = new_storage()
-    n2 = new_test_raft_with_prevote(
-        2, [1, 2, 3], 10, 1, n2_storage.make_ref(), True, l.make_ref()
-    )
+    n2 = new_test_raft_with_prevote(2, [1, 2, 3], 10, 1, n2_storage, True, l)
     n3_storage = new_storage()
-    n3 = new_test_raft_with_prevote(
-        3, [1, 2, 3], 10, 1, n3_storage.make_ref(), True, l.make_ref()
-    )
+    n3 = new_test_raft_with_prevote(3, [1, 2, 3], 10, 1, n3_storage, True, l)
 
-    n1.raft.make_ref().set_check_quorum(True)
-    n2.raft.make_ref().set_check_quorum(True)
-    n3.raft.make_ref().set_check_quorum(True)
+    n1.raft.set_check_quorum(True)
+    n2.raft.set_check_quorum(True)
+    n3.raft.set_check_quorum(True)
 
-    n1.raft.make_ref().become_follower(1, INVALID_ID)
-    n2.raft.make_ref().become_follower(1, INVALID_ID)
-    n3.raft.make_ref().become_follower(1, INVALID_ID)
+    n1.raft.become_follower(1, INVALID_ID)
+    n2.raft.become_follower(1, INVALID_ID)
+    n3.raft.become_follower(1, INVALID_ID)
 
     nt = Network.new([n1, n2, n3], l)
     nt.send([new_message(1, 1, MessageType.MsgHup, 0)])
 
     # check state
-    assert nt.peers.get(1).raft.make_ref().get_state() == StateRole.Leader
-    assert nt.peers.get(2).raft.make_ref().get_state() == StateRole.Follower
-    assert nt.peers.get(3).raft.make_ref().get_state() == StateRole.Follower
+    assert nt.peers.get(1).raft.get_state() == StateRole.Leader
+    assert nt.peers.get(2).raft.get_state() == StateRole.Follower
+    assert nt.peers.get(3).raft.get_state() == StateRole.Follower
 
     nt.isolate(3)
     nt.send([new_message(1, 1, MessageType.MsgPropose, 1)])
@@ -2127,51 +2081,49 @@ def test_disruptive_follower_pre_vote():
     nt.send([new_message(3, 3, MessageType.MsgHup, 0)])
 
     # check state
-    assert nt.peers.get(1).raft.make_ref().get_state() == StateRole.Leader
-    assert nt.peers.get(2).raft.make_ref().get_state() == StateRole.Follower
-    assert nt.peers.get(3).raft.make_ref().get_state() == StateRole.PreCandidate
+    assert nt.peers.get(1).raft.get_state() == StateRole.Leader
+    assert nt.peers.get(2).raft.get_state() == StateRole.Follower
+    assert nt.peers.get(3).raft.get_state() == StateRole.PreCandidate
 
     # check term
     # n1.Term == 2
     # n2.Term == 2
     # n3.Term == 2
-    assert nt.peers.get(1).raft.make_ref().get_term() == 2
-    assert nt.peers.get(2).raft.make_ref().get_term() == 2
-    assert nt.peers.get(3).raft.make_ref().get_term() == 2
+    assert nt.peers.get(1).raft.get_term() == 2
+    assert nt.peers.get(2).raft.get_term() == 2
+    assert nt.peers.get(3).raft.get_term() == 2
 
     # delayed leader heartbeat does not force current leader to step down
     msg = new_message(1, 3, MessageType.MsgHeartbeat, 0)
-    msg.make_ref().set_term(nt.peers.get(1).raft.make_ref().get_term())
+    msg.set_term(nt.peers.get(1).raft.get_term())
     nt.send([msg])
-    assert nt.peers.get(1).raft.make_ref().get_state() == StateRole.Leader
+    assert nt.peers.get(1).raft.get_state() == StateRole.Leader
 
 
 def test_read_only_option_safe():
     l = default_logger()
 
     storage_a = new_storage()
-    a = new_test_raft(1, [1, 2, 3], 10, 1, storage_a.make_ref(), l.make_ref())
+    a = new_test_raft(1, [1, 2, 3], 10, 1, storage_a, l)
     storage_b = new_storage()
-    b = new_test_raft(2, [1, 2, 3], 10, 1, storage_b.make_ref(), l.make_ref())
+    b = new_test_raft(2, [1, 2, 3], 10, 1, storage_b, l)
     storage_c = new_storage()
-    c = new_test_raft(3, [1, 2, 3], 10, 1, storage_c.make_ref(), l.make_ref())
+    c = new_test_raft(3, [1, 2, 3], 10, 1, storage_c, l)
 
     nt = Network.new([a, b, c], l)
 
     # we can not let system choose the value of randomizedElectionTimeout
     # otherwise it will introduce some uncertainty into this test case
     # we need to ensure randomizedElectionTimeout > electionTimeout here
-    b_election_timeout = b.raft.make_ref().election_timeout()
-    nt.peers.get(2).raft.make_ref().set_randomized_election_timeout(
-        b_election_timeout + 1
-    )
+    b_election_timeout = b.raft.election_timeout()
+    nt.peers.get(2).raft.set_randomized_election_timeout(b_election_timeout + 1)
 
     for _ in range(0, b_election_timeout):
-        nt.peers.get(2).raft.make_ref().tick()
+        nt.peers.get(2).raft.tick()
 
     nt.send([new_message(1, 1, MessageType.MsgHup, 0)])
 
-    assert nt.peers.get(1).raft.make_ref().get_state() == StateRole.Leader
+    assert nt.peers.get(1).raft.get_state() == StateRole.Leader
 
     class Test:
         def __init__(
@@ -2216,7 +2168,7 @@ def test_read_only_option_safe():
             nt.send([msg1.clone(), msg1.clone(), msg2.clone()])
 
         # TODO: Resolve `ReadState` not exposed issue and write remaining test codes.
-        # read_states = nt.peers.get(id).raft.make_ref().get_read_states()
+        # read_states = nt.peers.get(id).raft.get_read_states()
 
 
 # TODO: Resolve `ReadState` not exposed issue and write remaining test codes.
@@ -2292,42 +2244,42 @@ def test_leader_append_response():
         )
         # Initial raft logs: last index = 3, committed = 1.
         cs = ConfState_Owner([1, 2, 3], [])
-        store = MemStorage_Owner.new_with_conf_state(cs.make_ref())
+        store = MemStorage_Owner.new_with_conf_state(cs)
         ents = [empty_entry(0, 1), empty_entry(1, 2)]
-        store.make_ref().wl(lambda core: core.append(ents))
-        sm = new_test_raft(1, [1, 2, 3], 10, 1, store.make_ref(), l.make_ref())
+        store.wl(lambda core: core.append(ents))
+        sm = new_test_raft(1, [1, 2, 3], 10, 1, store, l)
         # sm term is 2 after it becomes the leader.
 
-        sm.raft.make_ref().become_candidate()
-        sm.raft.make_ref().become_leader()
+        sm.raft.become_candidate()
+        sm.raft.become_leader()
         sm.read_messages()
 
         m = new_message(2, 0, MessageType.MsgAppendResponse, 0)
-        m.make_ref().set_index(index)
-        m.make_ref().set_term(sm.raft.make_ref().get_term())
-        m.make_ref().set_reject(reject)
-        m.make_ref().set_reject_hint(index)
+        m.set_index(index)
+        m.set_term(sm.raft.get_term())
+        m.set_reject(reject)
+        m.set_reject_hint(index)
         sm.step(m)
 
         assert (
-            sm.raft.make_ref().prs().get(2).get_matched() == wmatch
-        ), f"#{i}: match = {sm.raft.make_ref().prs().get(2).get_matched()}, want {wmatch}"
+            sm.raft.prs().get(2).get_matched() == wmatch
+        ), f"#{i}: match = {sm.raft.prs().get(2).get_matched()}, want {wmatch}"
 
         assert (
-            sm.raft.make_ref().prs().get(2).get_next_idx() == wnext
-        ), f"#{i}: match = {sm.raft.make_ref().prs().get(2).get_next_idx()}, want {wnext}"
+            sm.raft.prs().get(2).get_next_idx() == wnext
+        ), f"#{i}: match = {sm.raft.prs().get(2).get_next_idx()}, want {wnext}"
 
         msgs = sm.read_messages()
         assert len(msgs) == wmsg_num, f"#{i} msg_num = {len(msgs)}, want {wmsg_num}"
 
         for j, msg in enumerate(msgs):
             assert (
-                msg.make_ref().get_index() == windex
-            ), f"#{i}.{j} index = {msg.make_ref().get_index()}, want {windex}"
+                msg.get_index() == windex
+            ), f"#{i}.{j} index = {msg.get_index()}, want {windex}"
 
             assert (
-                msg.make_ref().get_commit() == wcommitted
-            ), f"#{i}.{j} commit = {msg.make_ref().get_committed()}, want {wcommitted}"
+                msg.get_commit() == wcommitted
+            ), f"#{i}.{j} commit = {msg.get_committed()}, want {wcommitted}"
 
 
 # When the leader receives a heartbeat tick, it should
@@ -2338,19 +2290,19 @@ def test_bcast_beat():
     offset = 1000
     s = new_snapshot(offset, 1, [1, 2, 3])
     store = new_storage()
-    store.make_ref().wl(lambda core: core.apply_snapshot(s))
-    sm = new_test_raft(1, [1, 2, 3], 10, 1, store.make_ref(), l.make_ref())
-    sm.raft.make_ref().set_term(1)
+    store.wl(lambda core: core.apply_snapshot(s))
+    sm = new_test_raft(1, [1, 2, 3], 10, 1, store, l)
+    sm.raft.set_term(1)
 
-    sm.raft.make_ref().become_candidate()
-    sm.raft.make_ref().become_leader()
+    sm.raft.become_candidate()
+    sm.raft.become_leader()
     for i in range(0, 10):
-        sm.raft.make_ref().append_entry([empty_entry(0, offset + i + 1)])
+        sm.raft.append_entry([empty_entry(0, offset + i + 1)])
     sm.persist()
 
     # slow follower
     def mut_pr(sm: Interface, n: int, matched: int, next_idx: int):
-        m = sm.raft.make_ref().prs().get(n)
+        m = sm.raft.prs().get(n)
         m.set_matched(matched)
         m.set_next_idx(next_idx)
 
@@ -2366,33 +2318,29 @@ def test_bcast_beat():
 
     want_commit_map = {}
     want_commit_map[2] = min(
-        sm.raft_log.get_committed(), sm.raft.make_ref().prs().get(2).get_matched()
+        sm.raft_log.get_committed(), sm.raft.prs().get(2).get_matched()
     )
     want_commit_map[3] = min(
-        sm.raft_log.get_committed(), sm.raft.make_ref().prs().get(3).get_matched()
+        sm.raft_log.get_committed(), sm.raft.prs().get(3).get_matched()
     )
     for i, m in enumerate(msgs):
         assert (
-            m.make_ref().get_msg_type() == MessageType.MsgHeartbeat
-        ), f"#{i}: type = {m.make_ref().get_msg_type()}, want = {MessageType.MsgHeartbeat}"
+            m.get_msg_type() == MessageType.MsgHeartbeat
+        ), f"#{i}: type = {m.get_msg_type()}, want = {MessageType.MsgHeartbeat}"
+
+        assert m.get_index() == 0, f"#{i}: prev_index = {m.get_index()}, want = 0"
+
+        assert want_commit_map[m.get_to()] != 0, f"#{i}: unexpected to {m.get_to()}"
 
         assert (
-            m.make_ref().get_index() == 0
-        ), f"#{i}: prev_index = {m.make_ref().get_index()}, want = 0"
+            m.get_commit() == want_commit_map[m.get_to()]
+        ), f"#{i}: commit = {m.get_commit()}, want {want_commit_map[m.get_to()]}"
 
-        assert (
-            want_commit_map[m.make_ref().get_to()] != 0
-        ), f"#{i}: unexpected to {m.make_ref().get_to()}"
-
-        assert (
-            m.make_ref().get_commit() == want_commit_map[m.make_ref().get_to()]
-        ), f"#{i}: commit = {m.make_ref().get_commit()}, want {want_commit_map[m.make_ref().get_to()]}"
-
-        want_commit_map.pop(m.make_ref().get_to())
+        want_commit_map.pop(m.get_to())
 
         assert not (
-            m.make_ref().get_entries()
-        ), f"#{i}: entries count = {len(m.make_ref().get_entries())}, want 0"
+            m.get_entries()
+        ), f"#{i}: entries count = {len(m.get_entries())}, want 0"
 
 
 # tests the output of the statemachine when receiving MsgBeat
@@ -2414,12 +2362,12 @@ def test_recv_msg_beat():
     for i, v in enumerate(tests):
         state, w_msg = v.state, v.w_msg
         cs = ConfState_Owner([1, 2, 3], [])
-        store = MemStorage_Owner.new_with_conf_state(cs.make_ref())
+        store = MemStorage_Owner.new_with_conf_state(cs)
         ents = [empty_entry(0, 1), empty_entry(1, 2)]
-        store.make_ref().wl(lambda core: core.append(ents))
+        store.wl(lambda core: core.append(ents))
 
-        sm = new_test_raft(1, [1, 2, 3], 10, 1, store.make_ref(), l.make_ref())
-        sm.raft.make_ref().set_state(state)
+        sm = new_test_raft(1, [1, 2, 3], 10, 1, store, l)
+        sm.raft.set_state(state)
         sm.step(new_message(1, 1, MessageType.MsgBeat, 0))
 
         msgs = sm.read_messages()
@@ -2427,8 +2375,8 @@ def test_recv_msg_beat():
 
         for m in msgs:
             assert (
-                m.make_ref().get_msg_type() == MessageType.MsgHeartbeat
-            ), f"#{i}: msg.type = {m.make_ref().get_msg_type()}, want {MessageType.MsgHeartbeat}"
+                m.get_msg_type() == MessageType.MsgHeartbeat
+            ), f"#{i}: msg.type = {m.get_msg_type()}, want {MessageType.MsgHeartbeat}"
 
 
 def test_leader_increase_next():
@@ -2452,28 +2400,28 @@ def test_leader_increase_next():
     for i, v in enumerate(tests):
         state, next_idx, wnext = v.state, v.next_idx, v.wnext
         storage = new_storage()
-        sm = new_test_raft(1, [1, 2], 10, 1, storage.make_ref(), l.make_ref())
+        sm = new_test_raft(1, [1, 2], 10, 1, storage, l)
         sm.raft_log.append(previous_ents)
         sm.persist()
-        sm.raft.make_ref().become_candidate()
-        sm.raft.make_ref().become_leader()
-        sm.raft.make_ref().prs().get(2).set_state(state)
-        sm.raft.make_ref().prs().get(2).set_next_idx(next_idx)
+        sm.raft.become_candidate()
+        sm.raft.become_leader()
+        sm.raft.prs().get(2).set_state(state)
+        sm.raft.prs().get(2).set_next_idx(next_idx)
         sm.step(new_message(1, 1, MessageType.MsgPropose, 1))
 
         assert (
-            sm.raft.make_ref().prs().get(2).get_next_idx() == wnext
-        ), f"#{i}: next = {sm.raft.make_ref().prs().get(2).get_next_idx()}, want {wnext}"
+            sm.raft.prs().get(2).get_next_idx() == wnext
+        ), f"#{i}: next = {sm.raft.prs().get(2).get_next_idx()}, want {wnext}"
 
 
 def test_send_append_for_progress_probe():
     l = default_logger()
     storage = new_storage()
-    r = new_test_raft(1, [1, 2], 10, 1, storage.make_ref(), l.make_ref())
-    r.raft.make_ref().become_candidate()
-    r.raft.make_ref().become_leader()
+    r = new_test_raft(1, [1, 2], 10, 1, storage, l)
+    r.raft.become_candidate()
+    r.raft.become_leader()
     r.read_messages()
-    r.raft.make_ref().prs().get(2).become_probe()
+    r.raft.prs().get(2).become_probe()
 
     # each round is a heartbeat
     for i in range(0, 3):
@@ -2481,64 +2429,64 @@ def test_send_append_for_progress_probe():
             # we expect that raft will only send out one msgAPP on the first
             # loop. After that, the follower is paused until a heartbeat response is
             # received.
-            r.raft.make_ref().append_entry([new_entry(0, 0, SOME_DATA)])
-            r.raft.make_ref().send_append(2)
+            r.raft.append_entry([new_entry(0, 0, SOME_DATA)])
+            r.raft.send_append(2)
             msg = r.read_messages()
             assert len(msg) == 1
-            assert msg[0].make_ref().get_index() == 0
+            assert msg[0].get_index() == 0
 
-        assert r.raft.make_ref().prs().get(2).get_paused()
+        assert r.raft.prs().get(2).get_paused()
         for _ in range(0, 10):
-            r.raft.make_ref().append_entry([new_entry(0, 0, SOME_DATA)])
-            r.raft.make_ref().send_append(2)
+            r.raft.append_entry([new_entry(0, 0, SOME_DATA)])
+            r.raft.send_append(2)
             assert not r.read_messages()
 
         # do a heartbeat
-        for _ in range(0, r.raft.make_ref().heartbeat_timeout()):
+        for _ in range(0, r.raft.heartbeat_timeout()):
             r.step(new_message(1, 1, MessageType.MsgBeat, 0))
 
-        assert r.raft.make_ref().prs().get(2).get_paused()
+        assert r.raft.prs().get(2).get_paused()
 
         # consume the heartbeat
         msg = r.read_messages()
         assert len(msg) == 1
-        assert msg[0].make_ref().get_msg_type() == MessageType.MsgHeartbeat
+        assert msg[0].get_msg_type() == MessageType.MsgHeartbeat
 
     # a heartbeat response will allow another message to be sent
     r.step(new_message(2, 1, MessageType.MsgHeartbeatResponse, 0))
     msg = r.read_messages()
     assert len(msg) == 1
-    assert msg[0].make_ref().get_index() == 0
-    assert r.raft.make_ref().prs().get(2).get_paused()
+    assert msg[0].get_index() == 0
+    assert r.raft.prs().get(2).get_paused()
 
 
 def test_send_append_for_progress_replicate():
     l = default_logger()
     storage = new_storage()
-    r = new_test_raft(1, [1, 2], 10, 1, storage.make_ref(), l.make_ref())
-    r.raft.make_ref().become_candidate()
-    r.raft.make_ref().become_leader()
+    r = new_test_raft(1, [1, 2], 10, 1, storage, l)
+    r.raft.become_candidate()
+    r.raft.become_leader()
     r.read_messages()
-    r.raft.make_ref().prs().get(2).become_replicate()
+    r.raft.prs().get(2).become_replicate()
 
     for _ in range(0, 10):
-        r.raft.make_ref().append_entry([new_entry(0, 0, SOME_DATA)])
-        r.raft.make_ref().send_append(2)
+        r.raft.append_entry([new_entry(0, 0, SOME_DATA)])
+        r.raft.send_append(2)
         assert len(r.read_messages()) == 1
 
 
 def test_send_append_for_progress_snapshot():
     l = default_logger()
     storage = new_storage()
-    r = new_test_raft(1, [1, 2], 10, 1, storage.make_ref(), l.make_ref())
-    r.raft.make_ref().become_candidate()
-    r.raft.make_ref().become_leader()
+    r = new_test_raft(1, [1, 2], 10, 1, storage, l)
+    r.raft.become_candidate()
+    r.raft.become_leader()
     r.read_messages()
-    r.raft.make_ref().prs().get(2).become_snapshot(10)
+    r.raft.prs().get(2).become_snapshot(10)
 
     for _ in range(0, 10):
-        r.raft.make_ref().append_entry([new_entry(0, 0, SOME_DATA)])
-        r.raft.make_ref().send_append(2)
+        r.raft.append_entry([new_entry(0, 0, SOME_DATA)])
+        r.raft.send_append(2)
         assert not r.read_messages()
 
 
@@ -2546,19 +2494,19 @@ def test_recv_msg_unreachable():
     l = default_logger()
     previous_ents = [empty_entry(1, 1), empty_entry(1, 2), empty_entry(1, 3)]
     s = new_storage()
-    s.make_ref().wl(lambda core: core.append(previous_ents))
-    r = new_test_raft(1, [1, 2], 10, 1, s.make_ref(), l.make_ref())
-    r.raft.make_ref().become_candidate()
-    r.raft.make_ref().become_leader()
+    s.wl(lambda core: core.append(previous_ents))
+    r = new_test_raft(1, [1, 2], 10, 1, s, l)
+    r.raft.become_candidate()
+    r.raft.become_leader()
     r.read_messages()
     # set node 2 to state replicate
-    r.raft.make_ref().prs().get(2).set_matched(3)
-    r.raft.make_ref().prs().get(2).become_replicate()
-    r.raft.make_ref().prs().get(2).optimistic_update(5)
+    r.raft.prs().get(2).set_matched(3)
+    r.raft.prs().get(2).become_replicate()
+    r.raft.prs().get(2).optimistic_update(5)
 
     r.step(new_message(2, 1, MessageType.MsgUnreachable, 0))
 
-    peer_2 = r.raft.make_ref().prs().get(2)
+    peer_2 = r.raft.prs().get(2)
     assert peer_2.get_state() == ProgressState.Probe
     assert peer_2.get_matched() + 1 == peer_2.get_next_idx()
 
@@ -2569,13 +2517,10 @@ def test_restore():
     s = new_snapshot(11, 11, [1, 2, 3])
 
     storage = new_storage()
-    sm = new_test_raft(1, [1, 2], 10, 1, storage.make_ref(), l.make_ref())
-    sm.raft.make_ref().restore(s.clone())
-    assert sm.raft_log.last_index() == s.make_ref().get_metadata().get_index()
-    assert (
-        sm.raft_log.term(s.make_ref().get_metadata().get_index())
-        == s.make_ref().get_metadata().get_term()
-    )
+    sm = new_test_raft(1, [1, 2], 10, 1, storage, l)
+    sm.raft.restore(s.clone())
+    assert sm.raft_log.last_index() == s.get_metadata().get_index()
+    assert sm.raft_log.term(s.get_metadata().get_index()) == s.get_metadata().get_term()
 
     # TODO: Resolve below `assert_iter_eq` through exposing `conf` method of progress_tracker
     # assert_iter_eq!(
@@ -2584,7 +2529,7 @@ def test_restore():
     #         .get_conf_state()
     #         .voters
     # );
-    assert not sm.raft.make_ref().restore(s)
+    assert not sm.raft.restore(s)
 
 
 def test_restore_ignore_snapshot():
@@ -2592,19 +2537,19 @@ def test_restore_ignore_snapshot():
     previous_ents = [empty_entry(1, 1), empty_entry(1, 2), empty_entry(1, 3)]
     commit = 1
     storage = new_storage()
-    sm = new_test_raft(1, [1, 2], 10, 1, storage.make_ref(), l.make_ref())
+    sm = new_test_raft(1, [1, 2], 10, 1, storage, l)
     sm.raft_log.append(previous_ents)
     sm.raft_log.commit_to(commit)
 
     s = new_snapshot(commit, 1, [1, 2])
 
     # ingore snapshot
-    assert not sm.raft.make_ref().restore(s)
+    assert not sm.raft.restore(s)
     assert sm.raft_log.get_committed() == commit
 
     # ignore snapshot and fast forward commit
-    s.make_ref().get_metadata().set_index(commit + 1)
-    assert not sm.raft.make_ref().restore(s)
+    s.get_metadata().set_index(commit + 1)
+    assert not sm.raft.restore(s)
     assert sm.raft_log.get_committed() == commit + 1
 
 
@@ -2614,23 +2559,23 @@ def test_provide_snap():
     s = new_snapshot(11, 11, [1, 2])
 
     storage = new_storage()
-    sm = new_test_raft(1, [1, 2], 10, 1, storage.make_ref(), l.make_ref())
-    sm.raft.make_ref().restore(s.clone())
+    sm = new_test_raft(1, [1, 2], 10, 1, storage, l)
+    sm.raft.restore(s.clone())
     sm.persist()
 
-    sm.raft.make_ref().become_candidate()
-    sm.raft.make_ref().become_leader()
+    sm.raft.become_candidate()
+    sm.raft.become_leader()
 
     # force set the next of node 2, so that node 2 needs a snapshot
-    sm.raft.make_ref().prs().get(2).set_next_idx(sm.raft_log.first_index())
+    sm.raft.prs().get(2).set_next_idx(sm.raft_log.first_index())
     m = new_message(2, 1, MessageType.MsgAppendResponse, 0)
-    m.make_ref().set_index(sm.raft.make_ref().prs().get(2).get_next_idx() - 1)
-    m.make_ref().set_reject(True)
+    m.set_index(sm.raft.prs().get(2).get_next_idx() - 1)
+    m.set_reject(True)
     sm.step(m)
 
     msgs = sm.read_messages()
     assert len(msgs) == 1
-    assert msgs[0].make_ref().get_msg_type() == MessageType.MsgSnapshot
+    assert msgs[0].get_msg_type() == MessageType.MsgSnapshot
 
 
 def test_ignore_providing_snapshot():
@@ -2638,17 +2583,17 @@ def test_ignore_providing_snapshot():
     # restore the state machine from a snapshot so it has a compacted log and a snapshot
     s = new_snapshot(11, 11, [1, 2])
     storage = new_storage()
-    sm = new_test_raft(1, [1], 10, 1, storage.make_ref(), l.make_ref())
-    sm.raft.make_ref().restore(s)
+    sm = new_test_raft(1, [1], 10, 1, storage, l)
+    sm.raft.restore(s)
     sm.persist()
 
-    sm.raft.make_ref().become_candidate()
-    sm.raft.make_ref().become_leader()
+    sm.raft.become_candidate()
+    sm.raft.become_leader()
 
     # force set the next of node 2, so that node 2 needs a snapshot
     # change node 2 to be inactive, expect node 1 ignore sending snapshot to 2
-    sm.raft.make_ref().prs().get(2).set_next_idx(sm.raft_log.first_index() - 1)
-    sm.raft.make_ref().prs().get(2).set_recent_active(False)
+    sm.raft.prs().get(2).set_next_idx(sm.raft_log.first_index() - 1)
+    sm.raft.prs().get(2).set_recent_active(False)
 
     sm.step(new_message(1, 1, MessageType.MsgAppendResponse, 1))
 
@@ -2659,14 +2604,14 @@ def test_restore_from_snap_msg():
     l = default_logger()
     s = new_snapshot(11, 11, [1, 2])
     storage = new_storage()
-    sm = new_test_raft(2, [1, 2], 10, 1, storage.make_ref(), l.make_ref())
+    sm = new_test_raft(2, [1, 2], 10, 1, storage, l)
     m = new_message(1, 0, MessageType.MsgSnapshot, 0)
-    m.make_ref().set_term(2)
-    m.make_ref().set_snapshot(s)
+    m.set_term(2)
+    m.set_snapshot(s)
 
     sm.step(m)
 
-    assert sm.raft.make_ref().get_leader_id() == 1
+    assert sm.raft.get_leader_id() == 1
 
     # raft-rs's TODO: port the remaining if upstream completed this test.
 
@@ -2679,12 +2624,12 @@ def test_slow_node_restore():
     for _ in range(0, 100):
         nt.send([new_message(1, 1, MessageType.MsgPropose, 1)])
 
-    next_ents(nt.peers.get(1).raft.make_ref(), nt.storage.get(1))
+    next_ents(nt.peers.get(1).raft, nt.storage.get(1))
 
-    nt.storage.get(1).make_ref().wl(
+    nt.storage.get(1).wl(
         lambda core: core.commit_to(nt.peers.get(1).raft_log.get_applied())
     )
-    nt.storage.get(1).make_ref().wl(
+    nt.storage.get(1).wl(
         lambda core: core.compact(nt.peers.get(1).raft_log.get_applied())
     )
 
@@ -2694,7 +2639,7 @@ def test_slow_node_restore():
     # node 3 will only be considered as active when node 1 receives a reply from it.
     while True:
         nt.send([new_message(1, 1, MessageType.MsgBeat, 0)])
-        if nt.peers.get(1).raft.make_ref().prs().get(3).get_recent_active():
+        if nt.peers.get(1).raft.prs().get(3).get_recent_active():
             break
 
     # trigger a snapshot
@@ -2714,14 +2659,14 @@ def test_step_config():
     l = default_logger()
     # a raft that cannot make progress
     s = new_storage()
-    r = new_test_raft(1, [1, 2], 10, 1, s.make_ref(), l.make_ref())
-    r.raft.make_ref().become_candidate()
-    r.raft.make_ref().become_leader()
+    r = new_test_raft(1, [1, 2], 10, 1, s, l)
+    r.raft.become_candidate()
+    r.raft.become_leader()
     index = r.raft_log.last_index()
     m = new_message(1, 1, MessageType.MsgPropose, 0)
     e = Entry_Owner.default()
-    e.make_ref().set_entry_type(EntryType.EntryConfChange)
-    m.make_ref().set_entries([*m.make_ref().get_entries(), e])
+    e.set_entry_type(EntryType.EntryConfChange)
+    m.set_entries([*m.get_entries(), e])
     r.step(m)
     assert r.raft_log.last_index() == index + 1
 
@@ -2733,26 +2678,26 @@ def test_step_ignore_config():
     l = default_logger()
     s = new_storage()
     # a raft that cannot make progress
-    r = new_test_raft(1, [1, 2], 10, 1, s.make_ref(), l.make_ref())
-    r.raft.make_ref().become_candidate()
-    r.raft.make_ref().become_leader()
-    assert not r.raft.make_ref().has_pending_conf()
+    r = new_test_raft(1, [1, 2], 10, 1, s, l)
+    r.raft.become_candidate()
+    r.raft.become_leader()
+    assert not r.raft.has_pending_conf()
     m = new_message(1, 1, MessageType.MsgPropose, 0)
     e = Entry_Owner.default()
-    e.make_ref().set_entry_type(EntryType.EntryConfChange)
-    m.make_ref().set_entries([*m.make_ref().get_entries(), e])
-    assert not r.raft.make_ref().has_pending_conf()
+    e.set_entry_type(EntryType.EntryConfChange)
+    m.set_entries([*m.get_entries(), e])
+    assert not r.raft.has_pending_conf()
     r.step(m)
-    assert r.raft.make_ref().has_pending_conf()
+    assert r.raft.has_pending_conf()
     index = r.raft_log.last_index()
-    pending_conf_index = r.raft.make_ref().get_pending_conf_index()
+    pending_conf_index = r.raft.get_pending_conf_index()
     r.step(m)
     we = empty_entry(1, 3)
-    we.make_ref().set_entry_type(EntryType.EntryNormal)
+    we.set_entry_type(EntryType.EntryNormal)
     wents = [we]
     entries = r.raft_log.entries(index + 1, None)
     assert entries == wents
-    assert r.raft.make_ref().get_pending_conf_index() == pending_conf_index
+    assert r.raft.get_pending_conf_index() == pending_conf_index
 
 
 # test_new_leader_pending_config tests that new leader sets its pending_conf_index
@@ -2773,28 +2718,28 @@ def test_new_leader_pending_config():
     for i, v in enumerate(tests):
         add_entry, wpending_index = v.add_entry, v.wpending_index
         storage = new_storage()
-        r = new_test_raft(1, [1, 2], 10, 1, storage.make_ref(), l.make_ref())
+        r = new_test_raft(1, [1, 2], 10, 1, storage, l)
         e = Entry_Owner.default()
         if add_entry:
-            e.make_ref().set_entry_type(EntryType.EntryNormal)
-            r.raft.make_ref().append_entry([e])
+            e.set_entry_type(EntryType.EntryNormal)
+            r.raft.append_entry([e])
             r.persist()
-        r.raft.make_ref().become_candidate()
-        r.raft.make_ref().become_leader()
+        r.raft.become_candidate()
+        r.raft.become_leader()
 
         assert (
-            r.raft.make_ref().get_pending_conf_index() == wpending_index
-        ), f"#{i}: pending_conf_index = {r.raft.make_ref().get_pending_conf_index}, want {wpending_index}"
+            r.raft.get_pending_conf_index() == wpending_index
+        ), f"#{i}: pending_conf_index = {r.raft.get_pending_conf_index}, want {wpending_index}"
 
-        assert r.raft.make_ref().has_pending_conf() == add_entry, f"#{i}: "
+        assert r.raft.has_pending_conf() == add_entry, f"#{i}: "
 
 
 # test_add_node tests that add_node could update nodes correctly.
 def test_add_node():
     l = default_logger()
     storage = new_storage()
-    r = new_test_raft(1, [1], 10, 1, storage.make_ref(), l.make_ref())
-    r.raft.make_ref().apply_conf_change(add_node(2))
+    r = new_test_raft(1, [1], 10, 1, storage, l)
+    r.raft.apply_conf_change(add_node(2))
     # TODO: Resolve below `assert_iter_eq` through exposing `conf` method of progress_tracker
     # assert_iter_eq!(o r.prs().conf().voters().ids(),
     # vec![1, 2]
@@ -2805,27 +2750,27 @@ def test_add_node():
 def test_add_node_check_quorum():
     l = default_logger()
     storage = new_storage()
-    r = new_test_raft(1, [1], 10, 1, storage.make_ref(), l.make_ref())
-    r.raft.make_ref().set_check_quorum(True)
-    r.raft.make_ref().become_candidate()
-    r.raft.make_ref().become_leader()
-    for _ in range(0, r.raft.make_ref().election_timeout() - 1):
-        r.raft.make_ref().tick()
+    r = new_test_raft(1, [1], 10, 1, storage, l)
+    r.raft.set_check_quorum(True)
+    r.raft.become_candidate()
+    r.raft.become_leader()
+    for _ in range(0, r.raft.election_timeout() - 1):
+        r.raft.tick()
 
-    r.raft.make_ref().apply_conf_change(add_node(2))
+    r.raft.apply_conf_change(add_node(2))
 
     # This tick will reach electionTimeout, which triggers a quorum check.
-    r.raft.make_ref().tick()
+    r.raft.tick()
 
     # Node 1 should still be the leader after a single tick.
-    assert r.raft.make_ref().get_state() == StateRole.Leader
+    assert r.raft.get_state() == StateRole.Leader
 
     # After another electionTimeout ticks without hearing from node 2,
     # node 1 should step down.
-    for _ in range(0, r.raft.make_ref().election_timeout()):
-        r.raft.make_ref().tick()
+    for _ in range(0, r.raft.election_timeout()):
+        r.raft.tick()
 
-    assert r.raft.make_ref().get_state() == StateRole.Follower
+    assert r.raft.get_state() == StateRole.Follower
 
 
 # test_remove_node tests that removeNode could update pendingConf, nodes and
@@ -2833,15 +2778,15 @@ def test_add_node_check_quorum():
 def test_remove_node():
     l = default_logger()
     storage = new_storage()
-    r = new_test_raft(1, [1, 2], 10, 1, storage.make_ref(), l.make_ref())
-    r.raft.make_ref().apply_conf_change(remove_node(2))
+    r = new_test_raft(1, [1, 2], 10, 1, storage, l)
+    r.raft.apply_conf_change(remove_node(2))
 
     # TODO: Resolve below `assert_iter_eq` through exposing `conf` method of progress_tracker
     # assert_iter_eq!(o r.prs().conf().voters().ids(), vec![1]);
 
     # Removing all voters is not allowed.
     try:
-        r.raft.make_ref().apply_conf_change(remove_node(1))
+        r.raft.apply_conf_change(remove_node(1))
     except Exception:
         pass
 

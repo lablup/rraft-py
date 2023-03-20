@@ -9,12 +9,12 @@ from rraft import MessageType, default_logger
 def test_reject_stale_term_message():
     l = default_logger()
     storage = new_storage()
-    r = new_test_raft(1, [1, 2, 3], 10, 1, storage.make_ref(), l.make_ref())
+    r = new_test_raft(1, [1, 2, 3], 10, 1, storage, l)
     hs = hard_state(2, 0, 0)
-    r.raft.make_ref().load_state(hs.make_ref())
+    r.raft.load_state(hs)
 
     m = new_message(0, 0, MessageType.MsgAppend, 0)
-    m.make_ref().set_term(r.raft.make_ref().get_term() - 1)
+    m.set_term(r.raft.get_term() - 1)
     r.step(m)
 
 
@@ -23,8 +23,8 @@ def test_reject_stale_term_message():
 def test_step_ignore_old_term_msg():
     l = default_logger()
     storage = new_storage()
-    sm = new_test_raft(1, [1], 10, 1, storage.make_ref(), l.make_ref())
-    sm.raft.make_ref().set_term(2)
+    sm = new_test_raft(1, [1], 10, 1, storage, l)
+    sm.raft.set_term(2)
     m = new_message(0, 0, MessageType.MsgAppend, 0)
-    m.make_ref().set_term(1)
+    m.set_term(1)
     sm.step(m)
