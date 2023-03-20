@@ -1,12 +1,13 @@
 import asyncio
 from asyncio import Queue
 from datetime import datetime, timezone
-from typing import Callable, Dict, List
+from typing import Callable, Dict, List, cast
 from rraft import (
     Config_Owner,
     ConfState_Owner,
     EntryType,
     Entry_Ref,
+    HardState_Ref,
     Logger_Owner,
     Logger_Ref,
     MemStorage_Owner,
@@ -23,14 +24,14 @@ def now() -> int:
     return int(datetime.now(tz=timezone.utc).timestamp() * 1000)
 
 
-async def send_propose(logger: Logger_Ref) -> None:
+async def send_propose(logger: Logger_Owner | Logger_Ref) -> None:
     # Wait some time and send the request to the Raft.
     await asyncio.sleep(10)
     logger.info("propose a request")
 
     # Send a command to the Raft, wait for the Raft to apply it
     # and get the result.
-    raft_chan = Queue()
+    raft_chan: Queue = Queue()
 
     await channel.put(
         {
@@ -102,20 +103,19 @@ async def on_ready(
 
     if hs_ref := ready_ref.hs():
         # Raft HardState changed, and we need to persist it.
-        store_ref.wl(lambda core: core.set_hardstate(hs_ref))
+        store_ref.wl(lambda core: core.set_hardstate(cast(HardState_Ref, hs_ref)))
 
     if msg_refs := ready_ref.persisted_messages():
         # Send out the persisted messages come from the node.
-        handle_messages(msg_refs)
+        await handle_messages(msg_refs)
 
     # Advance the Raft.
     light_rd_owner = raft_group_ref.advance(ready_ref)
     light_rd_ref = light_rd_owner
-    ready_ref = None
 
     # Update commit index.
     if commit := light_rd_ref.commit_index():
-        store_ref.wl(lambda core: core.hard_state().set_commit(commit))
+        store_ref.wl(lambda core: core.hard_state().set_commit(cast(int, commit)))
 
     # Send out the messages.
     await handle_messages(light_rd_ref.messages())

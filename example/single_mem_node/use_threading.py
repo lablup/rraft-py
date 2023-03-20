@@ -2,9 +2,10 @@ from datetime import datetime, timezone
 from queue import Queue, Empty as QueueEmptyException
 from threading import Thread
 from time import sleep
-from typing import Dict, List, Callable
+from typing import Dict, List, Callable, cast
 from rraft import (
     Entry_Ref,
+    HardState_Ref,
     Logger_Ref,
     MemStorage_Owner,
     ConfState_Owner,
@@ -14,7 +15,6 @@ from rraft import (
     Message_Ref,
     RawNode__MemStorage_Owner,
     OverflowStrategy,
-    RawNode__MemStorage_Ref,
 )
 
 channel: Queue = Queue()
@@ -24,7 +24,7 @@ def now() -> int:
     return int(datetime.now(tz=timezone.utc).timestamp() * 1000)
 
 
-def send_propose(logger: Logger_Ref) -> None:
+def send_propose(logger: Logger_Owner | Logger_Ref) -> None:
     def _send_propose():
         # Wait some time and send the request to the Raft.
         sleep(10)
@@ -57,7 +57,9 @@ def send_propose(logger: Logger_Ref) -> None:
     Thread(name="single_mem_node", target=_send_propose).start()
 
 
-def on_ready(raft_group_ref: RawNode__MemStorage_Ref, cbs: Dict[str, Callable]) -> None:
+def on_ready(
+    raft_group_ref: RawNode__MemStorage_Owner, cbs: Dict[str, Callable]
+) -> None:
     if not raft_group_ref.has_ready():
         return
 
@@ -110,7 +112,7 @@ def on_ready(raft_group_ref: RawNode__MemStorage_Ref, cbs: Dict[str, Callable]) 
 
     if hs_ref := ready_ref.hs():
         # Raft HardState changed, and we need to persist it.
-        store_ref.wl(lambda core: core.set_hardstate(hs_ref))
+        store_ref.wl(lambda core: core.set_hardstate(cast(HardState_Ref, hs_ref)))
 
     if msg_refs := ready_ref.persisted_messages():
         # Send out the persisted messages come from the node.
@@ -119,12 +121,10 @@ def on_ready(raft_group_ref: RawNode__MemStorage_Ref, cbs: Dict[str, Callable]) 
     # Advance the Raft.
     light_rd_owner = raft_group_ref.advance(ready_ref)
     light_rd_ref = light_rd_owner
-    # TODO: Check if below code can prevent circular reference.
-    ready_ref = None
 
     # Update commit index.
     if commit := light_rd_ref.commit_index():
-        store_ref.wl(lambda core: core.hard_state().set_commit(commit))
+        store_ref.wl(lambda core: core.hard_state().set_commit(cast(int, commit)))
 
     # Send out the messages.
     handle_messages(light_rd_ref.messages())

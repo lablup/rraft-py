@@ -192,7 +192,7 @@ class RaftState_Ref(RaftState):
 
 # src/storage/mem_storage_core.rs
 class MemStorageCore:
-    def append(self, ents: List[Entry_Ref]) -> None:
+    def append(self, ents: List[Entry_Owner] | List[Entry_Ref]) -> None:
         """
         Append the new entries to storage.
 
@@ -201,7 +201,7 @@ class MemStorageCore:
         Panics if `ents` contains compacted entries, or there's a gap between `ents` and the last
         received entry in the storage.
         """
-    def apply_snapshot(self, snapshot: Snapshot_Ref) -> None:
+    def apply_snapshot(self, snapshot: Snapshot_Owner | Snapshot_Ref) -> None:
         """
         Overwrites the contents of this Storage object with those of the given snapshot.
 
@@ -228,12 +228,12 @@ class MemStorageCore:
         Panics if there is no such entry in raft logs.
         """
     def commit_to_and_set_conf_states(
-        self, idx: int, cs: Optional[ConfState_Ref]
+        self, idx: int, cs: Optional[ConfState_Owner] | Optional[ConfState_Ref]
     ) -> None:
         """
         Commit to `idx` and set configuration to the given states. Only used for tests.
         """
-    def set_conf_state(self, cs: ConfState_Ref) -> None:
+    def set_conf_state(self, cs: ConfState_Owner | ConfState_Ref) -> None:
         """
         Saves the current conf state.
         """
@@ -241,7 +241,7 @@ class MemStorageCore:
         """
         Get the hard state.
         """
-    def set_hardstate(self, hs: HardState_Ref) -> None:
+    def set_hardstate(self, hs: HardState_Owner | HardState_Ref) -> None:
         """
         Saves the current HardState.
         """
@@ -268,7 +268,7 @@ class MemStorageCore_Ref(MemStorageCore):
 # src/storage/mem_storage.rs
 class MemStorage(Cloneable):
     def clone(self) -> MemStorage_Owner: ...
-    def initialize_with_conf_state(self, conf_state: ConfState_Ref) -> None:
+    def initialize_with_conf_state(self, conf_state: ConfState_Owner | ConfState_Ref) -> None:
         """
         Initialize a `MemStorage` with a given `Config`.
 
@@ -327,7 +327,7 @@ class MemStorage_Owner(MemStorage):
     @staticmethod
     def default() -> MemStorage_Owner: ...
     @staticmethod
-    def new_with_conf_state(conf_state: ConfState_Ref) -> MemStorage_Owner:
+    def new_with_conf_state(conf_state: ConfState_Owner | ConfState_Ref) -> MemStorage_Owner:
         """
         Create a new `MemStorage` with a given `Config`. The given `Config` will be used to
         initialize the storage.
@@ -512,7 +512,7 @@ class RawNode__MemStorage:
         """
         Status returns the current status of the given group.
         """
-    def step(self, msg: Message_Ref) -> None:
+    def step(self, msg: Message_Owner | Message_Ref) -> None:
         """
         Step advances the state machine using the given message.
         """
@@ -528,7 +528,7 @@ class RawNode__MemStorage:
         """
         Propose proposes data be appended to the raft log.
         """
-    def propose_conf_change(self, context: List[Any], cc: ConfChange_Ref) -> None:
+    def propose_conf_change(self, context: List[Any], cc: ConfChange_Owner | ConfChange_Ref) -> None:
         """
         ProposeConfChange proposes a config change.
 
@@ -536,7 +536,7 @@ class RawNode__MemStorage:
         caller's responsibility to propose an empty conf change again to force
         leaving joint state.
         """
-    def propose_conf_change_v2(self, context: List[Any], cc: ConfChangeV2_Ref) -> None:
+    def propose_conf_change_v2(self, context: List[Any], cc: ConfChangeV2_Owner | ConfChangeV2_Ref) -> None:
         """
         ProposeConfChange proposes a config change.
 
@@ -544,13 +544,13 @@ class RawNode__MemStorage:
         caller's responsibility to propose an empty conf change again to force
         leaving joint state.
         """
-    def apply_conf_change(self, cc: ConfChange_Ref) -> ConfState_Owner:
+    def apply_conf_change(self, cc: ConfChange_Owner | ConfChange_Ref) -> ConfState_Owner:
         """
         Applies a config change to the local node. The app must call this when it
         applies a configuration change, except when it decides to reject the
         configuration change, in which case no call must take place.
         """
-    def apply_conf_change_v2(self, cc: ConfChangeV2_Ref) -> ConfState_Owner:
+    def apply_conf_change_v2(self, cc: ConfChangeV2_Owner | ConfChangeV2_Ref) -> ConfState_Owner:
         """
         Applies a config change to the local node. The app must call this when it
         applies a configuration change, except when it decides to reject the
@@ -606,7 +606,7 @@ class RawNode__MemStorage_Owner(RawNode__MemStorage):
     """
 
     def __init__(
-        self, cfg: Config_Ref, store: MemStorage_Ref, logger: Logger_Ref
+        self, cfg: Config_Owner | Config_Ref, store: MemStorage_Owner | MemStorage_Ref, logger: Logger_Owner | Logger_Ref
     ) -> None: ...
     def make_ref(self) -> RawNode__MemStorage_Ref: ...
 
@@ -699,7 +699,7 @@ class SnapshotMetadata(Cloneable):
         """ """
     def get_conf_state(self) -> ConfState_Ref:
         """ """
-    def set_conf_state(self, conf_state: ConfState_Ref) -> None:
+    def set_conf_state(self, conf_state: ConfState_Owner | ConfState_Ref) -> None:
         """ """
     def clear_conf_state(self) -> None:
         """ """
@@ -728,7 +728,7 @@ class Snapshot(Cloneable):
         """ """
     def get_metadata(self) -> SnapshotMetadata_Ref:
         """ """
-    def set_metadata(self, snapshot_meta_data: SnapshotMetadata_Ref) -> None:
+    def set_metadata(self, snapshot_meta_data: SnapshotMetadata_Owner | SnapshotMetadata_Ref) -> None:
         """ """
     def clear_metadata(self) -> None:
         """ """
@@ -807,7 +807,7 @@ class Message(Cloneable):
         """ """
     def get_entries(self) -> List[Entry_Ref]:
         """ """
-    def set_entries(self, ents: List[Entry_Ref]) -> None:
+    def set_entries(self, ents: List[Entry_Owner] | List[Entry_Ref]) -> None:
         """ """
     def clear_entries(self) -> None:
         """ """
@@ -825,7 +825,7 @@ class Message(Cloneable):
         """ """
     def get_snapshot(self) -> Snapshot_Ref:
         """ """
-    def set_snapshot(self, snapshot: Snapshot_Ref) -> None:
+    def set_snapshot(self, snapshot: Snapshot_Owner | Snapshot_Ref) -> None:
         """ """
     def clear_snapshot(self) -> None:
         """ """
@@ -913,7 +913,7 @@ class Entry(Cloneable):
         """ """
     def get_entry_type(self) -> EntryType:
         """ """
-    def set_entry_type(self, typ: Any) -> None:
+    def set_entry_type(self, typ: EntryType) -> None:
         """ """
     def clear_entry_type(self) -> None:
         """ """
@@ -1153,7 +1153,7 @@ class Unstable:
         """
         From a given snapshot, restores the snapshot to self, but doesn't unpack.
         """
-    def truncate_and_append(self, ents: List[Entry_Ref]) -> None:
+    def truncate_and_append(self, ents: List[Entry_Owner] | List[Entry_Ref]) -> None:
         """
         Append entries to unstable, truncate local block first if overlapped.
 
@@ -1171,15 +1171,15 @@ class Unstable:
         """ """
     def get_entries(self) -> List[Entry_Ref]:
         """ """
-    def set_entries(self, ents: List[Entry_Ref]) -> None:
+    def set_entries(self, ents: List[Entry_Owner] | List[Entry_Ref]) -> None:
         """ """
     def get_logger(self) -> Logger_Ref:
         """ """
-    def set_logger(self, logger: Logger_Ref) -> None:
+    def set_logger(self, logger: Logger_Owner | Logger_Ref) -> None:
         """ """
     def get_snapshot(self) -> Optional[Snapshot_Ref]:
         """ """
-    def set_snapshot(self, snapshot: Snapshot_Ref) -> None:
+    def set_snapshot(self, snapshot: Snapshot_Owner | Snapshot_Ref) -> None:
         """ """
 
 class Unstable_Owner(Unstable):
@@ -1190,7 +1190,7 @@ class Unstable_Owner(Unstable):
     might need to truncate the log before persisting unstable.entries.
     """
 
-    def __init__(self, offset: int, logger: Logger_Ref) -> None: ...
+    def __init__(self, offset: int, logger: Logger_Owner | Logger_Ref) -> None: ...
     def make_ref(self) -> Unstable_Ref: ...
 
 class Unstable_Ref(Unstable):
@@ -1214,11 +1214,11 @@ class Status__Memstorage:
         """ """
     def get_ss(self) -> SoftState_Ref:
         """ """
-    def set_ss(self, ss: SoftState_Ref) -> None:
+    def set_ss(self, ss: SoftState_Owner | SoftState_Ref) -> None:
         """ """
     def get_progress(self) -> Optional[ProgressTracker_Ref]:
         """ """
-    def set_progress(self, tracker: Optional[ProgressTracker_Ref]) -> None:
+    def set_progress(self, tracker: Optional[ProgressTracker_Owner] | Optional[ProgressTracker_Ref]) -> None:
         """ """
 
 class Status__Memstorage_Owner(Status__Memstorage):
@@ -1299,7 +1299,7 @@ class RaftLog__MemStorage:
         """
         Returns all the entries. Only used by tests.
         """
-    def append(self, ents: List[Entry_Ref]) -> int:
+    def append(self, ents: List[Entry_Owner] | List[Entry_Ref]) -> int:
         """
         Appends a set of entries to the unstable list.
         """
@@ -1307,7 +1307,7 @@ class RaftLog__MemStorage:
         """
         Returns the last applied index.
         """
-    def find_conflict(self, ents: List[Entry_Ref]) -> int:
+    def find_conflict(self, ents: List[Entry_Owner] | List[Entry_Ref]) -> int:
         """
         Finds the index of the conflict.
 
@@ -1395,7 +1395,7 @@ class RaftLog__MemStorage:
         Attempts to persist the snapshot and returns whether it did.
         """
     def maybe_append(
-        self, idx: int, term: int, committed: int, ents: List[Entry_Ref]
+        self, idx: int, term: int, committed: int, ents: List[Entry_Owner] | List[Entry_Ref]
     ) -> Optional[Tuple[int, int]]:
         """
         Returns None if the entries cannot be appended. Otherwise,
@@ -1484,7 +1484,7 @@ class RaftLog__MemStorage_Owner(RaftLog__MemStorage):
     Raft log implementation
     """
 
-    def __init__(self, store: MemStorage_Ref, logger: Logger_Ref) -> None: ...
+    def __init__(self, store: MemStorage_Ref, logger: Logger_Owner | Logger_Ref) -> None: ...
     def make_ref(self) -> RaftLog__MemStorage_Ref: ...
 
 class RaftLog__MemStorage_Ref(RaftLog__MemStorage):
@@ -1494,7 +1494,7 @@ class RaftLog__MemStorage_Ref(RaftLog__MemStorage):
 
 # src/prelude/raft.rs
 class Raft__MemStorage:
-    def append_entry(self, ents: List[Entry_Ref]) -> bool:
+    def append_entry(self, ents: List[Entry_Owner] | List[Entry_Ref]) -> bool:
         """
         Appends a slice of entries to the log.
         The entries are updated to match the current index and term.
@@ -1571,13 +1571,13 @@ class Raft__MemStorage:
         """
         Return current uncommitted size recorded by uncommitted_state
         """
-    def maybe_increase_uncommitted_size(self, ents: List[Entry_Ref]) -> bool:
+    def maybe_increase_uncommitted_size(self, ents: List[Entry_Owner] | List[Entry_Ref]) -> bool:
         """
         Increase size of 'ents' to uncommitted size. Return true when size limit
         is satisfied. Otherwise return false and uncommitted size remains unchanged.
         For raft with no limit(or non-leader raft), it always return true.
         """
-    def reduce_uncommitted_size(self, ents: List[Entry_Ref]) -> None:
+    def reduce_uncommitted_size(self, ents: List[Entry_Owner] | List[Entry_Ref]) -> None:
         """
         Reduce size of 'ents' from uncommitted size.
         """
@@ -1668,7 +1668,7 @@ class Raft__MemStorage:
         """
         Returns the number of pending read-only messages.
         """
-    def load_state(self, hs: HardState_Ref) -> None:
+    def load_state(self, hs: HardState_Owner | HardState_Ref) -> None:
         """
         For a given hardstate, load the state into self.
         """
@@ -1690,7 +1690,7 @@ class Raft__MemStorage:
 
         Returns true to indicate that there will probably be some readiness need to be handled.
         """
-    def step(self, msg: Message_Ref) -> None:
+    def step(self, msg: Message_Owner | Message_Ref) -> None:
         """
         Steps the raft along via a message. This should be called everytime your raft receives a
         message from a peer.
@@ -1715,9 +1715,9 @@ class Raft__MemStorage:
         """
         Returns whether the current raft is in lease.
         """
-    def handle_heartbeat(self, msg: Message_Ref) -> None:
+    def handle_heartbeat(self, msg: Message_Owner | Message_Ref) -> None:
         """ """
-    def handle_append_entries(self, msg: Message_Ref) -> None:
+    def handle_append_entries(self, msg: Message_Owner | Message_Ref) -> None:
         """ """
     def request_snapshot(self, request_index: int) -> None:
         """
@@ -1731,7 +1731,7 @@ class Raft__MemStorage:
         """
         Resets the current node to a given term.
         """
-    def restore(self, snapshot: Snapshot_Ref) -> bool:
+    def restore(self, snapshot: Snapshot_Owner | Snapshot_Ref) -> bool:
         """
         Recovers the state machine from a snapshot. It restores the log and the
         configuration of state machine.
@@ -1788,7 +1788,7 @@ class Raft__MemStorage:
         """ """
     def take_msgs(self) -> List[Message_Owner]:
         """ """
-    def set_msgs(self, msgs: List[Message_Ref]) -> None:
+    def set_msgs(self, msgs: List[Message_Owner | Message_Ref]) -> None:
         """ """
     def get_max_inflight(self) -> int:
         """ """
@@ -1825,7 +1825,7 @@ class Raft__MemStorage_Owner(Raft__MemStorage):
     """
 
     def __init__(
-        self, cfg: Config_Ref, store: MemStorage_Ref, logger: Logger_Ref
+        self, cfg: Config_Owner | Config_Ref, store: MemStorage_Owner | MemStorage_Ref, logger: Logger_Owner | Logger_Ref
     ) -> None: ...
     def make_ref(self) -> Raft__MemStorage_Ref: ...
 
@@ -1886,7 +1886,7 @@ class ProgressTracker_Owner(ProgressTracker):
     which could be `Leader`, `Follower` and `Learner`.
     """
 
-    def __init__(self, max_inflight: int, logger: Logger_Ref) -> None: ...
+    def __init__(self, max_inflight: int, logger: Logger_Owner | Logger_Ref) -> None: ...
     def make_ref(self) -> ProgressTracker_Ref: ...
 
 class ProgressTracker_Ref(ProgressTracker):
@@ -1944,7 +1944,7 @@ class Progress(Cloneable):
         """
     def get_ins(self) -> Inflights_Ref:
         """"""
-    def set_ins(self, inflights: Inflights_Ref) -> None:
+    def set_ins(self, inflights: Inflights_Owner | Inflights_Ref) -> None:
         """"""
     def get_commit_group_id(self) -> int:
         """"""
