@@ -62,12 +62,6 @@ impl Py_JointConfig_Owner {
         }
     }
 
-    pub fn clone(&self) -> Py_JointConfig_Owner {
-        Py_JointConfig_Owner {
-            inner: self.inner.clone(),
-        }
-    }
-
     pub fn __repr__(&self) -> String {
         format!("{:?}", self.inner)
     }
@@ -84,6 +78,11 @@ impl Py_JointConfig_Owner {
 
     pub fn __contains__(&self, id: u64) -> bool {
         self.inner.contains(id)
+    }
+
+    fn __getattr__(this: PyObject, py: Python<'_>, attr: &str) -> PyResult<PyObject> {
+        let reference = this.call_method0(py, "make_ref")?;
+        reference.getattr(py, attr)
     }
 }
 

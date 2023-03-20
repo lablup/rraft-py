@@ -63,12 +63,6 @@ impl Py_ProgressTracker_Owner {
         }
     }
 
-    pub fn clone(&self) -> Py_ProgressTracker_Owner {
-        Py_ProgressTracker_Owner {
-            inner: self.inner.clone(),
-        }
-    }
-
     pub fn __getitem__(&self, id: u64) -> Option<Py_Progress_Ref> {
         match self.inner.get(id) {
             Some(progress) => Some(Py_Progress_Ref {
@@ -76,6 +70,11 @@ impl Py_ProgressTracker_Owner {
             }),
             None => None,
         }
+    }
+
+    fn __getattr__(this: PyObject, py: Python<'_>, attr: &str) -> PyResult<PyObject> {
+        let reference = this.call_method0(py, "make_ref")?;
+        reference.getattr(py, attr)
     }
 }
 

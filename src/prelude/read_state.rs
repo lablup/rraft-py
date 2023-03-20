@@ -74,6 +74,11 @@ impl Py_ReadState_Owner {
             _ => panic!("Undefined operator"),
         }
     }
+
+    fn __getattr__(this: PyObject, py: Python<'_>, attr: &str) -> PyResult<PyObject> {
+        let reference = this.call_method0(py, "make_ref")?;
+        reference.getattr(py, attr)
+    }
 }
 
 #[pymethods]

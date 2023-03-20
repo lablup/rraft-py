@@ -62,12 +62,6 @@ impl Py_HardState_Owner {
         }
     }
 
-    pub fn clone(&mut self) -> Py_HardState_Owner {
-        Py_HardState_Owner {
-            inner: self.inner.clone(),
-        }
-    }
-
     pub fn __repr__(&mut self) -> String {
         format!("{:?}", self.inner)
     }
@@ -80,6 +74,11 @@ impl Py_HardState_Owner {
             CompareOp::Ne => self.inner != rhs,
             _ => panic!("Undefined operator"),
         }
+    }
+
+    fn __getattr__(this: PyObject, py: Python<'_>, attr: &str) -> PyResult<PyObject> {
+        let reference = this.call_method0(py, "make_ref")?;
+        reference.getattr(py, attr)
     }
 }
 

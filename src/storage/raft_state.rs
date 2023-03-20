@@ -66,14 +66,13 @@ impl Py_RaftState_Owner {
         }
     }
 
-    pub fn clone(&self) -> Py_RaftState_Owner {
-        Py_RaftState_Owner {
-            inner: self.inner.clone(),
-        }
-    }
-
     pub fn __repr__(&self) -> String {
         format!("{:?}", self.inner)
+    }
+
+    fn __getattr__(this: PyObject, py: Python<'_>, attr: &str) -> PyResult<PyObject> {
+        let reference = this.call_method0(py, "make_ref")?;
+        reference.getattr(py, attr)
     }
 }
 

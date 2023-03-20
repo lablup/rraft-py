@@ -63,12 +63,6 @@ impl Py_ConfChangeSingle_Owner {
         }
     }
 
-    pub fn clone(&self) -> Py_ConfChangeSingle_Owner {
-        Py_ConfChangeSingle_Owner {
-            inner: self.inner.clone(),
-        }
-    }
-
     pub fn __repr__(&self) -> String {
         format!("{:?}", self.inner)
     }
@@ -81,6 +75,11 @@ impl Py_ConfChangeSingle_Owner {
             CompareOp::Ne => self.inner != rhs,
             _ => panic!("Undefined operator"),
         }
+    }
+
+    fn __getattr__(this: PyObject, py: Python<'_>, attr: &str) -> PyResult<PyObject> {
+        let reference = this.call_method0(py, "make_ref")?;
+        reference.getattr(py, attr)
     }
 }
 

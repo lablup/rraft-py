@@ -76,10 +76,9 @@ impl Py_MemStorage_Owner {
         }
     }
 
-    pub fn clone(&mut self) -> Py_MemStorage_Owner {
-        Py_MemStorage_Owner {
-            inner: self.inner.clone(),
-        }
+    fn __getattr__(this: PyObject, py: Python<'_>, attr: &str) -> PyResult<PyObject> {
+        let reference = this.call_method0(py, "make_ref")?;
+        reference.getattr(py, attr)
     }
 }
 

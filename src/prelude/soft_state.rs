@@ -34,6 +34,11 @@ impl Py_SoftState_Owner {
     pub fn __repr__(&self) -> String {
         format!("{:?}", self.inner)
     }
+
+    fn __getattr__(this: PyObject, py: Python<'_>, attr: &str) -> PyResult<PyObject> {
+        let reference = this.call_method0(py, "make_ref")?;
+        reference.getattr(py, attr)
+    }
 }
 
 #[pymethods]

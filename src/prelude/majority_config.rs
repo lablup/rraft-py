@@ -62,12 +62,6 @@ impl Py_MajorityConfig_Owner {
         }
     }
 
-    pub fn clone(&self) -> Py_MajorityConfig_Owner {
-        Py_MajorityConfig_Owner {
-            inner: self.inner.clone(),
-        }
-    }
-
     pub fn __repr__(&self) -> String {
         format!("{:?}", self.inner)
     }
@@ -84,6 +78,11 @@ impl Py_MajorityConfig_Owner {
 
     pub fn __bool__(&self) -> bool {
         !self.inner.is_empty()
+    }
+
+    fn __getattr__(this: PyObject, py: Python<'_>, attr: &str) -> PyResult<PyObject> {
+        let reference = this.call_method0(py, "make_ref")?;
+        reference.getattr(py, attr)
     }
 }
 

@@ -49,6 +49,11 @@ impl Py_Status__MemStorage_Owner {
             inner: RustRef::new(&mut self.inner),
         }
     }
+
+    fn __getattr__(this: PyObject, py: Python<'_>, attr: &str) -> PyResult<PyObject> {
+        let reference = this.call_method0(py, "make_ref")?;
+        reference.getattr(py, attr)
+    }
 }
 
 #[pymethods]
