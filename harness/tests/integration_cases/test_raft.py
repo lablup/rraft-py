@@ -2,7 +2,7 @@ import math
 import os
 import sys
 import pytest
-from typing import Any, List, Optional, Tuple
+from typing import Any, List, Optional, Tuple, cast
 from test_utils import (
     new_test_raft_with_prevote,
     new_storage,
@@ -27,6 +27,7 @@ from rraft import (
     Entry_Owner,
     EntryType,
     HardState_Owner,
+    Logger_Owner,
     Logger_Ref,
     MemStorage_Owner,
     MemStorage_Ref,
@@ -58,10 +59,9 @@ def ents_with_config(
     pre_vote: bool,
     id: int,
     peers: List[int],
-    l: Logger_Ref,
+    l: Logger_Owner | Logger_Ref,
 ) -> Interface:
-    cs = ConfState_Owner(peers, [])
-    store = MemStorage_Owner.new_with_conf_state(cs)
+    store = MemStorage_Owner.new_with_conf_state(ConfState_Owner(peers, []))
 
     for i, term in enumerate(terms):
         e = Entry_Owner.default()
@@ -101,7 +101,7 @@ def voted_with_config(
     pre_vote: bool,
     id: int,
     peers: List[int],
-    l: Logger_Ref,
+    l: Logger_Owner | Logger_Ref,
 ) -> Interface:
     cs = ConfState_Owner(peers, [])
     store = MemStorage_Owner.new_with_conf_state(cs)
@@ -1190,9 +1190,12 @@ def test_handle_msg_append():
         m.set_commit(commit)
 
         if ents:
-            print("ents", ents)
-            ents = list(map(lambda item: empty_entry(item[1], item[0]), ents))
-            m.set_entries(ents)
+            m.set_entries(
+                cast(
+                    List[Entry_Owner],
+                    list(map(lambda item: empty_entry(item[1], item[0]), ents)),
+                )
+            )
         return m
 
     class Test:
