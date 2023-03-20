@@ -5,6 +5,7 @@ Ideally this file could eventually be generated automatically.
 but for now this should be handwritten.
 See https://github.com/PyO3/pyo3/issues/2454.
 """
+from abc import ABCMeta, abstractmethod
 from typing import Any, Callable, Dict, List, Optional, Set, Tuple
 
 # src/prelude/global.rs
@@ -112,6 +113,10 @@ class EntryType:
     EntryConfChangeV2: Any
     EntryNormal: Any
 
+class Cloneable(metaclass=ABCMeta):
+    @abstractmethod
+    def clone(self) -> Any: ...
+
 class Logger:
     def info(self, s: str) -> None:
         """
@@ -154,7 +159,7 @@ class Logger_Ref(Logger):
     """ """
 
 # src/storage/raft_state.rs
-class RaftState:
+class RaftState(Cloneable):
     def clone(self) -> RaftState_Owner: ...
     def initialized(self) -> bool:
         """
@@ -261,7 +266,7 @@ class MemStorageCore_Ref(MemStorageCore):
     """
 
 # src/storage/mem_storage.rs
-class MemStorage:
+class MemStorage(Cloneable):
     def clone(self) -> MemStorage_Owner: ...
     def initialize_with_conf_state(self, conf_state: ConfState_Ref) -> None:
         """
@@ -418,7 +423,8 @@ class Ready_Owner(Ready):
     """
 
     def make_ref(self) -> Ready_Ref: ...
-    def default(self) -> Ready_Owner: ...
+    @staticmethod
+    def default() -> Ready_Owner: ...
 
 class Ready_Ref(Ready):
     """
@@ -677,7 +683,7 @@ class LightReady_Ref(LightReady):
     """
 
 # src/eraftpb/snapshot_metadata.rs
-class SnapshotMetadata:
+class SnapshotMetadata(Cloneable):
     def clone(self) -> SnapshotMetadata_Owner: ...
     def get_index(self) -> int:
         """ """
@@ -712,7 +718,7 @@ class SnapshotMetadata_Ref(SnapshotMetadata):
     """
 
 # src/eraftpb/snapshot.rs
-class Snapshot:
+class Snapshot(Cloneable):
     def clone(self) -> Snapshot_Owner: ...
     def get_data(self) -> List[Any]:
         """ """
@@ -743,7 +749,7 @@ class Snapshot_Ref(Snapshot):
     """
 
 # src/eraftpb/message.rs
-class Message:
+class Message(Cloneable):
     def clone(self) -> Message_Owner: ...
     def get_commit(self) -> int:
         """ """
@@ -856,7 +862,7 @@ class Message_Ref(Message):
     """
 
 # src/eraftpb/hardstate.rs
-class HardState:
+class HardState(Cloneable):
     def clone(self) -> HardState_Owner: ...
     def get_term(self) -> int:
         """ """
@@ -891,7 +897,7 @@ class HardState_Ref(HardState):
     """
 
 # src/eraftpb/entry.rs
-class Entry:
+class Entry(Cloneable):
     def clone(self) -> Entry_Owner: ...
     def get_context(self) -> List[Any]:
         """ """
@@ -944,7 +950,7 @@ class Entry_Ref(Entry):
     """
 
 # src/eraftpb/conf_state.rs
-class ConfState:
+class ConfState(Cloneable):
     def clone(self) -> ConfState_Owner: ...
     def get_auto_leave(self) -> bool:
         """ """
@@ -993,7 +999,7 @@ class ConfState_Ref(ConfState):
     """
 
 # src/eraftpb/conf_change_v2.rs
-class ConfChangeV2:
+class ConfChangeV2(Cloneable):
     def clone(self) -> ConfChangeV2_Owner: ...
     def get_changes(self) -> List[Any]:
         """ """
@@ -1032,7 +1038,7 @@ class ConfChangeV2_Ref(ConfChangeV2):
     """
 
 # src/eraftpb/conf_change_single.rs
-class ConfChangeSingle:
+class ConfChangeSingle(Cloneable):
     def clone(self) -> ConfChangeSingle_Owner: ...
     def get_node_id(self) -> int:
         """ """
@@ -1052,7 +1058,8 @@ class ConfChangeSingle_Owner(ConfChangeSingle):
 
     def __init__(self) -> None: ...
     def make_ref(self) -> ConfChangeSingle_Ref: ...
-    def default(self) -> ConfChangeSingle_Owner: ...
+    @staticmethod
+    def default() -> ConfChangeSingle_Owner: ...
 
 class ConfChangeSingle_Ref(ConfChangeSingle):
     """
@@ -1060,7 +1067,7 @@ class ConfChangeSingle_Ref(ConfChangeSingle):
     """
 
 # src/eraftpb/conf_change.rs
-class ConfChange:
+class ConfChange(Cloneable):
     def clone(self) -> ConfChange_Owner: ...
     def get_id(self) -> int:
         """ """
@@ -1096,7 +1103,8 @@ class ConfChange_Owner(ConfChange):
 
     def __init__(self) -> None: ...
     def make_ref(self) -> ConfChange_Ref: ...
-    def default(self) -> ConfChange_Owner: ...
+    @staticmethod
+    def default() -> ConfChange_Owner: ...
 
 class ConfChange_Ref(ConfChange):
     """
@@ -1244,7 +1252,8 @@ class SoftState_Owner(SoftState):
     """
 
     def make_ref(self) -> SoftState_Ref: ...
-    def default(self) -> SoftState_Owner: ...
+    @staticmethod
+    def default() -> SoftState_Owner: ...
 
 class SoftState_Ref(SoftState):
     """
@@ -1252,7 +1261,7 @@ class SoftState_Ref(SoftState):
     """
 
 # src/prelude/read_state.rs
-class ReadState:
+class ReadState(Cloneable):
     def clone(self) -> ReadState_Owner: ...
     def get_index(self) -> int:
         """ """
@@ -1821,7 +1830,7 @@ class Raft__MemStorage_Owner(Raft__MemStorage):
     def make_ref(self) -> Raft__MemStorage_Ref: ...
 
 # src/prelude/progress_tracker.rs
-class ProgressTracker:
+class ProgressTracker(Cloneable):
     def clone(self) -> ProgressTracker_Owner: ...
     def get(self, id: int) -> Optional[Progress_Ref]:
         """"""
@@ -1886,7 +1895,7 @@ class ProgressTracker_Ref(ProgressTracker):
     """
 
 # src/prelude/progress.rs
-class Progress:
+class Progress(Cloneable):
     def clone(self) -> Progress_Owner: ...
     def become_probe(self) -> None:
         """Changes the progress to a probe."""
@@ -1988,7 +1997,7 @@ class Progress_Ref(Progress):
     """
 
 # src/prelude/joint_config.rs
-class JointConfig:
+class JointConfig(Cloneable):
     def clone(self) -> JointConfig_Owner: ...
     def clear(self) -> None:
         """Clears all IDs."""
@@ -2015,7 +2024,7 @@ class JointConfig_Ref(JointConfig):
     """
 
 # src/prelude/majority_config.rs
-class MajorityConfig:
+class MajorityConfig(Cloneable):
     def clone(self) -> MajorityConfig_Owner: ...
     def capacity(self) -> int:
         """"""
@@ -2062,7 +2071,7 @@ class MajorityConfig_Ref(MajorityConfig):
     """
 
 # src/prelude/inflights.rs
-class Inflights:
+class Inflights(Cloneable):
     def clone(self) -> Inflights_Owner: ...
     def add(self, inflight: int) -> None:
         """Adds an inflight into inflights"""
@@ -2090,7 +2099,7 @@ class Inflights_Ref(Inflights):
     Reference type of :class:`Inflights_Ref`.
     """
 
-class Config:
+class Config(Cloneable):
     def clone(self) -> Config_Owner: ...
     def min_election_tick(self) -> int:
         """The minimum number of ticks before an election."""
