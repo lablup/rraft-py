@@ -9,6 +9,13 @@ from abc import ABCMeta, abstractmethod
 from typing import Any, Callable, Dict, Final, List, Optional, Set, Tuple
 
 # src/prelude/global.rs
+NO_LIMIT: Final[Any]
+CAMPAIGN_ELECTION: Final[Any]
+CAMPAIGN_PRE_ELECTION: Final[Any]
+CAMPAIGN_TRANSFER: Final[Any]
+INVALID_ID: Final[Any]
+INVALID_INDEX: Final[Any]
+
 def majority(total: int) -> int:
     """
     Get the majority number of given nodes count.
