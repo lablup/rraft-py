@@ -6,7 +6,7 @@ but for now this should be handwritten.
 See https://github.com/PyO3/pyo3/issues/2454.
 """
 from abc import ABCMeta, abstractmethod
-from typing import Any, Callable, Dict, List, Optional, Set, Tuple
+from typing import Any, Callable, Dict, Final, List, Optional, Set, Tuple
 
 # src/prelude/global.rs
 def majority(total: int) -> int:
@@ -30,88 +30,88 @@ def vote_resp_msg_type(t: MessageType) -> MessageType:
 class OverflowStrategy:
     """ """
 
-    Block: Any
-    Drop: Any
-    DropAndReport: Any
+    Block: Final[Any]
+    Drop: Final[Any]
+    DropAndReport: Final[Any]
 
 # src/prelude/snapshot_status.rs
 class SnapshotStatus:
     """ """
 
-    Finish: Any
-    Failure: Any
+    Finish: Final[Any]
+    Failure: Final[Any]
 
 # src/prelude/progress_state.rs
 class ProgressState:
     """ """
 
-    Probe: Any
-    Replicate: Any
-    Snapshot: Any
+    Probe: Final[Any]
+    Replicate: Final[Any]
+    Snapshot: Final[Any]
 
 # src/prelude/state_role.rs
 class StateRole:
     """ """
 
-    Candidate: Any
-    Follower: Any
-    Leader: Any
-    PreCandidate: Any
+    Candidate: Final[Any]
+    Follower: Final[Any]
+    Leader: Final[Any]
+    PreCandidate: Final[Any]
 
 # src/prelude/readonly_option.rs
 class ReadOnlyOption:
     """ """
 
-    Safe: Any
-    LeaseBased: Any
+    Safe: Final[Any]
+    LeaseBased: Final[Any]
 
 # src/eraftpb/message_type.rs
 class MessageType:
     """ """
 
-    MsgHup: Any
-    MsgBeat: Any
-    MsgPropose: Any
-    MsgAppend: Any
-    MsgAppendResponse: Any
-    MsgRequestVote: Any
-    MsgRequestVoteResponse: Any
-    MsgSnapshot: Any
-    MsgHeartbeat: Any
-    MsgHeartbeatResponse: Any
-    MsgUnreachable: Any
-    MsgSnapStatus: Any
-    MsgCheckQuorup: Any
-    MsgTransferLeader: Any
-    MsgTimeoutNow: Any
-    MsgReadIndex: Any
-    MsgReadIndexResp: Any
-    MsgRequestPreVote: Any
-    MsgRequestPreVoteResponse: Any
+    MsgHup: Final[Any]
+    MsgBeat: Final[Any]
+    MsgPropose: Final[Any]
+    MsgAppend: Final[Any]
+    MsgAppendResponse: Final[Any]
+    MsgRequestVote: Final[Any]
+    MsgRequestVoteResponse: Final[Any]
+    MsgSnapshot: Final[Any]
+    MsgHeartbeat: Final[Any]
+    MsgHeartbeatResponse: Final[Any]
+    MsgUnreachable: Final[Any]
+    MsgSnapStatus: Final[Any]
+    MsgCheckQuorup: Final[Any]
+    MsgTransferLeader: Final[Any]
+    MsgTimeoutNow: Final[Any]
+    MsgReadIndex: Final[Any]
+    MsgReadIndexResp: Final[Any]
+    MsgRequestPreVote: Final[Any]
+    MsgRequestPreVoteResponse: Final[Any]
 
 # src/eraftpb/conf_change_transition.rs
 class ConfChangeTransition:
     """ """
 
-    Auto: Any
-    Explicit: Any
-    Implicit: Any
+    Auto: Final[Any]
+    Explicit: Final[Any]
+    Implicit: Final[Any]
 
 # src/eraftpb/conf_change_type.rs
 class ConfChangeType:
     """ """
 
-    AddNode: Any
-    AddLearnerNode: Any
-    RemoveNode: Any
+    AddNode: Final[Any]
+    AddLearnerNode: Final[Any]
+    RemoveNode: Final[Any]
 
 # src/eraftpb/entry_type.rs
 class EntryType:
     """ """
 
-    EntryConfChange: Any
-    EntryConfChangeV2: Any
-    EntryNormal: Any
+    EntryConfChange: Final[Any]
+    EntryConfChangeV2: Final[Any]
+    EntryNormal: Final[Any]
 
 class Cloneable(metaclass=ABCMeta):
     @abstractmethod
