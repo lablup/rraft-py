@@ -268,7 +268,9 @@ class MemStorageCore_Ref(MemStorageCore):
 # src/storage/mem_storage.rs
 class MemStorage(Cloneable):
     def clone(self) -> MemStorage_Owner: ...
-    def initialize_with_conf_state(self, conf_state: ConfState_Owner | ConfState_Ref) -> None:
+    def initialize_with_conf_state(
+        self, conf_state: ConfState_Owner | ConfState_Ref
+    ) -> None:
         """
         Initialize a `MemStorage` with a given `Config`.
 
@@ -327,7 +329,9 @@ class MemStorage_Owner(MemStorage):
     @staticmethod
     def default() -> MemStorage_Owner: ...
     @staticmethod
-    def new_with_conf_state(conf_state: ConfState_Owner | ConfState_Ref) -> MemStorage_Owner:
+    def new_with_conf_state(
+        conf_state: ConfState_Owner | ConfState_Ref,
+    ) -> MemStorage_Owner:
         """
         Create a new `MemStorage` with a given `Config`. The given `Config` will be used to
         initialize the storage.
@@ -528,7 +532,9 @@ class RawNode__MemStorage:
         """
         Propose proposes data be appended to the raft log.
         """
-    def propose_conf_change(self, context: List[Any], cc: ConfChange_Owner | ConfChange_Ref) -> None:
+    def propose_conf_change(
+        self, context: List[Any], cc: ConfChange_Owner | ConfChange_Ref
+    ) -> None:
         """
         ProposeConfChange proposes a config change.
 
@@ -536,7 +542,9 @@ class RawNode__MemStorage:
         caller's responsibility to propose an empty conf change again to force
         leaving joint state.
         """
-    def propose_conf_change_v2(self, context: List[Any], cc: ConfChangeV2_Owner | ConfChangeV2_Ref) -> None:
+    def propose_conf_change_v2(
+        self, context: List[Any], cc: ConfChangeV2_Owner | ConfChangeV2_Ref
+    ) -> None:
         """
         ProposeConfChange proposes a config change.
 
@@ -544,13 +552,17 @@ class RawNode__MemStorage:
         caller's responsibility to propose an empty conf change again to force
         leaving joint state.
         """
-    def apply_conf_change(self, cc: ConfChange_Owner | ConfChange_Ref) -> ConfState_Owner:
+    def apply_conf_change(
+        self, cc: ConfChange_Owner | ConfChange_Ref
+    ) -> ConfState_Owner:
         """
         Applies a config change to the local node. The app must call this when it
         applies a configuration change, except when it decides to reject the
         configuration change, in which case no call must take place.
         """
-    def apply_conf_change_v2(self, cc: ConfChangeV2_Owner | ConfChangeV2_Ref) -> ConfState_Owner:
+    def apply_conf_change_v2(
+        self, cc: ConfChangeV2_Owner | ConfChangeV2_Ref
+    ) -> ConfState_Owner:
         """
         Applies a config change to the local node. The app must call this when it
         applies a configuration change, except when it decides to reject the
@@ -606,7 +618,10 @@ class RawNode__MemStorage_Owner(RawNode__MemStorage):
     """
 
     def __init__(
-        self, cfg: Config_Owner | Config_Ref, store: MemStorage_Owner | MemStorage_Ref, logger: Logger_Owner | Logger_Ref
+        self,
+        cfg: Config_Owner | Config_Ref,
+        store: MemStorage_Owner | MemStorage_Ref,
+        logger: Logger_Owner | Logger_Ref,
     ) -> None: ...
     def make_ref(self) -> RawNode__MemStorage_Ref: ...
 
@@ -728,7 +743,9 @@ class Snapshot(Cloneable):
         """ """
     def get_metadata(self) -> SnapshotMetadata_Ref:
         """ """
-    def set_metadata(self, snapshot_meta_data: SnapshotMetadata_Owner | SnapshotMetadata_Ref) -> None:
+    def set_metadata(
+        self, snapshot_meta_data: SnapshotMetadata_Owner | SnapshotMetadata_Ref
+    ) -> None:
         """ """
     def clear_metadata(self) -> None:
         """ """
@@ -1218,7 +1235,9 @@ class Status__Memstorage:
         """ """
     def get_progress(self) -> Optional[ProgressTracker_Ref]:
         """ """
-    def set_progress(self, tracker: Optional[ProgressTracker_Owner] | Optional[ProgressTracker_Ref]) -> None:
+    def set_progress(
+        self, tracker: Optional[ProgressTracker_Owner] | Optional[ProgressTracker_Ref]
+    ) -> None:
         """ """
 
 class Status__Memstorage_Owner(Status__Memstorage):
@@ -1395,7 +1414,11 @@ class RaftLog__MemStorage:
         Attempts to persist the snapshot and returns whether it did.
         """
     def maybe_append(
-        self, idx: int, term: int, committed: int, ents: List[Entry_Owner] | List[Entry_Ref]
+        self,
+        idx: int,
+        term: int,
+        committed: int,
+        ents: List[Entry_Owner] | List[Entry_Ref],
     ) -> Optional[Tuple[int, int]]:
         """
         Returns None if the entries cannot be appended. Otherwise,
@@ -1484,7 +1507,9 @@ class RaftLog__MemStorage_Owner(RaftLog__MemStorage):
     Raft log implementation
     """
 
-    def __init__(self, store: MemStorage_Ref, logger: Logger_Owner | Logger_Ref) -> None: ...
+    def __init__(
+        self, store: MemStorage_Ref, logger: Logger_Owner | Logger_Ref
+    ) -> None: ...
     def make_ref(self) -> RaftLog__MemStorage_Ref: ...
 
 class RaftLog__MemStorage_Ref(RaftLog__MemStorage):
@@ -1571,13 +1596,17 @@ class Raft__MemStorage:
         """
         Return current uncommitted size recorded by uncommitted_state
         """
-    def maybe_increase_uncommitted_size(self, ents: List[Entry_Owner] | List[Entry_Ref]) -> bool:
+    def maybe_increase_uncommitted_size(
+        self, ents: List[Entry_Owner] | List[Entry_Ref]
+    ) -> bool:
         """
         Increase size of 'ents' to uncommitted size. Return true when size limit
         is satisfied. Otherwise return false and uncommitted size remains unchanged.
         For raft with no limit(or non-leader raft), it always return true.
         """
-    def reduce_uncommitted_size(self, ents: List[Entry_Owner] | List[Entry_Ref]) -> None:
+    def reduce_uncommitted_size(
+        self, ents: List[Entry_Owner] | List[Entry_Ref]
+    ) -> None:
         """
         Reduce size of 'ents' from uncommitted size.
         """
@@ -1825,7 +1854,10 @@ class Raft__MemStorage_Owner(Raft__MemStorage):
     """
 
     def __init__(
-        self, cfg: Config_Owner | Config_Ref, store: MemStorage_Owner | MemStorage_Ref, logger: Logger_Owner | Logger_Ref
+        self,
+        cfg: Config_Owner | Config_Ref,
+        store: MemStorage_Owner | MemStorage_Ref,
+        logger: Logger_Owner | Logger_Ref,
     ) -> None: ...
     def make_ref(self) -> Raft__MemStorage_Ref: ...
 
@@ -1886,7 +1918,9 @@ class ProgressTracker_Owner(ProgressTracker):
     which could be `Leader`, `Follower` and `Learner`.
     """
 
-    def __init__(self, max_inflight: int, logger: Logger_Owner | Logger_Ref) -> None: ...
+    def __init__(
+        self, max_inflight: int, logger: Logger_Owner | Logger_Ref
+    ) -> None: ...
     def make_ref(self) -> ProgressTracker_Ref: ...
 
 class ProgressTracker_Ref(ProgressTracker):
