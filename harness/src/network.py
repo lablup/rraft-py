@@ -1,12 +1,14 @@
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, cast
 from interface import Interface
 from rraft import (
     Config_Owner,
     ConfState_Owner,
+    Config_Ref,
     Logger_Owner,
     Logger_Ref,
     MemStorage_Owner,
     Message_Owner,
+    Message_Ref,
     MessageType,
     NO_LIMIT,
     Raft__MemStorage_Owner,
@@ -72,7 +74,7 @@ class Network:
     @staticmethod
     def new_with_config(
         peers: List[Optional[Interface]],
-        config: Config_Owner,
+        config: Config_Owner | Config_Ref,
         l: Logger_Owner | Logger_Ref,
     ) -> Any:
         nstorage = {}
@@ -81,15 +83,14 @@ class Network:
 
         for p, id in zip(peers, peer_addrs):
             if p is None:
-                cs_owner = ConfState_Owner(peer_addrs, [])
-                store_owner = MemStorage_Owner.new_with_conf_state(cs_owner)
+                store_owner = MemStorage_Owner.new_with_conf_state(
+                    ConfState_Owner(peer_addrs, [])
+                )
                 nstorage[id] = store_owner.clone()
                 cfg = config.clone()
                 cfg.set_id(id)
 
-                raft_owner = Raft__MemStorage_Owner(
-                    cfg, store_owner, l
-                )
+                raft_owner = Raft__MemStorage_Owner(cfg, store_owner, l)
                 r = Interface(raft_owner)
                 npeers[id] = r
             else:
@@ -111,19 +112,17 @@ class Network:
         self.ignorem[t] = True
 
     # Filter out messages that should be dropped according to rules set by `ignore` or `drop`.
-    def filter_(self, msgs: List[Message_Owner]) -> List[Message_Owner]:
-        def should_be_filtered(m: Message_Owner):
+    def filter_(
+        self, msgs: List[Message_Owner] | List[Message_Ref]
+    ) -> List[Message_Owner]:
+        def should_be_filtered(m: Message_Owner | Message_Ref):
             if self.ignorem.get(m.get_msg_type()):
                 return False
 
             # hups never go over the network, so don't drop them but panic
-            assert (
-                m.get_msg_type() != MessageType.MsgHup
-            ), "unexpected msgHup"
+            assert m.get_msg_type() != MessageType.MsgHup, "unexpected msgHup"
 
-            perc = self.dropm.get(
-                Connection(m.get_from(), m.get_to()), 0.0
-            )
+            perc = self.dropm.get(Connection(m.get_from(), m.get_to()), 0.0)
 
             return random.random() >= perc
 
@@ -141,12 +140,12 @@ class Network:
     # Instruct the cluster to `step` through the given messages.
     #
     # NOTE: the given `msgs` won't be filtered by its filters.
-    def send(self, msgs: List[Message_Owner]) -> None:
+    def send(self, msgs: List[Message_Owner] | List[Message_Ref]) -> None:
         while msgs:
             new_msgs: List[Message_Owner] = []
 
             for m in msgs:
-                p = self.peers.get(m.get_to())
+                p = cast(Interface, self.peers.get(m.get_to()))
                 p.step(m)
                 # The unstable data should be persisted before sending msg.
                 p.persist()
@@ -157,13 +156,13 @@ class Network:
             msgs.extend(new_msgs)
 
     # Filter `msgs` and then instruct the cluster to `step` through the given messages.
-    def filter_and_send(self, msgs: List[Message_Owner]) -> None:
+    def filter_and_send(self, msgs: List[Message_Owner] | List[Message_Ref]) -> None:
         self.send(self.filter_(msgs))
 
     # Dispatches the given messages to the appropriate peers.
     #
     # Unlike `send` this does not gather and send any responses. It also does not ignore errors.
-    def dispatch(self, messages: List[Message_Owner]) -> None:
+    def dispatch(self, messages: List[Message_Owner] | List[Message_Ref]) -> None:
         for message in self.filter_(messages):
             to = message.get_to()
             peer = self.peers[to]

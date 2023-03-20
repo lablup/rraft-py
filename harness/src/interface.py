@@ -33,7 +33,7 @@ class Interface:
         return self.raft.get_raft_log()
 
     # Step the raft, if it exists.
-    def step(self, message: Message_Ref) -> None:
+    def step(self, message: Message_Owner | Message_Ref) -> None:
         if self.raft:
             self.raft.step(message)
 
@@ -50,9 +50,7 @@ class Interface:
                 snap = snapshot.clone()
                 index = snap.get_metadata().get_index()
                 self.raft_log.stable_snap(index)
-                self.raft_log.get_store().wl(
-                    lambda core: core.apply_snapshot(snap)
-                )
+                self.raft_log.get_store().wl(lambda core: core.apply_snapshot(snap))
                 self.raft.on_persist_snap(index)
                 self.raft.commit_apply(index)
 

@@ -2,6 +2,7 @@ from typing import List, Optional
 from rraft import (
     ConfChange_Owner,
     ConfChangeSingle_Owner,
+    ConfChangeSingle_Ref,
     ConfChangeType,
     ConfChangeV2_Owner,
     ConfState_Owner,
@@ -9,6 +10,7 @@ from rraft import (
     Entry_Owner,
     Entry_Ref,
     HardState_Owner,
+    Logger_Owner,
     Logger_Ref,
     MemStorage_Owner,
     MemStorage_Ref,
@@ -62,8 +64,8 @@ def new_test_raft(
     peers: List[int],
     election: int,
     heartbeat: int,
-    storage: MemStorage_Ref,
-    logger: Logger_Ref,
+    storage: MemStorage_Owner | MemStorage_Ref,
+    logger: Logger_Owner | Logger_Ref,
 ) -> Interface:
     config = new_test_config(id, election, heartbeat)
     initial_state = storage.initial_state()
@@ -84,9 +86,9 @@ def new_test_raft_with_prevote(
     peers: List[int],
     election: int,
     heartbeat: int,
-    storage: MemStorage_Ref,
+    storage: MemStorage_Owner | MemStorage_Ref,
     pre_vote: bool,
-    logger: Logger_Ref,
+    logger: Logger_Owner | Logger_Ref,
 ) -> Interface:
     config = new_test_config(id, election, heartbeat)
     config.set_pre_vote(pre_vote)
@@ -108,9 +110,9 @@ def new_test_raft_with_logs(
     peers: List[int],
     election: int,
     heartbeat: int,
-    storage: MemStorage_Ref,
-    logs: List[Entry_Ref],
-    logger: Logger_Ref,
+    storage: MemStorage_Owner | MemStorage_Ref,
+    logs: List[Entry_Owner] | List[Entry_Ref],
+    logger: Logger_Owner | Logger_Ref,
 ) -> Interface:
     config = new_test_config(id, election, heartbeat)
     initial_state = storage.initial_state()
@@ -130,8 +132,8 @@ def new_test_raft_with_logs(
 
 def new_test_raft_with_config(
     config: Config_Owner,
-    storage: MemStorage_Ref,
-    logger: Logger_Ref,
+    storage: MemStorage_Owner | MemStorage_Ref,
+    logger: Logger_Owner | Logger_Ref,
 ) -> Interface:
     return Interface(Raft__MemStorage_Owner(config, storage, logger))
 
@@ -228,7 +230,7 @@ def add_learner(node_id: int) -> ConfChangeV2_Owner:
 
 
 def conf_state(voters: List[int], learners: List[int]) -> ConfState_Owner:
-    cs = ConfState_Owner()
+    cs = ConfState_Owner.default()
     cs.set_voters(voters)
     cs.set_learners(learners)
     return cs
@@ -248,7 +250,9 @@ def conf_state_v2(
     return cs
 
 
-def conf_change_v2(steps: List[ConfChangeSingle_Owner]) -> ConfChangeV2_Owner:
+def conf_change_v2(
+    steps: List[ConfChangeSingle_Owner] | List[ConfChangeSingle_Ref],
+) -> ConfChangeV2_Owner:
     cc = ConfChangeV2_Owner()
     cc.set_changes(steps)
     return cc
