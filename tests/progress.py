@@ -1,5 +1,3 @@
-from typing import Optional
-
 from rraft import Progress_Owner, ProgressState, INVALID_INDEX
 
 
@@ -11,9 +9,9 @@ def new_progress(
     ins_size: int,
 ) -> Progress_Owner:
     p = Progress_Owner(next_idx, ins_size)
-    p.make_ref().set_state(state)
-    p.make_ref().set_matched(matched)
-    p.make_ref().set_pending_snapshot(pending_snapshot)
+    p.set_state(state)
+    p.set_matched(matched)
+    p.set_pending_snapshot(pending_snapshot)
     return p
 
 
@@ -36,19 +34,19 @@ def test_progress_is_paused():
     for i, v in enumerate(tests):
         state, paused, w = v.state, v.paused, v.w
         p = new_progress(state, 0, 0, 0, 256)
-        p.make_ref().set_paused(paused)
-        if p.make_ref().is_paused() != w:
-            assert False, f"#{i}: shouldwait = {p.make_ref().is_paused()}, want {w}"
+        p.set_paused(paused)
+        if p.is_paused() != w:
+            assert False, f"#{i}: shouldwait = {p.is_paused()}, want {w}"
 
 
 def test_progress_resume():
     p = Progress_Owner(2, 256)
-    p.make_ref().set_paused(True)
-    p.make_ref().maybe_decr_to(1, 1, INVALID_INDEX)
-    assert not p.make_ref().get_paused(), "paused= true, want false"
-    p.make_ref().set_paused(True)
-    p.make_ref().maybe_update(2)
-    assert not p.make_ref().get_paused(), "paused= true, want false"
+    p.set_paused(True)
+    p.maybe_decr_to(1, 1, INVALID_INDEX)
+    assert not p.get_paused(), "paused= true, want false"
+    p.set_paused(True)
+    p.maybe_update(2)
+    assert not p.get_paused(), "paused= true, want false"
 
 
 def test_progress_become_probe():
@@ -72,36 +70,36 @@ def test_progress_become_probe():
 
     for i, v in enumerate(tests):
         p, wnext = v.p, v.wnext
-        p.make_ref().become_probe()
+        p.become_probe()
 
-        if p.make_ref().get_state() != ProgressState.Probe:
+        if p.get_state() != ProgressState.Probe:
             assert (
                 False
-            ), f"#{i}: state = {p.make_ref().get_state()}, want {ProgressState.Probe}"
+            ), f"#{i}: state = {p.get_state()}, want {ProgressState.Probe}"
 
-        if p.make_ref().get_matched() != matched:
-            assert False, f"#{i}: match = {p.make_ref().get_matched()}, want {matched}"
+        if p.get_matched() != matched:
+            assert False, f"#{i}: match = {p.get_matched()}, want {matched}"
 
-        if p.make_ref().get_next_idx() != wnext:
-            assert False, f"#{i}: next = {p.make_ref().get_next_idx()}, want {wnext}"
+        if p.get_next_idx() != wnext:
+            assert False, f"#{i}: next = {p.get_next_idx()}, want {wnext}"
 
 
 def test_progress_become_replicate():
     p = new_progress(ProgressState.Probe, 1, 5, 0, 256)
-    p.make_ref().become_replicate()
+    p.become_replicate()
 
-    assert p.make_ref().get_state() == ProgressState.Replicate
-    assert p.make_ref().get_matched() == 1
-    assert p.make_ref().get_matched() + 1 == p.make_ref().get_next_idx()
+    assert p.get_state() == ProgressState.Replicate
+    assert p.get_matched() == 1
+    assert p.get_matched() + 1 == p.get_next_idx()
 
 
 def test_progress_become_snapshot():
     p = new_progress(ProgressState.Probe, 1, 5, 0, 256)
-    p.make_ref().become_snapshot(10)
+    p.become_snapshot(10)
 
-    assert p.make_ref().get_state() == ProgressState.Snapshot
-    assert p.make_ref().get_matched() == 1
-    assert p.make_ref().get_pending_snapshot() == 10
+    assert p.get_state() == ProgressState.Snapshot
+    assert p.get_matched() == 1
+    assert p.get_pending_snapshot() == 10
 
 
 def test_progress_update():
@@ -124,16 +122,16 @@ def test_progress_update():
     for i, v in enumerate(tests):
         update, wm, wn, wok = v.update, v.wm, v.wn, v.wok
         p = Progress_Owner(prev_n, 256)
-        p.make_ref().set_matched(prev_m)
-        ok = p.make_ref().maybe_update(update)
+        p.set_matched(prev_m)
+        ok = p.maybe_update(update)
 
         assert ok == wok, f"#{i}: ok = {ok}, want {wok}"
         assert (
-            p.make_ref().get_matched() == wm
-        ), f"#{i}: match = {p.make_ref().get_matched()}, want {wm}"
+            p.get_matched() == wm
+        ), f"#{i}: match = {p.get_matched()}, want {wm}"
         assert (
-            p.make_ref().get_next_idx() == wn
-        ), f"#{i}: next = {p.make_ref().get_next_idx()}, want {wn}"
+            p.get_next_idx() == wn
+        ), f"#{i}: next = {p.get_next_idx()}, want {wn}"
 
 
 def test_progress_maybe_decr():
@@ -181,9 +179,9 @@ def test_progress_maybe_decr():
         )
 
         p = new_progress(state, m, n, 0, 0)
-        if p.make_ref().maybe_decr_to(rejected, last, 0) != w:
+        if p.maybe_decr_to(rejected, last, 0) != w:
             assert False, f"#{i}: maybeDecrTo = {not w}, want {w}"
-        if p.make_ref().get_matched() != m:
-            assert False, f"#{i}: match = {p.make_ref().get_matched()}, want {m}"
-        if p.make_ref().get_next_idx() != wn:
-            assert False, f"#{i}: next = {p.make_ref().get_next_idx()}, want {wn}"
+        if p.get_matched() != m:
+            assert False, f"#{i}: match = {p.get_matched()}, want {m}"
+        if p.get_next_idx() != wn:
+            assert False, f"#{i}: next = {p.get_next_idx()}, want {wn}"

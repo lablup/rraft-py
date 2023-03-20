@@ -597,7 +597,7 @@ class RawNode__MemStorage_Owner:
     """
 
     def __init__(
-        self, cfg: Config, store: MemStorage_Ref, logger: Logger_Ref
+        self, cfg: Config_Ref, store: MemStorage_Ref, logger: Logger_Ref
     ) -> None: ...
     def make_ref(self) -> RawNode__MemStorage_Ref: ...
 
@@ -1796,7 +1796,7 @@ class Raft__MemStorage_Owner:
     """
 
     def __init__(
-        self, cfg: Config, store: MemStorage_Ref, logger: Logger_Ref
+        self, cfg: Config_Ref, store: MemStorage_Ref, logger: Logger_Ref
     ) -> None: ...
     def make_ref(self) -> Raft__MemStorage_Ref: ...
 

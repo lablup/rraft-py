@@ -12,17 +12,17 @@ from rraft import (
 
 def new_entry(index: int, term: int) -> Entry_Owner:
     e = Entry_Owner()
-    e.make_ref().set_term(term)
-    e.make_ref().set_index(index)
+    e.set_term(term)
+    e.set_index(index)
     return e
 
 
 def new_snapshot(index: int, term: int) -> Snapshot_Owner:
     snap = Snapshot_Owner()
     meta = SnapshotMetadata_Owner()
-    meta.make_ref().set_term(term)
-    meta.make_ref().set_index(index)
-    snap.make_ref().set_metadata(meta.make_ref())
+    meta.set_term(term)
+    meta.set_index(index)
+    snap.set_metadata(meta)
     return snap
 
 
@@ -71,8 +71,8 @@ def test_find_conflict():
         ents, wconflict = v.ents, v.wconflict
         store = MemStorage_Owner()
         raft_log = RaftLog__MemStorage_Owner(store, l)
-        raft_log.make_ref().append(previous_ents)
-        gconflict = raft_log.make_ref().find_conflict(ents)
+        raft_log.append(previous_ents)
+        gconflict = raft_log.find_conflict(ents)
 
         assert gconflict == wconflict, f"#{i}: conflict = {gconflict}, want {wconflict}"
 
@@ -85,8 +85,8 @@ def test_is_up_to_date():
     ]
     store = MemStorage_Owner()
     l = default_logger()
-    raft_log = RaftLog__MemStorage_Owner(store, l.make_ref())
-    raft_log.make_ref().append(previous_ents)
+    raft_log = RaftLog__MemStorage_Owner(store, l)
+    raft_log.append(previous_ents)
 
     class Test:
         def __init__(self, last_index: int, term: int, up_to_date: bool) -> None:
@@ -96,22 +96,22 @@ def test_is_up_to_date():
 
     tests = [
         # greater term, ignore lastIndex
-        Test(raft_log.make_ref().last_index() - 1, 4, True),
-        Test(raft_log.make_ref().last_index(), 4, True),
-        Test(raft_log.make_ref().last_index() + 1, 4, True),
+        Test(raft_log.last_index() - 1, 4, True),
+        Test(raft_log.last_index(), 4, True),
+        Test(raft_log.last_index() + 1, 4, True),
         # smaller term, ignore lastIndex
-        Test(raft_log.make_ref().last_index() - 1, 2, False),
-        Test(raft_log.make_ref().last_index(), 2, False),
-        Test(raft_log.make_ref().last_index() + 1, 2, False),
+        Test(raft_log.last_index() - 1, 2, False),
+        Test(raft_log.last_index(), 2, False),
+        Test(raft_log.last_index() + 1, 2, False),
         # equal term, lager lastIndex wins
-        Test(raft_log.make_ref().last_index() - 1, 3, False),
-        Test(raft_log.make_ref().last_index(), 3, True),
-        Test(raft_log.make_ref().last_index() + 1, 3, True),
+        Test(raft_log.last_index() - 1, 3, False),
+        Test(raft_log.last_index(), 3, True),
+        Test(raft_log.last_index() + 1, 3, True),
     ]
 
     for i, v in enumerate(tests):
         last_index, term, up_to_date = v.last_index, v.term, v.up_to_date
-        g_up_to_date = raft_log.make_ref().is_up_to_date(last_index, term)
+        g_up_to_date = raft_log.is_up_to_date(last_index, term)
         assert (
             g_up_to_date == up_to_date
         ), f"#{i}: up_to_date = {g_up_to_date}, want {up_to_date}"
@@ -157,13 +157,13 @@ def test_append():
     for i, v in enumerate(tests):
         ents, windex, wents, wunstable = v.ents, v.windex, v.wents, v.wunstable
         store = MemStorage_Owner()
-        store.make_ref().wl(lambda core: core.append(previous_ents))
-        raft_log = RaftLog__MemStorage_Owner(store.make_ref(), l.make_ref())
-        index = raft_log.make_ref().append(ents)
+        store.wl(lambda core: core.append(previous_ents))
+        raft_log = RaftLog__MemStorage_Owner(store, l)
+        index = raft_log.append(ents)
         assert index == windex, f"#{i}: index = {index}, want {windex}"
 
-        g = raft_log.make_ref().entries(1, None)
-        wents = list(map(lambda x: x.make_ref(), wents))
+        g = raft_log.entries(1, None)
+        wents = list(map(lambda x: x, wents))
         # TODO: Handle errors properly here.
         assert g == wents, f"#{i}: logEnts = {g}, want {wents}"
 
@@ -175,39 +175,39 @@ def test_compaction_side_effects():
     storage = MemStorage_Owner()
 
     for i in range(1, unstable_index + 1):
-        storage.make_ref().wl(lambda core: core.append([new_entry(i, i)]))
+        storage.wl(lambda core: core.append([new_entry(i, i)]))
 
     l = default_logger()
-    raft_log = RaftLog__MemStorage_Owner(storage.make_ref(), l.make_ref())
+    raft_log = RaftLog__MemStorage_Owner(storage, l)
 
     for i in range(unstable_index, last_index):
-        raft_log.make_ref().append([new_entry(i + 1, i + 1)])
+        raft_log.append([new_entry(i + 1, i + 1)])
 
-    assert raft_log.make_ref().maybe_commit(
+    assert raft_log.maybe_commit(
         last_index, last_term
     ), "maybe_commit return false"
 
     offset = 500
-    raft_log.make_ref().get_store().wl(lambda core: core.compact(offset))
+    raft_log.get_store().wl(lambda core: core.compact(offset))
 
-    assert last_index == raft_log.make_ref().last_index()
+    assert last_index == raft_log.last_index()
 
-    for j in range(offset, raft_log.make_ref().last_index() + 1):
-        assert j == raft_log.make_ref().term(j)
-        assert raft_log.make_ref().match_term(
+    for j in range(offset, raft_log.last_index() + 1):
+        assert j == raft_log.term(j)
+        assert raft_log.match_term(
             j, j
         ), f"match_term({j}) = false, want true"
 
-    unstable_ents = raft_log.make_ref().unstable_entries()
+    unstable_ents = raft_log.unstable_entries()
     assert last_index - unstable_index == len(unstable_ents)
     assert unstable_index + 1 == unstable_ents[0].get_index()
 
-    prev = raft_log.make_ref().last_index()
-    raft_log.make_ref().append([new_entry(prev + 1, prev + 1)])
+    prev = raft_log.last_index()
+    raft_log.append([new_entry(prev + 1, prev + 1)])
     assert unstable_index + 1 == unstable_ents[0].get_index()
 
-    prev = raft_log.make_ref().last_index()
-    ents = raft_log.make_ref().entries(prev, None)
+    prev = raft_log.last_index()
+    ents = raft_log.entries(prev, None)
     assert len(ents) == 1
 
 

@@ -5,8 +5,8 @@ from rraft import Entry_Owner, MemStorage_Owner, Message_Ref, Snapshot_Owner, Sn
 
 def new_entry(index: int, term: int) -> Entry_Owner:
     e = Entry_Owner()
-    e.make_ref().set_term(term)
-    e.make_ref().set_index(index)
+    e.set_term(term)
+    e.set_index(index)
     return e
 
 
@@ -17,9 +17,9 @@ def size_of(m: Message_Ref):
 def new_snapshot(index: int, term: int) -> Snapshot_Owner:
     snap = Snapshot_Owner()
     meta = SnapshotMetadata_Owner()
-    meta.make_ref().set_term(term)
-    meta.make_ref().set_index(index)
-    snap.make_ref().set_metadata(meta.make_ref())
+    meta.set_term(term)
+    meta.set_index(index)
+    snap.set_metadata(meta.make_ref())
     return snap
 
 
@@ -43,7 +43,7 @@ def test_storage_term():
         idx, wterm = v.idx, v.wterm
         storage = MemStorage_Owner()
         # TODO: Resolve private fields issue.
-        # storage.make_ref().
+        # storage.
 
 
 def test_storage_entries():
