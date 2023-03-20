@@ -3,7 +3,7 @@ Type hints for Native Rust Extension
 
 Ideally this file could eventually be generated automatically.
 but for now this should be handwritten.
-See https://github.com/PyO3/pyo3/issues/2454
+See https://github.com/PyO3/pyo3/issues/2454.
 """
 from typing import Any, Callable, Dict, List, Optional, Set, Tuple
 
@@ -26,51 +26,12 @@ def vote_resp_msg_type(t: MessageType) -> MessageType:
     """
 
 # src/internal/slog.rs
-class Logger_Ref:
-    def info(self, s: str) -> None:
-        """
-        Log info level record
-
-        See `slog_log` for documentation.
-        """
-    def debug(self, s: str) -> None:
-        """
-        Log debug level record
-
-        See `log` for documentation.
-        """
-    def trace(self, s: str) -> None:
-        """
-        Log trace level record
-
-        See `log` for documentation.
-        """
-    def crit(self, s: str) -> None:
-        """
-        Log crit level record
-
-        See `log` for documentation.
-        """
-    def error(self, s: str) -> None:
-        """
-        Log error level record
-
-        See `log` for documentation.
-        """
-
-# src/internal/slog.rs
 class OverflowStrategy:
     """ """
 
     Block: Any
     Drop: Any
     DropAndReport: Any
-
-class Logger_Owner:
-    """ """
-
-    def __init__(self, chan_size: int, overflow_strategy: OverflowStrategy) -> None: ...
-    def make_ref(self) -> Logger_Ref: ...
 
 # src/prelude/snapshot_status.rs
 class SnapshotStatus:
@@ -151,12 +112,49 @@ class EntryType:
     EntryConfChangeV2: Any
     EntryNormal: Any
 
-# src/storage/raft_state.rs
-class RaftState_Ref:
-    """
-    Reference type of :class:`RaftState_Owner`.
-    """
+class Logger:
+    def info(self, s: str) -> None:
+        """
+        Log info level record
 
+        See `slog_log` for documentation.
+        """
+    def debug(self, s: str) -> None:
+        """
+        Log debug level record
+
+        See `log` for documentation.
+        """
+    def trace(self, s: str) -> None:
+        """
+        Log trace level record
+
+        See `log` for documentation.
+        """
+    def crit(self, s: str) -> None:
+        """
+        Log crit level record
+
+        See `log` for documentation.
+        """
+    def error(self, s: str) -> None:
+        """
+        Log error level record
+
+        See `log` for documentation.
+        """
+
+class Logger_Owner(Logger):
+    """ """
+
+    def __init__(self, chan_size: int, overflow_strategy: OverflowStrategy) -> None: ...
+    def make_ref(self) -> Logger_Ref: ...
+
+class Logger_Ref(Logger):
+    """ """
+
+# src/storage/raft_state.rs
+class RaftState:
     def clone(self) -> RaftState_Owner: ...
     def initialized(self) -> bool:
         """
@@ -171,7 +169,7 @@ class RaftState_Ref:
     def set_hard_state(self, hs: HardState_Ref) -> None:
         """ """
 
-class RaftState_Owner:
+class RaftState_Owner(RaftState):
     """
     Holds both the hard state (commit index, vote leader, term) and the configuration state
     (Current node IDs)
@@ -179,15 +177,16 @@ class RaftState_Owner:
 
     def __init__(self) -> None: ...
     def make_ref(self) -> RaftState_Ref: ...
-    def clone(self) -> RaftState_Owner: ...
-    def default(self) -> RaftState_Owner: ...
+    @staticmethod
+    def default() -> RaftState_Owner: ...
+
+class RaftState_Ref(RaftState):
+    """
+    Reference type of :class:`RaftState_Owner`.
+    """
 
 # src/storage/mem_storage_core.rs
-class MemStorageCore_Ref:
-    """
-    Reference type of :class:`MemStorage_Owner`.
-    """
-
+class MemStorageCore:
     def append(self, ents: List[Entry_Ref]) -> None:
         """
         Append the new entries to storage.
@@ -246,21 +245,23 @@ class MemStorageCore_Ref:
         Trigger a SnapshotTemporarilyUnavailable error.
         """
 
-class MemStorageCore_Owner:
+class MemStorageCore_Owner(MemStorageCore):
     """
     The Memory Storage Core instance holds the actual state of the storage struct. To access this
     value, use the `rl` and `wl` functions on the main MemStorage implementation.
     """
 
     def make_ref(self) -> MemStorageCore_Ref: ...
-    def default(self) -> MemStorageCore_Owner: ...
+    @staticmethod
+    def default() -> MemStorageCore_Owner: ...
 
-# src/storage/mem_storage.rs
-class MemStorage_Ref:
+class MemStorageCore_Ref(MemStorageCore):
     """
     Reference type of :class:`MemStorage_Owner`.
     """
 
+# src/storage/mem_storage.rs
+class MemStorage:
     def clone(self) -> MemStorage_Owner: ...
     def initialize_with_conf_state(self, conf_state: ConfState_Ref) -> None:
         """
@@ -305,7 +306,7 @@ class MemStorage_Ref:
         with functions that don't require mutation.
         """
 
-class MemStorage_Owner:
+class MemStorage_Owner(MemStorage):
     """
     `MemStorage` is a thread-safe but incomplete implementation of `Storage`, mainly for tests.
 
@@ -318,8 +319,8 @@ class MemStorage_Owner:
 
     def __init__(self) -> None: ...
     def make_ref(self) -> MemStorage_Ref: ...
-    def clone(self) -> MemStorage_Owner: ...
-    def default(self) -> MemStorage_Owner: ...
+    @staticmethod
+    def default() -> MemStorage_Owner: ...
     @staticmethod
     def new_with_conf_state(conf_state: ConfState_Ref) -> MemStorage_Owner:
         """
@@ -329,12 +330,13 @@ class MemStorage_Owner:
         You should use the same input to initialize all nodes.
         """
 
-# src/raw_node/ready.rs
-class Ready_Ref:
+class MemStorage_Ref(MemStorage):
     """
-    Reference type of :class:`Ready_Owner`.
+    Reference type of :class:`MemStorage_Owner`.
     """
 
+# src/raw_node/ready.rs
+class Ready:
     def hs(self) -> Optional[HardState_Ref]:
         """
         The current state of a Node to be saved to stable storage.
@@ -409,7 +411,7 @@ class Ready_Ref:
         ReadStates specifies the state for read only query.
         """
 
-class Ready_Owner:
+class Ready_Owner(Ready):
     """
     Ready encapsulates the entries and messages that are ready to read,
     be saved to stable storage, committed or sent to other peers.
@@ -418,12 +420,13 @@ class Ready_Owner:
     def make_ref(self) -> Ready_Ref: ...
     def default(self) -> Ready_Owner: ...
 
-# src/raw_node/raw_node.rs
-class RawNode__MemStorage_Ref:
+class Ready_Ref(Ready):
     """
-    Reference type of :class:`RawNode__MemStorage_Owner`.
+    Reference type of :class:`Ready_Owner`.
     """
 
+# src/raw_node/raw_node.rs
+class RawNode__MemStorage:
     def advance_apply(self) -> None:
         """
         Advance apply to the index of the last committed entries given before.
@@ -589,7 +592,7 @@ class RawNode__MemStorage_Ref:
     def get_raft(self) -> Raft__MemStorage_Ref:
         """ """
 
-class RawNode__MemStorage_Owner:
+class RawNode__MemStorage_Owner(RawNode__MemStorage):
     """
     RawNode is a thread-unsafe Node.
     The methods of this struct correspond to the methods of Node and are described
@@ -601,12 +604,13 @@ class RawNode__MemStorage_Owner:
     ) -> None: ...
     def make_ref(self) -> RawNode__MemStorage_Ref: ...
 
-# src/raw_node/peer.rs
-class Peer_Ref:
+class RawNode__MemStorage_Ref(RawNode__MemStorage):
     """
-    Reference type of :class:`Peer_Owner`.
+    Reference type of :class:`RawNode__MemStorage_Owner`.
     """
 
+# src/raw_node/peer.rs
+class Peer:
     def get_id(self) -> int:
         """ """
     def set_id(self, v: int) -> None:
@@ -616,7 +620,7 @@ class Peer_Ref:
     def set_context(self, context: List[Any]) -> None:
         """ """
 
-class Peer_Owner:
+class Peer_Owner(Peer):
     """
     Represents a Peer node in the cluster.
     """
@@ -624,12 +628,13 @@ class Peer_Owner:
     def __init__(self) -> None: ...
     def make_ref(self) -> Peer_Ref: ...
 
-# src/raw_node/light_ready.rs
-class LightReady_Ref:
+class Peer_Ref(Peer):
     """
-    Reference type of :class:`LightReady_Owner`.
+    Reference type of :class:`Peer_Owner`.
     """
 
+# src/raw_node/light_ready.rs
+class LightReady:
     def commit_index(self) -> Optional[int]:
         """
         The current commit index.
@@ -655,7 +660,7 @@ class LightReady_Ref:
         Take the Messages.
         """
 
-class LightReady_Owner:
+class LightReady_Owner(LightReady):
     """
     LightReady encapsulates the commit index, committed entries and
     messages that are ready to be applied or be sent to other peers.
@@ -663,14 +668,16 @@ class LightReady_Owner:
 
     def __init__(self) -> None: ...
     def make_ref(self) -> LightReady_Ref: ...
-    def default(self) -> LightReady_Owner: ...
+    @staticmethod
+    def default() -> LightReady_Owner: ...
+
+class LightReady_Ref(LightReady):
+    """
+    Reference type of :class:`LightReady_Owner`.
+    """
 
 # src/eraftpb/snapshot_metadata.rs
-class SnapshotMetadata_Ref:
-    """
-    Reference type of :class:`SnapshotMetadata_Owner`.
-    """
-
+class SnapshotMetadata:
     def clone(self) -> SnapshotMetadata_Owner: ...
     def get_index(self) -> int:
         """ """
@@ -693,19 +700,20 @@ class SnapshotMetadata_Ref:
     def has_conf_state(self) -> bool:
         """ """
 
-class SnapshotMetadata_Owner:
+class SnapshotMetadata_Owner(SnapshotMetadata):
     """ """
 
     def __init__(self) -> None: ...
     def make_ref(self) -> SnapshotMetadata_Ref: ...
     def clone(self) -> SnapshotMetadata_Owner: ...
 
-# src/eraftpb/snapshot.rs
-class Snapshot_Ref:
+class SnapshotMetadata_Ref(SnapshotMetadata):
     """
-    Reference type of :class:`Snapshot_Owner`.
+    Reference type of :class:`SnapshotMetadata_Owner`.
     """
 
+# src/eraftpb/snapshot.rs
+class Snapshot:
     def clone(self) -> Snapshot_Owner: ...
     def get_data(self) -> List[Any]:
         """ """
@@ -724,19 +732,20 @@ class Snapshot_Ref:
     def is_empty(self) -> bool:
         """ """
 
-class Snapshot_Owner:
+class Snapshot_Owner(Snapshot):
     """ """
 
     def __init__(self) -> None: ...
     def make_ref(self) -> Snapshot_Ref: ...
     def clone(self) -> Snapshot_Owner: ...
 
-# src/eraftpb/message.rs
-class Message_Ref:
+class Snapshot_Ref(Snapshot):
     """
-    Reference type of :class:`Message_Owner`.
+    Reference type of :class:`Snapshot_Owner`.
     """
 
+# src/eraftpb/message.rs
+class Message:
     def clone(self) -> Message_Owner: ...
     def get_commit(self) -> int:
         """ """
@@ -835,20 +844,22 @@ class Message_Ref:
     def get_cached_size(self) -> int:
         """ """
 
-class Message_Owner:
+class Message_Owner(Message):
     """ """
 
     def __init__(self) -> None: ...
     def make_ref(self) -> Message_Ref: ...
     def clone(self) -> Message_Owner: ...
-    def default(self) -> Message_Owner: ...
+    @staticmethod
+    def default() -> Message_Owner: ...
+
+class Message_Ref(Message):
+    """
+    Reference type of :class:`Message_Owner`.
+    """
 
 # src/eraftpb/hardstate.rs
-class HardState_Ref:
-    """
-    Reference type of :class:`HardState_Owner`.
-    """
-
+class HardState:
     def clone(self) -> HardState_Owner: ...
     def get_term(self) -> int:
         """ """
@@ -869,20 +880,22 @@ class HardState_Ref:
     def clear_commit(self) -> None:
         """ """
 
-class HardState_Owner:
+class HardState_Owner(HardState):
     """ """
 
     def __init__(self) -> None: ...
     def make_ref(self) -> HardState_Ref: ...
     def clone(self) -> HardState_Owner: ...
-    def default(self) -> HardState_Owner: ...
+    @staticmethod
+    def default() -> HardState_Owner: ...
+
+class HardState_Ref(HardState):
+    """
+    Reference type of :class:`HardState_Owner`.
+    """
 
 # src/eraftpb/entry.rs
-class Entry_Ref:
-    """
-    Reference type of :class:`Entry_Owner`.
-    """
-
+class Entry:
     def clone(self) -> Entry_Owner: ...
     def get_context(self) -> List[Any]:
         """ """
@@ -921,20 +934,22 @@ class Entry_Ref:
     def clear_index(self) -> None:
         """ """
 
-class Entry_Owner:
+class Entry_Owner(Entry):
     """ """
 
     def __init__(self) -> None: ...
     def make_ref(self) -> Entry_Ref: ...
-    def default(self) -> Entry_Owner: ...
+    @staticmethod
+    def default() -> Entry_Owner: ...
     def clone(self) -> Entry_Owner: ...
 
-# src/eraftpb/conf_state.rs
-class ConfState_Ref:
+class Entry_Ref(Entry):
     """
-    Reference type of :class:`ConfState_Owner`.
+    Reference type of :class:`Entry_Owner`.
     """
 
+# src/eraftpb/conf_state.rs
+class ConfState:
     def clone(self) -> ConfState_Owner: ...
     def get_auto_leave(self) -> bool:
         """ """
@@ -967,22 +982,24 @@ class ConfState_Ref:
     def clear_voters_outgoing(self) -> None:
         """ """
 
-class ConfState_Owner:
+class ConfState_Owner(ConfState):
     """ """
 
     def __init__(
         self, voters: Optional[List[int]], learners: Optional[List[int]]
     ) -> None: ...
     def make_ref(self) -> ConfState_Ref: ...
-    def default(self) -> ConfState_Owner: ...
+    @staticmethod
+    def default() -> ConfState_Owner: ...
     def clone(self) -> ConfState_Owner: ...
 
-# src/eraftpb/conf_change_v2.rs
-class ConfChangeV2_Ref:
+class ConfState_Ref(ConfState):
     """
-    Reference type of :class:`ConfChangeV2_Owner`.
+    Reference type of :class:`ConfState_Owner`.
     """
 
+# src/eraftpb/conf_change_v2.rs
+class ConfChangeV2:
     def clone(self) -> ConfChangeV2_Owner: ...
     def get_changes(self) -> List[Any]:
         """ """
@@ -1009,19 +1026,20 @@ class ConfChangeV2_Ref:
     def clear_joint(self) -> None:
         """ """
 
-class ConfChangeV2_Owner:
+class ConfChangeV2_Owner(ConfChangeV2):
     """ """
 
     def __init__(self) -> None: ...
     def make_ref(self) -> ConfChangeV2_Ref: ...
     def clone(self) -> ConfChangeV2_Owner: ...
 
-# src/eraftpb/conf_change_single.rs
-class ConfChangeSingle_Ref:
+class ConfChangeV2_Ref(ConfChangeV2):
     """
-    Reference type of :class:`ConfChangeSingle_Owner`.
+    Reference type of :class:`ConfChangeV2_Owner`.
     """
 
+# src/eraftpb/conf_change_single.rs
+class ConfChangeSingle:
     def clone(self) -> ConfChangeSingle_Owner: ...
     def get_node_id(self) -> int:
         """ """
@@ -1036,7 +1054,7 @@ class ConfChangeSingle_Ref:
     def clear_change_type(self) -> None:
         """ """
 
-class ConfChangeSingle_Owner:
+class ConfChangeSingle_Owner(ConfChangeSingle):
     """ """
 
     def __init__(self) -> None: ...
@@ -1044,12 +1062,13 @@ class ConfChangeSingle_Owner:
     def default(self) -> ConfChangeSingle_Owner: ...
     def clone(self) -> ConfChangeSingle_Owner: ...
 
-# src/eraftpb/conf_change.rs
-class ConfChange_Ref:
+class ConfChangeSingle_Ref(ConfChangeSingle):
     """
-    Reference type of :class:`ConfChange_Owner`.
+    Reference type of :class:`ConfChangeSingle_Owner`.
     """
 
+# src/eraftpb/conf_change.rs
+class ConfChange:
     def clone(self) -> ConfChange_Owner: ...
     def get_id(self) -> int:
         """ """
@@ -1080,20 +1099,20 @@ class ConfChange_Ref:
         Converts conf change to `ConfChangeV2`.
         """
 
-class ConfChange_Owner:
+class ConfChange_Owner(ConfChange):
     """ """
 
     def __init__(self) -> None: ...
     def make_ref(self) -> ConfChange_Ref: ...
-    def clone(self) -> ConfChange_Owner: ...
     def default(self) -> ConfChange_Owner: ...
 
-# src/prelude/unstable.rs
-class Unstable_Ref:
+class ConfChange_Ref(ConfChange):
     """
-    Reference type of :class:`Unstable_Owner`.
+    Reference type of :class:`ConfChange_Owner`.
     """
 
+# src/prelude/unstable.rs
+class Unstable:
     def maybe_first_index(self) -> Optional[int]:
         """
         Returns the index of the first possible entry in entries
@@ -1163,7 +1182,7 @@ class Unstable_Ref:
     def set_snapshot(self, snapshot: Snapshot_Ref) -> None:
         """ """
 
-class Unstable_Owner:
+class Unstable_Owner(Unstable):
     """
     The `unstable.entries[i]` has raft log position `i+unstable.offset`.
     Note that `unstable.offset` may be less than the highest log
@@ -1174,12 +1193,13 @@ class Unstable_Owner:
     def __init__(self, offset: int, logger: Logger_Ref) -> None: ...
     def make_ref(self) -> Unstable_Ref: ...
 
-# src/prelude/status.rs
-class Status__Memstorage_Ref:
+class Unstable_Ref(Unstable):
     """
-    Reference type of :class:`Status__Memstorage_Owner`.
+    Reference type of :class:`Unstable_Owner`.
     """
 
+# src/prelude/status.rs
+class Status__Memstorage:
     def get_applied(self) -> int:
         """ """
     def set_applied(self, applied: int) -> None:
@@ -1201,7 +1221,7 @@ class Status__Memstorage_Ref:
     def set_progress(self, tracker: Optional[ProgressTracker_Ref]) -> None:
         """ """
 
-class Status__Memstorage_Owner:
+class Status__Memstorage_Owner(Status__Memstorage):
     """
     Represents the current status of the raft
     """
@@ -1209,12 +1229,13 @@ class Status__Memstorage_Owner:
     def __init__(self, raft: Raft__MemStorage_Owner) -> None: ...
     def make_ref(self) -> Status__Memstorage_Ref: ...
 
-# src/prelude/soft_state.rs
-class SoftState_Ref:
+class Status__Memstorage_Ref(Status__Memstorage):
     """
-    Reference type of :class:`SoftState_Owner`.
+    Reference type of :class:`Status__Memstorage_Owner`.
     """
 
+# src/prelude/soft_state.rs
+class SoftState:
     def get_leader_id(self) -> int:
         """ """
     def set_leader_id(self, leader_id: int) -> None:
@@ -1224,7 +1245,7 @@ class SoftState_Ref:
     def set_raft_state(self, rs: StateRole) -> None:
         """ """
 
-class SoftState_Owner:
+class SoftState_Owner(SoftState):
     """
     SoftState provides state that is useful for logging and debugging.
     The state is volatile and does not need to be persisted to the WAL.
@@ -1233,12 +1254,13 @@ class SoftState_Owner:
     def make_ref(self) -> SoftState_Ref: ...
     def default(self) -> SoftState_Owner: ...
 
-# src/prelude/read_state.rs
-class ReadState_Ref:
+class SoftState_Ref(SoftState):
     """
-    Reference type of :class:`ReadState_Owner`.
+    Reference type of :class:`SoftState_Owner`.
     """
 
+# src/prelude/read_state.rs
+class ReadState:
     def clone(self) -> ReadState_Owner: ...
     def get_index(self) -> int:
         """ """
@@ -1249,7 +1271,7 @@ class ReadState_Ref:
     def set_request_ctx(self, request_ctx: List[int]) -> None:
         """ """
 
-class ReadState_Owner:
+class ReadState_Owner(ReadState):
     """
     ReadState provides state for read only query.
     It's caller's responsibility to send MsgReadIndex first before getting
@@ -1262,12 +1284,13 @@ class ReadState_Owner:
     def make_ref(self) -> ReadState_Ref: ...
     def clone(self) -> ReadState_Owner: ...
 
-# src/prelude/raft_log.rs
-class RaftLog__MemStorage_Ref:
+class ReadState_Ref(ReadState):
     """
-    Reference type of :class:`RaftLog__MemStorage_Owner`.
+    Reference type of :class:`ReadState_Owner`.
     """
 
+# src/prelude/raft_log.rs
+class RaftLog__MemStorage:
     def entries(self, idx: int, max_size: Optional[int]) -> List[Entry_Owner]:
         """
         Returns entries starting from a particular index and not exceeding a bytesize.
@@ -1456,7 +1479,7 @@ class RaftLog__MemStorage_Ref:
     def set_persisted(self, v: int) -> None:
         """ """
 
-class RaftLog__MemStorage_Owner:
+class RaftLog__MemStorage_Owner(RaftLog__MemStorage):
     """
     Raft log implementation
     """
@@ -1464,12 +1487,13 @@ class RaftLog__MemStorage_Owner:
     def __init__(self, store: MemStorage_Ref, logger: Logger_Ref) -> None: ...
     def make_ref(self) -> RaftLog__MemStorage_Ref: ...
 
-# src/prelude/raft.rs
-class Raft__MemStorage_Ref:
+class RaftLog__MemStorage_Ref(RaftLog__MemStorage):
     """
-    Reference type of :class:`Raft__MemStorage_Owner`.
+    Reference type of :class:`RaftLog__MemStorage_Owner`.
     """
 
+# src/prelude/raft.rs
+class Raft__MemStorage:
     def append_entry(self, ents: List[Entry_Ref]) -> bool:
         """
         Appends a slice of entries to the log.
@@ -1789,7 +1813,12 @@ class Raft__MemStorage_Ref:
     def get_readonly_read_index_queue(self) -> List[List[int]]:
         """ """
 
-class Raft__MemStorage_Owner:
+class Raft__MemStorage_Ref(Raft__MemStorage):
+    """
+    Reference type of :class:`Raft__MemStorage_Owner`.
+    """
+
+class Raft__MemStorage_Owner(Raft__MemStorage):
     """
     A struct that represents the raft consensus itself. Stores details concerning the current
     and possible state the system can take.
@@ -1801,11 +1830,7 @@ class Raft__MemStorage_Owner:
     def make_ref(self) -> Raft__MemStorage_Ref: ...
 
 # src/prelude/progress_tracker.rs
-class ProgressTracker_Ref:
-    """
-    Reference type of :class:`ProgressTracker_Owner`.
-    """
-
+class ProgressTracker:
     def clone(self) -> ProgressTracker_Owner: ...
     def get(self, id: int) -> Optional[Progress_Ref]:
         """"""
@@ -1855,7 +1880,7 @@ class ProgressTracker_Ref:
     def votes(self) -> Dict[int, bool]:
         """ """
 
-class ProgressTracker_Owner:
+class ProgressTracker_Owner(ProgressTracker):
     """
     `ProgressTracker` contains several `Progress`es,
     which could be `Leader`, `Follower` and `Learner`.
@@ -1865,12 +1890,13 @@ class ProgressTracker_Owner:
     def make_ref(self) -> ProgressTracker_Ref: ...
     def clone(self) -> ProgressTracker_Owner: ...
 
-# src/prelude/progress.rs
-class Progress_Ref:
+class ProgressTracker_Ref(ProgressTracker):
     """
-    Reference type of :class:`Progress_Owner`.
+    Reference type of :class:`ProgressTracker_Owner`.
     """
 
+# src/prelude/progress.rs
+class Progress:
     def clone(self) -> Progress_Owner: ...
     def become_probe(self) -> None:
         """Changes the progress to a probe."""
@@ -1958,21 +1984,21 @@ class Progress_Ref:
     def set_state(self, v: ProgressState) -> None:
         """"""
 
-class Progress_Owner:
+class Progress_Owner(Progress):
     """
     The progress of catching up from a restart.
     """
 
     def __init__(self, next_idx: int, ins_size: int) -> None: ...
     def make_ref(self) -> Progress_Ref: ...
-    def clone(self) -> Progress_Owner: ...
+
+class Progress_Ref(Progress):
+    """
+    Reference type of :class:`Progress_Owner`.
+    """
 
 # src/prelude/joint_config.rs
-class JointConfig_Ref:
-    """
-    Reference type of :class:`JointConfig_Owner`.
-    """
-
+class JointConfig:
     def clone(self) -> JointConfig_Owner: ...
     def clear(self) -> None:
         """Clears all IDs."""
@@ -1984,7 +2010,7 @@ class JointConfig_Ref:
         (i.e. the leader) in the current configuration.
         """
 
-class JointConfig_Owner:
+class JointConfig_Owner(JointConfig):
     """
     A configuration of two groups of (possibly overlapping) majority configurations.
     Decisions require the support of both majorities.
@@ -1992,14 +2018,14 @@ class JointConfig_Owner:
 
     def __init__(self, voters: Set[int]) -> None: ...
     def make_ref(self) -> JointConfig_Ref: ...
-    def clone(self) -> JointConfig_Owner: ...
+
+class JointConfig_Ref(JointConfig):
+    """
+    Reference type of :class:`JointConfig_Owner`.
+    """
 
 # src/prelude/majority_config.rs
-class MajorityConfig_Ref:
-    """
-    Reference type of :class:`MajorityConfig_Owner`.
-    """
-
+class MajorityConfig:
     def clone(self) -> MajorityConfig_Owner: ...
     def capacity(self) -> int:
         """"""
@@ -2032,7 +2058,7 @@ class MajorityConfig_Ref:
     def try_reserve(self, additional: int) -> None:
         """"""
 
-class MajorityConfig_Owner:
+class MajorityConfig_Owner(MajorityConfig):
     """
     A set of IDs that uses majority quorums to make decisions.
     """
@@ -2041,12 +2067,13 @@ class MajorityConfig_Owner:
     def make_ref(self) -> MajorityConfig_Ref: ...
     def clone(self) -> MajorityConfig_Owner: ...
 
-# src/prelude/inflights.rs
-class Inflights_Ref:
+class MajorityConfig_Ref(MajorityConfig):
     """
-    Reference type of :class:`Inflights_Ref`.
+    Reference type of :class:`MajorityConfig_Owner`.
     """
 
+# src/prelude/inflights.rs
+class Inflights:
     def clone(self) -> Inflights_Owner: ...
     def add(self, inflight: int) -> None:
         """Adds an inflight into inflights"""
@@ -2061,20 +2088,86 @@ class Inflights_Ref:
     def free_first_one(self) -> None:
         """Frees the first buffer entry."""
 
-class Inflights_Owner:
+class Inflights_Owner(Inflights):
     """
     A buffer of inflight messages.
     """
 
     def __init__(self, cap: int) -> None: ...
     def make_ref(self) -> Inflights_Ref: ...
-    def clone(self) -> Inflights_Owner: ...
 
-class Config_Ref:
+class Inflights_Ref(Inflights):
+    """
+    Reference type of :class:`Inflights_Ref`.
+    """
+
+class Config:
+    def clone(self) -> Config_Owner: ...
+    def min_election_tick(self) -> int:
+        """The minimum number of ticks before an election."""
+    def max_election_tick(self) -> int:
+        """The maximum number of ticks before an election."""
+    def validate(self) -> None:
+        """Runs validations against the config."""
+    def get_read_only_option(self) -> ReadOnlyOption:
+        """"""
+    def set_read_only_option(self, read_only_option: ReadOnlyOption) -> None:
+        """"""
+    def get_id(self) -> int:
+        """"""
+    def set_id(self, id: int) -> None:
+        """"""
+    def get_election_tick(self) -> int:
+        """"""
+    def set_election_tick(self, election_tick: int) -> None:
+        """"""
+    def get_heartbeat_tick(self) -> int:
+        """"""
+    def set_heartbeat_tick(self, heartbeat_tick: int) -> None:
+        """"""
+    def get_max_size_per_msg(self) -> int:
+        """"""
+    def set_max_size_per_msg(self, max_size_per_msg: int) -> None:
+        """"""
+    def get_max_inflight_msgs(self) -> int:
+        """"""
+    def set_max_inflight_msgs(self, max_inflight_msgs: int) -> None:
+        """"""
+    def get_applied(self) -> int:
+        """"""
+    def set_applied(self, applied: int) -> None:
+        """"""
+    def get_check_quorum(self) -> bool:
+        """"""
+    def set_check_quorum(self, check_quorum: bool) -> None:
+        """"""
+    def get_pre_vote(self) -> bool:
+        """"""
+    def set_pre_vote(self, pre_vote: bool) -> None:
+        """"""
+    def get_batch_append(self) -> bool:
+        """"""
+    def set_batch_append(self, batch_append: bool) -> None:
+        """"""
+    def get_skip_bcast_commit(self) -> bool:
+        """"""
+    def set_skip_bcast_commit(self, v: bool) -> None:
+        """"""
+    def get_priority(self) -> int:
+        """"""
+    def set_priority(self, priority: int) -> None:
+        """"""
+    def get_max_uncommitted_size(self) -> int:
+        """"""
+    def set_max_uncommitted_size(self, max_uncommitted_size: int) -> None:
+        """"""
+
+class Config_Ref(Config):
     """
     Config contains the parameters to start a raft.
     """
 
+class Config_Owner(Config):
     def __init__(
         self,
         *,
@@ -2148,67 +2241,4 @@ class Config_Ref:
 
         :param max_committed_size_per_ready: Max size for committed entries in a `Ready`.
         """
-    def clone(self) -> Config_Owner: ...
-    def min_election_tick(self) -> int:
-        """The minimum number of ticks before an election."""
-    def max_election_tick(self) -> int:
-        """The maximum number of ticks before an election."""
-    def validate(self) -> None:
-        """Runs validations against the config."""
-    def get_read_only_option(self) -> ReadOnlyOption:
-        """"""
-    def set_read_only_option(self, read_only_option: ReadOnlyOption) -> None:
-        """"""
-    def get_id(self) -> int:
-        """"""
-    def set_id(self, id: int) -> None:
-        """"""
-    def get_election_tick(self) -> int:
-        """"""
-    def set_election_tick(self, election_tick: int) -> None:
-        """"""
-    def get_heartbeat_tick(self) -> int:
-        """"""
-    def set_heartbeat_tick(self, heartbeat_tick: int) -> None:
-        """"""
-    def get_max_size_per_msg(self) -> int:
-        """"""
-    def set_max_size_per_msg(self, max_size_per_msg: int) -> None:
-        """"""
-    def get_max_inflight_msgs(self) -> int:
-        """"""
-    def set_max_inflight_msgs(self, max_inflight_msgs: int) -> None:
-        """"""
-    def get_applied(self) -> int:
-        """"""
-    def set_applied(self, applied: int) -> None:
-        """"""
-    def get_check_quorum(self) -> bool:
-        """"""
-    def set_check_quorum(self, check_quorum: bool) -> None:
-        """"""
-    def get_pre_vote(self) -> bool:
-        """"""
-    def set_pre_vote(self, pre_vote: bool) -> None:
-        """"""
-    def get_batch_append(self) -> bool:
-        """"""
-    def set_batch_append(self, batch_append: bool) -> None:
-        """"""
-    def get_skip_bcast_commit(self) -> bool:
-        """"""
-    def set_skip_bcast_commit(self, v: bool) -> None:
-        """"""
-    def get_priority(self) -> int:
-        """"""
-    def set_priority(self, priority: int) -> None:
-        """"""
-    def get_max_uncommitted_size(self) -> int:
-        """"""
-    def set_max_uncommitted_size(self, max_uncommitted_size: int) -> None:
-        """"""
-
-class Config_Owner:
-    def __init__(self) -> None: ...
     def make_ref(self) -> Config_Ref: ...
-    def clone(self) -> Config_Owner: ...
