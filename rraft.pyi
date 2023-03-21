@@ -1849,11 +1849,6 @@ class Raft__MemStorage:
     def get_readonly_read_index_queue(self) -> List[List[int]]:
         """ """
 
-class Raft__MemStorage_Ref(Raft__MemStorage):
-    """
-    Reference type of :class:`Raft__MemStorage_Owner`.
-    """
-
 class Raft__MemStorage_Owner(Raft__MemStorage):
     """
     A struct that represents the raft consensus itself. Stores details concerning the current
@@ -1867,6 +1862,11 @@ class Raft__MemStorage_Owner(Raft__MemStorage):
         logger: Logger_Owner | Logger_Ref,
     ) -> None: ...
     def make_ref(self) -> Raft__MemStorage_Ref: ...
+
+class Raft__MemStorage_Ref(Raft__MemStorage):
+    """
+    Reference type of :class:`Raft__MemStorage_Owner`.
+    """
 
 # src/prelude/progress_tracker.rs
 class ProgressTracker(Cloneable):
@@ -2201,11 +2201,6 @@ class Config(Cloneable):
     def set_max_uncommitted_size(self, max_uncommitted_size: int) -> None:
         """"""
 
-class Config_Ref(Config):
-    """
-    Config contains the parameters to start a raft.
-    """
-
 class Config_Owner(Config):
     def __init__(
         self,
@@ -2281,3 +2276,8 @@ class Config_Owner(Config):
         :param max_committed_size_per_ready: Max size for committed entries in a `Ready`.
         """
     def make_ref(self) -> Config_Ref: ...
+
+class Config_Ref(Config):
+    """
+    Config contains the parameters to start a raft.
+    """
