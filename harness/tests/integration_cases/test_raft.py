@@ -2872,7 +2872,21 @@ def test_commit_after_remove_node(pre_vote: bool):
 # test_leader_transfer_to_uptodate_node verifies transferring should succeed
 # if the transferee has the most up-to-date log entries when transfer starts.
 def test_leader_transfer_to_uptodate_node():
-    pass
+    l = default_logger()
+    nt = Network.new([None, None, None], l)
+    nt.send([new_message(1, 1, MessageType.MsgHup, 0)])
+
+    lead_id = nt.peers[1].raft.get_leader_id()
+    assert lead_id == 1
+
+    # Transfer leadership to peer 2.
+    nt.send([new_message(2, 1, MessageType.MsgTransferLeader, 0)])
+    check_leader_transfer_state(nt.peers[1].raft, StateRole.Follower, 2)
+
+    # After some log replication, transfer leadership back to peer 1.
+    nt.send([new_message(1, 1, MessageType.MsgPropose, 1)])
+    nt.send([new_message(1, 2, MessageType.MsgTransferLeader, 0)])
+    check_leader_transfer_state(nt.peers[1].raft, StateRole.Leader, 1)
 
 
 # test_leader_transfer_to_uptodate_node_from_follower verifies transferring should succeed
@@ -2944,8 +2958,10 @@ def test_leader_transfer_second_transfer_to_same_node():
     pass
 
 
-def check_leader_transfer_state():
-    pass
+def check_leader_transfer_state(r: Raft__MemStorage_Ref, state: StateRole, lead: int):
+    assert (
+        r.get_state() == state and r.get_leader_id() == lead
+    ), f"after transferring, node has state {r.state} lead {state}, want state {r.get_leader_id()} lead {lead}"
 
 
 # test_transfer_non_member verifies that when a MsgTimeoutNow arrives at
