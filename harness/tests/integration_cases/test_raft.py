@@ -2962,7 +2962,26 @@ def test_leader_transfer_to_slow_follower():
 
 
 def test_leader_transfer_after_snapshot():
-    pass
+    l = default_logger()
+    nt = Network.new([None, None, None], l)
+    nt.send([new_message(1, 1, MessageType.MsgHup, 0)])
+
+    nt.isolate(3)
+
+    nt.send([new_message(1, 1, MessageType.MsgPropose, 1)])
+    next_ents(nt.peers[1].raft, nt.storage[1])
+    nt.storage[1].wl(lambda core: core.commit_to(nt.peers[1].raft_log.get_applied()))
+    nt.storage[1].wl(lambda core: core.compact(nt.peers[1].raft_log.get_applied()))
+
+    nt.recover()
+    assert nt.peers[1].prs().get(3).get_matched() == 1
+
+    # Transfer leadership to 3 when node 3 is lack of snapshot.
+    nt.send([new_message(3, 1, MessageType.MsgTransferLeader, 0)])
+    # Send pb.MsgHeartbeatResp to leader to trigger a snapshot for node 3.
+    nt.send([new_message(3, 1, MessageType.MsgHeartbeatResponse, 0)])
+
+    check_leader_transfer_state(nt.peers[1].raft, StateRole.Follower, 3)
 
 
 def test_leader_transfer_to_self():
