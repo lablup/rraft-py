@@ -3269,14 +3269,34 @@ def new_test_learner_raft(
     return new_test_raft_with_config(cfg, storage, logger)
 
 
-def new_test_learner_raft_with_prevote():
-    pass
+def new_test_learner_raft_with_prevote(
+    id: int, peers: List[int], learners: List[int], logger: Logger_Ref, prevote: bool
+) -> Interface:
+    storage = new_storage()
+    storage.initialize_with_conf_state(ConfState_Owner(peers, learners))
+    cfg = new_test_config(id, 10, 1)
+    cfg.set_pre_vote(prevote)
+    return new_test_raft_with_config(cfg, storage, logger)
 
 
 # TestLearnerElectionTimeout verifies that the leader should not start election
 # even when times out.
 def test_learner_election_timeout():
-    pass
+    l = default_logger()
+    s1 = new_storage()
+    n1 = new_test_learner_raft(1, [1], [2], 10, 1, s1, l)
+
+    s2 = new_storage()
+    n2 = new_test_learner_raft(2, [1], [2], 10, 1, s2, l)
+
+    timeout = n2.election_timeout()
+    n2.set_randomized_election_timeout(timeout)
+
+    # n2 is a learner. Learner should not start election even when time out.
+    for _ in range(0, timeout):
+        n2.tick()
+
+    assert n2.get_state() == StateRole.Follower
 
 
 # TestLearnerPromotion verifies that the leaner should not election until
