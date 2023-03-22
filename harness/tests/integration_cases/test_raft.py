@@ -3641,7 +3641,33 @@ def test_prevote_migration_with_free_stuck_pre_candidate():
 
 
 def test_learner_respond_vote():
-    pass
+    l = default_logger()
+
+    s1 = new_storage()
+    n1 = new_test_learner_raft(1, [1, 2], [3], 10, 1, s1, l)
+    n1.raft.become_follower(1, INVALID_ID)
+    n1.raft.reset_randomized_election_timeout()
+
+    s3 = new_storage()
+    n3 = new_test_learner_raft(3, [1, 2], [3], 10, 1, s3, l)
+    n3.raft.become_follower(1, INVALID_ID)
+    n3.raft.reset_randomized_election_timeout()
+
+    def do_campaign(nw: Network):
+        msg = new_message(1, 1, MessageType.MsgHup, 0)
+        nw.send([msg])
+
+    network = Network.new([n1, None, n3], l)
+    network.isolate(2)
+
+    # Can't elect new leader because 1 won't send MsgRequestVote to 3.
+    do_campaign(network)
+    assert network.peers[1].raft.get_state() == StateRole.Candidate
+
+    # After promote 3 to voter, election should success.
+    network.peers[1].raft.apply_conf_change(add_node(3))
+    do_campaign(network)
+    assert n1.raft.get_state() == StateRole.Leader
 
 
 def test_election_tick_range():
