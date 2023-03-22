@@ -2525,13 +2525,10 @@ def test_restore():
     assert sm.raft_log.last_index() == s.get_metadata().get_index()
     assert sm.raft_log.term(s.get_metadata().get_index()) == s.get_metadata().get_term()
 
-    # TODO: Resolve below `assert_iter_eq` through exposing `conf` method of progress_tracker
-    # assert_iter_eq!(
-    #     o sm.prs().conf().voters().ids(),
-    #     s.get_metadata()
-    #         .get_conf_state()
-    #         .voters
-    # );
+    assert sm.raft.prs().conf_voters().ids() == set(
+        s.get_metadata().get_conf_state().get_voters()
+    )
+
     assert not sm.raft.restore(s)
 
 
@@ -2743,11 +2740,7 @@ def test_add_node():
     storage = new_storage()
     r = new_test_raft(1, [1], 10, 1, storage, l)
     r.raft.apply_conf_change(add_node(2))
-    # TODO: Resolve below `assert_iter_eq` through exposing `conf` method of progress_tracker
-    # assert_iter_eq!(o r.prs().conf().voters().ids(),
-    # vec![1, 2]
-    # );
-    pass
+    assert r.raft.prs().conf_voters().ids() == set([1, 2])
 
 
 def test_add_node_check_quorum():
@@ -2784,8 +2777,7 @@ def test_remove_node():
     r = new_test_raft(1, [1, 2], 10, 1, storage, l)
     r.raft.apply_conf_change(remove_node(2))
 
-    # TODO: Resolve below `assert_iter_eq` through exposing `conf` method of progress_tracker
-    # assert_iter_eq!(o r.prs().conf().voters().ids(), vec![1]);
+    assert r.raft.prs().conf_voters().ids() == set([1])
 
     # Removing all voters is not allowed.
     try:
@@ -2793,24 +2785,22 @@ def test_remove_node():
     except Exception:
         pass
 
-    # TODO: Resolve below `assert_iter_eq` through exposing `conf` method of progress_tracker
-    # assert_iter_eq!(o r.prs().conf().voters().ids(), vec![1]);
+    assert r.raft.prs().conf_voters().ids(), set([1])
 
 
 def test_remove_node_itself():
     l = default_logger()
     storage = new_storage()
-    nl = new_test_learner_raft(1, [1], [2], 10, 1, storage, l)
+    n1 = new_test_learner_raft(1, [1], [2], 10, 1, storage, l)
 
     try:
-        nl.raft.apply_conf_change(remove_node(1))
+        n1.raft.apply_conf_change(remove_node(1))
         assert False
     except Exception:
         pass
 
-    # TODO: Resolve below `assert_iter_eq` through exposing `conf` method of progress_tracker
-    # assert_iter_eq!(n1.prs().conf().learners(), vec![2]);
-    # assert_iter_eq!(o n1.prs().conf().voters().ids(), vec![1]);
+    # assert n1.raft.prs().conf_learners() == set([2])
+    # assert n1.raft.prs().conf_voters().ids() == [1]
 
 
 def test_promotable():
@@ -2839,7 +2829,25 @@ def test_promotable():
 
 
 def test_raft_nodes():
-    pass
+    l = default_logger()
+
+    class Test:
+        def __init__(self, ids: List[int], wids: List[int]):
+            self.ids = ids
+            self.wids = wids
+
+    tests = [
+        Test([1, 2, 3], [1, 2, 3]),
+        Test([3, 2, 1], [1, 2, 3]),
+    ]
+
+    for i, v in enumerate(tests):
+        ids, wids = v.ids, v.wids
+        storage = new_storage()
+        r = new_test_raft(1, ids, 10, 1, storage, l)
+        voter_ids = r.raft.prs().conf_voters().ids()
+        wids = set(wids)
+        assert voter_ids == wids, f"#{i}: nodes = {voter_ids}, want {wids}"
 
 
 def test_campaign_while_leader():
