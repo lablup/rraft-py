@@ -23,6 +23,10 @@ from test_utils import (
     # Network,
 )
 
+from test_raft_paper import (
+    commit_noop_entry,
+)
+
 from rraft import (
     ConfState_Owner,
     Entry_Owner,
@@ -3829,7 +3833,29 @@ def test_new_raft_with_bad_config_errors():
 
 # tests whether MsgAppend are batched
 def test_batch_msg_append():
-    pass
+    l = default_logger()
+    storage = new_storage()
+    raft = new_test_raft(1, [1, 2, 3], 10, 1, storage.clone(), l)
+    raft.raft.become_candidate()
+    raft.raft.become_leader()
+    raft.raft.set_batch_append(True)
+    commit_noop_entry(raft, storage)
+    for _ in range(0, 10):
+        prop_msg = new_message(1, 1, MessageType.MsgPropose, 1)
+        raft.raft.step(prop_msg)
+
+    assert len(raft.raft.get_msgs()) == 2
+
+    for msg in raft.raft.get_msgs():
+        assert len(msg.get_entries()) == 10
+        assert msg.get_index() == 1
+
+    # if the append entry is not continuous, raft should not batch the RPC
+    reject_msg = new_message(2, 1, MessageType.MsgAppendResponse, 0)
+    reject_msg.set_reject(True)
+    reject_msg.set_index(2)
+    raft.raft.step(reject_msg)
+    assert len(raft.raft.get_msgs()) == 3
 
 
 # Tests if unapplied conf change is checked before campaign.
