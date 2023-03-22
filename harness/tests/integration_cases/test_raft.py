@@ -3186,7 +3186,67 @@ def test_transfer_non_member():
 # Previously the cluster would come to a standstill when run with PreVote
 # enabled.
 def test_node_with_smaller_term_can_complete_election():
-    pass
+    l = default_logger()
+    s1 = new_storage()
+    n1 = new_test_raft_with_prevote(1, [1, 2, 3], 10, 1, s1, True, l)
+    s2 = new_storage()
+    n2 = new_test_raft_with_prevote(2, [1, 2, 3], 10, 1, s2, True, l)
+    s3 = new_storage()
+    n3 = new_test_raft_with_prevote(3, [1, 2, 3], 10, 1, s3, True, l)
+
+    n1.become_follower(1, INVALID_ID)
+    n2.become_follower(1, INVALID_ID)
+    n3.become_follower(1, INVALID_ID)
+
+    # cause a network partition to isolate node 3
+    config = Network.default_config()
+    config.set_pre_vote(True)
+    nt = Network.new_with_config([n1, n2, n3], config, l)
+    nt.cut(1, 3)
+    nt.cut(2, 3)
+
+    nt.send([new_message(1, 1, MessageType.MsgHup, 0)])
+
+    assert nt.peers[1].raft.get_state() == StateRole.Leader
+    assert nt.peers[2].raft.get_state() == StateRole.Follower
+
+    nt.send([new_message(3, 3, MessageType.MsgHup, 0)])
+    assert nt.peers[2].raft.get_state() == StateRole.PreCandidate
+
+    nt.send([new_message(2, 2, MessageType.MsgHup, 0)])
+
+    # check whether the term values are expected
+    # a.Term == 3
+    # b.Term == 3
+    # c.Term == 1
+
+    assert nt.peers[1].raft.get_term() == 3
+    assert nt.peers[2].raft.get_term() == 3
+    assert nt.peers[3].raft.get_term() == 1
+
+    # check state
+    # a == follower
+    # b == leader
+    # c == pre-candidate
+    assert nt.peers[1].raft.get_state() == StateRole.Follower
+    assert nt.peers[2].raft.get_state() == StateRole.Leader
+    assert nt.peers[3].raft.get_state() == StateRole.PreCandidate
+
+    # recover the network then immediately isolate b which is currently
+    # the leader, this is to emulate the crash of b.
+    nt.recover()
+    nt.cut(2, 1)
+    nt.cut(2, 3)
+
+    # call for election
+    nt.send([new_message(3, 3, MessageType.MsgHup, 0)])
+    nt.send([new_message(1, 1, MessageType.MsgHup, 0)])
+
+    # do we have a leader?
+    assert (
+        nt.peers[1].raft.get_state() == StateRole.Leader
+        or nt.peers[3].raft.get_state() == StateRole.Leader
+    ), f"no leader"
 
 
 def new_test_learner_raft(
