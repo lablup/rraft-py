@@ -3520,7 +3520,19 @@ def test_add_learner():
 # TestRemoveLearner tests that removeNode could update nodes and
 # and removed list correctly.
 def test_remove_learner():
-    pass
+    l = default_logger()
+    storage = new_storage()
+    n1 = new_test_learner_raft(1, [1], [2], 10, 1, storage, l)
+    n1.raft.apply_conf_change(remove_node(2))
+    assert n1.raft.prs().conf_voters().ids() == {1}
+    assert not n1.raft.prs().conf_learners()
+
+    # Remove all voters are not allowed.
+    with pytest.raises(Exception):
+        n1.raft.apply_conf_change(remove_node(1))
+
+    assert n1.raft.prs().conf_voters().ids() == {1}
+    assert not n1.raft.prs().conf_learners()
 
 
 # simulate rolling update a cluster for Pre-Vote. cluster has 3 nodes [n1, n2, n3].
