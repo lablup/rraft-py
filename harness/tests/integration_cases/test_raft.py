@@ -2915,7 +2915,33 @@ def test_leader_transfer_to_uptodate_node_from_follower():
 # TestLeaderTransferWithCheckQuorum ensures transferring leader still works
 # even the current leader is still under its leader lease
 def test_leader_transfer_with_check_quorum():
-    pass
+    l = default_logger()
+    nt = Network.new([None, None, None], l)
+    for i in range(1, 4):
+        r = nt.peers[i].raft
+        r.set_check_quorum(True)
+        election_timeout = r.get_election_timeout()
+        r.set_randomized_election_timeout(election_timeout + 1)
+
+    b_election_timeout = nt.peers[2].raft.get_election_timeout()
+    nt.peers[2].raft.set_randomized_election_timeout(b_election_timeout + 1)
+
+    # Letting peer 2 electionElapsed reach to timeout so that it can vote for peer 1
+    for _ in range(0, b_election_timeout):
+        nt.peers[2].raft.tick()
+
+    nt.send([new_message(1, 1, MessageType.MsgHup, 0)])
+
+    assert nt.peers[1].raft.get_leader_id() == 1
+
+    # Transfer leadership to 2.
+    nt.send([new_message(2, 1, MessageType.MsgTransferLeader, 0)])
+    check_leader_transfer_state(nt.peers[1].raft, StateRole.Follower, 2)
+
+    # After some log replication, transfer leadership back to 1.
+    nt.send([new_message(1, 1, MessageType.MsgPropose, 1)])
+    nt.send([new_message(1, 2, MessageType.MsgTransferLeader, 0)])
+    check_leader_transfer_state(nt.peers[1].raft, StateRole.Leader, 1)
 
 
 def test_leader_transfer_to_slow_follower():
