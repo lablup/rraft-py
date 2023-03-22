@@ -3412,7 +3412,18 @@ def test_restore_with_learner():
 
 # Tests if outgoing voters can restore snapshot correctly.
 def test_restore_with_voters_outgoing():
-    pass
+    l = default_logger()
+    # magic number
+    s = new_snapshot(11, 11, [2, 3, 4])
+    s.get_metadata().get_conf_state().set_voters_outgoing([1, 2, 3])
+
+    storage = new_storage()
+    sm = new_test_raft(1, [1, 2], 10, 1, storage, l)
+    assert sm.raft.restore(s.clone())
+    assert sm.raft_log.last_index() == s.get_metadata().get_index()
+    assert sm.raft_log.term(s.get_metadata().get_index()) == s.get_metadata().get_term()
+    assert sm.raft.prs().conf_voters().ids() == {1, 2, 3, 4}
+    assert not sm.raft.restore(s)
 
 
 # Verifies that a voter can be depromoted by snapshot.
