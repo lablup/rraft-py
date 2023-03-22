@@ -4,19 +4,20 @@ import sys
 import pytest
 from typing import Any, List, Optional, Tuple, cast
 from test_utils import (
-    new_test_raft_with_prevote,
-    new_storage,
-    new_message,
+    add_learner,
+    add_node,
+    empty_entry,
+    new_entry,
     new_message_with_entries,
-    new_test_raft,
+    new_message,
+    new_snapshot,
+    new_storage,
     new_test_config,
     new_test_raft_with_config,
     new_test_raft_with_logs,
-    new_entry,
-    empty_entry,
-    add_node,
+    new_test_raft_with_prevote,
+    new_test_raft,
     remove_node,
-    new_snapshot,
     SOME_DATA,
     # Interface,
     # Network,
@@ -3507,7 +3508,13 @@ def test_learner_receive_snapshot():
 
 # TestAddLearner tests that addLearner could update nodes correctly.
 def test_add_learner():
-    pass
+    l = default_logger()
+    storage = new_storage()
+    n1 = new_test_raft(1, [1, 2], 10, 1, storage, l)
+    n1.raft.apply_conf_change(add_learner(2))
+
+    assert n1.raft.prs().conf_learners() == {2}
+    assert 2 in n1.raft.prs().conf_learners()
 
 
 # TestRemoveLearner tests that removeNode could update nodes and
