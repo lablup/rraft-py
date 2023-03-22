@@ -3044,7 +3044,24 @@ def test_leader_transfer_timeout():
 
 
 def test_leader_transfer_ignore_proposal():
-    pass
+    l = default_logger()
+    nt = Network.new([None, None, None], l)
+    nt.send([new_message(1, 1, MessageType.MsgHup, 0)])
+
+    nt.isolate(3)
+
+    # Transfer leadership to isolated node to let transfer pending, then send proposal.
+    nt.send([new_message(3, 1, MessageType.MsgTransferLeader, 0)])
+    assert nt.peers[1].raft.get_lead_transferee() == 3
+
+    nt.send([new_message(1, 1, MessageType.MsgPropose, 1)])
+    try:
+        nt.peers[1].step([new_message(1, 1, MessageType.MsgPropose, 1)])
+        assert False, "should return drop proposal error while transferring"
+    except Exception:
+        pass
+
+    assert nt.peers[1].raft.get_macthed() == 3
 
 
 def test_leader_transfer_receive_higher_term_vote():
