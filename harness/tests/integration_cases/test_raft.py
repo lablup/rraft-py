@@ -3005,7 +3005,21 @@ def test_leader_transfer_to_non_existing_node():
 
 
 def test_leader_transfer_to_learner():
-    pass
+    l = default_logger()
+    s = MemStorage_Owner.new_with_conf_state(ConfState_Owner([1], [2]))
+    c = new_test_config(1, 10, 1)
+    leader = new_test_raft_with_config(c, s, l)
+
+    s = MemStorage_Owner.new_with_conf_state(ConfState_Owner([1], [2]))
+    c = new_test_config(2, 10, 1)
+    learner = new_test_raft_with_config(c, s, l)
+
+    nt = Network.new([leader, learner], l)
+    nt.send([new_message(1, 1, MessageType.MsgHup, 0)])
+
+    # Transfer leadership to learner node, there will be noop.
+    nt.send([new_message(2, 1, MessageType.MsgTransferLeader, 0)])
+    check_leader_transfer_state(nt.peers[1].raft, StateRole.Leader, 1)
 
 
 def test_leader_transfer_timeout():
