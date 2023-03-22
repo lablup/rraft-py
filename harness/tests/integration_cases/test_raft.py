@@ -3135,7 +3135,29 @@ def test_leader_transfer_second_transfer_to_another_node():
 # test_leader_transfer_second_transfer_to_same_node verifies second transfer leader request
 # to the same node should not extend the timeout while the first one is pending.
 def test_leader_transfer_second_transfer_to_same_node():
-    pass
+    l = default_logger()
+    nt = Network.new([None, None, None], l)
+    nt.send([new_message(1, 1, MessageType.MsgHup, 0)])
+
+    nt.isolate(3)
+
+    nt.send([new_message(3, 1, MessageType.MsgTransferLeader, 0)])
+
+    assert nt.peers[1].raft.get_lead_transferee() == 3
+
+    heartbeat_timeout = nt.peers[1].raft.heartbeat_timeout()
+
+    for _ in range(0, heartbeat_timeout):
+        nt.peers[1].raft.tick()
+
+    # Second transfer leadership request to the same node.
+    nt.send([new_message(3, 1, MessageType.MsgTransferLeader, 0)])
+
+    election_timeout = nt.peers[1].raft.election_timeout()
+    for _ in range(0, election_timeout - heartbeat_timeout):
+        nt.peers[1].raft.tick()
+
+    check_leader_transfer_state(nt.peers[1].raft, StateRole.Leader, 1)
 
 
 def check_leader_transfer_state(r: Raft__MemStorage_Ref, state: StateRole, lead: int):
