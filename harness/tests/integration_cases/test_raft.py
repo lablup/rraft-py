@@ -3440,6 +3440,20 @@ def test_restore_depromote_voter():
     assert sm.raft.restore(s)
 
 
+def test_restore_learner():
+    l = default_logger()
+    s = new_snapshot(11, 11, [1, 2])
+    s.get_metadata().get_conf_state().set_learners(
+        [*s.get_metadata().get_conf_state().get_learners(), 3]
+    )
+
+    storage = new_storage()
+    sm = new_test_raft(3, [], 10, 1, storage, l)
+    assert not sm.raft.promotable()
+    assert sm.raft.restore(s)
+    assert not sm.raft.promotable()
+
+
 # TestRestoreLearnerPromotion checks that a learner can become to a follower after
 # restoring snapshot.
 def test_restore_learner_promotion():
