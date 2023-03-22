@@ -139,7 +139,7 @@ def new_test_raft_with_config(
 
 
 def hard_state(term: int, commit: int, vote: int) -> HardState_Owner:
-    hs = HardState_Owner()
+    hs = HardState_Owner.default()
     hs.set_term(term)
     hs.set_commit(commit)
     hs.set_vote(vote)
@@ -181,7 +181,7 @@ def new_message(from_: int, to: int, t: MessageType, n: int) -> Message_Owner:
 
 
 def new_entry(term: int, index: int, data: Optional[str]) -> Entry_Owner:
-    e = Entry_Owner()
+    e = Entry_Owner.default()
     e.set_index(index)
     e.set_term(term)
     if data:
@@ -196,19 +196,15 @@ def empty_entry(term: int, index: int) -> Entry_Owner:
 
 
 def new_snapshot(index: int, term: int, voters: List[int]) -> Snapshot_Owner:
-    s = Snapshot_Owner()
-    meta = SnapshotMetadata_Owner()
-    meta.set_index(index)
-    meta.set_term(term)
-    cs_ref = meta.get_conf_state()
-    cs_ref.set_voters(voters)
-
-    s.set_metadata(meta)
+    s = Snapshot_Owner.default()
+    s.get_metadata().set_index(index)
+    s.get_metadata().set_term(term)
+    s.get_metadata().get_conf_state().set_voters(voters)
     return s
 
 
 def conf_change(ty: ConfChangeType, node_id: int) -> ConfChange_Owner:
-    cc = ConfChange_Owner()
+    cc = ConfChange_Owner.default()
     cc.set_change_type(ty)
     cc.set_node_id(node_id)
     return cc
@@ -253,6 +249,6 @@ def conf_state_v2(
 def conf_change_v2(
     steps: List[ConfChangeSingle_Owner] | List[ConfChangeSingle_Ref],
 ) -> ConfChangeV2_Owner:
-    cc = ConfChangeV2_Owner()
+    cc = ConfChangeV2_Owner.default()
     cc.set_changes(steps)
     return cc
