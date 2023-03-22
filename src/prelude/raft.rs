@@ -42,10 +42,14 @@ pub struct Py_Raft__MemStorage_Ref {
 #[pymethods]
 impl Py_Raft__MemStorage_Owner {
     #[new]
-    pub fn new(cfg: Py_Config_Mut, store: Py_MemStorage_Mut, logger: Py_Logger_Mut) -> Self {
-        Py_Raft__MemStorage_Owner {
-            inner: Raft::new(&cfg.into(), store.into(), &logger.into()).unwrap(),
-        }
+    pub fn new(
+        cfg: Py_Config_Mut,
+        store: Py_MemStorage_Mut,
+        logger: Py_Logger_Mut,
+    ) -> PyResult<Self> {
+        Raft::new(&cfg.into(), store.into(), &logger.into())
+            .and_then(|r| Ok(Py_Raft__MemStorage_Owner { inner: r }))
+            .map_err(|e| runtime_error(&e.to_string()))
     }
 
     pub fn make_ref(&mut self) -> Py_Raft__MemStorage_Ref {
