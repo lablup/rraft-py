@@ -161,8 +161,16 @@ impl Py_Config_Ref {
         self.inner.map_as_ref(|inner| inner.min_election_tick())
     }
 
+    pub fn set_min_election_tick(&mut self, v: usize) -> PyResult<()> {
+        self.inner.map_as_mut(|inner| inner.min_election_tick = v)
+    }
+
     pub fn max_election_tick(&self) -> PyResult<usize> {
         self.inner.map_as_ref(|inner| inner.max_election_tick())
+    }
+
+    pub fn set_max_election_tick(&mut self, v: usize) -> PyResult<()> {
+        self.inner.map_as_mut(|inner| inner.max_election_tick = v)
     }
 
     pub fn validate(&self) -> PyResult<()> {

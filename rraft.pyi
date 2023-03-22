@@ -2160,8 +2160,12 @@ class Config(Cloneable):
     def clone(self) -> Config_Owner: ...
     def min_election_tick(self) -> int:
         """The minimum number of ticks before an election."""
+    def set_min_election_tick(self, v: int) -> None:
+        """ """
     def max_election_tick(self) -> int:
         """The maximum number of ticks before an election."""
+    def set_max_election_tick(self, v: int) -> None:
+        """ """
     def validate(self) -> None:
         """Runs validations against the config."""
     def get_read_only_option(self) -> ReadOnlyOption:
