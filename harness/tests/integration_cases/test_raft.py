@@ -3023,7 +3023,24 @@ def test_leader_transfer_to_learner():
 
 
 def test_leader_transfer_timeout():
-    pass
+    l = default_logger()
+    nt = Network.new([None, None, None], l)
+    nt.send([new_message(1, 1, MessageType.MsgHup, 0)])
+
+    nt.isolate(3)
+
+    # Transfer leadership to isolated node, wait for timeout.
+    nt.send([new_message(3, 1, MessageType.MsgTransferLeader, 0)])
+    assert nt.peers[1].raft.get_lead_transferee() == 3
+    heartbeat_timeout = nt.peers[1].raft.heartbeat_timeout()
+    election_timeout = nt.peers[1].raft.election_timeout()
+    for _ in range(0, heartbeat_timeout):
+        nt.peers[1].raft.tick()
+    assert nt.peers[1].raft.get_lead_transferee() == 3
+    for _ in range(0, election_timeout - heartbeat_timeout):
+        nt.peers[1].raft.tick()
+
+    check_leader_transfer_state(nt.peers[1].raft, StateRole.Leader, 1)
 
 
 def test_leader_transfer_ignore_proposal():
