@@ -3712,12 +3712,109 @@ def test_election_tick_range():
 # TestPreVoteWithSplitVote verifies that after split vote, cluster can complete
 # election in next round.
 def test_prevote_with_split_vote():
-    pass
+    l = default_logger()
+    s1, s2, s3 = new_storage(), new_storage(), new_storage()
+    peers = [
+        new_test_raft(1, [1, 2, 3], 10, 1, s1, l),
+        new_test_raft(2, [1, 2, 3], 10, 1, s2, l),
+        new_test_raft(3, [1, 2, 3], 10, 1, s3, l),
+    ]
+
+    peers[0].raft.become_follower(1, INVALID_ID)
+    peers[1].raft.become_follower(1, INVALID_ID)
+    peers[2].raft.become_follower(1, INVALID_ID)
+
+    network = Network.new(peers, l)
+    network.send([new_message(1, 1, MessageType.MsgHup, 0)])
+
+    # simulate leader down. followers start split vote.
+    network.isolate(1)
+    network.send(
+        [
+            new_message(2, 2, MessageType.MsgHup, 0),
+            new_message(3, 3, MessageType.MsgHup, 0),
+        ]
+    )
+
+    # check whether the term values are expected
+    assert peers[1].raft.get_term() == 3, "peer 2 term"
+    assert peers[2].raft.get_term() == 3, "peer 3 term"
+
+    # check state
+    assert peers[1].raft.get_state() == StateRole.Candidate, "peer 2 state"
+    assert peers[2].raft.get_state() == StateRole.Candidate, "peer 3 state"
+
+    # node 2 election timeout first
+    network.send([new_message(2, 2, MessageType.MsgHup, 0)])
+
+    # check whether the term values are expected
+    assert peers[1].raft.get_term() == 4, "peer 2 term"
+    assert peers[2].raft.get_term() == 4, "peer 3 term"
+
+    # check state
+    assert peers[1].raft.get_state() == StateRole.Leader, "peer 2 state"
+    assert peers[2].raft.get_state() == StateRole.Follower, "peer 3 state"
 
 
 # ensure that after a node become pre-candidate, it will checkQuorum correctly.
 def test_prevote_with_check_quorum():
-    pass
+    l = default_logger()
+
+    def bootstrap(id: int) -> Interface:
+        cfg = new_test_config(id, 10, 1)
+        cfg.set_pre_vote(True)
+        cfg.set_check_quorum(True)
+        s = MemStorage_Owner.new_with_conf_state(ConfState_Owner([1, 2, 3], []))
+        i = new_test_raft_with_config(cfg, s, l)
+        i.raft.become_follower(1, INVALID_ID)
+        return i
+
+    peer1, peer2, peer3 = bootstrap(1), bootstrap(2), bootstrap(3)
+
+    network = Network.new([peer1, peer2, peer3], l)
+    network.send([new_message(1, 1, MessageType.MsgHup, 0)])
+
+    # cause a network partition to isolate node 3. node 3 has leader info
+    network.cut(1, 3)
+    network.cut(2, 3)
+
+    assert network.peers[1].raft.get_state() == StateRole.Leader, "peer 1 state"
+    assert network.peers[2].raft.get_state() == StateRole.Follower, "peer 2 state"
+
+    network.send([new_message(3, 3, MessageType.MsgHup, 0)])
+
+    assert network.peers[3].raft.get_state() == StateRole.PreCandidate, "peer 3 state"
+
+    # term + 2, so that node 2 will ignore node 3's PreVote
+    network.send([new_message(2, 1, MessageType.MsgTransferLeader, 0)])
+    network.send([new_message(1, 2, MessageType.MsgTransferLeader, 0)])
+
+    # check whether the term values are expected
+    assert network.peers[1].raft.get_term() == 4, "peer 1 term"
+    assert network.peers[2].raft.get_term() == 4, "peer 2 term"
+    assert network.peers[3].raft.get_term() == 2, "peer 3 term"
+
+    # check state
+    assert network.peers[1].raft.get_state() == StateRole.Leader, "peer 1 state"
+    assert network.peers[2].raft.get_state() == StateRole.Follower, "peer 2 state"
+    assert network.peers[3].raft.get_state() == StateRole.PreCandidate, "peer 3 state"
+
+    # recover the network then immediately isolate node 1 which is currently
+    # the leader, this is to emulate the crash of node 1.
+    network.recover()
+    network.cut(1, 2)
+    network.cut(1, 3)
+
+    # call for election. node 3 shouldn't ignore node 2's PreVote
+    timeout = network.peers[3].raft.randomized_election_timeout()
+    for _ in range(0, timeout):
+        network.peers[3].raft.tick()
+
+    network.send([new_message(2, 2, MessageType.MsgHup, 0)])
+
+    # check state
+    assert network.peers[2].raft.get_state() == StateRole.Leader, "peer 2 state"
+    assert network.peers[3].raft.get_state() == StateRole.Follower, "peer 3 state"
 
 
 # ensure a new Raft returns a Error::ConfigInvalid with an invalid config
