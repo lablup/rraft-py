@@ -503,6 +503,14 @@ impl Py_Raft__MemStorage_Ref {
         self.inner.map_as_mut(|inner| inner.check_quorum = v)
     }
 
+    pub fn get_pre_vote(&mut self) -> PyResult<bool> {
+        self.inner.map_as_mut(|inner| inner.pre_vote)
+    }
+
+    pub fn set_pre_vote(&mut self, v: bool) -> PyResult<()> {
+        self.inner.map_as_mut(|inner| inner.pre_vote = v)
+    }
+
     // Below function is exposed here because "ReadOnly" struct is not exposed in raft-rs.
     pub fn get_readonly_read_index_queue(&self, py: Python) -> PyResult<PyObject> {
         self.inner

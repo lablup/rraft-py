@@ -1852,6 +1852,10 @@ class Raft__MemStorage:
         """ """
     def set_check_quorum(self, v: bool) -> None:
         """ """
+    def get_pre_vote(self) -> bool:
+        """"""
+    def set_pre_vote(self, pre_vote: bool) -> None:
+        """"""
     def apply_conf_change(self, cc: ConfChangeV2_Ref) -> ConfChange_Ref:
         """ """
     def get_readonly_read_index_queue(self) -> List[List[int]]:
