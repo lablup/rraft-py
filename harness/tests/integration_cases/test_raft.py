@@ -3671,7 +3671,42 @@ def test_learner_respond_vote():
 
 
 def test_election_tick_range():
-    pass
+    l = default_logger()
+    cfg = new_test_config(1, 10, 1)
+    s = MemStorage_Owner.new_with_conf_state(ConfState_Owner([1, 2, 3], []))
+    raft = new_test_raft_with_config(cfg, s, l)
+    for _ in range(0, 1000):
+        raft.raft.reset_randomized_election_timeout()
+        randomized_timeout = raft.raft.randomized_election_timeout()
+        assert (
+            cfg.get_election_tick() <= randomized_timeout
+            and randomized_timeout < 2 * cfg.get_election_tick()
+        )
+
+    cfg.set_min_election_tick(cfg.get_election_tick())
+    cfg.validate()
+
+    # Too small election tick.
+    cfg.set_min_election_tick(cfg.get_election_tick() - 1)
+    with pytest.raises(Exception):
+        cfg.validate()
+
+    # max_election_tick should be larger than min_election_tick
+    cfg.set_min_election_tick(cfg.get_election_tick())
+    cfg.set_max_election_tick(cfg.get_election_tick())
+
+    with pytest.raises(Exception):
+        cfg.validate()
+
+    cfg.set_max_election_tick(cfg.get_election_tick() + 1)
+
+    storage = new_storage()
+    raft = new_test_raft_with_config(cfg, storage, l)
+
+    for _ in range(0, 100):
+        raft.raft.reset_randomized_election_timeout()
+        randomized_timeout = raft.raft.randomized_election_timeout()
+        assert randomized_timeout == cfg.get_election_tick()
 
 
 # TestPreVoteWithSplitVote verifies that after split vote, cluster can complete
