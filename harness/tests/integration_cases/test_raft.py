@@ -3065,7 +3065,21 @@ def test_leader_transfer_ignore_proposal():
 
 
 def test_leader_transfer_receive_higher_term_vote():
-    pass
+    l = default_logger()
+    nt = Network.new([None, None, None], l)
+    nt.send([new_message(1, 1, MessageType.MsgHup, 0)])
+
+    nt.isolate(3)
+
+    # Transfer leadership to isolated node to let transfer pending.
+    nt.send([new_message(3, 1, MessageType.MsgTransferLeader, 0)])
+    assert nt.peers[1].raft.get_lead_transferee() == 3
+
+    nt.send(
+        [new_message_with_entries(2, 2, MessageType.MsgHup, [new_entry(1, 2, None)])]
+    )
+
+    check_leader_transfer_state(nt.peers[1].raft, StateRole.Follower, 2)
 
 
 def test_leader_transfer_remove_node():
