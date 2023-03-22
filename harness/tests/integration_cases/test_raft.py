@@ -3383,7 +3383,31 @@ def test_learner_log_replication():
 
 # TestRestoreWithLearner restores a snapshot which contains learners.
 def test_restore_with_learner():
-    pass
+    l = default_logger()
+    s = new_snapshot(11, 11, [1, 2])
+    s.get_metadata().get_conf_state().set_learners(
+        [*s.get_metadata().get_conf_state().get_learners(), 3]
+    )
+
+    storage = new_storage()
+    sm = new_test_learner_raft(3, [1, 2], [3], 10, 1, storage, l)
+    assert not sm.raft.promotable()
+    assert sm.raft.restore(s.clone())
+    assert sm.raft_log.last_index() == 11
+    assert sm.raft_log.term(11) == 11
+    assert sm.raft.prs().conf_voters().ids() == {1, 2}
+    assert sm.raft.prs().conf_learners() == {3}
+
+    conf_state = s.get_metadata().get_conf_state()
+    for node in conf_state.get_voters():
+        assert sm.raft.prs().get(node)
+        assert node not in sm.raft.prs().conf_learners()
+
+    for node in conf_state.get_learners():
+        assert sm.raft.prs().get(node)
+        assert node in sm.raft.prs().conf_learners()
+
+    assert not sm.raft.restore(s)
 
 
 # Tests if outgoing voters can restore snapshot correctly.
