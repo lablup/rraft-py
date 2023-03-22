@@ -122,6 +122,11 @@ impl Py_JointConfig_Ref {
         self.inner.map_as_ref(|inner| inner.contains(id))
     }
 
+    pub fn ids(&self, py: Python) -> PyResult<PyObject> {
+        self.inner
+            .map_as_ref(|inner| inner.ids().iter().collect::<HashSet<_>>().into_py(py))
+    }
+
     pub fn is_singleton(&self) -> PyResult<bool> {
         self.inner.map_as_ref(|inner| inner.is_singleton())
     }

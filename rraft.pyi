@@ -1916,7 +1916,9 @@ class ProgressTracker(Cloneable):
         """
         Prepares for a new round of vote counting via recordVote.
         """
-    def votes(self) -> Dict[int, bool]:
+    def conf_voters(self) -> JointConfig_Ref:
+        """ """
+    def conf_learners(self) -> Set[int]:
         """ """
 
 class ProgressTracker_Owner(ProgressTracker):
@@ -2044,6 +2046,8 @@ class JointConfig(Cloneable):
         """Clears all IDs."""
     def contains(self, id: int) -> bool:
         """Check if an id is a voter."""
+    def ids() -> Set[int]:
+        """ """
     def is_singleton(self) -> bool:
         """
         Returns true if (and only if) there is only one voting member

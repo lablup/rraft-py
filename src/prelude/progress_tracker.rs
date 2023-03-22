@@ -10,6 +10,7 @@ use raft::ProgressTracker;
 use utils::reference::RustRef;
 use utils::unsafe_cast::make_mut;
 
+use super::joint_config::{Py_JointConfig_Owner, Py_JointConfig_Ref};
 use super::progress::Py_Progress_Ref;
 
 #[derive(Clone)]
@@ -162,14 +163,16 @@ impl Py_ProgressTracker_Ref {
     //     self.inner.tally_votes()
     // }
 
-    // pub fn conf(&mut self) {
-    //     self.inner.map_as_mut(|inner| {
-    //         let k = inner.conf();
-    //         let k = k.voters();
-    //         let k = k.ids();
-    //         k.
-    //     })
-    // }
+    pub fn conf_voters(&mut self) -> PyResult<Py_JointConfig_Ref> {
+        self.inner.map_as_mut(|inner| Py_JointConfig_Ref {
+            inner: RustRef::new(unsafe { make_mut(inner.conf().voters()) }),
+        })
+    }
+
+    pub fn conf_learners(&mut self, py: Python) -> PyResult<PyObject> {
+        self.inner
+            .map_as_mut(|inner| inner.conf().learners().clone().into_py(py))
+    }
 
     // pub fn apply_conf(&mut self, conf: Configuration, changes: MapChange, next_idx: u64) -> bool {
     //     self.inner.apply_conf(conf, changes, next_idx)
