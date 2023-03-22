@@ -3532,12 +3532,80 @@ def test_remove_learner():
 # n1 is leader with term 2
 # n2 is follower with term 2
 # n3 is partitioned, with term 4 and less log, state is candidate
-def new_prevote_migration_cluster():
-    pass
+def new_prevote_migration_cluster() -> Network:
+    # We intentionally do not enable pre_vote for n3, this is done so in order
+    # to simulate a rolling restart process where it's possible to have a mixed
+    # version cluster with replicas with pre_vote enabled, and replicas without.
+    l = default_logger()
+    s1 = new_storage()
+    n1 = new_test_raft_with_prevote(1, [1, 2, 3], 10, 1, s1, True, l)
+    s2 = new_storage()
+    n2 = new_test_raft_with_prevote(2, [1, 2, 3], 10, 1, s2, True, l)
+    s3 = new_storage()
+    n3 = new_test_raft_with_prevote(3, [1, 2, 3], 10, 1, s3, False, l)
+
+    n1.raft.become_follower(1, INVALID_ID)
+    n2.raft.become_follower(1, INVALID_ID)
+    n3.raft.become_follower(1, INVALID_ID)
+
+    nt = Network.new([n1, n2, n3], l)
+
+    nt.send([new_message(1, 1, MessageType.MsgHup, 0)])
+
+    # Cause a network partition to isolate n3.
+    nt.isolate(3)
+    nt.send([new_message(1, 1, MessageType.MsgPropose, 1)])
+
+    nt.send([new_message(3, 3, MessageType.MsgHup, 0)])
+    nt.send([new_message(3, 3, MessageType.MsgHup, 0)])
+
+    # check state
+    # n1.state == Leader
+    # n2.state == Follower
+    # n3.state == Candidate
+    assert nt.peers[1].raft.get_state() == StateRole.Leader
+    assert nt.peers[2].raft.get_state() == StateRole.Follower
+    assert nt.peers[3].raft.get_state() == StateRole.Candidate
+
+    # check term
+    # n1.Term == 2
+    # n2.Term == 2
+    # n3.Term == 4
+    assert nt.peers[1].raft.get_term() == 2
+    assert nt.peers[2].raft.get_term() == 2
+    assert nt.peers[3].raft.get_term() == 4
+
+    # Enable prevote on n3, then recover the network
+    nt.peers[3].raft.set_pre_vote(True)
+    nt.recover()
+
+    return nt
 
 
 def test_prevote_migration_can_complete_election():
-    pass
+    # n1 is leader with term 2
+    # n2 is follower with term 2
+    # n3 is pre-candidate with term 4, and less log
+    nt = new_prevote_migration_cluster()
+
+    # simulate leader down
+    nt.isolate(1)
+
+    # Call for elections from both n2 and n3.
+    nt.send([new_message(3, 3, MessageType.MsgHup, 0)])
+    nt.send([new_message(2, 2, MessageType.MsgHup, 0)])
+
+    # check state
+    # n2.state == Follower
+    # n3.state == PreCandidate
+    assert nt.peers[2].raft.get_state() == StateRole.Follower
+    assert nt.peers[3].raft.get_state() == StateRole.PreCandidate
+
+    nt.send([new_message(3, 3, MessageType.MsgHup, 0)])
+    nt.send([new_message(2, 2, MessageType.MsgHup, 0)])
+
+    # Do we have a leader?
+    assert nt.peers[2].raft.get_state() == StateRole.Leader or nt.peers[3].raft.get_state() == StateRole.Leader
 
 
 def test_prevote_migration_with_free_stuck_pre_candidate():
