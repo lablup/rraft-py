@@ -1858,6 +1858,8 @@ class Raft__MemStorage:
         """"""
     def apply_conf_change(self, cc: ConfChangeV2_Ref) -> ConfChange_Ref:
         """ """
+    def set_batch_append(self, v: bool) -> None:
+        """ Set whether batch append msg at runtime. """
     def get_readonly_read_index_queue(self) -> List[List[int]]:
         """ """
 
