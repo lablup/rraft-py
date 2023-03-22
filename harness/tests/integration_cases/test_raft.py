@@ -2814,7 +2814,28 @@ def test_remove_node_itself():
 
 
 def test_promotable():
-    pass
+    l = default_logger()
+    id = 1
+
+    class Test:
+        def __init__(self, peers: List[int], wp: bool):
+            self.peers = peers
+            self.wp = wp
+
+    tests = [
+        Test([1], True),
+        Test([1, 2, 3], True),
+        Test([], False),
+        Test([2, 3], False),
+    ]
+
+    for i, v in enumerate(tests):
+        peers, wp = v.peers, v.wp
+        storage = new_storage()
+        r = new_test_raft(id, peers, 5, 1, storage, l)
+        assert (
+            r.raft.promotable() == wp
+        ), f"#{i}: promotable = {r.raft.promotable()}, want {wp}"
 
 
 def test_raft_nodes():
