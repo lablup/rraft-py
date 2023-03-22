@@ -28,6 +28,8 @@ from test_raft_paper import (
 )
 
 from rraft import (
+    ConfChange_Owner,
+    ConfChangeType,
     ConfState_Owner,
     Entry_Owner,
     EntryType,
@@ -3860,7 +3862,58 @@ def test_batch_msg_append():
 
 # Tests if unapplied conf change is checked before campaign.
 def test_conf_change_check_before_campaign():
-    pass
+    l = default_logger()
+    nt = Network.new([None, None, None], l)
+    nt.send([new_message(1, 1, MessageType.MsgHup, 0)])
+    assert nt.peers[1].raft.get_state() == StateRole.Leader
+
+    m = new_message(1, 1, MessageType.MsgPropose, 0)
+    e = Entry_Owner.default()
+    e.set_entry_type(EntryType.EntryConfChange)
+    cc = ConfChange_Owner.default()
+    cc.set_change_type(ConfChangeType.RemoveNode)
+    cc.set_node_id(3)
+    e.set_data(cc.write_to_bytes())
+    m.set_entries([*m.get_entries(), e])
+    nt.send([m])
+
+    # trigger campaign in node 2
+    nt.peers.get(2).raft.reset_randomized_election_timeout()
+    timeout = nt.peers.get(2).raft.randomized_election_timeout()
+    for _ in range(0, timeout):
+        nt.peers.get(2).raft.tick()
+
+    # It's still follower because committed conf change is not applied.
+    assert nt.peers.get(2).raft.get_state() == StateRole.Follower
+
+    # Transfer leadership to peer 2.
+    nt.send([new_message(1, 1, MessageType.MsgTransferLeader, 2)])
+    assert nt.peers.get(1).raft.get_state() == StateRole.Leader
+
+    # It's still follower because committed conf change is not applied.
+    assert nt.peers.get(2).raft.get_state() == StateRole.Follower
+
+    # Abort transfer leader.
+    committed = nt.peers.get(2).raft_log.get_committed()
+    nt.peers.get(2).raft.commit_apply(committed)
+    nt.peers.get(2).raft.apply_conf_change(remove_node(3))
+
+    # transfer leadership to peer 2 again.
+    nt.send([new_message(2, 1, MessageType.MsgTransferLeader, 0)])
+    assert nt.peers.get(1).raft.get_state() == StateRole.Follower
+    assert nt.peers.get(2).raft.get_state() == StateRole.Leader
+
+    nt.peers.get(1).raft.commit_apply(committed)
+    nt.peers.get(1).raft.apply_conf_change(remove_node(3))
+
+    # trigger campaign in node 1
+    nt.peers.get(1).raft.reset_randomized_election_timeout()
+
+    timeout = nt.peers.get(1).raft.randomized_election_timeout()
+    for _ in range(0, timeout):
+        nt.peers.get(1).raft.tick()
+
+    assert nt.peers.get(1).raft.get_state() == StateRole.Candidate
 
 
 def test_advance_commit_index_by_vote_request():
