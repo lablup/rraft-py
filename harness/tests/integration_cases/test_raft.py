@@ -2895,7 +2895,21 @@ def test_leader_transfer_to_uptodate_node():
 # is sent to the leader, in this test case every leader transfer message is sent
 # to the follower.
 def test_leader_transfer_to_uptodate_node_from_follower():
-    pass
+    l = default_logger()
+    nt = Network.new([None, None, None], l)
+    nt.send([new_message(1, 1, MessageType.MsgHup, 0)])
+
+    lead_id = nt.peers[1].raft.get_leader_id()
+    assert lead_id == 1
+
+    # transfer leadership to peer 2.
+    nt.send([new_message(2, 2, MessageType.MsgTransferLeader, 0)])
+    check_leader_transfer_state(nt.peers[1].raft, StateRole.Follower, 2)
+
+    # After some log replication, transfer leadership back to peer 1.
+    nt.send([new_message(1, 1, MessageType.MsgPropose, 1)])
+    nt.send([new_message(1, 1, MessageType.MsgTransferLeader, 0)])
+    check_leader_transfer_state(nt.peers[1].raft, StateRole.Leader, 1)
 
 
 # TestLeaderTransferWithCheckQuorum ensures transferring leader still works
