@@ -3428,11 +3428,16 @@ def test_restore_with_voters_outgoing():
 
 # Verifies that a voter can be depromoted by snapshot.
 def test_restore_depromote_voter():
-    pass
+    l = default_logger()
+    s = new_snapshot(11, 11, [1, 2])
+    s.get_metadata().get_conf_state().set_learners(
+        [*s.get_metadata().get_conf_state().get_learners(), 3]
+    )
 
-
-def test_restore_learner():
-    pass
+    storage = new_storage()
+    sm = new_test_raft(3, [1, 2, 3], 10, 1, storage, l)
+    assert sm.raft.promotable()
+    assert sm.raft.restore(s)
 
 
 # TestRestoreLearnerPromotion checks that a learner can become to a follower after
