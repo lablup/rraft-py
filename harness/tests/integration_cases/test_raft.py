@@ -3605,11 +3605,39 @@ def test_prevote_migration_can_complete_election():
     nt.send([new_message(2, 2, MessageType.MsgHup, 0)])
 
     # Do we have a leader?
-    assert nt.peers[2].raft.get_state() == StateRole.Leader or nt.peers[3].raft.get_state() == StateRole.Leader
+    assert (
+        nt.peers[2].raft.get_state() == StateRole.Leader
+        or nt.peers[3].raft.get_state() == StateRole.Leader
+    )
 
 
 def test_prevote_migration_with_free_stuck_pre_candidate():
-    pass
+    l = default_logger()
+    nt = new_prevote_migration_cluster()
+
+    # n1 is leader with term 2
+    # n2 is follower with term 2
+    # n3 is pre-candidate with term 4, and less log
+    nt.send([new_message(3, 3, MessageType.MsgHup, 0)])
+
+    assert nt.peers[1].raft.get_state() == StateRole.Leader
+    assert nt.peers[2].raft.get_state() == StateRole.Follower
+    assert nt.peers[3].raft.get_state() == StateRole.PreCandidate
+
+    # Pre-Vote again for safety
+    nt.send([new_message(3, 3, MessageType.MsgHup, 0)])
+    assert nt.peers[1].raft.get_state() == StateRole.Leader
+    assert nt.peers[2].raft.get_state() == StateRole.Follower
+    assert nt.peers[3].raft.get_state() == StateRole.PreCandidate
+
+    to_send = new_message(1, 3, MessageType.MsgHeartbeat, 0)
+    to_send.set_term(nt.peers[1].raft.get_term())
+    nt.send([to_send])
+
+    # Disrupt the leader so that the stuck peer is freed
+    assert nt.peers[1].raft.get_state() == StateRole.Follower
+
+    assert nt.peers[3].raft.get_term() == nt.peers[1].raft.get_term()
 
 
 def test_learner_respond_vote():
