@@ -3819,7 +3819,12 @@ def test_prevote_with_check_quorum():
 
 # ensure a new Raft returns a Error::ConfigInvalid with an invalid config
 def test_new_raft_with_bad_config_errors():
-    pass
+    l = default_logger()
+    invalid_config = new_test_config(INVALID_ID, 1, 1)
+    s = MemStorage_Owner.new_with_conf_state(ConfState_Owner([1, 2], []))
+
+    with pytest.raises(Exception):
+        Raft__MemStorage_Owner(invalid_config, s, l)
 
 
 # tests whether MsgAppend are batched
