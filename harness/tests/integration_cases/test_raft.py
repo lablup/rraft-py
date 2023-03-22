@@ -2850,18 +2850,23 @@ def test_raft_nodes():
         assert voter_ids == wids, f"#{i}: nodes = {voter_ids}, want {wids}"
 
 
-def test_campaign_while_leader():
-    pass
-
-
-def test_campaign_while_leader_with_pre_vote():
-    pass
-
-
 # test_commit_after_remove_node verifies that pending commands can become
 # committed when a config change reduces the quorum requirements.
-def test_commit_after_remove_node():
-    pass
+#
+# test_campaign_while_leader
+# test_campaign_while_leader_with_pre_vote
+@pytest.mark.parametrize("pre_vote", [True, False])
+def test_commit_after_remove_node(pre_vote: bool):
+    l = default_logger()
+    r = new_test_raft_with_prevote(1, [1], 5, 1, new_storage(), pre_vote, l)
+    assert r.raft.get_state() == StateRole.Follower
+    # We don't call campaign() directly because it comes after the check
+    # for our current state.
+    r.raft.step(new_message(1, 1, MessageType.MsgHup, 0))
+    assert r.raft.get_state() == StateRole.Leader
+    term = r.raft.get_term()
+    r.raft.step(new_message(1, 1, MessageType.MsgHup, 0))
+    assert r.raft.get_term() == term
 
 
 # test_leader_transfer_to_uptodate_node verifies transferring should succeed
