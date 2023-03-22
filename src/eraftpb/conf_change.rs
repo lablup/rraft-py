@@ -161,6 +161,14 @@ impl Py_ConfChange_Ref {
         self.inner.map_as_mut(|inner| inner.clear_context())
     }
 
+    pub fn write_to_bytes(&mut self, py: Python) -> PyResult<PyObject> {
+        self.inner.map_as_mut(|inner| {
+            protobuf::Message::write_to_bytes(inner)
+                .unwrap()
+                .into_py(py)
+        })
+    }
+
     pub fn into_v2(&mut self) -> PyResult<Py_ConfChangeV2_Owner> {
         self.inner.map_as_mut(|inner| {
             let mut cc = ConfChangeV2::default();

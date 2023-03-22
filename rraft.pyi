@@ -1129,6 +1129,8 @@ class ConfChange(Cloneable):
         """
         Converts conf change to `ConfChangeV2`.
         """
+    def write_to_bytes(self) -> List[int]:
+        """ """
 
 class ConfChange_Owner(ConfChange):
     """ """
