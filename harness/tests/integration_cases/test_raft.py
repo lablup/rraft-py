@@ -2920,10 +2920,10 @@ def test_leader_transfer_with_check_quorum():
     for i in range(1, 4):
         r = nt.peers[i].raft
         r.set_check_quorum(True)
-        election_timeout = r.get_election_timeout()
+        election_timeout = r.election_timeout()
         r.set_randomized_election_timeout(election_timeout + 1)
 
-    b_election_timeout = nt.peers[2].raft.get_election_timeout()
+    b_election_timeout = nt.peers[2].raft.election_timeout()
     nt.peers[2].raft.set_randomized_election_timeout(b_election_timeout + 1)
 
     # Letting peer 2 electionElapsed reach to timeout so that it can vote for peer 1
@@ -2953,7 +2953,7 @@ def test_leader_transfer_to_slow_follower():
     nt.send([new_message(1, 1, MessageType.MsgPropose, 1)])
 
     nt.recover()
-    nt.peers[1].prs().get(3).get_matched() == 1
+    nt.peers[1].raft.prs().get(3).get_matched() == 1
 
     # Transfer leadership to 3 when node 3 is lack of log.
     nt.send([new_message(3, 1, MessageType.MsgTransferLeader, 0)])
@@ -2974,7 +2974,7 @@ def test_leader_transfer_after_snapshot():
     nt.storage[1].wl(lambda core: core.compact(nt.peers[1].raft_log.get_applied()))
 
     nt.recover()
-    assert nt.peers[1].prs().get(3).get_matched() == 1
+    assert nt.peers[1].raft.prs().get(3).get_matched() == 1
 
     # Transfer leadership to 3 when node 3 is lack of snapshot.
     nt.send([new_message(3, 1, MessageType.MsgTransferLeader, 0)])
@@ -3054,14 +3054,13 @@ def test_leader_transfer_ignore_proposal():
     nt.send([new_message(3, 1, MessageType.MsgTransferLeader, 0)])
     assert nt.peers[1].raft.get_lead_transferee() == 3
 
-    nt.send([new_message(1, 1, MessageType.MsgPropose, 1)])
     try:
-        nt.peers[1].step([new_message(1, 1, MessageType.MsgPropose, 1)])
-        assert False, "should return drop proposal error while transferring"
+        nt.send([new_message(1, 1, MessageType.MsgPropose, 1)])
+        nt.peers[1].step(new_message(1, 1, MessageType.MsgPropose, 1))
     except Exception:
-        pass
-
-    assert nt.peers[1].raft.get_macthed() == 3
+        assert nt.peers[1].raft.prs().get(1).get_matched() == 1
+    else:
+        assert False, "should return drop proposal error while transferring"
 
 
 def test_leader_transfer_receive_higher_term_vote():
@@ -3093,7 +3092,7 @@ def test_leader_transfer_remove_node():
     nt.send([new_message(3, 1, MessageType.MsgTransferLeader, 0)])
     assert nt.peers[1].raft.get_lead_transferee() == 3
 
-    nt.peers[1].apply_conf_change(nt.peers[1].raft, StateRole.Leader, 1)
+    check_leader_transfer_state(nt.peers[1].raft, StateRole.Leader, 1)
 
 
 # test_leader_transfer_back verifies leadership can transfer
@@ -3177,7 +3176,7 @@ def test_transfer_non_member():
     raft.step(new_message(2, 1, MessageType.MsgTimeoutNow, 0))
     raft.step(new_message(2, 1, MessageType.MsgRequestVoteResponse, 0))
     raft.step(new_message(3, 1, MessageType.MsgRequestVoteResponse, 0))
-    assert raft.get_state() == StateRole.Follower
+    assert raft.raft.get_state() == StateRole.Follower
 
 
 # TestNodeWithSmallerTermCanCompleteElection tests the scenario where a node
@@ -3194,9 +3193,9 @@ def test_node_with_smaller_term_can_complete_election():
     s3 = new_storage()
     n3 = new_test_raft_with_prevote(3, [1, 2, 3], 10, 1, s3, True, l)
 
-    n1.become_follower(1, INVALID_ID)
-    n2.become_follower(1, INVALID_ID)
-    n3.become_follower(1, INVALID_ID)
+    n1.raft.become_follower(1, INVALID_ID)
+    n2.raft.become_follower(1, INVALID_ID)
+    n3.raft.become_follower(1, INVALID_ID)
 
     # cause a network partition to isolate node 3
     config = Network.default_config()
@@ -3211,7 +3210,7 @@ def test_node_with_smaller_term_can_complete_election():
     assert nt.peers[2].raft.get_state() == StateRole.Follower
 
     nt.send([new_message(3, 3, MessageType.MsgHup, 0)])
-    assert nt.peers[2].raft.get_state() == StateRole.PreCandidate
+    assert nt.peers[3].raft.get_state() == StateRole.PreCandidate
 
     nt.send([new_message(2, 2, MessageType.MsgHup, 0)])
 
@@ -3262,8 +3261,8 @@ def new_test_learner_raft(
         storage.initial_state().initialized() and not peers
     ), f"new_test_raft with empty peers on initialized store"
 
-    if not peers and not storage.initial_state().initialized():
-        storage.initialize_with_conf_state(ConfState_Owner([peers], [learners]))
+    if peers and not storage.initial_state().initialized():
+        storage.initialize_with_conf_state(ConfState_Owner(peers, learners))
 
     cfg = new_test_config(id, election, heartbeat)
     return new_test_raft_with_config(cfg, storage, logger)
@@ -3289,36 +3288,37 @@ def test_learner_election_timeout():
     s2 = new_storage()
     n2 = new_test_learner_raft(2, [1], [2], 10, 1, s2, l)
 
-    timeout = n2.election_timeout()
-    n2.set_randomized_election_timeout(timeout)
+    timeout = n2.raft.election_timeout()
+    n2.raft.set_randomized_election_timeout(timeout)
 
     # n2 is a learner. Learner should not start election even when time out.
     for _ in range(0, timeout):
-        n2.tick()
+        n2.raft.tick()
 
-    assert n2.get_state() == StateRole.Follower
+    assert n2.raft.get_state() == StateRole.Follower
 
 
 # TestLearnerPromotion verifies that the leaner should not election until
 # it is promoted to a normal peer.
 def test_learner_promotion():
     l = default_logger()
-    storage = new_storage()
-    n1 = new_test_learner_raft(1, [1], [2], 10, 1, storage, l)
-    n1.become_follower(1, INVALID_ID)
+    s1 = new_storage()
+    n1 = new_test_learner_raft(1, [1], [2], 10, 1, s1, l)
+    n1.raft.become_follower(1, INVALID_ID)
 
-    n2 = new_test_learner_raft(2, [1], [2], 10, 1, storage, l)
-    n2.become_follower(1, INVALID_ID)
+    s2 = new_storage()
+    n2 = new_test_learner_raft(2, [1], [2], 10, 1, s2, l)
+    n2.raft.become_follower(1, INVALID_ID)
 
     network = Network.new([n1, n2], l)
     assert network.peers[1].raft.get_state() == StateRole.Follower
 
     # n1 should become leader.
-    timeout = network.peers[1].election_timeout()
-    network.peers[1].set_randomized_election_timeout(timeout)
+    timeout = network.peers[1].raft.election_timeout()
+    network.peers[1].raft.set_randomized_election_timeout(timeout)
 
     for _ in range(0, timeout):
-        network.peers[1].tick()
+        network.peers[1].raft.tick()
 
     assert network.peers[1].raft.get_state() == StateRole.Leader
     assert network.peers[2].raft.get_state() == StateRole.Follower
@@ -3327,8 +3327,8 @@ def test_learner_promotion():
     network.send([heart_beat.clone()])
 
     # Promote n2 from learner to follower.
-    network.peers[1].apply_conf_change(add_node(2))
-    network.peers[1].apply_conf_change(add_node(2))
+    network.peers[1].raft.apply_conf_change(add_node(2))
+    network.peers[2].raft.apply_conf_change(add_node(2))
     assert network.peers[2].raft.get_state() == StateRole.Follower
     assert network.peers[2].raft.promotable()
 
@@ -3367,17 +3367,17 @@ def test_learner_log_replication():
 
     assert network.peers[1].raft.get_state() == StateRole.Leader
     assert network.peers[2].raft.get_state() == StateRole.Follower
-    assert network.peers[2].raft.promotable()
+    assert not network.peers[2].raft.promotable()
 
     next_committed = network.peers[1].raft_log.get_committed() + 1
 
-    msg = new_message(1, 1, MessageType.MsgPropose, 0)
+    msg = new_message(1, 1, MessageType.MsgPropose, 1)
     network.send([msg])
 
     assert network.peers[1].raft_log.get_committed() == next_committed
     assert network.peers[2].raft_log.get_committed() == next_committed
 
-    matched = network.peers[1].prs().get(2).get_matched()
+    matched = network.peers[1].raft.prs().get(2).get_matched()
     assert matched == network.peers[2].raft_log.get_committed()
 
 
