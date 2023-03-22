@@ -3083,7 +3083,17 @@ def test_leader_transfer_receive_higher_term_vote():
 
 
 def test_leader_transfer_remove_node():
-    pass
+    l = default_logger()
+    nt = Network.new([None, None, None], l)
+    nt.send([new_message(1, 1, MessageType.MsgHup, 0)])
+
+    nt.ignore(MessageType.MsgTimeoutNow)
+
+    # The lead_transferee is removed when leadship transferring.
+    nt.send([new_message(3, 1, MessageType.MsgTransferLeader, 0)])
+    assert nt.peers[1].raft.get_lead_transferee() == 3
+
+    nt.peers[1].apply_conf_change(nt.peers[1].raft, StateRole.Leader, 1)
 
 
 # test_leader_transfer_back verifies leadership can transfer
