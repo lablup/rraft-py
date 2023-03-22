@@ -3468,7 +3468,41 @@ def test_restore_learner_promotion():
 
 # TestLearnerReceiveSnapshot tests that a learner can receive a snapshot from leader.
 def test_learner_receive_snapshot():
-    pass
+    l = default_logger()
+    s = new_snapshot(11, 11, [1])
+    s.get_metadata().get_conf_state().set_learners(
+        [*s.get_metadata().get_conf_state().get_learners(), 2]
+    )
+
+    s1 = new_storage()
+    n1 = new_test_learner_raft(1, [1], [2], 10, 1, s1, l)
+    s2 = new_storage()
+    n2 = new_test_learner_raft(2, [1], [2], 10, 1, s2, l)
+
+    n1.raft.restore(s)
+    n1.persist()
+
+    commited = n1.raft_log.get_committed()
+    n1.raft.commit_apply(commited)
+
+    network = Network.new([n1, n2], l)
+
+    timeout = network.peers[1].raft.election_timeout()
+    network.peers[1].raft.set_randomized_election_timeout(timeout)
+
+    for _ in range(0, timeout):
+        network.peers[1].raft.tick()
+
+    msg = Message_Owner.default()
+    msg.set_from(1)
+    msg.set_to(1)
+    msg.set_msg_type(MessageType.MsgBeat)
+    network.send([msg])
+
+    n1_committed = network.peers[1].raft_log.get_committed()
+    n2_committed = network.peers[2].raft_log.get_committed()
+
+    assert n1_committed == n2_committed
 
 
 # TestAddLearner tests that addLearner could update nodes correctly.
