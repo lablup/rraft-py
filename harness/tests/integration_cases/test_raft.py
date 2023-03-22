@@ -3346,7 +3346,39 @@ def test_learner_promotion():
 
 # TestLearnerLogReplication tests that a learner can receive entries from the leader.
 def test_learner_log_replication():
-    pass
+    l = default_logger()
+    s1 = new_storage()
+    n1 = new_test_learner_raft(1, [1], [2], 10, 1, s1, l)
+    s2 = new_storage()
+    n2 = new_test_learner_raft(2, [1], [2], 10, 1, s2, l)
+    network = Network.new([n1, n2], l)
+
+    network.peers[1].raft.become_follower(1, INVALID_ID)
+    network.peers[2].raft.become_follower(1, INVALID_ID)
+
+    timeout = network.peers[1].raft.election_timeout()
+    network.peers[1].raft.set_randomized_election_timeout(timeout)
+
+    for _ in range(0, timeout):
+        network.peers[1].raft.tick()
+
+    heart_beat = new_message(1, 1, MessageType.MsgBeat, 0)
+    network.send([heart_beat])
+
+    assert network.peers[1].raft.get_state() == StateRole.Leader
+    assert network.peers[2].raft.get_state() == StateRole.Follower
+    assert network.peers[2].raft.promotable()
+
+    next_committed = network.peers[1].raft_log.get_committed() + 1
+
+    msg = new_message(1, 1, MessageType.MsgPropose, 0)
+    network.send([msg])
+
+    assert network.peers[1].raft_log.get_committed() == next_committed
+    assert network.peers[2].raft_log.get_committed() == next_committed
+
+    matched = network.peers[1].prs().get(2).get_matched()
+    assert matched == network.peers[2].raft_log.get_committed()
 
 
 # TestRestoreWithLearner restores a snapshot which contains learners.
