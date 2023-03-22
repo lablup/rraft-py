@@ -3117,7 +3117,19 @@ def test_leader_transfer_back():
 # test_leader_transfer_second_transfer_to_another_node verifies leader can transfer to another node
 # when last transfer is pending.
 def test_leader_transfer_second_transfer_to_another_node():
-    pass
+    l = default_logger()
+    nt = Network.new([None, None, None], l)
+    nt.send([new_message(1, 1, MessageType.MsgHup, 0)])
+
+    nt.isolate(3)
+
+    nt.send([new_message(3, 1, MessageType.MsgTransferLeader, 0)])
+    assert nt.peers[1].raft.get_lead_transferee() == 3
+
+    # Transfer leadership to another node.
+    nt.send([new_message(2, 1, MessageType.MsgTransferLeader, 0)])
+
+    check_leader_transfer_state(nt.peers[1].raft, StateRole.Follower, 2)
 
 
 # test_leader_transfer_second_transfer_to_same_node verifies second transfer leader request
