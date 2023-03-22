@@ -2798,7 +2798,19 @@ def test_remove_node():
 
 
 def test_remove_node_itself():
-    pass
+    l = default_logger()
+    storage = new_storage()
+    nl = new_test_learner_raft(1, [1], [2], 10, 1, storage, l)
+
+    try:
+        nl.raft.apply_conf_change(remove_node(1))
+        assert False
+    except Exception:
+        pass
+
+    # TODO: Resolve below `assert_iter_eq` through exposing `conf` method of progress_tracker
+    # assert_iter_eq!(n1.prs().conf().learners(), vec![2]);
+    # assert_iter_eq!(o n1.prs().conf().voters().ids(), vec![1]);
 
 
 def test_promotable():
@@ -2919,8 +2931,24 @@ def test_node_with_smaller_term_can_complete_election():
     pass
 
 
-def new_test_learner_raft():
-    pass
+def new_test_learner_raft(
+    id: int,
+    peers: List[int],
+    learners: List[int],
+    election: int,
+    heartbeat: int,
+    storage: MemStorage_Ref,
+    logger: Logger_Ref,
+) -> Interface:
+    assert not (
+        storage.initial_state().initialized() and not peers
+    ), f"new_test_raft with empty peers on initialized store"
+
+    if not peers and not storage.initial_state().initialized():
+        storage.initialize_with_conf_state(ConfState_Owner([peers], [learners]))
+
+    cfg = new_test_config(id, election, heartbeat)
+    return new_test_raft_with_config(cfg, storage, logger)
 
 
 def new_test_learner_raft_with_prevote():
