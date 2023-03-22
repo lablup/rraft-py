@@ -2781,10 +2781,8 @@ def test_remove_node():
     assert r.raft.prs().conf_voters().ids() == set([1])
 
     # Removing all voters is not allowed.
-    try:
+    with pytest.raises(Exception):
         r.raft.apply_conf_change(remove_node(1))
-    except Exception:
-        pass
 
     assert r.raft.prs().conf_voters().ids(), set([1])
 
@@ -2794,11 +2792,8 @@ def test_remove_node_itself():
     storage = new_storage()
     n1 = new_test_learner_raft(1, [1], [2], 10, 1, storage, l)
 
-    try:
+    with pytest.raises(Exception):
         n1.raft.apply_conf_change(remove_node(1))
-        assert False
-    except Exception:
-        pass
 
     # assert n1.raft.prs().conf_learners() == set([2])
     # assert n1.raft.prs().conf_voters().ids() == [1]
@@ -3055,13 +3050,11 @@ def test_leader_transfer_ignore_proposal():
     nt.send([new_message(3, 1, MessageType.MsgTransferLeader, 0)])
     assert nt.peers[1].raft.get_lead_transferee() == 3
 
-    try:
+    with pytest.raises(Exception):
         nt.send([new_message(1, 1, MessageType.MsgPropose, 1)])
         nt.peers[1].step(new_message(1, 1, MessageType.MsgPropose, 1))
-    except Exception:
-        assert nt.peers[1].raft.prs().get(1).get_matched() == 1
-    else:
-        assert False, "should return drop proposal error while transferring"
+
+    assert nt.peers[1].raft.prs().get(1).get_matched() == 1
 
 
 def test_leader_transfer_receive_higher_term_vote():
