@@ -3302,7 +3302,46 @@ def test_learner_election_timeout():
 # TestLearnerPromotion verifies that the leaner should not election until
 # it is promoted to a normal peer.
 def test_learner_promotion():
-    pass
+    l = default_logger()
+    storage = new_storage()
+    n1 = new_test_learner_raft(1, [1], [2], 10, 1, storage, l)
+    n1.become_follower(1, INVALID_ID)
+
+    n2 = new_test_learner_raft(2, [1], [2], 10, 1, storage, l)
+    n2.become_follower(1, INVALID_ID)
+
+    network = Network.new([n1, n2], l)
+    assert network.peers[1].raft.get_state() == StateRole.Follower
+
+    # n1 should become leader.
+    timeout = network.peers[1].election_timeout()
+    network.peers[1].set_randomized_election_timeout(timeout)
+
+    for _ in range(0, timeout):
+        network.peers[1].tick()
+
+    assert network.peers[1].raft.get_state() == StateRole.Leader
+    assert network.peers[2].raft.get_state() == StateRole.Follower
+
+    heart_beat = new_message(1, 1, MessageType.MsgBeat, 0)
+    network.send([heart_beat.clone()])
+
+    # Promote n2 from learner to follower.
+    network.peers[1].apply_conf_change(add_node(2))
+    network.peers[1].apply_conf_change(add_node(2))
+    assert network.peers[2].raft.get_state() == StateRole.Follower
+    assert network.peers[2].raft.promotable()
+
+    timeout = network.peers[2].raft.election_timeout()
+    network.peers[2].raft.set_randomized_election_timeout(timeout)
+    for _ in range(0, timeout):
+        network.peers[2].raft.tick()
+
+    heart_beat.set_to(2)
+    heart_beat.set_from(2)
+    network.send([heart_beat])
+    assert network.peers[1].raft.get_state() == StateRole.Follower
+    assert network.peers[2].raft.get_state() == StateRole.Leader
 
 
 # TestLearnerLogReplication tests that a learner can receive entries from the leader.
