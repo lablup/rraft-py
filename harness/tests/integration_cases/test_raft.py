@@ -3457,7 +3457,13 @@ def test_restore_learner():
 # TestRestoreLearnerPromotion checks that a learner can become to a follower after
 # restoring snapshot.
 def test_restore_learner_promotion():
-    pass
+    l = default_logger()
+    s = new_snapshot(11, 11, [1, 2, 3])
+    storage = new_storage()
+    sm = new_test_learner_raft(3, [1, 2], [3], 10, 1, storage, l)
+    assert not sm.raft.promotable()
+    assert sm.raft.restore(s)
+    assert sm.raft.promotable()
 
 
 # TestLearnerReceiveSnapshot tests that a learner can receive a snapshot from leader.
