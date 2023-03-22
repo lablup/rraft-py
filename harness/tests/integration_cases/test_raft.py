@@ -2945,7 +2945,20 @@ def test_leader_transfer_with_check_quorum():
 
 
 def test_leader_transfer_to_slow_follower():
-    pass
+    l = default_logger()
+    nt = Network.new([None, None, None], l)
+    nt.send([new_message(1, 1, MessageType.MsgHup, 0)])
+
+    nt.isolate(3)
+    nt.send([new_message(1, 1, MessageType.MsgPropose, 1)])
+
+    nt.recover()
+    nt.peers[1].prs().get(3).get_matched() == 1
+
+    # Transfer leadership to 3 when node 3 is lack of log.
+    nt.send([new_message(3, 1, MessageType.MsgTransferLeader, 0)])
+
+    check_leader_transfer_state(nt.peers[1].raft, StateRole.Follower, 3)
 
 
 def test_leader_transfer_after_snapshot():
