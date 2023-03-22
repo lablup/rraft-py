@@ -2985,7 +2985,13 @@ def test_leader_transfer_after_snapshot():
 
 
 def test_leader_transfer_to_self():
-    pass
+    l = default_logger()
+    nt = Network.new([None, None, None], l)
+    nt.send([new_message(1, 1, MessageType.MsgHup, 0)])
+
+    # Transfer leadership to self, there will be noop.
+    nt.send([new_message(1, 1, MessageType.MsgTransferLeader, 0)])
+    check_leader_transfer_state(nt.peers[1].raft, StateRole.Leader, 1)
 
 
 def test_leader_transfer_to_non_existing_node():
