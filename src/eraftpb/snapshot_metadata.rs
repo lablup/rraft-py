@@ -51,6 +51,13 @@ impl Py_SnapshotMetadata_Owner {
         }
     }
 
+    #[staticmethod]
+    pub fn default() -> Py_SnapshotMetadata_Owner {
+        Py_SnapshotMetadata_Owner {
+            inner: SnapshotMetadata::default(),
+        }
+    }
+
     pub fn make_ref(&mut self) -> Py_SnapshotMetadata_Ref {
         Py_SnapshotMetadata_Ref {
             inner: RustRef::new(&mut self.inner),

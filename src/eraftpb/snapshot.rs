@@ -55,6 +55,13 @@ impl Py_Snapshot_Owner {
         }
     }
 
+    #[staticmethod]
+    pub fn default() -> Py_Snapshot_Owner {
+        Py_Snapshot_Owner {
+            inner: Snapshot::default(),
+        }
+    }
+
     pub fn make_ref(&mut self) -> Py_Snapshot_Ref {
         Py_Snapshot_Ref {
             inner: RustRef::new(&mut self.inner),
