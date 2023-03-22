@@ -132,9 +132,9 @@ impl Py_SnapshotMetadata_Ref {
         self.inner.map_as_mut(|inner| inner.clear_term())
     }
 
-    pub fn get_conf_state(&self) -> PyResult<Py_ConfState_Ref> {
-        self.inner.map_as_ref(|inner| Py_ConfState_Ref {
-            inner: RustRef::new(unsafe { make_mut(inner.get_conf_state()) }),
+    pub fn get_conf_state(&mut self) -> PyResult<Py_ConfState_Ref> {
+        self.inner.map_as_mut(|inner| Py_ConfState_Ref {
+            inner: RustRef::new(inner.mut_conf_state()),
         })
     }
 

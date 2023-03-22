@@ -280,9 +280,9 @@ impl Py_Message_Ref {
         self.inner.map_as_mut(|inner| inner.clear_reject())
     }
 
-    pub fn get_snapshot(&self) -> PyResult<Py_Snapshot_Ref> {
-        self.inner.map_as_ref(|inner| Py_Snapshot_Ref {
-            inner: RustRef::new(unsafe { make_mut(inner.get_snapshot()) }),
+    pub fn get_snapshot(&mut self) -> PyResult<Py_Snapshot_Ref> {
+        self.inner.map_as_mut(|inner| Py_Snapshot_Ref {
+            inner: RustRef::new(inner.mut_snapshot()),
         })
     }
 

@@ -312,13 +312,13 @@ impl Py_RaftLog__MemStorage_Ref {
 
     pub fn store(&mut self) -> PyResult<Py_MemStorage_Ref> {
         self.inner.map_as_mut(|inner| Py_MemStorage_Ref {
-            inner: RustRef::new(unsafe { make_mut(inner.store()) }),
+            inner: RustRef::new(inner.mut_store()),
         })
     }
 
-    pub fn get_store(&self) -> PyResult<Py_MemStorage_Ref> {
-        self.inner.map_as_ref(|inner| Py_MemStorage_Ref {
-            inner: RustRef::new(unsafe { make_mut(inner.store()) }),
+    pub fn get_store(&mut self) -> PyResult<Py_MemStorage_Ref> {
+        self.inner.map_as_mut(|inner| Py_MemStorage_Ref {
+            inner: RustRef::new(inner.mut_store()),
         })
     }
 }

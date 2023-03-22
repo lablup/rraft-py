@@ -320,9 +320,9 @@ impl Py_Raft__MemStorage_Ref {
             .and_then(to_pyresult)
     }
 
-    pub fn prs(&self) -> PyResult<Py_ProgressTracker_Ref> {
-        self.inner.map_as_ref(|inner| Py_ProgressTracker_Ref {
-            inner: RustRef::new(unsafe { make_mut(inner.prs()) }),
+    pub fn prs(&mut self) -> PyResult<Py_ProgressTracker_Ref> {
+        self.inner.map_as_mut(|inner| Py_ProgressTracker_Ref {
+            inner: RustRef::new(inner.mut_prs()),
         })
     }
 

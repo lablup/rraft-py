@@ -1035,9 +1035,11 @@ class ConfChangeV2(Cloneable):
         """ """
     def clear_context(self) -> None:
         """ """
-    def get_context(self) -> List[Any]:
+    def get_context(self) -> List[ConfChangeSingle_Ref]:
         """ """
-    def set_changes(self, v: List[Any]) -> None:
+    def set_changes(
+        self, v: List[ConfChangeSingle_Owner] | List[ConfChangeSingle_Ref]
+    ) -> None:
         """ """
     def clear_changes(self) -> None:
         """ """

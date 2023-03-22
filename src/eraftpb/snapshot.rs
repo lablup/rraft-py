@@ -6,7 +6,6 @@ use pyo3::{
 
 use raft::eraftpb::Snapshot;
 use utils::reference::RustRef;
-use utils::unsafe_cast::make_mut;
 
 use super::snapshot_metadata::{Py_SnapshotMetadata_Mut, Py_SnapshotMetadata_Ref};
 
@@ -136,9 +135,9 @@ impl Py_Snapshot_Ref {
         self.inner.map_as_mut(|inner| inner.clear_data())
     }
 
-    pub fn get_metadata(&self) -> PyResult<Py_SnapshotMetadata_Ref> {
-        self.inner.map_as_ref(|inner| Py_SnapshotMetadata_Ref {
-            inner: RustRef::new(unsafe { make_mut(inner.get_metadata()) }),
+    pub fn get_metadata(&mut self) -> PyResult<Py_SnapshotMetadata_Ref> {
+        self.inner.map_as_mut(|inner| Py_SnapshotMetadata_Ref {
+            inner: RustRef::new(inner.mut_metadata()),
         })
     }
 

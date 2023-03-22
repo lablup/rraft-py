@@ -90,9 +90,9 @@ impl Py_MemStorageCore_Ref {
             .and_then(to_pyresult)
     }
 
-    pub fn hard_state(&self) -> PyResult<Py_HardState_Ref> {
-        self.inner.map_as_ref(|inner| Py_HardState_Ref {
-            inner: RustRef::new(unsafe { make_mut(inner.hard_state()) }),
+    pub fn hard_state(&mut self) -> PyResult<Py_HardState_Ref> {
+        self.inner.map_as_mut(|inner| Py_HardState_Ref {
+            inner: RustRef::new(inner.mut_hard_state()),
         })
     }
 
