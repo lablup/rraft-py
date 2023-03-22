@@ -3171,7 +3171,13 @@ def check_leader_transfer_state(r: Raft__MemStorage_Ref, state: StateRole, lead:
 # (previously, if the node also got votes, it would panic as it
 # transitioned to StateRole::Leader)
 def test_transfer_non_member():
-    pass
+    l = default_logger()
+    storage = new_storage()
+    raft = new_test_raft(1, [2, 3, 4], 5, 1, storage, l)
+    raft.step(new_message(2, 1, MessageType.MsgTimeoutNow, 0))
+    raft.step(new_message(2, 1, MessageType.MsgRequestVoteResponse, 0))
+    raft.step(new_message(3, 1, MessageType.MsgRequestVoteResponse, 0))
+    assert raft.get_state() == StateRole.Follower
 
 
 # TestNodeWithSmallerTermCanCompleteElection tests the scenario where a node
