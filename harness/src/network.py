@@ -66,7 +66,7 @@ class Network:
     # A `None` node will be replaced with a new Raft node, and its configuration will
     # be `peers`.
     @staticmethod
-    def new(peers: List[Optional[Interface]], l: Logger_Owner | Logger_Ref) -> Any:
+    def new(peers: List[Optional[Interface]], l: Logger_Owner) -> Any:
         cfg = Network.default_config()
         return Network.new_with_config(peers, cfg, l)
 
@@ -75,7 +75,7 @@ class Network:
     def new_with_config(
         peers: List[Optional[Interface]],
         config: Config_Owner | Config_Ref,
-        l: Logger_Owner | Logger_Ref,
+        l: Logger_Owner,
     ) -> Any:
         nstorage = {}
         npeers = {}
@@ -89,10 +89,7 @@ class Network:
                 nstorage[id] = store_owner.clone()
                 cfg = config.clone()
                 cfg.set_id(id)
-
-                raft_owner = Raft__MemStorage_Owner(cfg, store_owner, l)
-                r = Interface(raft_owner)
-                npeers[id] = r
+                npeers[id] = Interface(Raft__MemStorage_Owner(cfg, store_owner, l))
             else:
                 if p.raft:
                     if raft := p.raft:
