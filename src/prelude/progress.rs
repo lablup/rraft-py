@@ -105,18 +105,16 @@ impl Py_Progress_Ref {
     }
 
     pub fn become_probe(&mut self) -> PyResult<()> {
-        to_pyresult(self.inner.map_as_mut(|inner| inner.become_probe()))
+        self.inner.map_as_mut(|inner| inner.become_probe())
     }
 
     pub fn become_replicate(&mut self) -> PyResult<()> {
-        to_pyresult(self.inner.map_as_mut(|inner| inner.become_replicate()))
+        self.inner.map_as_mut(|inner| inner.become_replicate())
     }
 
     pub fn become_snapshot(&mut self, snapshot_idx: u64) -> PyResult<()> {
-        to_pyresult(
-            self.inner
-                .map_as_mut(|inner| inner.become_snapshot(snapshot_idx)),
-        )
+        self.inner
+            .map_as_mut(|inner| inner.become_snapshot(snapshot_idx))
     }
 
     pub fn maybe_snapshot_abort(&self) -> PyResult<bool> {
@@ -138,7 +136,7 @@ impl Py_Progress_Ref {
     }
 
     pub fn snapshot_failure(&mut self) -> PyResult<()> {
-        to_pyresult(self.inner.map_as_mut(|inner| inner.snapshot_failure()))
+        self.inner.map_as_mut(|inner| inner.snapshot_failure())
     }
 
     pub fn is_paused(&self) -> PyResult<bool> {
@@ -146,22 +144,20 @@ impl Py_Progress_Ref {
     }
 
     pub fn resume(&mut self) -> PyResult<()> {
-        to_pyresult(self.inner.map_as_mut(|inner| inner.resume()))
+        self.inner.map_as_mut(|inner| inner.resume())
     }
 
     pub fn update_state(&mut self, last: u64) -> PyResult<()> {
-        to_pyresult(self.inner.map_as_mut(|inner| inner.update_state(last)))
+        self.inner.map_as_mut(|inner| inner.update_state(last))
     }
 
     pub fn update_committed(&mut self, committed_index: u64) -> PyResult<()> {
-        to_pyresult(
-            self.inner
-                .map_as_mut(|inner| inner.update_committed(committed_index)),
-        )
+        self.inner
+            .map_as_mut(|inner| inner.update_committed(committed_index))
     }
 
     pub fn optimistic_update(&mut self, n: u64) -> PyResult<()> {
-        to_pyresult(self.inner.map_as_mut(|inner| inner.optimistic_update(n)))
+        self.inner.map_as_mut(|inner| inner.optimistic_update(n))
     }
 
     pub fn get_ins(&mut self) -> PyResult<Py_Inflights_Ref> {
