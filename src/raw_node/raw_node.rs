@@ -244,7 +244,7 @@ impl Py_RawNode__MemStorage_Ref {
             .map_as_mut(|inner| inner.on_persist_ready(number))
     }
 
-    pub fn read_index(&mut self, rctx: &PyList) -> PyResult<()> {
+    pub fn read_index(&mut self, rctx: &PyBytes) -> PyResult<()> {
         let rctx = rctx.extract()?;
         self.inner.map_as_mut(|inner| inner.read_index(rctx))
     }
