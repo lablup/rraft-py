@@ -1,4 +1,3 @@
-use pyo3::exceptions::PyRuntimeError;
 use pyo3::prelude::*;
 use pyo3::types::PyList;
 
@@ -139,11 +138,12 @@ impl Py_RawNode__MemStorage_Ref {
     }
 
     pub fn snap(&self) -> PyResult<Option<Py_Snapshot_Ref>> {
-        self.inner.map_as_ref(|inner| match inner.snap() {
-            Some(snap) => Some(Py_Snapshot_Ref {
-                inner: RustRef::new(unsafe { make_mut(snap) }),
-            }),
-            None => None,
+        self.inner.map_as_ref(|inner| {
+            inner.snap().and_then(|snap| {
+                Some(Py_Snapshot_Ref {
+                    inner: RustRef::new(unsafe { make_mut(snap) }),
+                })
+            })
         })
     }
 
@@ -212,11 +212,10 @@ impl Py_RawNode__MemStorage_Ref {
         self.inner
             .map_as_mut(|inner| {
                 let cc: ConfChange = cc.into();
-                let cs = inner.apply_conf_change(&cc);
-                match cs {
-                    Ok(cs) => Ok(Py_ConfState_Owner { inner: cs }),
-                    Err(e) => Err(e),
-                }
+
+                inner
+                    .apply_conf_change(&cc)
+                    .and_then(|cs| Ok(Py_ConfState_Owner { inner: cs }))
             })
             .and_then(to_pyresult)
     }
@@ -228,11 +227,10 @@ impl Py_RawNode__MemStorage_Ref {
         self.inner
             .map_as_mut(|inner| {
                 let cc: ConfChangeV2 = cc.into();
-                let cs = inner.apply_conf_change(&cc);
-                match cs {
-                    Ok(cs) => Ok(Py_ConfState_Owner { inner: cs }),
-                    Err(e) => Err(e),
-                }
+
+                inner
+                    .apply_conf_change(&cc)
+                    .and_then(|cs| Ok(Py_ConfState_Owner { inner: cs }))
             })
             .and_then(to_pyresult)
     }

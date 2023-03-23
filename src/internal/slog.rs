@@ -19,8 +19,8 @@ impl Into<OverflowStrategy> for Py_OverflowStrategy {
 }
 
 impl From<OverflowStrategy> for Py_OverflowStrategy {
-    fn from(strategy: OverflowStrategy) -> Self {
-        match strategy {
+    fn from(x: OverflowStrategy) -> Self {
+        match x {
             OverflowStrategy::Block => Py_OverflowStrategy(OverflowStrategy::Block),
             OverflowStrategy::Drop => Py_OverflowStrategy(OverflowStrategy::Drop),
             OverflowStrategy::DropAndReport => Py_OverflowStrategy(OverflowStrategy::DropAndReport),

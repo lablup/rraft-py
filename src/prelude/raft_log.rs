@@ -60,16 +60,17 @@ impl Py_RaftLog__MemStorage_Ref {
     }
 
     pub fn entries(&self, idx: u64, max_size: Option<u64>, py: Python) -> PyResult<PyObject> {
-        self.inner.map_as_ref(|inner| {
-            // TODO: Handle below type unwrapping properly.
-            let entries = inner.entries(idx, max_size).unwrap();
-
-            entries
-                .into_iter()
-                .map(|entry| Py_Entry_Owner { inner: entry })
-                .collect::<Vec<_>>()
-                .into_py(py)
-        })
+        self.inner
+            .map_as_ref(|inner| {
+                inner.entries(idx, max_size).and_then(|entries| {
+                    Ok(entries
+                        .into_iter()
+                        .map(|entry| Py_Entry_Owner { inner: entry })
+                        .collect::<Vec<_>>()
+                        .into_py(py))
+                })
+            })
+            .and_then(to_pyresult)
     }
 
     pub fn all_entries(&self, py: Python) -> PyResult<PyObject> {
@@ -126,7 +127,7 @@ impl Py_RaftLog__MemStorage_Ref {
                 entries
                     .iter_mut()
                     .map(|x| x.into())
-                    .collect::<Vec<Entry>>()
+                    .collect::<Vec<_>>()
                     .as_slice(),
             )
         })
@@ -144,7 +145,7 @@ impl Py_RaftLog__MemStorage_Ref {
                 entries
                     .iter_mut()
                     .map(|x| x.into())
-                    .collect::<Vec<Entry>>()
+                    .collect::<Vec<_>>()
                     .as_slice(),
             )
         })
@@ -209,7 +210,7 @@ impl Py_RaftLog__MemStorage_Ref {
                 entries
                     .iter_mut()
                     .map(|x| x.into())
-                    .collect::<Vec<Entry>>()
+                    .collect::<Vec<_>>()
                     .as_slice(),
             )
         })
@@ -217,12 +218,14 @@ impl Py_RaftLog__MemStorage_Ref {
 
     pub fn snapshot(&self, request_index: u64) -> PyResult<Py_Snapshot_Ref> {
         self.inner
-            .map_as_ref(|inner| match inner.snapshot(request_index) {
-                Ok(mut snapshot) => Py_Snapshot_Ref {
-                    inner: RustRef::new(&mut snapshot),
-                },
-                Err(e) => panic!("snapshot error: {:?}", e),
+            .map_as_ref(|inner| {
+                inner.snapshot(request_index).and_then(|mut snapshot| {
+                    Ok(Py_Snapshot_Ref {
+                        inner: RustRef::new(&mut snapshot),
+                    })
+                })
             })
+            .and_then(to_pyresult)
     }
 
     pub fn stable_entries(&mut self, index: u64, term: u64) -> PyResult<()> {

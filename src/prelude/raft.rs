@@ -463,7 +463,7 @@ impl Py_Raft__MemStorage_Ref {
 
     pub fn take_msgs(&mut self, py: Python) -> PyResult<PyObject> {
         self.inner.map_as_mut(|inner| {
-            let msgs = inner.msgs.drain(..).collect::<Vec<Message>>();
+            let msgs = inner.msgs.drain(..).collect::<Vec<_>>();
 
             msgs.into_iter()
                 .map(|msg| Py_Message_Owner { inner: msg })

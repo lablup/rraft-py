@@ -1,7 +1,7 @@
 use pyo3::{exceptions::PyIOError, prelude::*, pyclass::CompareOp, types::PyString};
 
 use raft::{Error, StorageError};
-use utils::unsafe_cast::make_static;
+use utils::{errors::runtime_error, unsafe_cast::make_static};
 
 #[pyclass(name = "StorageError")]
 pub struct Py_StorageError(pub StorageError);
@@ -152,5 +152,11 @@ impl Py_RaftError {
     #[classattr]
     pub fn RequestSnapshotDropped() -> Self {
         Py_RaftError(Error::RequestSnapshotDropped)
+    }
+}
+
+impl From<Py_RaftError> for PyErr {
+    fn from(err: Py_RaftError) -> PyErr {
+        runtime_error(&err.0.to_string())
     }
 }

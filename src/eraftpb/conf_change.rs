@@ -1,5 +1,5 @@
 use pyo3::{prelude::*, pyclass::CompareOp, types::PyList};
-use utils::reference::RustRef;
+use utils::{errors::to_pyresult, reference::RustRef};
 
 use super::{conf_change_type::Py_ConfChangeType, conf_change_v2::Py_ConfChangeV2_Owner};
 
@@ -162,11 +162,11 @@ impl Py_ConfChange_Ref {
     }
 
     pub fn write_to_bytes(&mut self, py: Python) -> PyResult<PyObject> {
-        self.inner.map_as_mut(|inner| {
-            protobuf::Message::write_to_bytes(inner)
-                .unwrap()
-                .into_py(py)
-        })
+        self.inner
+            .map_as_mut(|inner| {
+                protobuf::Message::write_to_bytes(inner).and_then(|x| Ok(x.into_py(py)))
+            })
+            .and_then(to_pyresult)
     }
 
     pub fn into_v2(&mut self) -> PyResult<Py_ConfChangeV2_Owner> {

@@ -17,8 +17,8 @@ impl Into<StateRole> for Py_StateRole {
 }
 
 impl From<StateRole> for Py_StateRole {
-    fn from(opt: StateRole) -> Self {
-        match opt {
+    fn from(x: StateRole) -> Self {
+        match x {
             StateRole::Candidate => Py_StateRole(StateRole::Candidate),
             StateRole::Follower => Py_StateRole(StateRole::Follower),
             StateRole::Leader => Py_StateRole(StateRole::Leader),

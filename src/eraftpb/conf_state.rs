@@ -3,6 +3,7 @@ use pyo3::{prelude::*, types::PyList};
 
 use raft::eraftpb::ConfState;
 
+use utils::errors::runtime_error;
 use utils::reference::RustRef;
 
 #[derive(Clone)]
@@ -44,20 +45,21 @@ impl Into<ConfState> for &mut Py_ConfState_Mut<'_> {
 #[pymethods]
 impl Py_ConfState_Owner {
     #[new]
-    pub fn new(voters: Option<&PyList>, learners: Option<&PyList>) -> Self {
+    pub fn new(voters: Option<&PyList>, learners: Option<&PyList>) -> PyResult<Self> {
         if voters.and(learners).is_none() {
-            Py_ConfState_Owner {
+            Ok(Py_ConfState_Owner {
                 inner: ConfState::new_(),
-            }
+            })
         } else if voters.or(learners).is_none() {
-            // TODO: Improve below logic through throwing PyErr if possible
-            panic!("voters and learners both values should or should not be given.")
+            Err(runtime_error(
+                "voters and learners both values should or should not be given.",
+            ))
         } else {
             let voters = voters.unwrap().extract::<Vec<u64>>().unwrap();
             let learners = learners.unwrap().extract::<Vec<u64>>().unwrap();
-            Py_ConfState_Owner {
+            Ok(Py_ConfState_Owner {
                 inner: ConfState::from((voters, learners)),
-            }
+            })
         }
     }
 

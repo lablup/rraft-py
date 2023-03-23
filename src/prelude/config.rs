@@ -233,7 +233,7 @@ impl Py_Config_Ref {
     }
 
     pub fn get_max_inflight_msgs(&self) -> PyResult<usize> {
-        to_pyresult(self.inner.map_as_ref(|inner| inner.max_inflight_msgs))
+        self.inner.map_as_ref(|inner| inner.max_inflight_msgs)
     }
 
     pub fn set_max_inflight_msgs(&mut self, max_inflight_msgs: usize) -> PyResult<()> {
@@ -242,7 +242,7 @@ impl Py_Config_Ref {
     }
 
     pub fn get_applied(&self) -> PyResult<u64> {
-        to_pyresult(self.inner.map_as_ref(|inner| inner.applied))
+        self.inner.map_as_ref(|inner| inner.applied)
     }
 
     pub fn set_applied(&mut self, applied: u64) -> PyResult<()> {
@@ -250,7 +250,7 @@ impl Py_Config_Ref {
     }
 
     pub fn get_check_quorum(&self) -> PyResult<bool> {
-        to_pyresult(self.inner.map_as_ref(|inner| inner.check_quorum))
+        self.inner.map_as_ref(|inner| inner.check_quorum)
     }
 
     pub fn set_check_quorum(&mut self, check_quorum: bool) -> PyResult<()> {
@@ -259,7 +259,7 @@ impl Py_Config_Ref {
     }
 
     pub fn get_pre_vote(&self) -> PyResult<bool> {
-        to_pyresult(self.inner.map_as_ref(|inner| inner.pre_vote))
+        self.inner.map_as_ref(|inner| inner.pre_vote)
     }
 
     pub fn set_pre_vote(&mut self, pre_vote: bool) -> PyResult<()> {
@@ -267,7 +267,7 @@ impl Py_Config_Ref {
     }
 
     pub fn get_batch_append(&self) -> PyResult<bool> {
-        to_pyresult(self.inner.map_as_ref(|inner| inner.batch_append))
+        self.inner.map_as_ref(|inner| inner.batch_append)
     }
 
     pub fn set_batch_append(&mut self, batch_append: bool) -> PyResult<()> {
@@ -276,7 +276,7 @@ impl Py_Config_Ref {
     }
 
     pub fn get_skip_bcast_commit(&self) -> PyResult<bool> {
-        to_pyresult(self.inner.map_as_ref(|inner| inner.skip_bcast_commit))
+        self.inner.map_as_ref(|inner| inner.skip_bcast_commit)
     }
 
     pub fn set_skip_bcast_commit(&mut self, v: bool) -> PyResult<()> {

@@ -12,7 +12,7 @@ use utils::{
 use super::{
     progress_tracker::{Py_ProgressTracker_Mut, Py_ProgressTracker_Ref},
     raft::Py_Raft__MemStorage_Owner,
-    soft_state::{Py_SoftState_Owner, Py_SoftState_Ref},
+    soft_state::Py_SoftState_Ref,
 };
 
 #[pyclass(name = "Status__MemStorage_Owner")]
@@ -114,11 +114,12 @@ impl Py_Status__MemStorage_Ref {
     }
 
     pub fn get_progress(&mut self) -> PyResult<Option<Py_ProgressTracker_Ref>> {
-        self.inner.map_as_mut(|inner| match inner.progress {
-            Some(p) => Some(Py_ProgressTracker_Ref {
-                inner: RustRef::new(unsafe { make_mut(p) }),
-            }),
-            None => None,
+        self.inner.map_as_mut(|inner| {
+            inner.progress.and_then(|p| {
+                Some(Py_ProgressTracker_Ref {
+                    inner: RustRef::new(unsafe { make_mut(p) }),
+                })
+            })
         })
     }
 

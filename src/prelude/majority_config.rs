@@ -128,11 +128,8 @@ impl Py_MajorityConfig_Ref {
 
     pub fn extend(&mut self, other_set: &PySet) -> PyResult<()> {
         let other_set = other_set.extract::<HashSet<u64, BuildHasherDefault<FxHasher>>>()?;
-
-        to_pyresult(
-            self.inner
-                .map_as_mut(|inner| inner.extend(other_set.iter())),
-        )
+        self.inner
+            .map_as_mut(|inner| inner.extend(other_set.iter()))
     }
 
     pub fn get(&self, v: u64) -> PyResult<Option<u64>> {
@@ -167,7 +164,7 @@ impl Py_MajorityConfig_Ref {
     }
 
     pub fn reserve(&mut self, additional: usize) -> PyResult<()> {
-        to_pyresult(self.inner.map_as_mut(|inner| inner.reserve(additional)))
+        self.inner.map_as_mut(|inner| inner.reserve(additional))
     }
 
     pub fn remove(&mut self, v: u64) -> PyResult<bool> {

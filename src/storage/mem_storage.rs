@@ -96,27 +96,41 @@ impl Py_MemStorage_Ref {
     }
 
     pub fn initial_state(&self) -> PyResult<Py_RaftState_Owner> {
-        self.inner.map_as_ref(|inner| Py_RaftState_Owner {
-            inner: inner.initial_state().unwrap(),
-        })
+        self.inner
+            .map_as_ref(|inner| {
+                inner
+                    .initial_state()
+                    .and_then(|state| Ok(Py_RaftState_Owner { inner: state }))
+            })
+            .and_then(to_pyresult)
     }
 
     pub fn first_index(&self) -> PyResult<u64> {
-        self.inner.map_as_ref(|inner| inner.first_index().unwrap())
+        self.inner
+            .map_as_ref(|inner| inner.first_index())
+            .and_then(to_pyresult)
     }
 
     pub fn last_index(&self) -> PyResult<u64> {
-        self.inner.map_as_ref(|inner| inner.last_index().unwrap())
+        self.inner
+            .map_as_ref(|inner| inner.last_index())
+            .and_then(to_pyresult)
     }
 
     pub fn term(&self, idx: u64) -> PyResult<u64> {
-        self.inner.map_as_ref(|inner| inner.term(idx).unwrap())
+        self.inner
+            .map_as_ref(|inner| inner.term(idx))
+            .and_then(to_pyresult)
     }
 
     pub fn snapshot(&self, request_index: u64) -> PyResult<Py_Snapshot_Owner> {
-        self.inner.map_as_ref(|inner| Py_Snapshot_Owner {
-            inner: inner.snapshot(request_index).unwrap(),
-        })
+        self.inner
+            .map_as_ref(|inner| {
+                inner
+                    .snapshot(request_index)
+                    .and_then(|snapshot| Ok(Py_Snapshot_Owner { inner: snapshot }))
+            })
+            .and_then(to_pyresult)
     }
 
     pub fn entries(
@@ -126,15 +140,17 @@ impl Py_MemStorage_Ref {
         max_size: Option<u64>,
         py: Python,
     ) -> PyResult<PyObject> {
-        self.inner.map_as_ref(|inner| {
-            let entries = inner.entries(low, high, max_size).unwrap();
-
-            entries
-                .into_iter()
-                .map(|entry| Py_Entry_Owner { inner: entry })
-                .collect::<Vec<_>>()
-                .into_py(py)
-        })
+        self.inner
+            .map_as_ref(|inner| {
+                inner.entries(low, high, max_size).and_then(|entries| {
+                    Ok(entries
+                        .into_iter()
+                        .map(|entry| Py_Entry_Owner { inner: entry })
+                        .collect::<Vec<_>>()
+                        .into_py(py))
+                })
+            })
+            .and_then(to_pyresult)
     }
 
     pub fn wl(&mut self, cb: PyObject, py: Python) -> PyResult<()> {

@@ -1,6 +1,6 @@
 use pyo3::{prelude::*, pyclass::CompareOp, types::PyList};
 use raft::{eraftpb::ConfChangeV2, prelude::ConfChangeSingle};
-use utils::{reference::RustRef, unsafe_cast::make_mut};
+use utils::{errors::to_pyresult, reference::RustRef, unsafe_cast::make_mut};
 
 use super::{
     conf_change::Py_ConfChange_Ref,
@@ -173,11 +173,11 @@ impl Py_ConfChangeV2_Ref {
     }
 
     pub fn write_to_bytes(&mut self, py: Python) -> PyResult<PyObject> {
-        self.inner.map_as_mut(|inner| {
-            protobuf::Message::write_to_bytes(inner)
-                .unwrap()
-                .into_py(py)
-        })
+        self.inner
+            .map_as_mut(|inner| {
+                protobuf::Message::write_to_bytes(inner).and_then(|x| Ok(x.into_py(py)))
+            })
+            .and_then(to_pyresult)
     }
 
     pub fn into_v2(&mut self) -> PyResult<Py_ConfChangeV2_Owner> {
