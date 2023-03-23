@@ -129,6 +129,13 @@ impl Py_Config_Owner {
         Py_Config_Owner { inner: config }
     }
 
+    #[staticmethod]
+    pub fn default() -> Py_Config_Owner {
+        Py_Config_Owner {
+            inner: Config::default(),
+        }
+    }
+
     pub fn make_ref(&mut self) -> Py_Config_Ref {
         Py_Config_Ref {
             inner: RustRef::new(&mut self.inner),

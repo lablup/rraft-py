@@ -2330,6 +2330,8 @@ class Config_Owner(Config):
         :param max_committed_size_per_ready: Max size for committed entries in a `Ready`.
         """
     def make_ref(self) -> Config_Ref: ...
+    @staticmethod
+    def default() -> Config_Owner: ...
 
 class Config_Ref(Config):
     """
