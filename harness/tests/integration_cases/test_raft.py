@@ -4312,7 +4312,15 @@ def test_request_snapshot_matched_change():
 
 # Test if request snapshot can make progress when the peer is not Replicate.
 def test_request_snapshot_none_replicate():
-    pass
+    nt, _ = prepare_request_snapshot()
+    nt.peers[1].raft.prs().get(2).set_state(ProgressState.Snapshot)
+
+    # Request the latest snapshot.
+    request_idx = nt.peers[2].raft_log.get_committed()
+    nt.peers[2].raft.request_snapshot(request_idx)
+    req_snap = nt.peers[2].raft.get_msgs().pop()
+    nt.peers[1].raft.step(req_snap)
+    assert nt.peers[1].raft.prs().get(2).get_pending_request_snapshot() != 0
 
 
 # Test if request snapshot can make progress when leader steps down.
