@@ -4349,7 +4349,24 @@ def test_request_snapshot_step_down():
 
 # Abort request snapshot if it becomes leader or candidate.
 def test_request_snapshot_on_role_change():
-    pass
+    nt, _ = prepare_request_snapshot()
+
+    request_idx = nt.peers[2].raft_log.get_committed()
+    nt.peers[2].raft.request_snapshot(request_idx)
+
+    # Becoming follower does not reset pending_request_snapshot.
+    term, id = nt.peers[1].raft.get_term(), nt.peers[2].raft.get_id()
+    nt.peers[2].raft.become_follower(term, id)
+
+    assert (
+        nt.peers[2].raft.get_pending_request_snapshot() != INVALID_INDEX
+    ), f"{nt.peers[2].raft.get_pending_request_snapshot()}"
+
+    nt.peers[2].raft.become_candidate()
+    # Becoming candidate resets pending_request_snapshot.
+    assert (
+        nt.peers[2].raft.get_pending_request_snapshot() == INVALID_INDEX
+    ), f"{nt.peers[2].raft.get_pending_request_snapshot()}"
 
 
 # Tests group commit.
