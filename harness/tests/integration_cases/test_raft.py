@@ -36,6 +36,7 @@ from rraft import (
     ConfChangeTransition,
     ConfChangeType,
     ConfState_Owner,
+    Config_Owner,
     Entry_Owner,
     EntryType,
     HardState_Owner,
@@ -4695,7 +4696,54 @@ def test_read_when_quorum_becomes_less():
 
 
 def test_uncommitted_entries_size_limit():
-    pass
+    l = default_logger()
+    config = Config_Owner.default()
+    config.set_id(1)
+    config.set_max_uncommitted_size(12)
+    nt = Network.new_with_config([None, None, None], config, l)
+    data = list(b"hello world!")
+    entry = Entry_Owner.default()
+    entry.set_data(data)
+    msg = new_message_with_entries(1, 1, MessageType.MsgPropose, [entry])
+    nt.send([new_message(1, 1, MessageType.MsgHup, 0)])
+
+    # should return ok
+    nt.dispatch([msg.clone()])
+
+    # then next proposal should be dropped
+    with pytest.raises(Exception):
+        nt.dispatch([msg])
+
+    # but entry with empty size should be accepted
+    entry = Entry_Owner.default()
+    empty_msgs = new_message_with_entries(1, 1, MessageType.MsgPropose, [entry])
+    nt.dispatch([empty_msgs])
+
+    # after reduce, new proposal should be accepted
+    entry = Entry_Owner.default()
+    entry.set_data(data)
+    entry.set_index(3)
+    nt.peers[1].raft.reduce_uncommitted_size([entry]) == 0
+    assert nt.peers[1].raft.uncommitted_size() == 0
+
+    # a huge proposal should be accepted when there is no uncommitted entry,
+    # even it's bigger than max_uncommitted_size
+    entry = Entry_Owner.default()
+    entry.set_data(list(b"hello world and raft"))
+    long_msg = new_message_with_entries(1, 1, MessageType.MsgPropose, [entry])
+    nt.dispatch([long_msg])
+
+    # but another huge one will be dropped
+    entry = Entry_Owner.default()
+    entry.set_data(list(b"hello world and raft"))
+    long_msg = new_message_with_entries(1, 1, MessageType.MsgPropose, [entry])
+    with pytest.raises(Exception):
+        nt.dispatch([long_msg])
+
+    # entry with empty size should still be accepted
+    entry = Entry_Owner.default()
+    empty_msg = new_message_with_entries(1, 1, MessageType.MsgPropose, [entry])
+    nt.dispatch([empty_msg])
 
 
 def test_uncommitted_entry_after_leader_election():
