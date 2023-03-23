@@ -6,8 +6,8 @@ from typing import Any, List, Optional, Tuple, cast
 from test_utils import (
     add_learner,
     add_node,
-    conf_change,
     conf_change_v2,
+    conf_change,
     empty_entry,
     new_entry,
     new_message_with_entries,
@@ -4815,8 +4815,282 @@ def test_uncommitted_state_advance_ready_from_last_term():
 
 
 def test_fast_log_rejection():
-    pass
+    class Test:
+        def __init__(
+            self,
+            leader_log: List[int],
+            follower_log: List[int],
+            reject_hint_term: int,
+            reject_hint_index: int,
+            next_append_term: int,
+            next_append_index: int,
+        ) -> None:
+            self.leader_log = leader_log
+            self.follower_log = follower_log
+            self.reject_hint_term = reject_hint_term
+            self.reject_hint_index = reject_hint_index
+            self.next_append_term = next_append_term
+            self.next_append_index = next_append_index
 
+    tests = [
+        # This case tests that leader can find the conflict index quickly.
+        # Firstly leader appends (type=MsgApp,index=7,logTerm=4, entries=...);
+        # After rejected leader appends (type=MsgApp,index=3,logTerm=2).
+        Test(
+            [
+                empty_entry(1, 1),
+                empty_entry(2, 2),
+                empty_entry(2, 3),
+                empty_entry(4, 4),
+                empty_entry(4, 5),
+                empty_entry(4, 6),
+                empty_entry(4, 7),
+            ],
+            [
+                empty_entry(1, 1),
+                empty_entry(2, 2),
+                empty_entry(2, 3),
+                empty_entry(3, 4),
+                empty_entry(3, 5),
+                empty_entry(3, 6),
+                empty_entry(3, 7),
+                empty_entry(3, 8),
+                empty_entry(3, 9),
+                empty_entry(3, 10),
+                empty_entry(3, 11),
+            ],
+            3,
+            7,
+            2,
+            3,
+        ),
+        # This case tests that leader can find the conflict index quickly.
+        # Firstly leader appends (type=MsgApp,index=8,logTerm=5, entries=...);
+        # After rejected leader appends (type=MsgApp,index=4,logTerm=3).
+        Test(
+            [
+                empty_entry(1, 1),
+                empty_entry(2, 2),
+                empty_entry(2, 3),
+                empty_entry(3, 4),
+                empty_entry(4, 5),
+                empty_entry(4, 6),
+                empty_entry(4, 7),
+                empty_entry(5, 8),
+            ],
+            [
+                empty_entry(1, 1),
+                empty_entry(2, 2),
+                empty_entry(2, 3),
+                empty_entry(3, 4),
+                empty_entry(3, 5),
+                empty_entry(3, 6),
+                empty_entry(3, 7),
+                empty_entry(3, 8),
+                empty_entry(3, 9),
+                empty_entry(3, 10),
+                empty_entry(3, 11),
+            ],
+            3,
+            8,
+            3,
+            4,
+        ),
+        # This case tests that follower can find the conflict index quickly.
+        # Firstly leader appends (type=MsgApp,index=4,logTerm=1, entries=...);
+        # After rejected leader appends (type=MsgApp,index=1,logTerm=1).
+        Test(
+            [
+                empty_entry(1, 1),
+                empty_entry(1, 2),
+                empty_entry(1, 3),
+                empty_entry(1, 4),
+            ],
+            [
+                empty_entry(1, 1),
+                empty_entry(2, 2),
+                empty_entry(2, 3),
+                empty_entry(4, 4),
+            ],
+            1,
+            1,
+            1,
+            1,
+        ),
+        # This case is similar to the previous case. However, this time, the
+        # leader has a longer uncommitted log tail than the follower.
+        # Firstly leader appends (type=MsgApp,index=6,logTerm=1, entries=...);
+        # After rejected leader appends (type=MsgApp,index=1,logTerm=1).
+        Test(
+            [
+                empty_entry(1, 1),
+                empty_entry(1, 2),
+                empty_entry(1, 3),
+                empty_entry(1, 4),
+                empty_entry(1, 5),
+                empty_entry(1, 6),
+            ],
+            [
+                empty_entry(1, 1),
+                empty_entry(2, 2),
+                empty_entry(2, 3),
+                empty_entry(4, 4),
+            ],
+            1,
+            1,
+            1,
+            1,
+        ),
+        # This case is similar to the previous case. However, this time, the
+        # follower has a longer uncommitted log tail than the leader.
+        # Firstly leader appends (type=MsgApp,index=4,logTerm=1, entries=...);
+        # After rejected leader appends (type=MsgApp,index=1,logTerm=1).
+        Test(
+            [
+                empty_entry(1, 1),
+                empty_entry(1, 2),
+                empty_entry(1, 3),
+                empty_entry(1, 4),
+            ],
+            [
+                empty_entry(1, 1),
+                empty_entry(2, 2),
+                empty_entry(2, 3),
+                empty_entry(4, 4),
+                empty_entry(4, 5),
+                empty_entry(4, 6),
+            ],
+            1,
+            1,
+            1,
+            1,
+        ),
+        # An normal case that there are no log conflicts.
+        # Firstly leader appends (type=MsgApp,index=5,logTerm=5, entries=...);
+        # After rejected leader appends (type=MsgApp,index=4,logTerm=4).
+        Test(
+            [
+                empty_entry(1, 1),
+                empty_entry(1, 2),
+                empty_entry(1, 3),
+                empty_entry(4, 4),
+                empty_entry(5, 5),
+            ],
+            [
+                empty_entry(1, 1),
+                empty_entry(1, 2),
+                empty_entry(1, 3),
+                empty_entry(4, 4),
+            ],
+            4,
+            4,
+            4,
+            4,
+        ),
+        # Test case from example comment in stepLeader (on leader).
+        Test(
+            [
+                empty_entry(2, 1),
+                empty_entry(5, 2),
+                empty_entry(5, 3),
+                empty_entry(5, 4),
+                empty_entry(5, 5),
+                empty_entry(5, 6),
+                empty_entry(5, 7),
+                empty_entry(5, 8),
+                empty_entry(5, 9),
+            ],
+            [
+                empty_entry(2, 1),
+                empty_entry(4, 2),
+                empty_entry(4, 3),
+                empty_entry(4, 4),
+                empty_entry(4, 5),
+                empty_entry(4, 6),
+            ],
+            4,
+            6,
+            2,
+            1,
+        ),
+        # Test case from example comment in handleAppendEntries (on follower).
+        Test(
+            [
+                empty_entry(2, 1),
+                empty_entry(2, 2),
+                empty_entry(2, 3),
+                empty_entry(2, 4),
+                empty_entry(2, 5),
+            ],
+            [
+                empty_entry(2, 1),
+                empty_entry(4, 2),
+                empty_entry(4, 3),
+                empty_entry(4, 4),
+                empty_entry(4, 5),
+                empty_entry(4, 6),
+                empty_entry(4, 7),
+                empty_entry(4, 8),
+            ],
+            2,
+            1,
+            2,
+            1,
+        ),
+    ]
 
-def test_switching_check_quorum():
-    pass
+    for i, v in enumerate(tests):
+        (
+            leader_log,
+            follower_log,
+            reject_hint_term,
+            reject_hint_index,
+            next_append_term,
+            next_append_index,
+        ) = (
+            v.leader_log,
+            v.follower_log,
+            v.reject_hint_term,
+            v.reject_hint_index,
+            v.next_append_term,
+            v.next_append_index,
+        )
+        l = default_logger()
+        s1 = MemStorage_Owner.new_with_conf_state(ConfState_Owner([1, 2, 3], []))
+        s1.wl(lambda core: core.append(leader_log))
+
+        s2 = MemStorage_Owner.new_with_conf_state(ConfState_Owner([1, 2, 3], []))
+        s2.wl(lambda core: core.append(follower_log))
+
+        n1 = new_test_raft(1, [1, 2, 3], 10, 1, s1, l)
+        n2 = new_test_raft(2, [1, 2, 3], 10, 1, s2, l)
+
+        n1.raft.become_candidate()
+        n1.raft.become_leader()
+
+        n2.step(new_message(2, 1, MessageType.MsgHeartbeat, 0))
+
+        msgs = n2.read_messages()
+        assert len(msgs) == 1, f"{i}"
+        assert msgs[0].get_msg_type() == MessageType.MsgHeartbeatResponse, f"{i}"
+
+        # move Vec item by pop
+        n1.step(msgs.pop())
+
+        msgs = n1.read_messages()
+        assert len(msgs) == 1, f"{i}"
+        assert msgs[0].get_msg_type() == MessageType.MsgAppend, f"{i}"
+        n2.step(msgs.pop())
+
+        msgs = n2.read_messages()
+        assert len(msgs) == 1
+        assert msgs[0].get_msg_type() == MessageType.MsgAppendResponse, f"{i}"
+        assert msgs[0].get_reject(), f"{i}"
+        assert msgs[0].get_reject_hint() == reject_hint_index, f"{i}"
+        assert msgs[0].get_log_term() == reject_hint_term, f"{i}"
+        n1.step(msgs.pop())
+
+        msgs = n1.read_messages()
+        assert len(msgs) == 1, f"{i}"
+        assert msgs[0].get_log_term() == next_append_term, f"{i}"
+        assert msgs[0].get_index() == next_append_index, f"{i}"

@@ -52,7 +52,7 @@ class Network:
     # Get a base config. Calling `Network::new` will initialize peers with this config.
     @staticmethod
     def default_config() -> Config_Owner:
-        cfg = Config_Owner()
+        cfg = Config_Owner.default()
         cfg.set_election_tick(10)
         cfg.set_heartbeat_tick(1)
         cfg.set_max_size_per_msg(NO_LIMIT)
