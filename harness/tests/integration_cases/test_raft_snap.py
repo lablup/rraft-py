@@ -2,6 +2,8 @@ import os
 import sys
 import warnings
 
+import pytest
+
 from rraft import (
     MessageType,
     ProgressState,
@@ -169,20 +171,19 @@ def test_request_snapshot():
     sm.persist()
 
     # Raft can not step request snapshot if there is no leader.
-    try:
+    with pytest.raises(Exception) as e:
         sm.raft.request_snapshot(INVALID_INDEX + 1)
-    except Exception as e:
-        # TODO: Inhance error check handling logic.
-        assert str(e) == "raft: request snapshot dropped"
+
+    assert str(e.value) == "raft: request snapshot dropped"
 
     sm.raft.become_candidate()
     sm.raft.become_leader()
 
     # Raft can not step request snapshot if itself is a leader.
-    try:
+    with pytest.raises(Exception) as e:
         sm.raft.request_snapshot(INVALID_INDEX + 1)
-    except Exception as e:
-        assert str(e) == "raft: request snapshot dropped"
+
+    assert str(e.value) == "raft: request snapshot dropped"
 
     m = new_message(2, 1, MessageType.MsgAppendResponse, 0)
     m.set_index(11)

@@ -2754,7 +2754,7 @@ def test_add_node():
     storage = new_storage()
     r = new_test_raft(1, [1], 10, 1, storage, l)
     r.raft.apply_conf_change(add_node(2))
-    assert r.raft.prs().conf_voters().ids() == set([1, 2])
+    assert r.raft.prs().conf_voters().ids() == {1, 2}
 
 
 def test_add_node_check_quorum():
@@ -2791,13 +2791,14 @@ def test_remove_node():
     r = new_test_raft(1, [1, 2], 10, 1, storage, l)
     r.raft.apply_conf_change(remove_node(2))
 
-    assert r.raft.prs().conf_voters().ids() == set([1])
+    assert r.raft.prs().conf_voters().ids() == {1}
 
     # Removing all voters is not allowed.
-    with pytest.raises(Exception):
+    with pytest.raises(Exception) as e:
         r.raft.apply_conf_change(remove_node(1))
 
-    assert r.raft.prs().conf_voters().ids(), set([1])
+    assert str(e.value) == "removed all voters"
+    assert r.raft.prs().conf_voters().ids() == {1}
 
 
 def test_remove_node_itself():
@@ -2805,11 +2806,13 @@ def test_remove_node_itself():
     storage = new_storage()
     n1 = new_test_learner_raft(1, [1], [2], 10, 1, storage, l)
 
-    with pytest.raises(Exception):
+    with pytest.raises(Exception) as e:
         n1.raft.apply_conf_change(remove_node(1))
 
-    # assert n1.raft.prs().conf_learners() == set([2])
-    # assert n1.raft.prs().conf_voters().ids() == [1]
+    assert str(e.value) == "removed all voters"
+
+    assert n1.raft.prs().conf_learners() == {2}
+    assert n1.raft.prs().conf_voters().ids() == {1}
 
 
 def test_promotable():
@@ -3063,10 +3066,11 @@ def test_leader_transfer_ignore_proposal():
     nt.send([new_message(3, 1, MessageType.MsgTransferLeader, 0)])
     assert nt.peers[1].raft.get_lead_transferee() == 3
 
-    with pytest.raises(Exception):
+    with pytest.raises(Exception) as e:
         nt.send([new_message(1, 1, MessageType.MsgPropose, 1)])
         nt.peers[1].step(new_message(1, 1, MessageType.MsgPropose, 1))
 
+    assert str(e.value) == "raft: proposal dropped"
     assert nt.peers[1].raft.prs().get(1).get_matched() == 1
 
 
@@ -3534,9 +3538,10 @@ def test_remove_learner():
     assert not n1.raft.prs().conf_learners()
 
     # Remove all voters are not allowed.
-    with pytest.raises(Exception):
+    with pytest.raises(Exception) as e:
         n1.raft.apply_conf_change(remove_node(1))
 
+    assert str(e.value) == "removed all voters"
     assert n1.raft.prs().conf_voters().ids() == {1}
     assert not n1.raft.prs().conf_learners()
 
@@ -3701,15 +3706,25 @@ def test_election_tick_range():
 
     # Too small election tick.
     cfg.set_min_election_tick(cfg.get_election_tick() - 1)
-    with pytest.raises(Exception):
+    with pytest.raises(Exception) as e:
         cfg.validate()
+
+    assert (
+        f"min election tick {cfg.get_election_tick() - 1} must not be less than election_tick {cfg.get_election_tick()}"
+        == str(e.value)
+    )
 
     # max_election_tick should be larger than min_election_tick
     cfg.set_min_election_tick(cfg.get_election_tick())
     cfg.set_max_election_tick(cfg.get_election_tick())
 
-    with pytest.raises(Exception):
+    with pytest.raises(Exception) as e:
         cfg.validate()
+
+    assert (
+        f"min election tick {cfg.get_election_tick()} should be less than max election tick {cfg.get_election_tick()}"
+        == str(e.value)
+    )
 
     cfg.set_max_election_tick(cfg.get_election_tick() + 1)
 
@@ -3836,8 +3851,10 @@ def test_new_raft_with_bad_config_errors():
     invalid_config = new_test_config(INVALID_ID, 1, 1)
     s = MemStorage_Owner.new_with_conf_state(ConfState_Owner([1, 2], []))
 
-    with pytest.raises(Exception):
+    with pytest.raises(Exception) as e:
         Raft__MemStorage_Owner(invalid_config, s, l)
+
+    assert str(e.value) == "invalid node id"
 
 
 # tests whether MsgAppend are batched
@@ -4710,8 +4727,10 @@ def test_uncommitted_entries_size_limit():
     nt.dispatch([msg.clone()])
 
     # then next proposal should be dropped
-    with pytest.raises(Exception):
+    with pytest.raises(Exception) as e:
         nt.dispatch([msg])
+
+    assert str(e.value) == "raft: proposal dropped"
 
     # but entry with empty size should be accepted
     entry = Entry_Owner.default()
@@ -4736,8 +4755,10 @@ def test_uncommitted_entries_size_limit():
     entry = Entry_Owner.default()
     entry.set_data(list(b"hello world and raft"))
     long_msg = new_message_with_entries(1, 1, MessageType.MsgPropose, [entry])
-    with pytest.raises(Exception):
+    with pytest.raises(Exception) as e:
         nt.dispatch([long_msg])
+
+    assert str(e.value) == "raft: proposal dropped"
 
     # entry with empty size should still be accepted
     entry = Entry_Owner.default()
