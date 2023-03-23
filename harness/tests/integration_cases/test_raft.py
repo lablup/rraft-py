@@ -174,7 +174,7 @@ def test_progress_committed_index():
     # #1 test append entries
     # append entries between 1 and 2
     test_entries = Entry_Owner.default()
-    test_entries.set_data(list(b"testdata"))
+    test_entries.set_data(b"testdata")
     m = new_message_with_entries(1, 1, MessageType.MsgPropose, [test_entries])
     nt.cut(1, 3)
     nt.send([m.clone(), m])
@@ -343,7 +343,7 @@ def test_progress_paused():
     m.set_msg_type(MessageType.MsgPropose)
 
     e = Entry_Owner.default()
-    e.set_data(list(b"some_data"))
+    e.set_data(b"some_data")
     m.set_entries([e])
 
     raft.step(m.clone())
@@ -1391,7 +1391,7 @@ def test_raft_frees_read_only_mem():
     sm.raft_log.commit_to(last_index)
 
     ctx = "ctx"
-    vec_ctx = list(bytes(ctx, "utf-8"))
+    vec_ctx = bytes(ctx, "utf-8")
     # leader starts linearizable read request.
     # more info: raft dissertation 6.4, step 2.
     m = new_message_with_entries(2, 1, MessageType.MsgReadIndex, [new_entry(0, 0, ctx)])
@@ -4208,7 +4208,7 @@ def prepare_request_snapshot() -> Tuple[Network, Snapshot_Owner]:
 
     test_entries = Entry_Owner.default()
 
-    test_entries.set_data(list(b"testdata"))
+    test_entries.set_data(b"testdata")
     msg = new_message_with_entries(1, 1, MessageType.MsgPropose, [test_entries])
     nt.send([msg.clone(), msg])
     assert nt.peers[1].raft_log.get_committed() == 14
@@ -4221,7 +4221,7 @@ def prepare_request_snapshot() -> Tuple[Network, Snapshot_Owner]:
 
     # Commit a new raft log.
     test_entries = Entry_Owner.default()
-    test_entries.set_data(list(b"testdata"))
+    test_entries.set_data(b"testdata")
     msg = new_message_with_entries(1, 1, MessageType.MsgPropose, [test_entries])
     nt.send([msg])
 
@@ -4250,7 +4250,7 @@ def test_follower_request_snapshot():
 
     # New proposes can not be replicated to peer 2.
     test_entries = Entry_Owner.default()
-    test_entries.set_data(list(b"testdata"))
+    test_entries.set_data(b"testdata")
     msg = new_message_with_entries(1, 1, MessageType.MsgPropose, [test_entries])
     nt.send([msg.clone()])
     assert nt.peers[1].raft_log.get_committed() == 16
@@ -4348,7 +4348,7 @@ def test_request_snapshot_step_down():
     # Commit a new entry and leader steps down while peer 2 is isolated.
     nt.isolate(2)
     test_entries = Entry_Owner.default()
-    test_entries.set_data(list(b"testdata"))
+    test_entries.set_data(b"testdata")
     msg = new_message_with_entries(1, 1, MessageType.MsgPropose, [test_entries])
     nt.send([msg])
     nt.send([new_message(3, 3, MessageType.MsgHup, 0)])
@@ -4694,7 +4694,7 @@ def test_read_when_quorum_becomes_less():
     m.set_to(1)
     m.set_msg_type(MessageType.MsgReadIndex)
     e = Entry_Owner.default()
-    e.set_data(list(b"abcdefg"))
+    e.set_data(b"abcdefg")
     m.set_entries([e])
     network.dispatch([m])
 
@@ -4717,7 +4717,7 @@ def test_uncommitted_entries_size_limit():
     config.set_id(1)
     config.set_max_uncommitted_size(12)
     nt = Network.new_with_config([None, None, None], config, l)
-    data = list(b"hello world!")
+    data = b"hello world!"
     entry = Entry_Owner.default()
     entry.set_data(data)
     msg = new_message_with_entries(1, 1, MessageType.MsgPropose, [entry])
@@ -4747,13 +4747,13 @@ def test_uncommitted_entries_size_limit():
     # a huge proposal should be accepted when there is no uncommitted entry,
     # even it's bigger than max_uncommitted_size
     entry = Entry_Owner.default()
-    entry.set_data(list(b"hello world and raft"))
+    entry.set_data(b"hello world and raft")
     long_msg = new_message_with_entries(1, 1, MessageType.MsgPropose, [entry])
     nt.dispatch([long_msg])
 
     # but another huge one will be dropped
     entry = Entry_Owner.default()
-    entry.set_data(list(b"hello world and raft"))
+    entry.set_data(b"hello world and raft")
     long_msg = new_message_with_entries(1, 1, MessageType.MsgPropose, [entry])
     with pytest.raises(Exception) as e:
         nt.dispatch([long_msg])
@@ -4772,7 +4772,7 @@ def test_uncommitted_entry_after_leader_election():
     config.set_id(1)
     config.set_max_uncommitted_size(12)
     nt = Network.new_with_config([None, None, None, None, None], config, l)
-    data = list(b"hello world!")
+    data = b"hello world!"
     entry = Entry_Owner.default()
     entry.set_data(data)
     msg = new_message_with_entries(1, 1, MessageType.MsgPropose, [entry])
@@ -4805,7 +4805,7 @@ def test_uncommitted_state_advance_ready_from_last_term():
     config.set_max_uncommitted_size(12)
     nt = Network.new_with_config([None, None, None, None, None], config, l)
 
-    data = list(b"hello world!")
+    data = b"hello world!"
     ent = Entry_Owner.default()
     ent.set_data(data)
 

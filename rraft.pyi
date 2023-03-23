@@ -535,12 +535,12 @@ class RawNode__MemStorage:
         """
         Campaign causes this RawNode to transition to candidate state.
         """
-    def propose(self, context: List[Any], data: List[Any]) -> None:
+    def propose(self, context: bytes, data: bytes) -> None:
         """
         Propose proposes data be appended to the raft log.
         """
     def propose_conf_change(
-        self, context: List[Any], cc: ConfChange_Owner | ConfChange_Ref
+        self, context: bytes, cc: ConfChange_Owner | ConfChange_Ref
     ) -> None:
         """
         ProposeConfChange proposes a config change.
@@ -550,7 +550,7 @@ class RawNode__MemStorage:
         leaving joint state.
         """
     def propose_conf_change_v2(
-        self, context: List[Any], cc: ConfChangeV2_Owner | ConfChangeV2_Ref
+        self, context: bytes, cc: ConfChangeV2_Owner | ConfChangeV2_Ref
     ) -> None:
         """
         ProposeConfChange proposes a config change.
@@ -591,7 +591,7 @@ class RawNode__MemStorage:
         [`Self::has_ready`] and [`Self::ready`] should be called later to handle further
         updates that become valid after ready being persisted.
         """
-    def read_index(self, rctx: List[int]) -> None:
+    def read_index(self, rctx: bytes) -> None:
         """
         ReadIndex requests a read state. The read state will be set in ready.
         Read State has a read index. Once the application advances further than the read
@@ -643,9 +643,9 @@ class Peer:
         """ """
     def set_id(self, id: int) -> None:
         """ """
-    def get_context(self) -> List[Any]:
+    def get_context(self) -> bytes:
         """ """
-    def set_context(self, context: List[Any]) -> None:
+    def set_context(self, context: bytes) -> None:
         """ """
 
 class Peer_Owner(Peer):
@@ -744,9 +744,9 @@ class SnapshotMetadata_Ref(SnapshotMetadata):
 # src/eraftpb/snapshot.rs
 class Snapshot(Cloneable):
     def clone(self) -> Snapshot_Owner: ...
-    def get_data(self) -> List[Any]:
+    def get_data(self) -> bytes:
         """ """
-    def set_data(self, data: List[Any]) -> None:
+    def set_data(self, data: bytes) -> None:
         """ """
     def clear_data(self) -> None:
         """ """
@@ -821,9 +821,9 @@ class Message(Cloneable):
         """ """
     def clear_priority(self) -> None:
         """ """
-    def get_context(self) -> List[Any]:
+    def get_context(self) -> bytes:
         """ """
-    def set_context(self, context: List[Any]) -> None:
+    def set_context(self, context: bytes) -> None:
         """ """
     def clear_context(self) -> None:
         """ """
@@ -927,15 +927,15 @@ class HardState_Ref(HardState):
 # src/eraftpb/entry.rs
 class Entry(Cloneable):
     def clone(self) -> Entry_Owner: ...
-    def get_context(self) -> List[Any]:
+    def get_context(self) -> bytes:
         """ """
-    def set_context(self, context: List[Any]) -> None:
+    def set_context(self, context: bytes) -> None:
         """ """
     def clear_context(self) -> None:
         """ """
-    def get_data(self) -> List[Any]:
+    def get_data(self) -> bytes:
         """ """
-    def set_data(self, data: List[Any]) -> None:
+    def set_data(self, data: bytes) -> None:
         """ """
     def clear_data(self) -> None:
         """ """
@@ -1029,9 +1029,9 @@ class ConfState_Ref(ConfState):
 # src/eraftpb/conf_change_v2.rs
 class ConfChangeV2(Cloneable):
     def clone(self) -> ConfChangeV2_Owner: ...
-    def get_changes(self) -> List[Any]:
+    def get_changes(self) -> bytes:
         """ """
-    def set_context(self, context: List[Any]) -> None:
+    def set_context(self, context: bytes) -> None:
         """ """
     def clear_context(self) -> None:
         """ """
@@ -1055,7 +1055,7 @@ class ConfChangeV2(Cloneable):
         """ """
     def clear_joint(self) -> None:
         """ """
-    def write_to_bytes(self) -> List[int]:
+    def write_to_bytes(self) -> bytes:
         """ """
     def into_v2(self) -> ConfChangeV2_Owner:
         """
@@ -1135,9 +1135,9 @@ class ConfChange(Cloneable):
         """ """
     def clear_change_type(self) -> None:
         """ """
-    def get_context(self) -> List[Any]:
+    def get_context(self) -> bytes:
         """ """
-    def set_context(self, context: List[Any]):
+    def set_context(self, context: bytes):
         """ """
     def clear_context(self) -> None:
         """ """
@@ -1155,7 +1155,7 @@ class ConfChange(Cloneable):
 
         `ConfChangeV2` can't be changed back to `ConfChange`.
         """
-    def write_to_bytes(self) -> List[int]:
+    def write_to_bytes(self) -> bytes:
         """ """
 
 class ConfChange_Owner(ConfChange):
@@ -1329,9 +1329,9 @@ class ReadState(Cloneable):
         """ """
     def set_index(self, idx: int) -> None:
         """ """
-    def get_request_ctx(self) -> List[int]:
+    def get_request_ctx(self) -> bytes:
         """ """
-    def set_request_ctx(self, request_ctx: List[int]) -> None:
+    def set_request_ctx(self, request_ctx: bytes) -> None:
         """ """
 
 class ReadState_Owner(ReadState):

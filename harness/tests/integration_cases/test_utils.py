@@ -185,9 +185,7 @@ def new_entry(term: int, index: int, data: Optional[str]) -> Entry_Owner:
     e.set_index(index)
     e.set_term(term)
     if data:
-        # TODO: Resolve below issue.
-        # Maybe it would be better to pass 'bytes' itself or through 'memoryview' object instead of creating a new list.
-        e.set_data(list(data.encode("utf-8")))
+        e.set_data(data.encode("utf-8"))
     return e
 
 

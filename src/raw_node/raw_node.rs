@@ -1,5 +1,5 @@
 use pyo3::prelude::*;
-use pyo3::types::PyList;
+use pyo3::types::{PyBytes, PyList};
 
 use raft::prelude::{ConfChange, ConfChangeV2};
 use raft::storage::MemStorage;
@@ -167,7 +167,7 @@ impl Py_RawNode__MemStorage_Ref {
             .and_then(to_pyresult)
     }
 
-    pub fn propose(&mut self, context: &PyList, data: &PyList) -> PyResult<()> {
+    pub fn propose(&mut self, context: &PyBytes, data: &PyBytes) -> PyResult<()> {
         let context = context.extract::<Vec<u8>>()?;
         let data = data.extract::<Vec<u8>>()?;
 
@@ -176,7 +176,11 @@ impl Py_RawNode__MemStorage_Ref {
             .and_then(to_pyresult)
     }
 
-    pub fn propose_conf_change(&mut self, context: &PyList, cc: Py_ConfChange_Mut) -> PyResult<()> {
+    pub fn propose_conf_change(
+        &mut self,
+        context: &PyBytes,
+        cc: Py_ConfChange_Mut,
+    ) -> PyResult<()> {
         let context = context.extract::<Vec<u8>>()?;
         let cc: ConfChange = cc.into();
 
@@ -187,7 +191,7 @@ impl Py_RawNode__MemStorage_Ref {
 
     pub fn propose_conf_change_v2(
         &mut self,
-        context: &PyList,
+        context: &PyBytes,
         cc: Py_ConfChangeV2_Mut,
     ) -> PyResult<()> {
         let context = context.extract::<Vec<u8>>()?;

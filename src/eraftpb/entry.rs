@@ -1,4 +1,5 @@
 use pyo3::pyclass::CompareOp;
+use pyo3::types::PyBytes;
 use pyo3::{prelude::*, types::PyList};
 
 use raft::eraftpb::Entry;
@@ -109,12 +110,12 @@ impl Py_Entry_Ref {
         })
     }
 
-    pub fn get_context(&self, py: Python) -> PyResult<Py<PyList>> {
+    pub fn get_context(&self, py: Python) -> PyResult<Py<PyBytes>> {
         self.inner
-            .map_as_ref(|inner| PyList::new(py, inner.get_context()).into())
+            .map_as_ref(|inner| PyBytes::new(py, inner.get_context()).into())
     }
 
-    pub fn set_context(&mut self, byte_arr: &PyList) -> PyResult<()> {
+    pub fn set_context(&mut self, byte_arr: &PyBytes) -> PyResult<()> {
         let v = byte_arr.extract::<Vec<u8>>()?;
         self.inner.map_as_mut(|inner| inner.set_context(v))
     }
@@ -123,12 +124,12 @@ impl Py_Entry_Ref {
         self.inner.map_as_mut(|inner| inner.clear_context())
     }
 
-    pub fn get_data(&self, py: Python) -> PyResult<Py<PyList>> {
+    pub fn get_data(&self, py: Python) -> PyResult<Py<PyBytes>> {
         self.inner
-            .map_as_ref(|inner| PyList::new(py, inner.get_data()).into())
+            .map_as_ref(|inner| PyBytes::new(py, inner.get_data()).into())
     }
 
-    pub fn set_data(&mut self, byte_arr: &PyList) -> PyResult<()> {
+    pub fn set_data(&mut self, byte_arr: &PyBytes) -> PyResult<()> {
         let v = byte_arr.extract::<Vec<u8>>()?;
         self.inner.map_as_mut(|inner| inner.set_data(v))
     }

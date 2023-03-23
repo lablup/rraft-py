@@ -1,4 +1,8 @@
-use pyo3::{prelude::*, pyclass::CompareOp, types::PyList};
+use pyo3::{
+    prelude::*,
+    pyclass::CompareOp,
+    types::{PyBytes, PyList},
+};
 
 use raft::ReadState;
 
@@ -115,10 +119,10 @@ impl Py_ReadState_Ref {
 
     pub fn get_request_ctx(&self, py: Python) -> PyResult<PyObject> {
         self.inner
-            .map_as_ref(|inner| inner.request_ctx.to_object(py))
+            .map_as_ref(|inner| PyBytes::new(py, inner.request_ctx.as_slice()).to_object(py))
     }
 
-    pub fn set_request_ctx(&mut self, request_ctx: &PyList) -> PyResult<()> {
+    pub fn set_request_ctx(&mut self, request_ctx: &PyBytes) -> PyResult<()> {
         let v = request_ctx.extract()?;
         self.inner.map_as_mut(|inner| inner.request_ctx = v)
     }

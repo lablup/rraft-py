@@ -1,5 +1,9 @@
 use protobuf::Message as _Message;
-use pyo3::{prelude::*, pyclass::CompareOp, types::PyList};
+use pyo3::{
+    prelude::*,
+    pyclass::CompareOp,
+    types::{PyBytes, PyList},
+};
 
 use raft::eraftpb::Message;
 use utils::unsafe_cast::make_mut;
@@ -198,12 +202,12 @@ impl Py_Message_Ref {
         self.inner.map_as_mut(|inner| inner.clear_priority())
     }
 
-    pub fn get_context(&self, py: Python) -> PyResult<Py<PyList>> {
+    pub fn get_context(&self, py: Python) -> PyResult<Py<PyBytes>> {
         self.inner
-            .map_as_ref(|inner| PyList::new(py, inner.get_context()).into())
+            .map_as_ref(|inner| PyBytes::new(py, inner.get_context()).into())
     }
 
-    pub fn set_context(&mut self, context: &PyList) -> PyResult<()> {
+    pub fn set_context(&mut self, context: &PyBytes) -> PyResult<()> {
         let v = context.extract::<Vec<u8>>()?;
         self.inner.map_as_mut(|inner| inner.set_context(v))
     }

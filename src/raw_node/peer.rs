@@ -1,4 +1,7 @@
-use pyo3::{prelude::*, types::PyList};
+use pyo3::{
+    prelude::*,
+    types::{PyBytes, PyList},
+};
 
 use raft::raw_node::Peer;
 
@@ -53,14 +56,14 @@ impl Py_Peer_Ref {
         self.inner.map_as_mut(|inner| inner.id = id)
     }
 
-    pub fn get_context(&mut self, py: Python) -> PyResult<Option<Py<PyList>>> {
+    pub fn get_context(&mut self, py: Python) -> PyResult<Option<Py<PyBytes>>> {
         self.inner.map_as_mut(|inner| match &inner.context {
-            Some(context) => Some(PyList::new(py, context.as_slice()).into()),
+            Some(context) => Some(PyBytes::new(py, context.as_slice()).into()),
             None => None,
         })
     }
 
-    pub fn set_context(&mut self, context: &PyList, py: Python) -> PyResult<()> {
+    pub fn set_context(&mut self, context: &PyBytes, py: Python) -> PyResult<()> {
         todo!()
     }
 }

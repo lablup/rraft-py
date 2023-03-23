@@ -1,7 +1,7 @@
 use pyo3::{
     prelude::*,
     pyclass::CompareOp,
-    types::{PyByteArray, PyList},
+    types::{PyBytes, PyList},
 };
 
 use raft::eraftpb::Snapshot;
@@ -119,15 +119,14 @@ impl Py_Snapshot_Ref {
         })
     }
 
-    pub fn get_data(&self, py: Python) -> PyResult<Py<PyList>> {
+    pub fn get_data(&self, py: Python) -> PyResult<Py<PyBytes>> {
         self.inner
-            .map_as_ref(|inner| PyList::new(py, inner.get_data()).into())
+            .map_as_ref(|inner| PyBytes::new(py, inner.get_data()).into())
     }
 
-    pub fn set_data(&mut self, byte_arr: &PyByteArray) -> PyResult<()> {
+    pub fn set_data(&mut self, byte_arr: &PyBytes) -> PyResult<()> {
         self.inner.map_as_mut(|inner| {
-            let slice = unsafe { byte_arr.as_bytes() };
-            inner.set_data(slice.to_vec());
+            inner.set_data(byte_arr.as_bytes().to_vec());
         })
     }
 

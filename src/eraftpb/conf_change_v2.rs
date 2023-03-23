@@ -1,4 +1,8 @@
-use pyo3::{prelude::*, pyclass::CompareOp, types::PyList};
+use pyo3::{
+    prelude::*,
+    pyclass::CompareOp,
+    types::{PyBytes, PyList},
+};
 use raft::{eraftpb::ConfChangeV2, prelude::ConfChangeSingle};
 use utils::{errors::to_pyresult, reference::RustRef, unsafe_cast::make_mut};
 
@@ -137,12 +141,12 @@ impl Py_ConfChangeV2_Ref {
         self.inner.map_as_mut(|inner| inner.clear_changes())
     }
 
-    pub fn get_context(&self, py: Python) -> PyResult<Py<PyList>> {
+    pub fn get_context(&self, py: Python) -> PyResult<Py<PyBytes>> {
         self.inner
-            .map_as_ref(|inner| PyList::new(py, inner.get_context()).into())
+            .map_as_ref(|inner| PyBytes::new(py, inner.get_context()).into())
     }
 
-    pub fn set_context(&mut self, v: &PyList) -> PyResult<()> {
+    pub fn set_context(&mut self, v: &PyBytes) -> PyResult<()> {
         let context = v.extract::<Vec<u8>>()?;
         self.inner.map_as_mut(|inner| inner.set_context(context))
     }
@@ -175,7 +179,8 @@ impl Py_ConfChangeV2_Ref {
     pub fn write_to_bytes(&mut self, py: Python) -> PyResult<PyObject> {
         self.inner
             .map_as_mut(|inner| {
-                protobuf::Message::write_to_bytes(inner).and_then(|x| Ok(x.into_py(py)))
+                protobuf::Message::write_to_bytes(inner)
+                    .and_then(|x| Ok(PyBytes::new(py, x.as_slice()).into_py(py)))
             })
             .and_then(to_pyresult)
     }
