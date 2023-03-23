@@ -30,6 +30,7 @@ from test_raft_paper import (
 )
 
 from rraft import (
+    INVALID_INDEX,
     ConfChange_Owner,
     ConfChangeSingle_Owner,
     ConfChangeTransition,
@@ -4325,7 +4326,25 @@ def test_request_snapshot_none_replicate():
 
 # Test if request snapshot can make progress when leader steps down.
 def test_request_snapshot_step_down():
-    pass
+    nt, _ = prepare_request_snapshot()
+
+    # Commit a new entry and leader steps down while peer 2 is isolated.
+    nt.isolate(2)
+    test_entries = Entry_Owner.default()
+    test_entries.set_data(list(b"testdata"))
+    msg = new_message_with_entries(1, 1, MessageType.MsgPropose, [test_entries])
+    nt.send([msg])
+    nt.send([new_message(3, 3, MessageType.MsgHup, 0)])
+    assert nt.peers[3].raft.get_state() == StateRole.Leader
+
+    # Recover and request the latest snapshot.
+    nt.recover()
+    request_idx = nt.peers[2].raft_log.get_committed()
+    nt.peers[2].raft.request_snapshot(request_idx)
+    nt.send([new_message(3, 3, MessageType.MsgBeat, 0)])
+    assert (
+        nt.peers[2].raft.get_pending_request_snapshot() == INVALID_INDEX
+    ), f"{nt.peers[2].raft.get_pending_request_snapshot()}"
 
 
 # Abort request snapshot if it becomes leader or candidate.
