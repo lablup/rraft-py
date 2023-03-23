@@ -179,10 +179,23 @@ impl Py_ConfChange_Ref {
             Py_ConfChangeV2_Owner { inner: cc }
         })
     }
+
+    pub fn as_v1(&mut self) -> PyResult<Option<Py_ConfChange_Ref>> {
+        self.inner.map_as_mut(|inner| {
+            Some(Py_ConfChange_Ref {
+                inner: RustRef::new(inner),
+            })
+        })
+    }
+
+    // TODO: Apply COW to below method
+    pub fn as_v2(&mut self) -> PyResult<Py_ConfChangeV2_Owner> {
+        self.clone().unwrap().make_ref().into_v2()
+    }
 }
 
 /// Creates a `ConfChangeSingle`.
-fn new_conf_change_single(node_id: u64, typ: ConfChangeType) -> ConfChangeSingle {
+pub fn new_conf_change_single(node_id: u64, typ: ConfChangeType) -> ConfChangeSingle {
     let mut single = ConfChangeSingle::default();
     single.node_id = node_id;
     single.set_change_type(typ);

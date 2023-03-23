@@ -1,7 +1,11 @@
 use pyo3::prelude::*;
 
+use crate::eraftpb::conf_change::new_conf_change_single as _new_conf_change_single;
+use crate::eraftpb::conf_change_single::Py_ConfChangeSingle_Owner;
+use crate::eraftpb::conf_change_type::Py_ConfChangeType;
 use raft::default_logger as _default_logger;
 use raft::majority as _majority;
+use raft::prelude::ConfChangeSingle;
 use raft::vote_resp_msg_type as _vote_resp_msg_type;
 use raft::{
     CAMPAIGN_ELECTION, CAMPAIGN_PRE_ELECTION, CAMPAIGN_TRANSFER, INVALID_ID, INVALID_INDEX,
@@ -27,6 +31,13 @@ pub fn default_logger() -> Py_Logger_Owner {
 #[pyfunction]
 pub fn vote_resp_msg_type(typ: &Py_MessageType) -> Py_MessageType {
     Py_MessageType(_vote_resp_msg_type(typ.0))
+}
+
+#[pyfunction]
+pub fn new_conf_change_single(node_id: u64, typ: &Py_ConfChangeType) -> Py_ConfChangeSingle_Owner {
+    Py_ConfChangeSingle_Owner {
+        inner: _new_conf_change_single(node_id, typ.0),
+    }
 }
 
 // Global scope constant

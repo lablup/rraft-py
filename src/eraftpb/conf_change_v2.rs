@@ -3,6 +3,7 @@ use raft::{eraftpb::ConfChangeV2, prelude::ConfChangeSingle};
 use utils::{reference::RustRef, unsafe_cast::make_mut};
 
 use super::{
+    conf_change::Py_ConfChange_Ref,
     conf_change_single::{Py_ConfChangeSingle_Mut, Py_ConfChangeSingle_Ref},
     conf_change_transition::Py_ConfChangeTransition,
 };
@@ -169,5 +170,28 @@ impl Py_ConfChangeV2_Ref {
 
     pub fn leave_joint(&self) -> PyResult<bool> {
         self.inner.map_as_ref(|inner| inner.leave_joint())
+    }
+
+    pub fn write_to_bytes(&mut self, py: Python) -> PyResult<PyObject> {
+        self.inner.map_as_mut(|inner| {
+            protobuf::Message::write_to_bytes(inner)
+                .unwrap()
+                .into_py(py)
+        })
+    }
+
+    pub fn into_v2(&mut self) -> PyResult<Py_ConfChangeV2_Owner> {
+        self.inner.map_as_mut(|inner| Py_ConfChangeV2_Owner {
+            inner: inner.clone(),
+        })
+    }
+
+    pub fn as_v1(&mut self) -> PyResult<Option<Py_ConfChange_Ref>> {
+        self.inner.map_as_mut(|_inner| None)
+    }
+
+    // TODO: Apply COW to below method
+    pub fn as_v2(&mut self) -> PyResult<Py_ConfChangeV2_Owner> {
+        self.clone().unwrap().make_ref().into_v2()
     }
 }

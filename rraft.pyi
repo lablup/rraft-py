@@ -1055,6 +1055,22 @@ class ConfChangeV2(Cloneable):
         """ """
     def clear_joint(self) -> None:
         """ """
+    def write_to_bytes(self) -> List[int]:
+        """ """
+    def into_v2(self) -> ConfChangeV2_Owner:
+        """
+        Converts conf change to `ConfChangeV2`.
+        """
+    def as_v2(self) -> ConfChangeV2_Owner:
+        """
+        Gets conf change as `ConfChangeV2`.
+        """
+    def as_v1(self) -> ConfChange_Ref:
+        """
+        Converts conf change to `ConfChange`.
+
+        `ConfChangeV2` can't be changed back to `ConfChange`.
+        """
 
 class ConfChangeV2_Owner(ConfChangeV2):
     """ """
@@ -1128,6 +1144,16 @@ class ConfChange(Cloneable):
     def into_v2(self) -> ConfChangeV2_Owner:
         """
         Converts conf change to `ConfChangeV2`.
+        """
+    def as_v2(self) -> ConfChangeV2_Owner:
+        """
+        Gets conf change as `ConfChangeV2`.
+        """
+    def as_v1(self) -> ConfChange_Ref:
+        """
+        Converts conf change to `ConfChange`.
+
+        `ConfChangeV2` can't be changed back to `ConfChange`.
         """
     def write_to_bytes(self) -> List[int]:
         """ """
