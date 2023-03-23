@@ -4617,7 +4617,46 @@ def test_election_with_priority_log():
 # test_election_after_change_priority verifies that a peer can win an election
 # by raising its priority and lose election by lowering its priority.
 def test_election_after_change_priority():
-    pass
+    l = default_logger()
+    s1, s2, s3 = new_storage(), new_storage(), new_storage()
+    n1 = new_test_raft(1, [1, 2, 3], 10, 1, s1, l)
+    n2 = new_test_raft(2, [1, 2, 3], 10, 1, s2, l)
+    n3 = new_test_raft(3, [1, 2, 3], 10, 1, s3, l)
+
+    # priority of n1 is 0 in default.
+    n2.raft.set_priority(2)
+    n3.raft.set_priority(3)
+    n1.raft.become_follower(1, INVALID_ID)
+    n2.raft.become_follower(1, INVALID_ID)
+    n3.raft.become_follower(1, INVALID_ID)
+    network = Network.new([n1, n2, n3], l)
+
+    assert network.peers[1].raft.get_priority() == 0, "peer 1 priority"
+    network.send([new_message(1, 1, MessageType.MsgHup, 0)])
+    # check state
+    assert network.peers[1].raft.get_state() == StateRole.Follower, "peer 1 state"
+
+    class Test:
+        def __init__(self, id: int, p: int, state: StateRole) -> None:
+            self.id = id
+            self.p = p
+            self.state = state
+
+    tests = [
+        Test(1, 1, StateRole.Follower),
+        Test(1, 2, StateRole.Leader),
+        Test(1, 3, StateRole.Leader),
+        Test(1, 0, StateRole.Follower),
+    ]
+
+    for i, v in enumerate(tests):
+        id, p, state = v.id, v.p, v.state
+        network.peers[id].raft.become_follower(i + 2, INVALID_ID)
+        network.peers[id].raft.set_priority(p)
+        network.send([new_message(id, id, MessageType.MsgHup, 0)])
+
+        # check state
+        assert network.peers[id].raft.get_state() == state, f"peer {id} state"
 
 
 # `test_read_when_quorum_becomes_less` tests read requests could be handled earlier
