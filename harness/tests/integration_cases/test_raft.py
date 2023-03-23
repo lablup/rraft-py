@@ -4541,7 +4541,77 @@ def test_group_commit_consistent():
 # test_election_with_priority_log verifies the correctness
 # of the election with both priority and log.
 def test_election_with_priority_log():
-    pass
+    l = default_logger()
+
+    class Test:
+        def __init__(
+            self,
+            l1: bool,
+            l2: bool,
+            l3: bool,
+            p1: int,
+            p2: int,
+            p3: int,
+            id: int,
+            state: StateRole,
+        ) -> None:
+            self.l1 = l1
+            self.l2 = l2
+            self.l3 = l3
+            self.p1 = p1
+            self.p2 = p2
+            self.p3 = p3
+            self.id = id
+            self.state = state
+
+    tests = [
+        # log is up to date or not 1..3, priority 1..3, id, state
+        # Test(True, False, False, 3, 1, 1, 1, StateRole.Leader),
+        # Test(True, False, False, 2, 2, 2, 1, StateRole.Leader),
+        # Test(True, False, False, 1, 3, 3, 1, StateRole.Leader),
+        # Test(True, True, True, 3, 1, 1, 1, StateRole.Leader),
+        # Test(True, True, True, 2, 2, 2, 1, StateRole.Leader),
+        # Test(True, True, True, 1, 3, 3, 1, StateRole.Follower),
+        # Test(False, True, True, 3, 1, 1, 1, StateRole.Follower),
+        # Test(False, True, True, 2, 2, 2, 1, StateRole.Follower),
+        # Test(False, True, True, 1, 3, 3, 1, StateRole.Follower),
+        # Test(False, False, True, 1, 3, 3, 1, StateRole.Follower),
+        Test(False, False, True, 1, 1, 3, 1, StateRole.Leader),
+    ]
+
+    for _i, v in enumerate(tests):
+        l1, l2, l3, p1, p2, p3, id, state = (
+            v.l1,
+            v.l2,
+            v.l3,
+            v.p1,
+            v.p2,
+            v.p3,
+            v.id,
+            v.state,
+        )
+        s1, s2, s3 = new_storage(), new_storage(), new_storage()
+        n1 = new_test_raft(1, [1, 2, 3], 10, 1, s1, l)
+        n2 = new_test_raft(2, [1, 2, 3], 10, 1, s2, l)
+        n3 = new_test_raft(3, [1, 2, 3], 10, 1, s3, l)
+
+        n1.raft.set_priority(p1)
+        n2.raft.set_priority(p2)
+        n3.raft.set_priority(p3)
+
+        entries = [new_entry(1, 1, SOME_DATA), new_entry(1, 1, SOME_DATA)]
+
+        if l1:
+            n1.raft_log.append(entries)
+        if l2:
+            n2.raft_log.append(entries)
+        if l3:
+            n3.raft_log.append(entries)
+
+        network = Network.new([n1, n2, n3], l)
+        network.send([new_message(id, id, MessageType.MsgHup, 0)])
+
+        assert network.peers[id].raft.get_state() == state
 
 
 # test_election_after_change_priority verifies that a peer can win an election
