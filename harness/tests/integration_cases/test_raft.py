@@ -4747,7 +4747,35 @@ def test_uncommitted_entries_size_limit():
 
 
 def test_uncommitted_entry_after_leader_election():
-    pass
+    l = default_logger()
+    config = Config_Owner.default()
+    config.set_id(1)
+    config.set_max_uncommitted_size(12)
+    nt = Network.new_with_config([None, None, None, None, None], config, l)
+    data = list(b"hello world!")
+    entry = Entry_Owner.default()
+    entry.set_data(data)
+    msg = new_message_with_entries(1, 1, MessageType.MsgPropose, [entry])
+
+    nt.send([new_message(1, 1, MessageType.MsgHup, 0)])
+
+    # create a uncommitted entry on node2
+    nt.cut(1, 3)
+    nt.cut(1, 4)
+    nt.cut(1, 5)
+    nt.send([msg])
+
+    # now isolate master and make node2 as master
+    nt.isolate(1)
+    # ignore message append, cluster only work on election
+    nt.ignore(MessageType.MsgAppend)
+    nt.send([new_message(2, 2, MessageType.MsgHup, 0)])
+
+    # uncommitted log size should be 0 on node2,
+    # because we set uncommitted size to 0 rather than re-computing it,
+    # which means max_uncommitted_size is a soft limit
+    assert nt.peers[2].raft.get_state() == StateRole.Leader
+    assert nt.peers[2].raft.uncommitted_size() == 0
 
 
 def test_uncommitted_state_advance_ready_from_last_term():
