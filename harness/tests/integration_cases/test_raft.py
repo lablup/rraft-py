@@ -4566,16 +4566,16 @@ def test_election_with_priority_log():
 
     tests = [
         # log is up to date or not 1..3, priority 1..3, id, state
-        # Test(True, False, False, 3, 1, 1, 1, StateRole.Leader),
-        # Test(True, False, False, 2, 2, 2, 1, StateRole.Leader),
-        # Test(True, False, False, 1, 3, 3, 1, StateRole.Leader),
-        # Test(True, True, True, 3, 1, 1, 1, StateRole.Leader),
-        # Test(True, True, True, 2, 2, 2, 1, StateRole.Leader),
-        # Test(True, True, True, 1, 3, 3, 1, StateRole.Follower),
-        # Test(False, True, True, 3, 1, 1, 1, StateRole.Follower),
-        # Test(False, True, True, 2, 2, 2, 1, StateRole.Follower),
-        # Test(False, True, True, 1, 3, 3, 1, StateRole.Follower),
-        # Test(False, False, True, 1, 3, 3, 1, StateRole.Follower),
+        Test(True, False, False, 3, 1, 1, 1, StateRole.Leader),
+        Test(True, False, False, 2, 2, 2, 1, StateRole.Leader),
+        Test(True, False, False, 1, 3, 3, 1, StateRole.Leader),
+        Test(True, True, True, 3, 1, 1, 1, StateRole.Leader),
+        Test(True, True, True, 2, 2, 2, 1, StateRole.Leader),
+        Test(True, True, True, 1, 3, 3, 1, StateRole.Follower),
+        Test(False, True, True, 3, 1, 1, 1, StateRole.Follower),
+        Test(False, True, True, 2, 2, 2, 1, StateRole.Follower),
+        Test(False, True, True, 1, 3, 3, 1, StateRole.Follower),
+        Test(False, False, True, 1, 3, 3, 1, StateRole.Follower),
         Test(False, False, True, 1, 1, 3, 1, StateRole.Leader),
     ]
 
