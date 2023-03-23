@@ -6,7 +6,7 @@ but for now this should be handwritten.
 See https://github.com/PyO3/pyo3/issues/2454
 """
 from abc import ABCMeta, abstractmethod
-from typing import Any, Callable, Dict, Final, List, Optional, Set, Tuple
+from typing import Any, Callable, Final, List, Optional, Set, Tuple
 
 # src/prelude/global.rs
 NO_LIMIT: Final[Any]
@@ -829,7 +829,7 @@ class Message(Cloneable):
         """ """
     def get_reject_hint(self) -> int:
         """ """
-    def set_reject_hint(self, v: bool) -> None:
+    def set_reject_hint(self, reject_hint: bool) -> None:
         """ """
     def clear_reject_hint(self) -> None:
         """ """
@@ -982,7 +982,7 @@ class ConfState(Cloneable):
     def clone(self) -> ConfState_Owner: ...
     def get_auto_leave(self) -> bool:
         """ """
-    def set_auto_leave(self, v: bool) -> None:
+    def set_auto_leave(self, auto_leave: bool) -> None:
         """ """
     def clear_auto_leave(self) -> None:
         """ """
