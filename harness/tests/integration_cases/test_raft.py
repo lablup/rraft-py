@@ -4779,7 +4779,39 @@ def test_uncommitted_entry_after_leader_election():
 
 
 def test_uncommitted_state_advance_ready_from_last_term():
-    pass
+    l = default_logger()
+    config = Config_Owner.default()
+    config.set_id(1)
+    config.set_max_uncommitted_size(12)
+    nt = Network.new_with_config([None, None, None, None, None], config, l)
+
+    data = list(b"hello world!")
+    ent = Entry_Owner.default()
+    ent.set_data(data)
+
+    nt.send([new_message(1, 1, MessageType.MsgHup, 0)])
+    nt.send([new_message_with_entries(1, 1, MessageType.MsgPropose, [ent.clone()])])
+    nt.send([new_message_with_entries(1, 1, MessageType.MsgPropose, [ent.clone()])])
+
+    # now node2 has 2 committed entries
+    # make node2 leader
+    nt.send([new_message(2, 2, MessageType.MsgHup, 0)])
+    assert nt.peers[2].raft.get_state() == StateRole.Leader
+
+    nt.isolate(2)
+    # create one uncommitted entry
+    nt.send([new_message_with_entries(2, 2, MessageType.MsgPropose, [ent.clone()])])
+
+    ent1 = ent.clone()
+    ent1.set_index(1)
+    ent2 = ent
+    ent2.set_index(2)
+
+    # simulate advance 2 entries when node2 is follower
+    nt.peers[2].raft.reduce_uncommitted_size([ent1, ent2])
+
+    # uncommitted size should be 12(remain unchanged since there's only one uncommitted entries)
+    assert nt.peers[2].raft.uncommitted_size() == len(data)
 
 
 def test_fast_log_rejection():
