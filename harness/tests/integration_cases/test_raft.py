@@ -32,7 +32,6 @@ from test_raft_paper import (
 from rraft import (
     INVALID_INDEX,
     ConfChange_Owner,
-    ConfChangeSingle_Owner,
     ConfChangeTransition,
     ConfChangeType,
     ConfState_Owner,
@@ -5083,7 +5082,7 @@ def test_fast_log_rejection():
         n2.step(msgs.pop())
 
         msgs = n2.read_messages()
-        assert len(msgs) == 1
+        assert len(msgs) == 1, f"{i}"
         assert msgs[0].get_msg_type() == MessageType.MsgAppendResponse, f"{i}"
         assert msgs[0].get_reject(), f"{i}"
         assert msgs[0].get_reject_hint() == reject_hint_index, f"{i}"

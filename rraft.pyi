@@ -641,7 +641,7 @@ class RawNode__MemStorage_Ref(RawNode__MemStorage):
 class Peer:
     def get_id(self) -> int:
         """ """
-    def set_id(self, v: int) -> None:
+    def set_id(self, id: int) -> None:
         """ """
     def get_context(self) -> List[Any]:
         """ """
@@ -746,14 +746,14 @@ class Snapshot(Cloneable):
     def clone(self) -> Snapshot_Owner: ...
     def get_data(self) -> List[Any]:
         """ """
-    def set_data(self, byte_arr: List[Any]) -> None:
+    def set_data(self, data: List[Any]) -> None:
         """ """
     def clear_data(self) -> None:
         """ """
     def get_metadata(self) -> SnapshotMetadata_Ref:
         """ """
     def set_metadata(
-        self, snapshot_meta_data: SnapshotMetadata_Owner | SnapshotMetadata_Ref
+        self, meta_data: SnapshotMetadata_Owner | SnapshotMetadata_Ref
     ) -> None:
         """ """
     def clear_metadata(self) -> None:
@@ -781,43 +781,43 @@ class Message(Cloneable):
     def clone(self) -> Message_Owner: ...
     def get_commit(self) -> int:
         """ """
-    def set_commit(self, v: int) -> None:
+    def set_commit(self, commit: int) -> None:
         """ """
     def clear_commit(self) -> None:
         """ """
     def get_commit_term(self) -> int:
         """ """
-    def set_commit_term(self, v: int) -> None:
+    def set_commit_term(self, commit_term: int) -> None:
         """ """
     def clear_commit_term(self) -> None:
         """ """
     def get_from(self) -> int:
         """ """
-    def set_from(self, v: int) -> None:
+    def set_from(self, from_: int) -> None:
         """ """
     def clear_from(self) -> None:
         """ """
     def get_index(self) -> int:
         """ """
-    def set_index(self, v: int) -> None:
+    def set_index(self, index: int) -> None:
         """ """
     def clear_index(self) -> None:
         """ """
     def get_term(self) -> int:
         """ """
-    def set_term(self, v: int) -> None:
+    def set_term(self, term: int) -> None:
         """ """
     def clear_term(self) -> None:
         """ """
     def get_log_term(self) -> int:
         """ """
-    def set_log_term(self, v: int) -> None:
+    def set_log_term(self, log_index: int) -> None:
         """ """
     def clear_log_term(self) -> None:
         """ """
     def get_priority(self) -> int:
         """ """
-    def set_priority(self, v: int) -> None:
+    def set_priority(self, priority: int) -> None:
         """ """
     def clear_priority(self) -> None:
         """ """
@@ -847,7 +847,7 @@ class Message(Cloneable):
         """ """
     def get_reject(self) -> bool:
         """ """
-    def set_reject(self, v: bool) -> None:
+    def set_reject(self, reject: bool) -> None:
         """ """
     def clear_reject(self) -> None:
         """ """
@@ -859,13 +859,13 @@ class Message(Cloneable):
         """ """
     def get_to(self) -> int:
         """ """
-    def set_to(self, v: int) -> None:
+    def set_to(self, to: int) -> None:
         """ """
     def clear_to(self) -> None:
         """ """
     def get_request_snapshot(self) -> int:
         """ """
-    def set_request_snapshot(self, v: int) -> None:
+    def set_request_snapshot(self, request_snapshot: int) -> None:
         """ """
     def clear_request_snapshot(self) -> None:
         """ """
@@ -894,19 +894,19 @@ class HardState(Cloneable):
     def clone(self) -> HardState_Owner: ...
     def get_term(self) -> int:
         """ """
-    def set_term(self, v: int) -> None:
+    def set_term(self, term: int) -> None:
         """ """
     def clear_term(self) -> None:
         """ """
     def get_vote(self) -> int:
         """ """
-    def set_vote(self, v: int) -> None:
+    def set_vote(self, vote: int) -> None:
         """ """
     def clear_vote(self) -> None:
         """ """
     def get_commit(self) -> int:
         """ """
-    def set_commit(self, v: int) -> None:
+    def set_commit(self, commit: int) -> None:
         """ """
     def clear_commit(self) -> None:
         """ """
@@ -929,13 +929,13 @@ class Entry(Cloneable):
     def clone(self) -> Entry_Owner: ...
     def get_context(self) -> List[Any]:
         """ """
-    def set_context(self, byte_arr: List[Any]) -> None:
+    def set_context(self, context: List[Any]) -> None:
         """ """
     def clear_context(self) -> None:
         """ """
     def get_data(self) -> List[Any]:
         """ """
-    def set_data(self, byte_arr: List[Any]) -> None:
+    def set_data(self, data: List[Any]) -> None:
         """ """
     def clear_data(self) -> None:
         """ """
@@ -947,7 +947,7 @@ class Entry(Cloneable):
         """ """
     def get_sync_log(self) -> bool:
         """ """
-    def set_sync_log(self, v: bool) -> None:
+    def set_sync_log(self, sync_log: bool) -> None:
         """ """
     def clear_sync_log(self) -> None:
         """ """
@@ -988,25 +988,25 @@ class ConfState(Cloneable):
         """ """
     def get_learners(self) -> List[int]:
         """ """
-    def set_learners(self, list: List[int]) -> None:
+    def set_learners(self, learners: List[int]) -> None:
         """ """
     def clear_learners(self) -> None:
         """ """
     def get_learners_next(self) -> List[int]:
         """ """
-    def set_learners_next(self, list: List[int]) -> None:
+    def set_learners_next(self, learners_next: List[int]) -> None:
         """ """
     def clear_learners_next(self) -> None:
         """ """
     def get_voters(self) -> List[int]:
         """ """
-    def set_voters(self, list: List[int]) -> None:
+    def set_voters(self, voters: List[int]) -> None:
         """ """
     def clear_voters(self) -> None:
         """ """
     def get_voters_outgoing(self) -> List[int]:
         """ """
-    def set_voters_outgoing(self, list: List[int]) -> None:
+    def set_voters_outgoing(self, voters_outgoing: List[int]) -> None:
         """ """
     def clear_voters_outgoing(self) -> None:
         """ """
@@ -1031,21 +1031,21 @@ class ConfChangeV2(Cloneable):
     def clone(self) -> ConfChangeV2_Owner: ...
     def get_changes(self) -> List[Any]:
         """ """
-    def set_context(self, v: List[Any]) -> None:
+    def set_context(self, context: List[Any]) -> None:
         """ """
     def clear_context(self) -> None:
         """ """
     def get_context(self) -> List[ConfChangeSingle_Ref]:
         """ """
     def set_changes(
-        self, v: List[ConfChangeSingle_Owner] | List[ConfChangeSingle_Ref]
+        self, changes: List[ConfChangeSingle_Owner] | List[ConfChangeSingle_Ref]
     ) -> None:
         """ """
     def clear_changes(self) -> None:
         """ """
     def get_transition(self) -> ConfChangeTransition:
         """ """
-    def set_transition(self, v: ConfChangeTransition) -> None:
+    def set_transition(self, transition: ConfChangeTransition) -> None:
         """ """
     def clear_transition(self) -> None:
         """ """
@@ -1090,13 +1090,13 @@ class ConfChangeSingle(Cloneable):
     def clone(self) -> ConfChangeSingle_Owner: ...
     def get_node_id(self) -> int:
         """ """
-    def set_node_id(self, v: int):
+    def set_node_id(self, node_id: int):
         """ """
     def clear_node_id(self) -> None:
         """ """
     def get_change_type(self) -> ConfChangeType:
         """ """
-    def set_change_type(self, v: ConfChangeType) -> None:
+    def set_change_type(self, typ: ConfChangeType) -> None:
         """ """
     def clear_change_type(self) -> None:
         """ """
@@ -1119,19 +1119,19 @@ class ConfChange(Cloneable):
     def clone(self) -> ConfChange_Owner: ...
     def get_id(self) -> int:
         """ """
-    def set_id(self, v: int) -> None:
+    def set_id(self, id: int) -> None:
         """ """
     def clear_id(self) -> None:
         """ """
     def get_node_id(self) -> int:
         """ """
-    def set_node_id(self, v: int) -> None:
+    def set_node_id(self, node_id: int) -> None:
         """ """
     def clear_node_id(self) -> None:
         """ """
     def get_change_type(self) -> ConfChangeType:
         """ """
-    def set_change_type(self, v: ConfChangeType) -> None:
+    def set_change_type(self, typ: ConfChangeType) -> None:
         """ """
     def clear_change_type(self) -> None:
         """ """
@@ -1274,7 +1274,7 @@ class Status__Memstorage:
         """ """
     def get_ss(self) -> SoftState_Ref:
         """ """
-    def set_ss(self, ss: SoftState_Owner | SoftState_Ref) -> None:
+    def set_ss(self, ss: SoftState_Ref) -> None:
         """ """
     def get_progress(self) -> Optional[ProgressTracker_Ref]:
         """ """
@@ -1304,7 +1304,7 @@ class SoftState:
         """ """
     def get_raft_state(self) -> StateRole:
         """ """
-    def set_raft_state(self, rs: StateRole) -> None:
+    def set_raft_state(self, role: StateRole) -> None:
         """ """
 
 class SoftState_Owner(SoftState):
@@ -1534,15 +1534,15 @@ class RaftLog__MemStorage:
         """
     def get_applied(self) -> int:
         """ """
-    def set_applied(self, v: int) -> None:
+    def set_applied(self, applied: int) -> None:
         """ """
     def get_committed(self) -> int:
         """ """
-    def set_committed(self, v: int) -> None:
+    def set_committed(self, committed: int) -> None:
         """ """
     def get_persisted(self) -> int:
         """ """
-    def set_persisted(self, v: int) -> None:
+    def set_persisted(self, persisted: int) -> None:
         """ """
 
 class RaftLog__MemStorage_Owner(RaftLog__MemStorage):
@@ -1714,7 +1714,7 @@ class Raft__MemStorage:
         """
         Return the length of the current randomized election timeout.
         """
-    def set_randomized_election_timeout(self, t: int) -> None:
+    def set_randomized_election_timeout(self, randomized_election_timeout: int) -> None:
         """
         For testing leader lease
         """
@@ -1826,39 +1826,39 @@ class Raft__MemStorage:
         """
     def get_lead_transferee(self) -> Optional[int]:
         """ """
-    def set_lead_transferee(self, v: int) -> None:
+    def set_lead_transferee(self, lead_transferee: int) -> None:
         """ """
     def get_term(self) -> int:
         """ """
-    def set_term(self, v: int) -> None:
+    def set_term(self, term: int) -> None:
         """ """
     def get_vote(self) -> int:
         """ """
-    def set_vote(self, v: int) -> None:
+    def set_vote(self, vote: int) -> None:
         """ """
     def get_priority(self) -> int:
         """ """
-    def set_priority(self, v: int) -> None:
+    def set_priority(self, priority: int) -> None:
         """ """
     def get_leader_id(self) -> int:
         """ """
-    def set_leader_id(self, v: int) -> None:
+    def set_leader_id(self, leader_id: int) -> None:
         """ """
     def get_max_msg_size(self) -> int:
         """ """
-    def set_max_msg_size(self, v: int) -> None:
+    def set_max_msg_size(self, max_msg_size: int) -> None:
         """ """
     def get_pending_conf_index(self) -> int:
         """ """
-    def set_pending_conf_index(self, v: int) -> None:
+    def set_pending_conf_index(self, pending_conf_index: int) -> None:
         """ """
     def get_pending_request_snapshot(self) -> int:
         """ """
-    def set_pending_request_snapshot(self, v: int) -> None:
+    def set_pending_request_snapshot(self, pending_request_snapshot: int) -> None:
         """ """
     def get_id(self) -> int:
         """ """
-    def set_id(self, v: int) -> None:
+    def set_id(self, id: int) -> None:
         """ """
     def get_msgs(self) -> List[Message_Ref]:
         """ """
@@ -1868,30 +1868,30 @@ class Raft__MemStorage:
         """ """
     def get_max_inflight(self) -> int:
         """ """
-    def set_max_inflight(self, v: int) -> None:
+    def set_max_inflight(self, max_inflight: int) -> None:
         """ """
     def get_state(self) -> StateRole:
         """ """
-    def set_state(self, v: StateRole) -> None:
+    def set_state(self, state_role: StateRole) -> None:
         """ """
     def get_raft_log(self) -> RaftLog__MemStorage_Ref:
         """ """
     def get_election_elapsed(self) -> int:
         """ """
-    def set_election_elapsed(self, v: int) -> None:
+    def set_election_elapsed(self, election_elapsed: int) -> None:
         """ """
     def get_check_quorum(self) -> bool:
         """ """
-    def set_check_quorum(self, v: bool) -> None:
+    def set_check_quorum(self, check_quorum: bool) -> None:
         """ """
     def get_pre_vote(self) -> bool:
         """"""
     def set_pre_vote(self, pre_vote: bool) -> None:
         """"""
-    def apply_conf_change(self, cc: ConfChangeV2_Ref) -> ConfChange_Ref:
+    def apply_conf_change(self, conf_change: ConfChangeV2_Ref) -> ConfChange_Ref:
         """ """
-    def set_batch_append(self, v: bool) -> None:
-        """ Set whether batch append msg at runtime. """
+    def set_batch_append(self, batch_append: bool) -> None:
+        """Set whether batch append msg at runtime."""
     def get_readonly_read_index_queue(self) -> List[List[int]]:
         """ """
 
@@ -2037,39 +2037,39 @@ class Progress(Cloneable):
         """"""
     def get_commit_group_id(self) -> int:
         """"""
-    def set_commit_group_id(self, v: int) -> None:
+    def set_commit_group_id(self, commit_group_id: int) -> None:
         """"""
     def get_committed_index(self) -> int:
         """"""
-    def set_committed_index(self, v: int) -> None:
+    def set_committed_index(self, committed_index: int) -> None:
         """"""
     def get_matched(self) -> int:
         """"""
-    def set_matched(self, v: int) -> None:
+    def set_matched(self, matched: int) -> None:
         """"""
     def get_next_idx(self) -> int:
         """"""
-    def set_next_idx(self, v: int) -> None:
+    def set_next_idx(self, next_idx: int) -> None:
         """"""
     def get_pending_snapshot(self) -> int:
         """"""
-    def set_pending_snapshot(self, v: int) -> None:
+    def set_pending_snapshot(self, pending_snapshot: int) -> None:
         """"""
     def get_pending_request_snapshot(self) -> int:
         """"""
-    def set_pending_request_snapshot(self, v: int) -> None:
+    def set_pending_request_snapshot(self, pending_request_snapshot: int) -> None:
         """"""
     def get_recent_active(self) -> bool:
         """"""
-    def set_recent_active(self, v: bool) -> None:
+    def set_recent_active(self, recent_active: bool) -> None:
         """"""
     def get_paused(self) -> bool:
         """"""
-    def set_paused(self, v: bool) -> None:
+    def set_paused(self, paused: bool) -> None:
         """"""
     def get_state(self) -> ProgressState:
         """"""
-    def set_state(self, v: ProgressState) -> None:
+    def set_state(self, state: ProgressState) -> None:
         """"""
 
 class Progress_Owner(Progress):
@@ -2123,7 +2123,7 @@ class MajorityConfig(Cloneable):
         """"""
     def extend(self, other_set: Set[int]) -> None:
         """"""
-    def get(self, v: int) -> Optional[int]:
+    def get(self, index: int) -> Optional[int]:
         """"""
     def insert(self, value: int) -> bool:
         """"""
@@ -2139,7 +2139,7 @@ class MajorityConfig(Cloneable):
         """"""
     def reserve(self, additional: int) -> None:
         """"""
-    def remove(self, v: int) -> bool:
+    def remove(self, value: int) -> bool:
         """"""
     def shrink_to(self, min_capacity: int) -> None:
         """"""
@@ -2194,11 +2194,11 @@ class Config(Cloneable):
     def clone(self) -> Config_Owner: ...
     def min_election_tick(self) -> int:
         """The minimum number of ticks before an election."""
-    def set_min_election_tick(self, v: int) -> None:
+    def set_min_election_tick(self, min_election_tick: int) -> None:
         """ """
     def max_election_tick(self) -> int:
         """The maximum number of ticks before an election."""
-    def set_max_election_tick(self, v: int) -> None:
+    def set_max_election_tick(self, max_election_tick: int) -> None:
         """ """
     def validate(self) -> None:
         """Runs validations against the config."""
@@ -2244,7 +2244,7 @@ class Config(Cloneable):
         """"""
     def get_skip_bcast_commit(self) -> bool:
         """"""
-    def set_skip_bcast_commit(self, v: bool) -> None:
+    def set_skip_bcast_commit(self, skip_bcast_commit: bool) -> None:
         """"""
     def get_priority(self) -> int:
         """"""
