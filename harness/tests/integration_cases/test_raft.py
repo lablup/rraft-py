@@ -49,6 +49,7 @@ from rraft import (
     Raft__MemStorage_Owner,
     Raft__MemStorage_Ref,
     RaftLog__MemStorage_Ref,
+    Snapshot_Owner,
     StateRole,
     default_logger,
     vote_resp_msg_type,
@@ -4165,23 +4166,88 @@ def test_advance_commit_index_by_vote_response(use_prevote: bool):
         ), f"#{i} node 2 state: {nt.peers[2].raft.get_state()} want Leader"
 
 
-# Tests the commit index can be forwarded by direct vote response
-def test_advance_commit_index_by_direct_vote_response():
-    pass
+def prepare_request_snapshot() -> Tuple[Network, Snapshot_Owner]:
+    l = default_logger()
 
+    def index_term_11(id: int, ids: List[int]) -> Interface:
+        store = MemStorage_Owner()
+        store.wl(lambda core: core.apply_snapshot(new_snapshot(11, 11, ids)))
+        raft = new_test_raft(id, ids, 5, 1, store, l)
+        raft.raft.reset(11)
+        return raft
 
-# Tests the commit index can be forwarded by prevote response
-def test_advance_commit_index_by_prevote_response():
-    pass
+    nt = Network.new(
+        [
+            index_term_11(1, [1, 2, 3]),
+            index_term_11(2, [1, 2, 3]),
+            index_term_11(3, [1, 2, 3]),
+        ],
+        l,
+    )
 
+    # elect r1 as leader
+    nt.send([new_message(1, 1, MessageType.MsgHup, 0)])
 
-def prepare_request_snapshot():
-    pass
+    test_entries = Entry_Owner.default()
+
+    test_entries.set_data(list(b"testdata"))
+    msg = new_message_with_entries(1, 1, MessageType.MsgPropose, [test_entries])
+    nt.send([msg.clone(), msg])
+    assert nt.peers[1].raft_log.get_committed() == 14
+    assert nt.peers[2].raft_log.get_committed() == 14
+
+    ents = nt.peers[1].raft_log.unstable_entries()
+    nt.storage[1].wl(lambda core: core.append(ents))
+    nt.storage[1].wl(lambda core: core.commit_to(14))
+    nt.peers[1].raft_log.set_applied(14)
+
+    # Commit a new raft log.
+    test_entries = Entry_Owner.default()
+    test_entries.set_data(list(b"testdata"))
+    msg = new_message_with_entries(1, 1, MessageType.MsgPropose, [test_entries])
+    nt.send([msg])
+
+    s = nt.storage[1].snapshot(0)
+
+    return (nt, s)
 
 
 # Test if an up-to-date follower can request a snapshot from leader.
 def test_follower_request_snapshot():
-    pass
+    nt, s = prepare_request_snapshot()
+
+    # Request the latest snapshot.
+    prev_snapshot_idx = s.get_metadata().get_index()
+    request_idx = nt.peers[1].raft_log.get_committed()
+    assert prev_snapshot_idx < request_idx
+    nt.peers[2].raft.request_snapshot(request_idx)
+
+    # Send the request snapshot message.
+    req_snap = nt.peers[2].raft.get_msgs().pop()
+    assert req_snap.get_msg_type() == MessageType.MsgAppendResponse
+    assert req_snap.get_reject()
+    assert req_snap.get_request_snapshot() == request_idx
+
+    nt.peers[1].raft.step(req_snap)
+
+    # New proposes can not be replicated to peer 2.
+    test_entries = Entry_Owner.default()
+    test_entries.set_data(list(b"testdata"))
+    msg = new_message_with_entries(1, 1, MessageType.MsgPropose, [test_entries])
+    nt.send([msg.clone()])
+    assert nt.peers[1].raft_log.get_committed() == 16
+    assert nt.peers[1].raft.prs().get(2).get_state() == ProgressState.Snapshot
+    assert nt.peers[2].raft_log.get_committed() == 15
+
+    # Util snapshot success or fail.
+    report_ok = new_message(2, 1, MessageType.MsgSnapStatus, 0)
+    nt.send([report_ok])
+    hb_resp = new_message(2, 1, MessageType.MsgHeartbeatResponse, 0)
+    nt.send([hb_resp])
+    nt.send([msg])
+
+    assert nt.peers[1].raft_log.get_committed() == 17
+    assert nt.peers[2].raft_log.get_committed() == 17
 
 
 # Test if request snapshot can make progress when it meets SnapshotTemporarilyUnavailable.
