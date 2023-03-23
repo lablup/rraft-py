@@ -4374,7 +4374,78 @@ def test_request_snapshot_on_role_change():
 # 1. Logs should be replicated to at least different groups before committed;
 # 2. all peers are configured to the same group, simple quorum should be used.
 def test_group_commit():
-    pass
+    l = default_logger()
+
+    class Test:
+        def __init__(
+            self, matches: List[int], group_ids: List[int], g_w: int, q_w: int
+        ):
+            self.matches = matches
+            self.group_ids = group_ids
+            self.g_w = g_w
+            self.q_w = q_w
+
+    tests = [
+        # Single
+        Test([1], [0], 1, 1),
+        Test([1], [1], 1, 1),
+        # Odd
+        Test([2, 2, 1], [1, 2, 1], 2, 2),
+        Test([2, 2, 1], [1, 1, 2], 1, 2),
+        Test([2, 2, 1], [1, 0, 1], 1, 2),
+        Test([2, 2, 1], [0, 0, 0], 1, 2),
+        # Even
+        Test([4, 2, 1, 3], [0, 0, 0, 0], 1, 2),
+        Test([4, 2, 1, 3], [1, 0, 0, 0], 1, 2),
+        Test([4, 2, 1, 3], [0, 1, 0, 2], 2, 2),
+        Test([4, 2, 1, 3], [0, 2, 1, 0], 1, 2),
+        Test([4, 2, 1, 3], [1, 1, 1, 1], 2, 2),
+        Test([4, 2, 1, 3], [1, 1, 2, 1], 1, 2),
+        Test([4, 2, 1, 3], [1, 2, 1, 1], 2, 2),
+        Test([4, 2, 1, 3], [4, 3, 2, 1], 2, 2),
+    ]
+
+    for i, v in enumerate(tests):
+        matches, group_ids, g_w, q_w = v.matches, v.group_ids, v.g_w, v.q_w
+        store = MemStorage_Owner.new_with_conf_state(ConfState_Owner([1], []))
+        min_index = min(matches)
+        max_index = max(matches)
+        logs = [empty_entry(1, i) for i in range(min_index, max_index + 1)]
+        store.wl(lambda core: core.append(logs))
+        hs = HardState_Owner.default()
+        hs.set_term(1)
+        store.wl(lambda core: core.set_hardstate(hs))
+        cfg = new_test_config(1, 5, 1)
+        sm = new_test_raft_with_config(cfg, store, l)
+
+        groups = []
+        for j, v in enumerate(zip(matches, group_ids)):
+            m, g = v[0], v[1]
+            id = j + 1
+            if not sm.raft.prs().get(id):
+                sm.raft.apply_conf_change(add_node(id))
+                pr = sm.raft.prs().get(id)
+                pr.set_matched(m)
+                pr.set_next_idx(m + 1)
+            if g != 0:
+                groups.append((id, g))
+        sm.raft.enable_group_commit(True)
+        sm.raft.assign_commit_groups(groups)
+
+        assert (
+            sm.raft_log.get_committed() == 0
+        ), f"#{i}: follower group committed {sm.raft_log.get_committed()}, want 0"
+
+        sm.raft.set_state(StateRole.Leader)
+        sm.raft.assign_commit_groups(groups)
+
+        assert (
+            sm.raft_log.get_committed() == g_w
+        ), f"#{i}: leader group committed {sm.raft_log.get_committed()}, want {g_w}"
+        sm.raft.enable_group_commit(False)
+        assert (
+            sm.raft_log.get_committed() == q_w
+        ), f"#{i}: quorum committed {sm.raft_log.get_committed()}, want {g_w}"
 
 
 def test_group_commit_consistent():
