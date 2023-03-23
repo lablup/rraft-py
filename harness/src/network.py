@@ -143,11 +143,15 @@ class Network:
 
             for m in msgs:
                 p = cast(Interface, self.peers.get(m.get_to()))
-                p.step(m)
-                # The unstable data should be persisted before sending msg.
-                p.persist()
-                resp = p.read_messages()
-                new_msgs.extend(self.filter_(resp))
+                try:
+                    p.step(m)
+                except Exception:
+                    continue
+                finally:
+                    # The unstable data should be persisted before sending msg.
+                    p.persist()
+                    resp = p.read_messages()
+                    new_msgs.extend(self.filter_(resp))
 
             msgs = []
             msgs.extend(new_msgs)
