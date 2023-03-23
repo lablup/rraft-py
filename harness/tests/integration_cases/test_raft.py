@@ -4449,7 +4449,93 @@ def test_group_commit():
 
 
 def test_group_commit_consistent():
-    pass
+    l = default_logger()
+    logs = []
+    for i in range(1, 6):
+        logs.append(empty_entry(1, i))
+    for i in range(6, 8 + 1):
+        logs.append(empty_entry(2, i))
+
+    class Test:
+        def __init__(
+            self,
+            matches: List[int],
+            group_ids: List[int],
+            committed: int,
+            applied: int,
+            role: StateRole,
+            exp: Optional[bool],
+        ) -> None:
+            self.matches = matches
+            self.group_ids = group_ids
+            self.committed = committed
+            self.applied = applied
+            self.role = role
+            self.exp = exp
+
+    tests = [
+        # Single node is not using group commit
+        Test([8], [0], 8, 6, StateRole.Leader, False),
+        Test([8], [1], 8, 5, StateRole.Leader, None),
+        Test([8], [1], 8, 6, StateRole.Follower, None),
+        # Not commit to current term should return None, as old leader may
+        # have reach consistent.
+        Test([8, 2, 0], [1, 2, 1], 2, 2, StateRole.Leader, None),
+        Test([8, 2, 6], [1, 1, 2], 6, 6, StateRole.Leader, True),
+        # Not apply to current term should return None, as there maybe pending conf change.
+        Test([8, 2, 6], [1, 1, 2], 6, 5, StateRole.Leader, None),
+        # It should be false when not using group commit.
+        Test([8, 6, 6], [0, 0, 0], 6, 6, StateRole.Leader, False),
+        Test([8, 6, 6], [1, 1, 0], 6, 6, StateRole.Leader, False),
+        # Only leader knows what's the current state.
+        Test([8, 2, 6], [1, 1, 2], 6, 6, StateRole.Follower, None),
+        Test([8, 2, 6], [1, 1, 2], 6, 6, StateRole.Candidate, None),
+        Test([8, 2, 6], [1, 1, 2], 6, 6, StateRole.PreCandidate, None),
+    ]
+
+    for i, v in enumerate(tests):
+        matches, group_ids, committed, applied, role, exp = (
+            v.matches,
+            v.group_ids,
+            v.committed,
+            v.applied,
+            v.role,
+            v.exp,
+        )
+        store = MemStorage_Owner.new_with_conf_state(ConfState_Owner([1], []))
+        store.wl(lambda core: core.append(logs))
+        hs = HardState_Owner.default()
+        hs.set_term(2)
+        hs.set_commit(committed)
+        store.wl(lambda core: core.set_hardstate(hs))
+        cfg = new_test_config(1, 5, 1)
+        cfg.set_applied(applied)
+        sm = new_test_raft_with_config(cfg, store, l)
+        sm.raft.set_state(role)
+
+        groups = []
+        for j, v in enumerate(zip(matches, group_ids)):
+            m, g = v[0], v[1]
+            id = j + 1
+            if not sm.raft.prs().get(id):
+                sm.raft.apply_conf_change(add_node(id))
+                pr = sm.raft.prs().get(id)
+                pr.set_matched(m)
+                pr.set_next_idx(m + 1)
+            if g != 0:
+                groups.append((id, g))
+
+        sm.raft.assign_commit_groups(groups)
+
+        if exp:
+            is_consistent = sm.raft.check_group_commit_consistent()
+            assert (
+                is_consistent == False
+            ), f"#{i}: consistency = {is_consistent}, want Some(false)"
+        sm.raft.enable_group_commit(True)
+
+        is_consistent = sm.raft.check_group_commit_consistent()
+        assert is_consistent == exp, f"#{i}: consistency = {is_consistent}, want {exp}"
 
 
 # test_election_with_priority_log verifies the correctness
