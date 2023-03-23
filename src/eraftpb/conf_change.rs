@@ -1,8 +1,4 @@
-use pyo3::{
-    prelude::*,
-    pyclass::CompareOp,
-    types::{PyBytes, PyList},
-};
+use pyo3::{prelude::*, pyclass::CompareOp, types::PyBytes};
 use utils::{errors::to_pyresult, reference::RustRef};
 
 use super::{conf_change_type::Py_ConfChangeType, conf_change_v2::Py_ConfChangeV2_Owner};

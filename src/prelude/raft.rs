@@ -5,7 +5,7 @@ use utils::{
     unsafe_cast::make_mut,
 };
 
-use raft::{prelude::Message, storage::MemStorage, Raft};
+use raft::{storage::MemStorage, Raft};
 
 use crate::{
     eraftpb::{

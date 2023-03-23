@@ -3,7 +3,7 @@ use pyo3::{
     pyclass::CompareOp,
     types::{PyBytes, PyList},
 };
-use raft::{eraftpb::ConfChangeV2, prelude::ConfChangeSingle};
+use raft::eraftpb::ConfChangeV2;
 use utils::{errors::to_pyresult, reference::RustRef, unsafe_cast::make_mut};
 
 use super::{

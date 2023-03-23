@@ -7,7 +7,7 @@ use crate::{
     },
     internal::slog::{Py_Logger_Mut, Py_Logger_Ref},
 };
-use raft::{prelude::Snapshot, Unstable};
+use raft::Unstable;
 use utils::unsafe_cast::make_mut;
 
 use utils::reference::RustRef;

@@ -10,7 +10,7 @@ use raft::ProgressTracker;
 use utils::reference::RustRef;
 use utils::unsafe_cast::make_mut;
 
-use super::joint_config::{Py_JointConfig_Owner, Py_JointConfig_Ref};
+use super::joint_config::Py_JointConfig_Ref;
 use super::progress::Py_Progress_Ref;
 
 #[derive(Clone)]

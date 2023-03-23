@@ -9,7 +9,6 @@ use crate::internal::slog::Py_Logger_Mut;
 
 use crate::storage::mem_storage::{Py_MemStorage_Mut, Py_MemStorage_Ref};
 use crate::storage::storage::Py_Storage;
-use raft::prelude::Entry;
 use raft::storage::MemStorage;
 use raft::RaftLog;
 use utils::reference::RustRef;

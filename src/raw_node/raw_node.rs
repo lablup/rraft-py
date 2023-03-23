@@ -1,5 +1,5 @@
 use pyo3::prelude::*;
-use pyo3::types::{PyBytes, PyList};
+use pyo3::types::PyBytes;
 
 use raft::prelude::{ConfChange, ConfChangeV2};
 use raft::storage::MemStorage;

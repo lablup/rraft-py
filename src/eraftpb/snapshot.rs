@@ -1,8 +1,4 @@
-use pyo3::{
-    prelude::*,
-    pyclass::CompareOp,
-    types::{PyBytes, PyList},
-};
+use pyo3::{prelude::*, pyclass::CompareOp, types::PyBytes};
 
 use raft::eraftpb::Snapshot;
 use utils::reference::RustRef;

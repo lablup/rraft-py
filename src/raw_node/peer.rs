@@ -1,7 +1,4 @@
-use pyo3::{
-    prelude::*,
-    types::{PyBytes, PyList},
-};
+use pyo3::{prelude::*, types::PyBytes};
 
 use raft::raw_node::Peer;
 

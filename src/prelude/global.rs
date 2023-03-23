@@ -5,7 +5,6 @@ use crate::eraftpb::conf_change_single::Py_ConfChangeSingle_Owner;
 use crate::eraftpb::conf_change_type::Py_ConfChangeType;
 use raft::default_logger as _default_logger;
 use raft::majority as _majority;
-use raft::prelude::ConfChangeSingle;
 use raft::vote_resp_msg_type as _vote_resp_msg_type;
 use raft::{
     CAMPAIGN_ELECTION, CAMPAIGN_PRE_ELECTION, CAMPAIGN_TRANSFER, INVALID_ID, INVALID_INDEX,
