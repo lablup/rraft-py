@@ -1,7 +1,8 @@
 // Ref: https://pyo3.rs/main/trait_bounds
-use pyo3::{exceptions::PyRuntimeError, prelude::*};
+use pyo3::prelude::*;
 
 use raft::storage::Storage;
+use utils::errors::to_pyresult;
 
 use crate::eraftpb::entry::Py_Entry_Ref;
 use crate::eraftpb::snapshot::{Py_Snapshot_Owner, Py_Snapshot_Ref};
@@ -23,12 +24,11 @@ impl Py_Storage {
     }
 
     pub fn initial_state(&self) -> PyResult<Py_RaftState_Ref> {
-        match Storage::initial_state(self) {
-            Ok(mut rs) => Ok(Py_RaftState_Ref {
+        to_pyresult(Storage::initial_state(self).and_then(|mut rs| {
+            Ok(Py_RaftState_Ref {
                 inner: RustRef::new(&mut rs),
-            }),
-            Err(err) => Err(PyRuntimeError::new_err(err.to_string())),
-        }
+            })
+        }))
     }
 
     pub fn entries(
@@ -38,8 +38,8 @@ impl Py_Storage {
         max_size: Option<u64>,
         py: Python,
     ) -> PyResult<PyObject> {
-        match Storage::entries(self, low, high, max_size) {
-            Ok(mut entries) => {
+        to_pyresult(
+            Storage::entries(self, low, high, max_size).and_then(|mut entries| {
                 let py_entries = entries
                     .iter_mut()
                     .map(|x| Py_Entry_Ref {
@@ -47,39 +47,30 @@ impl Py_Storage {
                     })
                     .collect::<Vec<_>>();
                 Ok(py_entries.into_py(py))
-            }
-            Err(err) => Err(PyRuntimeError::new_err(err.to_string())),
-        }
+            }),
+        )
     }
 
     pub fn term(&self, idx: u64) -> PyResult<u64> {
-        match Storage::term(self, idx) {
-            Ok(term) => Ok(term),
-            Err(err) => Err(PyRuntimeError::new_err(err.to_string())),
-        }
+        to_pyresult(Storage::term(self, idx))
     }
 
     pub fn first_index(&self) -> PyResult<u64> {
-        match Storage::first_index(self) {
-            Ok(idx) => Ok(idx),
-            Err(err) => Err(PyRuntimeError::new_err(err.to_string())),
-        }
+        to_pyresult(Storage::first_index(self))
     }
 
     pub fn last_index(&self) -> PyResult<u64> {
-        match Storage::last_index(self) {
-            Ok(idx) => Ok(idx),
-            Err(err) => Err(PyRuntimeError::new_err(err.to_string())),
-        }
+        to_pyresult(Storage::last_index(self))
     }
 
     pub fn snapshot(&self, request_index: u64) -> PyResult<Py_Snapshot_Ref> {
-        match Storage::snapshot(self, request_index) {
-            Ok(mut snapshot) => Ok(Py_Snapshot_Ref {
-                inner: RustRef::new(&mut snapshot),
+        to_pyresult(
+            Storage::snapshot(self, request_index).and_then(|mut snapshot| {
+                Ok(Py_Snapshot_Ref {
+                    inner: RustRef::new(&mut snapshot),
+                })
             }),
-            Err(err) => Err(PyRuntimeError::new_err(err.to_string())),
-        }
+        )
     }
 }
 
