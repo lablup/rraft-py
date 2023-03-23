@@ -5,11 +5,7 @@ use utils::{
     unsafe_cast::make_mut,
 };
 
-use raft::{
-    prelude::{HardState, Message},
-    storage::MemStorage,
-    Raft,
-};
+use raft::{prelude::Message, storage::MemStorage, Raft};
 
 use crate::{
     eraftpb::{
@@ -21,7 +17,10 @@ use crate::{
         snapshot::{Py_Snapshot_Mut, Py_Snapshot_Ref},
     },
     internal::slog::Py_Logger_Mut,
-    storage::{mem_storage::Py_MemStorage_Mut, storage::Py_Storage},
+    storage::{
+        mem_storage::{Py_MemStorage_Mut, Py_MemStorage_Ref},
+        storage::Py_Storage,
+    },
 };
 
 use super::{
@@ -509,6 +508,12 @@ impl Py_Raft__MemStorage_Ref {
 
     pub fn get_pre_vote(&mut self) -> PyResult<bool> {
         self.inner.map_as_mut(|inner| inner.pre_vote)
+    }
+
+    pub fn store(&mut self) -> PyResult<Py_MemStorage_Ref> {
+        self.inner.map_as_mut(|inner| Py_MemStorage_Ref {
+            inner: RustRef::new(inner.mut_store()),
+        })
     }
 
     pub fn set_pre_vote(&mut self, v: bool) -> PyResult<()> {

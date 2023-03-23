@@ -1812,6 +1812,10 @@ class Raft__MemStorage:
         """
         Grabs a reference to the snapshot
         """
+    def store(self) -> MemStorage_Ref:
+        """
+        Grabs an immutable reference to the store.
+        """
     def on_persist_snap(self, index: int) -> None:
         """
         Notifies that the snapshot have been persisted.
