@@ -4252,7 +4252,37 @@ def test_follower_request_snapshot():
 
 # Test if request snapshot can make progress when it meets SnapshotTemporarilyUnavailable.
 def test_request_snapshot_unavailable():
-    pass
+    nt, s = prepare_request_snapshot()
+
+    # Request the latest snapshot.
+    prev_snapshot_idx = s.get_metadata().get_index()
+    request_idx = nt.peers[1].raft_log.get_committed()
+    assert prev_snapshot_idx < request_idx
+
+    nt.peers[2].raft.request_snapshot(request_idx)
+
+    # Send the request snapshot message.
+    req_snap = nt.peers[2].raft.get_msgs().pop()
+
+    assert req_snap.get_msg_type() == MessageType.MsgAppendResponse
+    assert req_snap.get_reject()
+    assert req_snap.get_request_snapshot() == request_idx
+
+    # Peer 2 is still in probe state due to SnapshotTemporarilyUnavailable.
+    nt.peers[1].raft.store().wl(lambda core: core.trigger_snap_unavailable())
+    nt.peers[1].step(req_snap.clone())
+    assert nt.peers[1].raft.prs().get(2).get_state() == ProgressState.Probe
+
+    # Next index is decreased.
+    nt.peers[1].raft.store().wl(lambda core: core.trigger_snap_unavailable())
+    nt.peers[1].step(req_snap.clone())
+
+    assert nt.peers[1].raft.prs().get(2).get_state() == ProgressState.Probe
+
+    # Snapshot will be available if it requests again. This message must not
+    # be considered stale even if `reject != next - 1`
+    nt.peers[1].step(req_snap)
+    assert nt.peers[1].raft.prs().get(2).get_state() == ProgressState.Snapshot
 
 
 # Test if request snapshot can make progress when matched is advanced.
