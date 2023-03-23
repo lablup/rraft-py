@@ -4662,7 +4662,36 @@ def test_election_after_change_priority():
 # `test_read_when_quorum_becomes_less` tests read requests could be handled earlier
 # if quorum becomes less in configuration changes.
 def test_read_when_quorum_becomes_less():
-    pass
+    l = default_logger()
+    network = Network.new([None, None], l)
+
+    m = Message_Owner.default()
+    m.set_from(1)
+    m.set_to(1)
+    m.set_msg_type(MessageType.MsgHup)
+    network.send([m])
+    assert network.peers[1].raft_log.get_committed() == 1
+
+    # Read index on the peer.
+    m = Message_Owner.default()
+    m.set_to(1)
+    m.set_msg_type(MessageType.MsgReadIndex)
+    e = Entry_Owner.default()
+    e.set_data(list(b"abcdefg"))
+    m.set_entries([e])
+    network.dispatch([m])
+
+    # Broadcast heartbeats.
+    heartbeats = network.read_messages()
+    network.dispatch(heartbeats)
+
+    # Drop heartbeat response from peer 2.
+    heartbeat_responses = network.read_messages()
+    assert len(heartbeat_responses) == 1
+
+    network.peers[1].raft.apply_conf_change(remove_node(2))
+    # TODO: Uncomment below assertion after `read_states` implemented.
+    # assert network.peers[1].raft.read_states()
 
 
 def test_uncommitted_entries_size_limit():
