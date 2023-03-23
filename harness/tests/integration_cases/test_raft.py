@@ -4287,7 +4287,27 @@ def test_request_snapshot_unavailable():
 
 # Test if request snapshot can make progress when matched is advanced.
 def test_request_snapshot_matched_change():
-    pass
+    nt, _ = prepare_request_snapshot()
+    # Let matched be greater than the committed.
+    nt.peers[2].raft_log.set_committed(nt.peers[2].raft_log.get_committed() - 1)
+
+    # Request the latest snapshot.
+    request_idx = nt.peers[2].raft_log.get_committed()
+    nt.peers[2].raft.request_snapshot(request_idx)
+    req_snap = nt.peers[2].raft.get_msgs().pop()
+    # The request snapshot is ignored because it is considered as out of order.
+    nt.peers[1].step(req_snap)
+    assert nt.peers[1].raft.prs().get(2).get_state() == ProgressState.Replicate
+
+    # Heartbeat is responded with a request snapshot message.
+    for _ in range(0, nt.peers[1].raft.heartbeat_timeout()):
+        nt.peers[1].raft.tick()
+
+    msg_hb = list(filter(lambda m: m.get_to() == 2, nt.peers[1].raft.get_msgs()))
+    nt.peers[2].step(msg_hb.pop())
+    req_snap = nt.peers[2].raft.get_msgs().pop()
+    nt.peers[1].step(req_snap)
+    assert nt.peers[1].raft.prs().get(2).get_state() == ProgressState.Snapshot
 
 
 # Test if request snapshot can make progress when the peer is not Replicate.
