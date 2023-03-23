@@ -6,6 +6,8 @@ from typing import Any, List, Optional, Tuple, cast
 from test_utils import (
     add_learner,
     add_node,
+    conf_change,
+    conf_change_v2,
     empty_entry,
     new_entry,
     new_message_with_entries,
@@ -29,6 +31,7 @@ from test_raft_paper import (
 
 from rraft import (
     ConfChange_Owner,
+    ConfChangeSingle_Owner,
     ConfChangeType,
     ConfState_Owner,
     Entry_Owner,
@@ -48,6 +51,7 @@ from rraft import (
     StateRole,
     default_logger,
     vote_resp_msg_type,
+    new_conf_change_single,
     INVALID_ID,
 )
 
@@ -3916,8 +3920,117 @@ def test_conf_change_check_before_campaign():
     assert nt.peers.get(1).raft.get_state() == StateRole.Candidate
 
 
-def test_advance_commit_index_by_vote_request():
-    pass
+@pytest.mark.parametrize("use_prevote", [True, False])
+def test_advance_commit_index_by_vote_request(use_prevote: bool):
+    l = default_logger()
+
+    cases: List[ConfChange_Owner] = [
+        conf_change(ConfChangeType.AddNode, 4),
+        conf_change_v2(
+            [
+                new_conf_change_single(3, ConfChangeType.AddLearnerNode),
+                new_conf_change_single(4, ConfChangeType.AddNode),
+            ]
+        ),
+    ]
+
+    for i, cc in enumerate(cases):
+        peers = [
+            new_test_learner_raft_with_prevote(1, [1, 2, 3], [4], l, use_prevote),
+            new_test_learner_raft_with_prevote(2, [1, 2, 3], [4], l, use_prevote),
+            new_test_learner_raft_with_prevote(3, [1, 2, 3], [4], l, use_prevote),
+            new_test_learner_raft_with_prevote(4, [1, 2, 3], [4], l, use_prevote),
+        ]
+
+        nt = Network.new(peers, l)
+        nt.send([new_message(1, 1, MessageType.MsgHup, 0)])
+        e = Entry_Owner.default()
+
+        if v1 := cc.as_v1():
+            e.set_entry_type(EntryType.EntryConfChange)
+            e.set_data(v1.write_to_bytes())
+        else:
+            e.set_entry_type(EntryType.EntryConfChangeV2)
+            e.set_data(cc.as_v2().write_to_bytes())
+
+        # propose a confchange entry but don't let it commit
+        nt.ignore(MessageType.MsgAppendResponse)
+        nt.send([new_message_with_entries(1, 1, MessageType.MsgPropose, [e])])
+
+        cc_index = nt.peers[1].raft_log.last_index()
+
+        # let node 4 have more up to data log than other voter
+        nt.recover()
+        nt.cut(1, 2)
+        nt.cut(1, 3)
+        nt.send([new_message(1, 1, MessageType.MsgPropose, 1)])
+
+        # let the confchange entry commit but don't let node 4 know
+        nt.recover()
+        nt.cut(1, 4)
+        nt.ignore(MessageType.MsgAppend)
+        msg = new_message(2, 1, MessageType.MsgAppendResponse, 0)
+        msg.set_index(nt.peers[2].raft_log.last_index())
+        nt.send([msg, new_message(1, 1, MessageType.MsgBeat, 0)])
+
+        # simulate the leader down
+        nt.recover()
+        nt.isolate(1)
+
+        p4 = nt.peers[4]
+        assert (
+            p4.raft_log.get_committed() < cc_index
+        ), f"#{i} expected node 4 commit index less than {cc_index}, got {p4.raft_log.get_committed()}"
+
+        # node 4 can't start new election because it thinks itself is a learner
+        for _ in range(0, p4.raft.randomized_election_timeout()):
+            p4.raft.tick()
+
+        assert (
+            p4.raft.get_state() == StateRole.Follower
+        ), f"#{i} node 4 state: {p4.raft.get_state()}, want Follower"
+
+        p2 = nt.peers[2]
+        assert (
+            p2.raft_log.get_committed() >= cc_index
+        ), f"#{i} expected node 2 commit index not less than {cc_index}, got {p2.raft_log.get_committed()}"
+
+        p2.raft.apply_conf_change(cc.as_v2())
+        p2.raft.commit_apply(cc_index)
+
+        # node 2 needs votes from both node 3 and node 4, but node 4 will reject it
+        for _ in range(0, p2.raft.randomized_election_timeout()):
+            p2.raft.tick()
+
+        want = StateRole.PreCandidate if use_prevote else StateRole.Candidate
+
+        assert (
+            p2.raft.get_state() == want
+        ), f"#{i} node 2 state: {p2.raft.get_state()}, want {want}"
+        msgs = nt.read_messages()
+        nt.filter_and_send(msgs)
+
+        assert (
+            nt.peers[2].raft.get_state() != StateRole.Leader
+        ), f"#{i} node 2 can't campaign successfully."
+
+        # node 4's commit index should be advanced by node 2's vote request
+        p4 = nt.peers[4]
+        assert (
+            p4.raft_log.get_committed() >= cc_index
+        ), f"#{i} expected node 4 commit index not less than {cc_index}, got {p4.raft_log.get_committed()}"
+
+        p4.raft.apply_conf_change(cc.as_v2())
+        p4.raft.commit_apply(cc_index)
+
+        # now node 4 can start new election and become leader
+        for _ in range(0, p4.raft.randomized_election_timeout()):
+            p4.raft.tick()
+        msgs = nt.read_messages()
+        nt.filter_and_send(msgs)
+        assert (
+            nt.peers[4].raft.get_state() == StateRole.Leader
+        ), f"#{i} node 4 state: {nt.peers[4].raft.get_state()}, want Leader"
 
 
 def test_advance_commit_index_by_direct_vote_request():
