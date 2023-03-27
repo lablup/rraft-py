@@ -1,8 +1,8 @@
-use pyo3::prelude::*;
+use pyo3::{prelude::*, pyclass::CompareOp};
 
 use raft::SoftState;
 
-use utils::reference::RustRef;
+use utils::{errors::to_pyresult, reference::RustRef};
 
 use super::state_role::Py_StateRole;
 
@@ -35,6 +35,14 @@ impl Py_SoftState_Owner {
         format!("{:?}", self.inner)
     }
 
+    pub fn __richcmp__(&self, rhs: &Py_SoftState_Ref, op: CompareOp) -> PyResult<bool> {
+        match op {
+            CompareOp::Eq => rhs.inner.map_as_ref(|x| x == &self.inner),
+            CompareOp::Ne => rhs.inner.map_as_ref(|x| x != &self.inner),
+            _ => panic!("Undefined operator"),
+        }
+    }
+
     fn __getattr__(this: PyObject, py: Python<'_>, attr: &str) -> PyResult<PyObject> {
         let reference = this.call_method0(py, "make_ref")?;
         reference.getattr(py, attr)
@@ -45,6 +53,16 @@ impl Py_SoftState_Owner {
 impl Py_SoftState_Ref {
     pub fn __repr__(&self) -> PyResult<String> {
         self.inner.map_as_ref(|inner| format!("{:?}", inner))
+    }
+
+    pub fn __richcmp__(&self, rhs: &Py_SoftState_Ref, op: CompareOp) -> PyResult<bool> {
+        self.inner
+            .map_as_ref(|inner| match op {
+                CompareOp::Eq => rhs.inner.map_as_ref(|x| x == inner),
+                CompareOp::Ne => rhs.inner.map_as_ref(|x| x != inner),
+                _ => panic!("Undefined operator"),
+            })
+            .and_then(to_pyresult)
     }
 
     pub fn get_leader_id(&self) -> PyResult<u64> {
