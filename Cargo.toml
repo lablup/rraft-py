@@ -40,4 +40,6 @@ rustflags = [
 	"-A", "non-upper-case-globals",
 	"-A", "non-camel-case-types",
 	"-A", "clippy::should-implement-trait",
+	"-A", "clippy::new-without-default",
+	"-A", "clippy::module-inception",
 ]

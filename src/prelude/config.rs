@@ -86,6 +86,7 @@ fn format_config<T: Into<Config>>(cfg: T) -> String {
 
 #[pymethods]
 impl Py_Config_Owner {
+    #![allow(clippy::too_many_arguments)]
     #[new]
     pub fn new(
         id: Option<u64>,

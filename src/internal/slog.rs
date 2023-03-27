@@ -7,17 +7,6 @@ use utils::reference::RustRef;
 #[pyclass(name = "OverflowStrategy")]
 pub struct Py_OverflowStrategy(pub OverflowStrategy);
 
-impl Into<OverflowStrategy> for Py_OverflowStrategy {
-    fn into(self) -> OverflowStrategy {
-        match self.0 {
-            OverflowStrategy::Block => OverflowStrategy::Block,
-            OverflowStrategy::Drop => OverflowStrategy::Drop,
-            OverflowStrategy::DropAndReport => OverflowStrategy::DropAndReport,
-            _ => todo!(),
-        }
-    }
-}
-
 impl From<OverflowStrategy> for Py_OverflowStrategy {
     fn from(x: OverflowStrategy) -> Self {
         match x {

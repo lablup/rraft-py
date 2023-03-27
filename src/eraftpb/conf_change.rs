@@ -197,8 +197,10 @@ impl Py_ConfChange_Ref {
 
 /// Creates a `ConfChangeSingle`.
 pub fn new_conf_change_single(node_id: u64, typ: ConfChangeType) -> ConfChangeSingle {
-    let mut single = ConfChangeSingle::default();
-    single.node_id = node_id;
+    let mut single = ConfChangeSingle {
+        node_id,
+        ..Default::default()
+    };
     single.set_change_type(typ);
     single
 }

@@ -250,7 +250,7 @@ impl Py_Raft__MemStorage_Ref {
 
     pub fn load_state(&mut self, hs: Py_HardState_Mut) -> PyResult<()> {
         self.inner
-            .map_as_mut(|inner| inner.load_state(&mut hs.into()))
+            .map_as_mut(|inner| inner.load_state(&hs.into()))
     }
 
     pub fn soft_state(&self) -> PyResult<Py_SoftState_Ref> {
