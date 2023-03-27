@@ -179,7 +179,8 @@ impl Py_ConfChangeV2_Ref {
     pub fn write_to_bytes(&mut self, py: Python) -> PyResult<PyObject> {
         self.inner
             .map_as_mut(|inner| {
-                protobuf::Message::write_to_bytes(inner).map(|x| PyBytes::new(py, x.as_slice()).into_py(py))
+                protobuf::Message::write_to_bytes(inner)
+                    .map(|x| PyBytes::new(py, x.as_slice()).into_py(py))
             })
             .and_then(to_pyresult)
     }

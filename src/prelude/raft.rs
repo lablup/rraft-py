@@ -46,7 +46,8 @@ impl Py_Raft__MemStorage_Owner {
         store: Py_MemStorage_Mut,
         logger: Py_Logger_Mut,
     ) -> PyResult<Self> {
-        Raft::new(&cfg.into(), store.into(), &logger.into()).map(|r| Py_Raft__MemStorage_Owner { inner: r })
+        Raft::new(&cfg.into(), store.into(), &logger.into())
+            .map(|r| Py_Raft__MemStorage_Owner { inner: r })
             .map_err(|e| runtime_error(&e.to_string()))
     }
 
@@ -335,8 +336,8 @@ impl Py_Raft__MemStorage_Ref {
     pub fn snap(&self) -> PyResult<Option<Py_Snapshot_Ref>> {
         self.inner.map_as_ref(|inner| {
             inner.snap().map(|snapshot| Py_Snapshot_Ref {
-                    inner: RustRef::new(unsafe { make_mut(snapshot) }),
-                })
+                inner: RustRef::new(unsafe { make_mut(snapshot) }),
+            })
         })
     }
 

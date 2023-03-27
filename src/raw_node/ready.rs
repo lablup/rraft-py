@@ -59,19 +59,19 @@ impl Py_Ready_Ref {
     pub fn hs(&mut self) -> PyResult<Option<Py_HardState_Ref>> {
         self.inner.map_as_mut(|inner| {
             inner.hs().map(|hs| Py_HardState_Ref {
-                    inner: RustRef::new(unsafe { make_mut(hs) }),
-                })
+                inner: RustRef::new(unsafe { make_mut(hs) }),
+            })
         })
     }
 
     pub fn ss(&mut self) -> PyResult<Option<Py_SoftState_Owner>> {
         self.inner.map_as_mut(|inner| {
             inner.ss().map(|ss| Py_SoftState_Owner {
-                    inner: SoftState {
-                        leader_id: ss.leader_id,
-                        raft_state: ss.raft_state,
-                    },
-                })
+                inner: SoftState {
+                    leader_id: ss.leader_id,
+                    raft_state: ss.raft_state,
+                },
+            })
         })
     }
 

@@ -99,7 +99,8 @@ impl Py_MemStorage_Ref {
         self.inner
             .map_as_ref(|inner| {
                 inner
-                    .initial_state().map(|state| Py_RaftState_Owner { inner: state })
+                    .initial_state()
+                    .map(|state| Py_RaftState_Owner { inner: state })
             })
             .and_then(to_pyresult)
     }
@@ -126,7 +127,8 @@ impl Py_MemStorage_Ref {
         self.inner
             .map_as_ref(|inner| {
                 inner
-                    .snapshot(request_index).map(|snapshot| Py_Snapshot_Owner { inner: snapshot })
+                    .snapshot(request_index)
+                    .map(|snapshot| Py_Snapshot_Owner { inner: snapshot })
             })
             .and_then(to_pyresult)
     }
@@ -140,11 +142,13 @@ impl Py_MemStorage_Ref {
     ) -> PyResult<PyObject> {
         self.inner
             .map_as_ref(|inner| {
-                inner.entries(low, high, max_size).map(|entries| entries
+                inner.entries(low, high, max_size).map(|entries| {
+                    entries
                         .into_iter()
                         .map(|entry| Py_Entry_Owner { inner: entry })
                         .collect::<Vec<_>>()
-                        .into_py(py))
+                        .into_py(py)
+                })
             })
             .and_then(to_pyresult)
     }

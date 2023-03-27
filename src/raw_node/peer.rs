@@ -54,7 +54,12 @@ impl Py_Peer_Ref {
     }
 
     pub fn get_context(&mut self, py: Python) -> PyResult<Option<Py<PyBytes>>> {
-        self.inner.map_as_mut(|inner| inner.context.as_ref().map(|context| PyBytes::new(py, context.as_slice()).into()))
+        self.inner.map_as_mut(|inner| {
+            inner
+                .context
+                .as_ref()
+                .map(|context| PyBytes::new(py, context.as_slice()).into())
+        })
     }
 
     pub fn set_context(&mut self, _context: &PyBytes, _py: Python) -> PyResult<()> {

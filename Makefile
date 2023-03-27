@@ -5,6 +5,9 @@ build:
 unit-test:
 	pytest tests
 
+fmt:
+	cargo fmt
+
 lint:
 	cargo clippy 
 

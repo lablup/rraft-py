@@ -22,7 +22,7 @@ use crate::prelude::raft::Py_Raft__MemStorage_Ref;
 
 use crate::prelude::snapshot_status::Py_SnapshotStatus;
 use crate::prelude::status::Py_Status__MemStorage_Owner;
-use crate::storage::mem_storage::{Py_MemStorage_Mut};
+use crate::storage::mem_storage::Py_MemStorage_Mut;
 use crate::storage::py_storage::Py_Storage;
 use utils::reference::RustRef;
 
@@ -140,8 +140,8 @@ impl Py_RawNode__MemStorage_Ref {
     pub fn snap(&self) -> PyResult<Option<Py_Snapshot_Ref>> {
         self.inner.map_as_ref(|inner| {
             inner.snap().map(|snap| Py_Snapshot_Ref {
-                    inner: RustRef::new(unsafe { make_mut(snap) }),
-                })
+                inner: RustRef::new(unsafe { make_mut(snap) }),
+            })
         })
     }
 
@@ -216,7 +216,8 @@ impl Py_RawNode__MemStorage_Ref {
                 let cc: ConfChange = cc.into();
 
                 inner
-                    .apply_conf_change(&cc).map(|cs| Py_ConfState_Owner { inner: cs })
+                    .apply_conf_change(&cc)
+                    .map(|cs| Py_ConfState_Owner { inner: cs })
             })
             .and_then(to_pyresult)
     }
@@ -230,7 +231,8 @@ impl Py_RawNode__MemStorage_Ref {
                 let cc: ConfChangeV2 = cc.into();
 
                 inner
-                    .apply_conf_change(&cc).map(|cs| Py_ConfState_Owner { inner: cs })
+                    .apply_conf_change(&cc)
+                    .map(|cs| Py_ConfState_Owner { inner: cs })
             })
             .and_then(to_pyresult)
     }

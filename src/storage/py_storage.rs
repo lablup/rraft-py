@@ -24,10 +24,8 @@ impl Py_Storage {
     }
 
     pub fn initial_state(&self) -> PyResult<Py_RaftState_Ref> {
-        to_pyresult(Storage::initial_state(self).map(|mut rs| {
-            Py_RaftState_Ref {
-                inner: RustRef::new(&mut rs),
-            }
+        to_pyresult(Storage::initial_state(self).map(|mut rs| Py_RaftState_Ref {
+            inner: RustRef::new(&mut rs),
         }))
     }
 
@@ -65,10 +63,8 @@ impl Py_Storage {
 
     pub fn snapshot(&self, request_index: u64) -> PyResult<Py_Snapshot_Ref> {
         to_pyresult(
-            Storage::snapshot(self, request_index).map(|mut snapshot| {
-                Py_Snapshot_Ref {
-                    inner: RustRef::new(&mut snapshot),
-                }
+            Storage::snapshot(self, request_index).map(|mut snapshot| Py_Snapshot_Ref {
+                inner: RustRef::new(&mut snapshot),
             }),
         )
     }

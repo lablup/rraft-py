@@ -1,6 +1,6 @@
 use pyo3::{prelude::*, AsPyPointer};
 
-use raft::{SoftState, Status};
+use raft::Status;
 
 use crate::eraftpb::hard_state::{Py_HardState_Mut, Py_HardState_Ref};
 
@@ -106,9 +106,7 @@ impl Py_Status__MemStorage_Ref {
 
     /// WARNING: This function replace rd with default SoftState.
     pub fn set_ss(&mut self, ss: &mut Py_SoftState_Ref) -> PyResult<()> {
-        let ss = ss
-            .inner
-            .map_as_mut(|ss| std::mem::take(ss))?;
+        let ss = ss.inner.map_as_mut(|ss| std::mem::take(ss))?;
 
         self.inner.map_as_mut(|inner| inner.ss = ss)
     }
@@ -116,8 +114,8 @@ impl Py_Status__MemStorage_Ref {
     pub fn get_progress(&mut self) -> PyResult<Option<Py_ProgressTracker_Ref>> {
         self.inner.map_as_mut(|inner| {
             inner.progress.map(|p| Py_ProgressTracker_Ref {
-                    inner: RustRef::new(unsafe { make_mut(p) }),
-                })
+                inner: RustRef::new(unsafe { make_mut(p) }),
+            })
         })
     }
 
