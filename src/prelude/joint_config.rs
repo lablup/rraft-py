@@ -25,18 +25,18 @@ pub enum Py_JointConfig_Mut<'p> {
     RefMut(Py_JointConfig_Ref),
 }
 
-impl Into<JointConfig> for Py_JointConfig_Mut<'_> {
-    fn into(self) -> JointConfig {
-        match self {
+impl From<Py_JointConfig_Mut<'_>> for JointConfig {
+    fn from(val: Py_JointConfig_Mut<'_>) -> Self {
+        match val {
             Py_JointConfig_Mut::Owned(x) => x.inner.clone(),
             Py_JointConfig_Mut::RefMut(mut x) => x.inner.map_as_mut(|x| x.clone()).unwrap(),
         }
     }
 }
 
-impl Into<JointConfig> for &mut Py_JointConfig_Mut<'_> {
-    fn into(self) -> JointConfig {
-        match self {
+impl From<&mut Py_JointConfig_Mut<'_>> for JointConfig {
+    fn from(val: &mut Py_JointConfig_Mut<'_>) -> Self {
+        match val {
             Py_JointConfig_Mut::Owned(x) => x.inner.clone(),
             Py_JointConfig_Mut::RefMut(x) => x.inner.map_as_mut(|x| x.clone()).unwrap(),
         }

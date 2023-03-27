@@ -22,18 +22,18 @@ pub enum Py_HardState_Mut<'p> {
     RefMut(Py_HardState_Ref),
 }
 
-impl Into<HardState> for Py_HardState_Mut<'_> {
-    fn into(self) -> HardState {
-        match self {
+impl From<Py_HardState_Mut<'_>> for HardState {
+    fn from(val: Py_HardState_Mut<'_>) -> Self {
+        match val {
             Py_HardState_Mut::Owned(x) => x.inner.clone(),
             Py_HardState_Mut::RefMut(mut x) => x.inner.map_as_mut(|x| x.clone()).unwrap(),
         }
     }
 }
 
-impl Into<HardState> for &mut Py_HardState_Mut<'_> {
-    fn into(self) -> HardState {
-        match self {
+impl From<&mut Py_HardState_Mut<'_>> for HardState {
+    fn from(val: &mut Py_HardState_Mut<'_>) -> Self {
+        match val {
             Py_HardState_Mut::Owned(x) => x.inner.clone(),
             Py_HardState_Mut::RefMut(x) => x.inner.map_as_mut(|x| x.clone()).unwrap(),
         }

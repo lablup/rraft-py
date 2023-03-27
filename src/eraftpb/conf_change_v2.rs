@@ -30,18 +30,18 @@ pub enum Py_ConfChangeV2_Mut<'p> {
     RefMut(Py_ConfChangeV2_Ref),
 }
 
-impl Into<ConfChangeV2> for Py_ConfChangeV2_Mut<'_> {
-    fn into(self) -> ConfChangeV2 {
-        match self {
+impl From<Py_ConfChangeV2_Mut<'_>> for ConfChangeV2 {
+    fn from(val: Py_ConfChangeV2_Mut<'_>) -> Self {
+        match val {
             Py_ConfChangeV2_Mut::Owned(x) => x.inner.clone(),
             Py_ConfChangeV2_Mut::RefMut(mut x) => x.inner.map_as_mut(|x| x.clone()).unwrap(),
         }
     }
 }
 
-impl Into<ConfChangeV2> for &mut Py_ConfChangeV2_Mut<'_> {
-    fn into(self) -> ConfChangeV2 {
-        match self {
+impl From<&mut Py_ConfChangeV2_Mut<'_>> for ConfChangeV2 {
+    fn from(val: &mut Py_ConfChangeV2_Mut<'_>) -> Self {
+        match val {
             Py_ConfChangeV2_Mut::Owned(x) => x.inner.clone(),
             Py_ConfChangeV2_Mut::RefMut(x) => x.inner.map_as_mut(|x| x.clone()).unwrap(),
         }
@@ -179,8 +179,7 @@ impl Py_ConfChangeV2_Ref {
     pub fn write_to_bytes(&mut self, py: Python) -> PyResult<PyObject> {
         self.inner
             .map_as_mut(|inner| {
-                protobuf::Message::write_to_bytes(inner)
-                    .and_then(|x| Ok(PyBytes::new(py, x.as_slice()).into_py(py)))
+                protobuf::Message::write_to_bytes(inner).map(|x| PyBytes::new(py, x.as_slice()).into_py(py))
             })
             .and_then(to_pyresult)
     }

@@ -6,9 +6,9 @@ use raft::eraftpb::EntryType;
 #[pyclass(name = "EntryType")]
 pub struct Py_EntryType(pub EntryType);
 
-impl Into<EntryType> for Py_EntryType {
-    fn into(self) -> EntryType {
-        match self.0 {
+impl From<Py_EntryType> for EntryType {
+    fn from(val: Py_EntryType) -> Self {
+        match val.0 {
             EntryType::EntryConfChange => EntryType::EntryConfChange,
             EntryType::EntryConfChangeV2 => EntryType::EntryConfChangeV2,
             EntryType::EntryNormal => EntryType::EntryNormal,

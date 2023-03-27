@@ -5,9 +5,9 @@ use raft::StateRole;
 #[pyclass(name = "StateRole")]
 pub struct Py_StateRole(pub StateRole);
 
-impl Into<StateRole> for Py_StateRole {
-    fn into(self) -> StateRole {
-        match self.0 {
+impl From<Py_StateRole> for StateRole {
+    fn from(val: Py_StateRole) -> Self {
+        match val.0 {
             StateRole::Candidate => StateRole::Candidate,
             StateRole::Follower => StateRole::Follower,
             StateRole::Leader => StateRole::Leader,

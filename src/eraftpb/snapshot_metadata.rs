@@ -24,18 +24,18 @@ pub enum Py_SnapshotMetadata_Mut<'p> {
     RefMut(Py_SnapshotMetadata_Ref),
 }
 
-impl Into<SnapshotMetadata> for Py_SnapshotMetadata_Mut<'_> {
-    fn into(self) -> SnapshotMetadata {
-        match self {
+impl From<Py_SnapshotMetadata_Mut<'_>> for SnapshotMetadata {
+    fn from(val: Py_SnapshotMetadata_Mut<'_>) -> Self {
+        match val {
             Py_SnapshotMetadata_Mut::Owned(x) => x.inner.clone(),
             Py_SnapshotMetadata_Mut::RefMut(mut x) => x.inner.map_as_mut(|x| x.clone()).unwrap(),
         }
     }
 }
 
-impl Into<SnapshotMetadata> for &mut Py_SnapshotMetadata_Mut<'_> {
-    fn into(self) -> SnapshotMetadata {
-        match self {
+impl From<&mut Py_SnapshotMetadata_Mut<'_>> for SnapshotMetadata {
+    fn from(val: &mut Py_SnapshotMetadata_Mut<'_>) -> Self {
+        match val {
             Py_SnapshotMetadata_Mut::Owned(x) => x.inner.clone(),
             Py_SnapshotMetadata_Mut::RefMut(x) => x.inner.map_as_mut(|x| x.clone()).unwrap(),
         }

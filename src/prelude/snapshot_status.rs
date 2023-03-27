@@ -6,9 +6,9 @@ use raft::SnapshotStatus;
 #[pyclass(name = "SnapshotStatus")]
 pub struct Py_SnapshotStatus(pub SnapshotStatus);
 
-impl Into<SnapshotStatus> for Py_SnapshotStatus {
-    fn into(self) -> SnapshotStatus {
-        match self.0 {
+impl From<Py_SnapshotStatus> for SnapshotStatus {
+    fn from(val: Py_SnapshotStatus) -> Self {
+        match val.0 {
             SnapshotStatus::Finish => SnapshotStatus::Finish,
             SnapshotStatus::Failure => SnapshotStatus::Failure,
         }

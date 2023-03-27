@@ -22,18 +22,18 @@ pub enum Py_ReadState_Mut<'p> {
     RefMut(Py_ReadState_Ref),
 }
 
-impl Into<ReadState> for Py_ReadState_Mut<'_> {
-    fn into(self) -> ReadState {
-        match self {
+impl From<Py_ReadState_Mut<'_>> for ReadState {
+    fn from(val: Py_ReadState_Mut<'_>) -> Self {
+        match val {
             Py_ReadState_Mut::Owned(x) => x.inner.clone(),
             Py_ReadState_Mut::RefMut(mut x) => x.inner.map_as_mut(|x| x.clone()).unwrap(),
         }
     }
 }
 
-impl Into<ReadState> for &mut Py_ReadState_Mut<'_> {
-    fn into(self) -> ReadState {
-        match self {
+impl From<&mut Py_ReadState_Mut<'_>> for ReadState {
+    fn from(val: &mut Py_ReadState_Mut<'_>) -> Self {
+        match val {
             Py_ReadState_Mut::Owned(x) => x.inner.clone(),
             Py_ReadState_Mut::RefMut(x) => x.inner.map_as_mut(|x| x.clone()).unwrap(),
         }

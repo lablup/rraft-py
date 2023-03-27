@@ -31,18 +31,18 @@ pub enum Py_ProgressTracker_Mut<'p> {
     RefMut(Py_ProgressTracker_Ref),
 }
 
-impl Into<ProgressTracker> for Py_ProgressTracker_Mut<'_> {
-    fn into(self) -> ProgressTracker {
-        match self {
+impl From<Py_ProgressTracker_Mut<'_>> for ProgressTracker {
+    fn from(val: Py_ProgressTracker_Mut<'_>) -> Self {
+        match val {
             Py_ProgressTracker_Mut::Owned(x) => x.inner.clone(),
             Py_ProgressTracker_Mut::RefMut(mut x) => x.inner.map_as_mut(|x| x.clone()).unwrap(),
         }
     }
 }
 
-impl Into<ProgressTracker> for &mut Py_ProgressTracker_Mut<'_> {
-    fn into(self) -> ProgressTracker {
-        match self {
+impl From<&mut Py_ProgressTracker_Mut<'_>> for ProgressTracker {
+    fn from(val: &mut Py_ProgressTracker_Mut<'_>) -> Self {
+        match val {
             Py_ProgressTracker_Mut::Owned(x) => x.inner.clone(),
             Py_ProgressTracker_Mut::RefMut(x) => x.inner.map_as_mut(|x| x.clone()).unwrap(),
         }
@@ -65,12 +65,9 @@ impl Py_ProgressTracker_Owner {
     }
 
     pub fn __getitem__(&self, id: u64) -> Option<Py_Progress_Ref> {
-        match self.inner.get(id) {
-            Some(progress) => Some(Py_Progress_Ref {
+        self.inner.get(id).map(|progress| Py_Progress_Ref {
                 inner: RustRef::new(unsafe { make_mut(progress) }),
-            }),
-            None => None,
-        }
+            })
     }
 
     fn __getattr__(this: PyObject, py: Python<'_>, attr: &str) -> PyResult<PyObject> {
@@ -88,21 +85,15 @@ impl Py_ProgressTracker_Ref {
     }
 
     pub fn __getitem__(&self, id: u64) -> PyResult<Option<Py_Progress_Ref>> {
-        self.inner.map_as_ref(|inner| match inner.get(id) {
-            Some(progress) => Some(Py_Progress_Ref {
+        self.inner.map_as_ref(|inner| inner.get(id).map(|progress| Py_Progress_Ref {
                 inner: RustRef::new(unsafe { make_mut(progress) }),
-            }),
-            None => None,
-        })
+            }))
     }
 
     pub fn get(&self, id: u64) -> PyResult<Option<Py_Progress_Ref>> {
-        self.inner.map_as_ref(|inner| match inner.get(id) {
-            Some(progress) => Some(Py_Progress_Ref {
+        self.inner.map_as_ref(|inner| inner.get(id).map(|progress| Py_Progress_Ref {
                 inner: RustRef::new(unsafe { make_mut(progress) }),
-            }),
-            None => None,
-        })
+            }))
     }
 
     pub fn group_commit(&self) -> PyResult<bool> {
@@ -155,7 +146,7 @@ impl Py_ProgressTracker_Ref {
                 .extract::<HashMap<u64, bool, BuildHasherDefault<FxHasher>>>()
                 .unwrap();
 
-            let vote_result = inner.vote_result(&votes);
+            let _vote_result = inner.vote_result(&votes);
         })
     }
 

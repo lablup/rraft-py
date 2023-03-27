@@ -29,18 +29,18 @@ pub enum Py_MemStorage_Mut<'p> {
     RefMut(Py_MemStorage_Ref),
 }
 
-impl Into<MemStorage> for Py_MemStorage_Mut<'_> {
-    fn into(self) -> MemStorage {
-        match self {
+impl From<Py_MemStorage_Mut<'_>> for MemStorage {
+    fn from(val: Py_MemStorage_Mut<'_>) -> Self {
+        match val {
             Py_MemStorage_Mut::Owned(x) => x.inner.clone(),
             Py_MemStorage_Mut::RefMut(mut x) => x.inner.map_as_mut(|x| x.clone()).unwrap(),
         }
     }
 }
 
-impl Into<MemStorage> for &mut Py_MemStorage_Mut<'_> {
-    fn into(self) -> MemStorage {
-        match self {
+impl From<&mut Py_MemStorage_Mut<'_>> for MemStorage {
+    fn from(val: &mut Py_MemStorage_Mut<'_>) -> Self {
+        match val {
             Py_MemStorage_Mut::Owned(x) => x.inner.clone(),
             Py_MemStorage_Mut::RefMut(x) => x.inner.map_as_mut(|x| x.clone()).unwrap(),
         }
@@ -99,8 +99,7 @@ impl Py_MemStorage_Ref {
         self.inner
             .map_as_ref(|inner| {
                 inner
-                    .initial_state()
-                    .and_then(|state| Ok(Py_RaftState_Owner { inner: state }))
+                    .initial_state().map(|state| Py_RaftState_Owner { inner: state })
             })
             .and_then(to_pyresult)
     }
@@ -127,8 +126,7 @@ impl Py_MemStorage_Ref {
         self.inner
             .map_as_ref(|inner| {
                 inner
-                    .snapshot(request_index)
-                    .and_then(|snapshot| Ok(Py_Snapshot_Owner { inner: snapshot }))
+                    .snapshot(request_index).map(|snapshot| Py_Snapshot_Owner { inner: snapshot })
             })
             .and_then(to_pyresult)
     }
@@ -142,13 +140,11 @@ impl Py_MemStorage_Ref {
     ) -> PyResult<PyObject> {
         self.inner
             .map_as_ref(|inner| {
-                inner.entries(low, high, max_size).and_then(|entries| {
-                    Ok(entries
+                inner.entries(low, high, max_size).map(|entries| entries
                         .into_iter()
                         .map(|entry| Py_Entry_Owner { inner: entry })
                         .collect::<Vec<_>>()
                         .into_py(py))
-                })
             })
             .and_then(to_pyresult)
     }
@@ -161,7 +157,7 @@ impl Py_MemStorage_Ref {
                 inner: RustRef::new(wl.deref_mut()),
             };
 
-            cb.call1(py, (arg,));
+            let _ = cb.call1(py, (arg,));
         })
     }
 
@@ -173,7 +169,7 @@ impl Py_MemStorage_Ref {
                 inner: RustRef::new(unsafe { make_mut(rl.deref()) }),
             };
 
-            cb.call1(py, (arg,));
+            let _ = cb.call1(py, (arg,));
         })
     }
 }

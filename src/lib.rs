@@ -82,7 +82,7 @@ fn rraft(_py: Python, m: &PyModule) -> PyResult<()> {
     m.add_class::<storage::mem_storage::Py_MemStorage_Ref>()?;
     m.add_class::<storage::raft_state::Py_RaftState_Owner>()?;
     m.add_class::<storage::raft_state::Py_RaftState_Ref>()?;
-    m.add_class::<storage::storage::Py_Storage>()?;
+    m.add_class::<storage::py_storage::Py_Storage>()?;
 
     m.add_function(wrap_pyfunction!(prelude::global::majority, m)?)?;
     m.add_function(wrap_pyfunction!(prelude::global::default_logger, m)?)?;

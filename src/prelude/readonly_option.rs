@@ -6,9 +6,9 @@ use raft::ReadOnlyOption;
 #[pyclass(name = "ReadOnlyOption")]
 pub struct Py_ReadOnlyOption(pub ReadOnlyOption);
 
-impl Into<ReadOnlyOption> for Py_ReadOnlyOption {
-    fn into(self) -> ReadOnlyOption {
-        match self.0 {
+impl From<Py_ReadOnlyOption> for ReadOnlyOption {
+    fn from(val: Py_ReadOnlyOption) -> Self {
+        match val.0 {
             ReadOnlyOption::Safe => ReadOnlyOption::Safe,
             ReadOnlyOption::LeaseBased => ReadOnlyOption::LeaseBased,
         }

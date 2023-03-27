@@ -24,18 +24,18 @@ pub enum Py_ConfState_Mut<'p> {
     RefMut(Py_ConfState_Ref),
 }
 
-impl Into<ConfState> for Py_ConfState_Mut<'_> {
-    fn into(self) -> ConfState {
-        match self {
+impl From<Py_ConfState_Mut<'_>> for ConfState {
+    fn from(val: Py_ConfState_Mut<'_>) -> Self {
+        match val {
             Py_ConfState_Mut::Owned(x) => x.inner.clone(),
             Py_ConfState_Mut::RefMut(mut x) => x.inner.map_as_mut(|x| x.clone()).unwrap(),
         }
     }
 }
 
-impl Into<ConfState> for &mut Py_ConfState_Mut<'_> {
-    fn into(self) -> ConfState {
-        match self {
+impl From<&mut Py_ConfState_Mut<'_>> for ConfState {
+    fn from(val: &mut Py_ConfState_Mut<'_>) -> Self {
+        match val {
             Py_ConfState_Mut::Owned(x) => x.inner.clone(),
             Py_ConfState_Mut::RefMut(x) => x.inner.map_as_mut(|x| x.clone()).unwrap(),
         }

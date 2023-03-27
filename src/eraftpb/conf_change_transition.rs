@@ -6,9 +6,9 @@ use raft::eraftpb::ConfChangeTransition;
 #[pyclass(name = "ConfChangeTransition")]
 pub struct Py_ConfChangeTransition(pub ConfChangeTransition);
 
-impl Into<ConfChangeTransition> for Py_ConfChangeTransition {
-    fn into(self) -> ConfChangeTransition {
-        match self.0 {
+impl From<Py_ConfChangeTransition> for ConfChangeTransition {
+    fn from(val: Py_ConfChangeTransition) -> Self {
+        match val.0 {
             ConfChangeTransition::Auto => ConfChangeTransition::Auto,
             ConfChangeTransition::Explicit => ConfChangeTransition::Explicit,
             ConfChangeTransition::Implicit => ConfChangeTransition::Implicit,

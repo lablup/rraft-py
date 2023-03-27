@@ -26,18 +26,18 @@ pub enum Py_RaftState_Mut<'p> {
     RefMut(Py_RaftState_Ref),
 }
 
-impl Into<RaftState> for Py_RaftState_Mut<'_> {
-    fn into(self) -> RaftState {
-        match self {
+impl From<Py_RaftState_Mut<'_>> for RaftState {
+    fn from(val: Py_RaftState_Mut<'_>) -> Self {
+        match val {
             Py_RaftState_Mut::Owned(x) => x.inner.clone(),
             Py_RaftState_Mut::RefMut(mut x) => x.inner.map_as_mut(|x| x.clone()).unwrap(),
         }
     }
 }
 
-impl Into<RaftState> for &mut Py_RaftState_Mut<'_> {
-    fn into(self) -> RaftState {
-        match self {
+impl From<&mut Py_RaftState_Mut<'_>> for RaftState {
+    fn from(val: &mut Py_RaftState_Mut<'_>) -> Self {
+        match val {
             Py_RaftState_Mut::Owned(x) => x.inner.clone(),
             Py_RaftState_Mut::RefMut(x) => x.inner.map_as_mut(|x| x.clone()).unwrap(),
         }

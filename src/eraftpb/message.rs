@@ -34,18 +34,18 @@ pub enum Py_Message_Mut<'p> {
     RefMut(Py_Message_Ref),
 }
 
-impl Into<Message> for Py_Message_Mut<'_> {
-    fn into(self) -> Message {
-        match self {
+impl From<Py_Message_Mut<'_>> for Message {
+    fn from(val: Py_Message_Mut<'_>) -> Self {
+        match val {
             Py_Message_Mut::Owned(x) => x.inner.clone(),
             Py_Message_Mut::RefMut(mut x) => x.inner.map_as_mut(|x| x.clone()).unwrap(),
         }
     }
 }
 
-impl Into<Message> for &mut Py_Message_Mut<'_> {
-    fn into(self) -> Message {
-        match self {
+impl From<&mut Py_Message_Mut<'_>> for Message {
+    fn from(val: &mut Py_Message_Mut<'_>) -> Self {
+        match val {
             Py_Message_Mut::Owned(x) => x.inner.clone(),
             Py_Message_Mut::RefMut(x) => x.inner.map_as_mut(|x| x.clone()).unwrap(),
         }

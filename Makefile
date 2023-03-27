@@ -4,3 +4,9 @@ build:
 
 unit-test:
 	pytest tests
+
+lint:
+	cargo clippy 
+
+lint-fix:
+	cargo clippy --fix --lib -p rraft-py

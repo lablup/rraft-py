@@ -25,18 +25,18 @@ pub enum Py_Config_Mut<'p> {
     RefMut(Py_Config_Ref),
 }
 
-impl Into<Config> for Py_Config_Mut<'_> {
-    fn into(self) -> Config {
-        match self {
+impl From<Py_Config_Mut<'_>> for Config {
+    fn from(val: Py_Config_Mut<'_>) -> Self {
+        match val {
             Py_Config_Mut::Owned(x) => x.inner.clone(),
             Py_Config_Mut::RefMut(mut x) => x.inner.map_as_mut(|x| x.clone()).unwrap(),
         }
     }
 }
 
-impl Into<Config> for &mut Py_Config_Mut<'_> {
-    fn into(self) -> Config {
-        match self {
+impl From<&mut Py_Config_Mut<'_>> for Config {
+    fn from(val: &mut Py_Config_Mut<'_>) -> Self {
+        match val {
             Py_Config_Mut::Owned(x) => x.inner.clone(),
             Py_Config_Mut::RefMut(x) => x.inner.map_as_mut(|x| x.clone()).unwrap(),
         }

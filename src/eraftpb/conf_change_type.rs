@@ -6,9 +6,9 @@ use raft::eraftpb::ConfChangeType;
 #[pyclass(name = "ConfChangeType")]
 pub struct Py_ConfChangeType(pub ConfChangeType);
 
-impl Into<ConfChangeType> for Py_ConfChangeType {
-    fn into(self) -> ConfChangeType {
-        match self.0 {
+impl From<Py_ConfChangeType> for ConfChangeType {
+    fn from(val: Py_ConfChangeType) -> Self {
+        match val.0 {
             ConfChangeType::AddNode => ConfChangeType::AddNode,
             ConfChangeType::AddLearnerNode => ConfChangeType::AddLearnerNode,
             ConfChangeType::RemoveNode => ConfChangeType::RemoveNode,

@@ -27,18 +27,18 @@ pub enum Py_Progress_Mut<'p> {
     RefMut(Py_Progress_Ref),
 }
 
-impl Into<Progress> for Py_Progress_Mut<'_> {
-    fn into(self) -> Progress {
-        match self {
+impl From<Py_Progress_Mut<'_>> for Progress {
+    fn from(val: Py_Progress_Mut<'_>) -> Self {
+        match val {
             Py_Progress_Mut::Owned(x) => x.inner.clone(),
             Py_Progress_Mut::RefMut(mut x) => x.inner.map_as_mut(|x| x.clone()).unwrap(),
         }
     }
 }
 
-impl Into<Progress> for &mut Py_Progress_Mut<'_> {
-    fn into(self) -> Progress {
-        match self {
+impl From<&mut Py_Progress_Mut<'_>> for Progress {
+    fn from(val: &mut Py_Progress_Mut<'_>) -> Self {
+        match val {
             Py_Progress_Mut::Owned(x) => x.inner.clone(),
             Py_Progress_Mut::RefMut(x) => x.inner.map_as_mut(|x| x.clone()).unwrap(),
         }

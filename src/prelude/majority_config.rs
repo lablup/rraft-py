@@ -24,18 +24,18 @@ pub enum Py_MajorityConfig_Mut<'p> {
     RefMut(Py_MajorityConfig_Ref),
 }
 
-impl Into<MajorityConfig> for Py_MajorityConfig_Mut<'_> {
-    fn into(self) -> MajorityConfig {
-        match self {
+impl From<Py_MajorityConfig_Mut<'_>> for MajorityConfig {
+    fn from(val: Py_MajorityConfig_Mut<'_>) -> Self {
+        match val {
             Py_MajorityConfig_Mut::Owned(x) => x.inner.clone(),
             Py_MajorityConfig_Mut::RefMut(mut x) => x.inner.map_as_mut(|x| x.clone()).unwrap(),
         }
     }
 }
 
-impl Into<MajorityConfig> for &mut Py_MajorityConfig_Mut<'_> {
-    fn into(self) -> MajorityConfig {
-        match self {
+impl From<&mut Py_MajorityConfig_Mut<'_>> for MajorityConfig {
+    fn from(val: &mut Py_MajorityConfig_Mut<'_>) -> Self {
+        match val {
             Py_MajorityConfig_Mut::Owned(x) => x.inner.clone(),
             Py_MajorityConfig_Mut::RefMut(x) => x.inner.map_as_mut(|x| x.clone()).unwrap(),
         }
@@ -132,7 +132,7 @@ impl Py_MajorityConfig_Ref {
     }
 
     pub fn get(&self, v: u64) -> PyResult<Option<u64>> {
-        self.inner.map_as_ref(|inner| inner.get(&v).map(|x| *x))
+        self.inner.map_as_ref(|inner| inner.get(&v).copied())
     }
 
     pub fn insert(&mut self, value: u64) -> PyResult<bool> {

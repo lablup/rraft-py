@@ -23,18 +23,18 @@ pub enum Py_ConfChangeSingle_Mut<'p> {
     RefMut(Py_ConfChangeSingle_Ref),
 }
 
-impl Into<ConfChangeSingle> for Py_ConfChangeSingle_Mut<'_> {
-    fn into(self) -> ConfChangeSingle {
-        match self {
+impl From<Py_ConfChangeSingle_Mut<'_>> for ConfChangeSingle {
+    fn from(val: Py_ConfChangeSingle_Mut<'_>) -> Self {
+        match val {
             Py_ConfChangeSingle_Mut::Owned(x) => x.inner.clone(),
             Py_ConfChangeSingle_Mut::RefMut(mut x) => x.inner.map_as_mut(|x| x.clone()).unwrap(),
         }
     }
 }
 
-impl Into<ConfChangeSingle> for &mut Py_ConfChangeSingle_Mut<'_> {
-    fn into(self) -> ConfChangeSingle {
-        match self {
+impl From<&mut Py_ConfChangeSingle_Mut<'_>> for ConfChangeSingle {
+    fn from(val: &mut Py_ConfChangeSingle_Mut<'_>) -> Self {
+        match val {
             Py_ConfChangeSingle_Mut::Owned(x) => x.inner.clone(),
             Py_ConfChangeSingle_Mut::RefMut(x) => x.inner.map_as_mut(|x| x.clone()).unwrap(),
         }

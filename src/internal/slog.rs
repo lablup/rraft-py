@@ -78,9 +78,9 @@ pub enum Py_Logger_Mut<'p> {
     RefMut(Py_Logger_Ref),
 }
 
-impl Into<Logger> for Py_Logger_Mut<'_> {
-    fn into(self) -> Logger {
-        match self {
+impl From<Py_Logger_Mut<'_>> for Logger {
+    fn from(val: Py_Logger_Mut<'_>) -> Self {
+        match val {
             Py_Logger_Mut::Owned(x) => x.inner.clone(),
             Py_Logger_Mut::RefMut(mut x) => x.inner.map_as_mut(|x| x.clone()).unwrap(),
         }

@@ -19,7 +19,7 @@ use crate::{
     internal::slog::Py_Logger_Mut,
     storage::{
         mem_storage::{Py_MemStorage_Mut, Py_MemStorage_Ref},
-        storage::Py_Storage,
+        py_storage::Py_Storage,
     },
 };
 
@@ -46,8 +46,7 @@ impl Py_Raft__MemStorage_Owner {
         store: Py_MemStorage_Mut,
         logger: Py_Logger_Mut,
     ) -> PyResult<Self> {
-        Raft::new(&cfg.into(), store.into(), &logger.into())
-            .and_then(|r| Ok(Py_Raft__MemStorage_Owner { inner: r }))
+        Raft::new(&cfg.into(), store.into(), &logger.into()).map(|r| Py_Raft__MemStorage_Owner { inner: r })
             .map_err(|e| runtime_error(&e.to_string()))
     }
 
@@ -335,11 +334,9 @@ impl Py_Raft__MemStorage_Ref {
 
     pub fn snap(&self) -> PyResult<Option<Py_Snapshot_Ref>> {
         self.inner.map_as_ref(|inner| {
-            inner.snap().and_then(|snapshot| {
-                Some(Py_Snapshot_Ref {
+            inner.snap().map(|snapshot| Py_Snapshot_Ref {
                     inner: RustRef::new(unsafe { make_mut(snapshot) }),
                 })
-            })
         })
     }
 
@@ -531,7 +528,7 @@ impl Py_Raft__MemStorage_Ref {
     }
 
     // Below function is exposed here because "ReadOnly" struct is not exposed in raft-rs.
-    pub fn get_read_only_pending_read_index(&self, py: Python) -> PyResult<PyObject> {
+    pub fn get_read_only_pending_read_index(&self, _py: Python) -> PyResult<PyObject> {
         todo!()
         // self.inner.map_as_ref(|inner| {
         //     let dict = PyDict::new(py);

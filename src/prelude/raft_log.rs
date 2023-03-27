@@ -8,7 +8,7 @@ use crate::eraftpb::snapshot::Py_Snapshot_Ref;
 use crate::internal::slog::Py_Logger_Mut;
 
 use crate::storage::mem_storage::{Py_MemStorage_Mut, Py_MemStorage_Ref};
-use crate::storage::storage::Py_Storage;
+use crate::storage::py_storage::Py_Storage;
 use raft::storage::MemStorage;
 use raft::RaftLog;
 use utils::reference::RustRef;
@@ -61,13 +61,11 @@ impl Py_RaftLog__MemStorage_Ref {
     pub fn entries(&self, idx: u64, max_size: Option<u64>, py: Python) -> PyResult<PyObject> {
         self.inner
             .map_as_ref(|inner| {
-                inner.entries(idx, max_size).and_then(|entries| {
-                    Ok(entries
+                inner.entries(idx, max_size).map(|entries| entries
                         .into_iter()
                         .map(|entry| Py_Entry_Owner { inner: entry })
                         .collect::<Vec<_>>()
                         .into_py(py))
-                })
             })
             .and_then(to_pyresult)
     }
@@ -85,15 +83,11 @@ impl Py_RaftLog__MemStorage_Ref {
 
     pub fn next_entries(&self, max_size: Option<u64>, py: Python) -> PyResult<Option<PyObject>> {
         self.inner.map_as_ref(|inner| {
-            inner.next_entries(max_size).and_then(|entries| {
-                Some(
-                    entries
+            inner.next_entries(max_size).map(|entries| entries
                         .into_iter()
                         .map(|entry| Py_Entry_Owner { inner: entry })
                         .collect::<Vec<_>>()
-                        .into_py(py),
-                )
-            })
+                        .into_py(py))
         })
     }
 
@@ -105,16 +99,11 @@ impl Py_RaftLog__MemStorage_Ref {
     ) -> PyResult<Option<PyObject>> {
         self.inner.map_as_ref(|inner| {
             inner
-                .next_entries_since(since_idx, max_size)
-                .and_then(|entries| {
-                    Some(
-                        entries
+                .next_entries_since(since_idx, max_size).map(|entries| entries
                             .into_iter()
                             .map(|entry| Py_Entry_Owner { inner: entry })
                             .collect::<Vec<_>>()
-                            .into_py(py),
-                    )
-                })
+                            .into_py(py))
         })
     }
 
@@ -218,11 +207,9 @@ impl Py_RaftLog__MemStorage_Ref {
     pub fn snapshot(&self, request_index: u64) -> PyResult<Py_Snapshot_Ref> {
         self.inner
             .map_as_ref(|inner| {
-                inner.snapshot(request_index).and_then(|mut snapshot| {
-                    Ok(Py_Snapshot_Ref {
+                inner.snapshot(request_index).map(|mut snapshot| Py_Snapshot_Ref {
                         inner: RustRef::new(&mut snapshot),
                     })
-                })
             })
             .and_then(to_pyresult)
     }
@@ -280,12 +267,9 @@ impl Py_RaftLog__MemStorage_Ref {
 
     pub fn unstable_snapshot(&self) -> PyResult<Option<Py_Snapshot_Ref>> {
         self.inner
-            .map_as_ref(|inner| match inner.unstable_snapshot() {
-                Some(snapshot) => Some(Py_Snapshot_Ref {
+            .map_as_ref(|inner| inner.unstable_snapshot().as_ref().map(|snapshot| Py_Snapshot_Ref {
                     inner: RustRef::new(unsafe { make_mut(snapshot) }),
-                }),
-                None => None,
-            })
+                }))
     }
 
     pub fn get_applied(&self) -> PyResult<u64> {

@@ -78,10 +78,10 @@ impl Py_RaftError {
             Error::Io(ref err) => format!("Io {{ err: {} }}", err),
             // Error::CodecError() => format!("CodecError"),
             Error::Store(ref err) => format!("Store {{ err: {} }}", err),
-            Error::StepLocalMsg => format!("StepLocalMsg"),
-            Error::StepPeerNotFound => format!("StepPeerNotFound"),
-            Error::ProposalDropped => format!("ProposalDropped"),
-            Error::RequestSnapshotDropped => format!("RequestSnapshotDropped"),
+            Error::StepLocalMsg => "StepLocalMsg".to_string(),
+            Error::StepPeerNotFound => "StepPeerNotFound".to_string(),
+            Error::ProposalDropped => "ProposalDropped".to_string(),
+            Error::RequestSnapshotDropped => "RequestSnapshotDropped".to_string(),
             _ => todo!(),
         }
     }

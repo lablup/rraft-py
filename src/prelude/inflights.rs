@@ -22,18 +22,18 @@ pub enum Py_Inflights_Mut<'p> {
     RefMut(Py_Inflights_Ref),
 }
 
-impl Into<Inflights> for Py_Inflights_Mut<'_> {
-    fn into(self) -> Inflights {
-        match self {
+impl From<Py_Inflights_Mut<'_>> for Inflights {
+    fn from(val: Py_Inflights_Mut<'_>) -> Self {
+        match val {
             Py_Inflights_Mut::Owned(x) => x.inner.clone(),
             Py_Inflights_Mut::RefMut(mut x) => x.inner.map_as_mut(|x| x.clone()).unwrap(),
         }
     }
 }
 
-impl Into<Inflights> for &mut Py_Inflights_Mut<'_> {
-    fn into(self) -> Inflights {
-        match self {
+impl From<&mut Py_Inflights_Mut<'_>> for Inflights {
+    fn from(val: &mut Py_Inflights_Mut<'_>) -> Self {
+        match val {
             Py_Inflights_Mut::Owned(x) => x.inner.clone(),
             Py_Inflights_Mut::RefMut(x) => x.inner.map_as_mut(|x| x.clone()).unwrap(),
         }

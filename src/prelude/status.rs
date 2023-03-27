@@ -108,18 +108,16 @@ impl Py_Status__MemStorage_Ref {
     pub fn set_ss(&mut self, ss: &mut Py_SoftState_Ref) -> PyResult<()> {
         let ss = ss
             .inner
-            .map_as_mut(|ss| std::mem::replace(ss, SoftState::default()))?;
+            .map_as_mut(|ss| std::mem::take(ss))?;
 
         self.inner.map_as_mut(|inner| inner.ss = ss)
     }
 
     pub fn get_progress(&mut self) -> PyResult<Option<Py_ProgressTracker_Ref>> {
         self.inner.map_as_mut(|inner| {
-            inner.progress.and_then(|p| {
-                Some(Py_ProgressTracker_Ref {
+            inner.progress.map(|p| Py_ProgressTracker_Ref {
                     inner: RustRef::new(unsafe { make_mut(p) }),
                 })
-            })
         })
     }
 

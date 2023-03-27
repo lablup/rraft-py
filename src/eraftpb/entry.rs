@@ -26,18 +26,18 @@ pub enum Py_Entry_Mut<'p> {
     RefMut(Py_Entry_Ref),
 }
 
-impl Into<Entry> for Py_Entry_Mut<'_> {
-    fn into(self) -> Entry {
-        match self {
+impl From<Py_Entry_Mut<'_>> for Entry {
+    fn from(val: Py_Entry_Mut<'_>) -> Self {
+        match val {
             Py_Entry_Mut::Owned(x) => x.inner.clone(),
             Py_Entry_Mut::RefMut(mut x) => x.inner.map_as_mut(|x| x.clone()).unwrap(),
         }
     }
 }
 
-impl Into<Entry> for &mut Py_Entry_Mut<'_> {
-    fn into(self) -> Entry {
-        match self {
+impl From<&mut Py_Entry_Mut<'_>> for Entry {
+    fn from(val: &mut Py_Entry_Mut<'_>) -> Self {
+        match val {
             Py_Entry_Mut::Owned(x) => x.inner.clone(),
             Py_Entry_Mut::RefMut(x) => x.inner.map_as_mut(|x| x.clone()).unwrap(),
         }

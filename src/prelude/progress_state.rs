@@ -6,9 +6,9 @@ use raft::ProgressState;
 #[pyclass(name = "ProgressState")]
 pub struct Py_ProgressState(pub ProgressState);
 
-impl Into<ProgressState> for Py_ProgressState {
-    fn into(self) -> ProgressState {
-        match self.0 {
+impl From<Py_ProgressState> for ProgressState {
+    fn from(val: Py_ProgressState) -> Self {
+        match val.0 {
             ProgressState::Probe => ProgressState::Probe,
             ProgressState::Replicate => ProgressState::Replicate,
             ProgressState::Snapshot => ProgressState::Snapshot,

@@ -23,18 +23,18 @@ pub enum Py_Snapshot_Mut<'p> {
     RefMut(Py_Snapshot_Ref),
 }
 
-impl Into<Snapshot> for Py_Snapshot_Mut<'_> {
-    fn into(self) -> Snapshot {
-        match self {
+impl From<Py_Snapshot_Mut<'_>> for Snapshot {
+    fn from(val: Py_Snapshot_Mut<'_>) -> Self {
+        match val {
             Py_Snapshot_Mut::Owned(x) => x.inner.clone(),
             Py_Snapshot_Mut::RefMut(mut x) => x.inner.map_as_mut(|x| x.clone()).unwrap(),
         }
     }
 }
 
-impl Into<Snapshot> for &mut Py_Snapshot_Mut<'_> {
-    fn into(self) -> Snapshot {
-        match self {
+impl From<&mut Py_Snapshot_Mut<'_>> for Snapshot {
+    fn from(val: &mut Py_Snapshot_Mut<'_>) -> Self {
+        match val {
             Py_Snapshot_Mut::Owned(x) => x.inner.clone(),
             Py_Snapshot_Mut::RefMut(x) => x.inner.map_as_mut(|x| x.clone()).unwrap(),
         }

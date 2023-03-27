@@ -6,9 +6,9 @@ use raft::eraftpb::MessageType;
 #[pyclass(name = "MessageType")]
 pub struct Py_MessageType(pub MessageType);
 
-impl Into<MessageType> for Py_MessageType {
-    fn into(self) -> MessageType {
-        match self.0 {
+impl From<Py_MessageType> for MessageType {
+    fn from(val: Py_MessageType) -> Self {
+        match val.0 {
             MessageType::MsgHup => MessageType::MsgHup,
             MessageType::MsgBeat => MessageType::MsgBeat,
             MessageType::MsgPropose => MessageType::MsgPropose,

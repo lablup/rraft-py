@@ -24,10 +24,10 @@ impl Py_Storage {
     }
 
     pub fn initial_state(&self) -> PyResult<Py_RaftState_Ref> {
-        to_pyresult(Storage::initial_state(self).and_then(|mut rs| {
-            Ok(Py_RaftState_Ref {
+        to_pyresult(Storage::initial_state(self).map(|mut rs| {
+            Py_RaftState_Ref {
                 inner: RustRef::new(&mut rs),
-            })
+            }
         }))
     }
 
@@ -39,14 +39,14 @@ impl Py_Storage {
         py: Python,
     ) -> PyResult<PyObject> {
         to_pyresult(
-            Storage::entries(self, low, high, max_size).and_then(|mut entries| {
+            Storage::entries(self, low, high, max_size).map(|mut entries| {
                 let py_entries = entries
                     .iter_mut()
                     .map(|x| Py_Entry_Ref {
                         inner: RustRef::new(x),
                     })
                     .collect::<Vec<_>>();
-                Ok(py_entries.into_py(py))
+                py_entries.into_py(py)
             }),
         )
     }
@@ -65,10 +65,10 @@ impl Py_Storage {
 
     pub fn snapshot(&self, request_index: u64) -> PyResult<Py_Snapshot_Ref> {
         to_pyresult(
-            Storage::snapshot(self, request_index).and_then(|mut snapshot| {
-                Ok(Py_Snapshot_Ref {
+            Storage::snapshot(self, request_index).map(|mut snapshot| {
+                Py_Snapshot_Ref {
                     inner: RustRef::new(&mut snapshot),
-                })
+                }
             }),
         )
     }

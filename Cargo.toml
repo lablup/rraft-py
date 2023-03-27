@@ -1,3 +1,5 @@
+cargo-features = ["profile-rustflags"]
+
 [package]
 name = "rraft-py"
 version = "0.1.0"
@@ -5,9 +7,11 @@ authors = ["Lablup Inc."]
 license = ""
 keywords = ["raft", "distributed-systems", "ha"]
 repository = "https://github.com/jopemachine/rraft-py"
-readme = "README.md"
+readme = "./README.md"
 homepage = "https://github.com/jopemachine/rraft-py"
-description = "Unofficial Python Binding of the tikv/raft-rs"
+description = """
+Unofficial Python Binding of the tikv/raft-rs
+"""
 categories = ["algorithms", "database-implementations"]
 edition = "2018"
 
@@ -29,3 +33,11 @@ utils = { path = "src/utils" }
 [lib]
 name = "rraft"
 crate-type = ["cdylib"]
+
+[profile.dev]
+rustflags = [
+	"-A", "non-snake-case",
+	"-A", "non-upper-case-globals",
+	"-A", "non-camel-case-types",
+	"-A", "clippy::should-implement-trait",
+]
