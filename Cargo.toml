@@ -6,9 +6,9 @@ version = "0.1.0"
 authors = ["Lablup Inc."]
 license = ""
 keywords = ["raft", "distributed-systems", "ha"]
-repository = "https://github.com/jopemachine/rraft-py"
+repository = "https://github.com/lablup/rraft-py"
 readme = "./README.md"
-homepage = "https://github.com/jopemachine/rraft-py"
+homepage = "https://github.com/lablup/rraft-py"
 description = """
 Unofficial Python Binding of the tikv/raft-rs
 """
