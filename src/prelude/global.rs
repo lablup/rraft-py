@@ -3,6 +3,9 @@ use pyo3::prelude::*;
 use crate::eraftpb::conf_change::new_conf_change_single as _new_conf_change_single;
 use crate::eraftpb::conf_change_single::Py_ConfChangeSingle_Owner;
 use crate::eraftpb::conf_change_type::Py_ConfChangeType;
+use crate::eraftpb::message_type::{
+    is_local_msg as _is_local_msg, is_response_msg as _is_response_msg,
+};
 use raft::default_logger as _default_logger;
 use raft::majority as _majority;
 use raft::vote_resp_msg_type as _vote_resp_msg_type;
@@ -37,6 +40,16 @@ pub fn new_conf_change_single(node_id: u64, typ: &Py_ConfChangeType) -> Py_ConfC
     Py_ConfChangeSingle_Owner {
         inner: _new_conf_change_single(node_id, typ.0),
     }
+}
+
+#[pyfunction]
+pub fn is_local_msg(typ: &Py_MessageType) -> bool {
+    _is_local_msg(typ.0)
+}
+
+#[pyfunction]
+pub fn is_response_msg(typ: &Py_MessageType) -> bool {
+    _is_response_msg(typ.0)
 }
 
 // Global scope constant

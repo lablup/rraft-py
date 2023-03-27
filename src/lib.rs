@@ -87,6 +87,8 @@ fn rraft(_py: Python, m: &PyModule) -> PyResult<()> {
     m.add_function(wrap_pyfunction!(prelude::global::majority, m)?)?;
     m.add_function(wrap_pyfunction!(prelude::global::default_logger, m)?)?;
     m.add_function(wrap_pyfunction!(prelude::global::vote_resp_msg_type, m)?)?;
+    m.add_function(wrap_pyfunction!(prelude::global::is_local_msg, m)?)?;
+    m.add_function(wrap_pyfunction!(prelude::global::is_response_msg, m)?)?;
     m.add_function(wrap_pyfunction!(
         prelude::global::new_conf_change_single,
         m
