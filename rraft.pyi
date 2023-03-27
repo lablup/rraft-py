@@ -88,7 +88,7 @@ class MessageType:
     MsgHeartbeatResponse: Final[Any]
     MsgUnreachable: Final[Any]
     MsgSnapStatus: Final[Any]
-    MsgCheckQuorup: Final[Any]
+    MsgCheckQuorum: Final[Any]
     MsgTransferLeader: Final[Any]
     MsgTimeoutNow: Final[Any]
     MsgReadIndex: Final[Any]
