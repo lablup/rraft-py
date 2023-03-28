@@ -24,6 +24,7 @@ from rraft import (
     Snapshot_Owner,
     Snapshot_Ref,
     SoftState_Ref,
+    StateRole,
     default_logger,
     new_conf_change_single,
     is_local_msg,
@@ -49,6 +50,7 @@ from test_utils import (
     remove_node,
     SOME_DATA,
     hard_state,
+    soft_state,
     # Interface,
     # Network,
 )
@@ -677,7 +679,55 @@ def test_raw_node_read_index():
 # application to bootstrap the state, i.e. it does not accept peers and will not
 # create faux configuration change entries.
 def test_raw_node_start():
-    pass
+    l = default_logger()
+    store = new_storage()
+    raw_node = new_raw_node(1, [1], 10, 1, store.clone(), l)
+
+    rd = raw_node.ready()
+    must_cmp_ready(rd, None, None, [], [], None, True, True, False)
+    _ = raw_node.advance(rd.make_ref())
+
+    raw_node.campaign()
+    rd = raw_node.ready()
+    ss = soft_state(1, StateRole.Leader)
+
+    must_cmp_ready(
+        rd.make_ref(),
+        ss.make_ref(),
+        hard_state(2, 1, 1),
+        [new_entry(2, 2, None)],
+        [],
+        None,
+        True,
+        True,
+        True,
+    )
+    store.wl(lambda core: core.append(rd.entries()))
+
+    light_rd = raw_node.advance(rd.make_ref())
+    assert light_rd.commit_index() == 2
+    assert light_rd.committed_entries() == [new_entry(2, 2, None)]
+    assert not raw_node.has_ready()
+
+    raw_node.propose([], list(b"somedata"))
+    rd = raw_node.ready()
+    must_cmp_ready(
+        rd.make_ref(),
+        None,
+        None,
+        [new_entry(2, 3, SOME_DATA)],
+        [],
+        None,
+        True,
+        True,
+        True,
+    )
+    store.wl(lambda core: core.append(rd.entries()))
+    light_rd = raw_node.advance(rd.make_ref())
+    assert light_rd.commit_index() == 3
+    assert light_rd.committed_entries() == [new_entry(2, 3, SOME_DATA)]
+
+    assert not raw_node.has_ready()
 
 
 def test_raw_node_restart():

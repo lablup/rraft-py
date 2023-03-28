@@ -147,7 +147,7 @@ def hard_state(term: int, commit: int, vote: int) -> HardState_Owner:
 
 
 def soft_state(leader_id: int, raft_state: StateRole) -> SoftState_Owner:
-    ss = SoftState_Owner()
+    ss = SoftState_Owner.default()
     ss.set_leader_id(leader_id)
     ss.set_raft_state(raft_state)
     return ss
