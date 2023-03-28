@@ -538,7 +538,60 @@ def test_raw_node_joint_auto_leave():
 # Ensures that two proposes to add the same node should not affect the later propose
 # to add new node.
 def test_raw_node_propose_add_duplicate_node():
-    pass
+    l = default_logger()
+    s = new_storage()
+    raw_node = new_raw_node(1, [1], 10, 1, s.clone(), l)
+    raw_node.campaign()
+
+    while True:
+        rd = raw_node.ready()
+        s.wl(lambda core: core.append(rd.entries()))
+
+        if ss := rd.ss():
+            if ss.get_leader_id() == raw_node.get_raft().get_id():
+                raw_node.advance(rd.make_ref())
+                break
+        raw_node.advance(rd.make_ref())
+
+    def propose_conf_change_and_apply(cc: ConfChange_Owner):
+        raw_node.propose_conf_change([], cc)
+        rd = raw_node.ready()
+        s.wl(lambda core: core.append(rd.entries()))
+
+        def handle_committed_entries(
+            rn: RawNode__MemStorage_Ref, committed_entries: List[Entry_Owner]
+        ):
+            for e in committed_entries:
+                if e.get_entry_type() == EntryType.EntryConfChange:
+                    conf_change = ConfChange_Owner.default()
+                    conf_change.merge_from_bytes(e.get_data())
+                    rn.apply_conf_change(conf_change)
+
+        handle_committed_entries(raw_node, rd.take_committed_entries())
+
+        light_rd = raw_node.advance(rd.make_ref())
+        handle_committed_entries(raw_node, light_rd.take_committed_entries())
+        raw_node.advance_apply()
+
+    cc1 = conf_change(ConfChangeType.AddNode, 1)
+    ccdata1 = cc1.write_to_bytes()
+    propose_conf_change_and_apply(cc1.clone())
+
+    # try to add the same node again
+    propose_conf_change_and_apply(cc1)
+
+    # the new node join should be ok
+    cc2 = conf_change(ConfChangeType.AddNode, 2)
+    ccdata2 = cc2.write_to_bytes()
+    propose_conf_change_and_apply(cc2)
+
+    last_index = s.last_index()
+
+    # the last three entries should be: ConfChange cc1, cc1, cc2
+    entries = s.entries(last_index - 2, last_index + 1, None)
+    assert len(entries) == 3
+    assert entries[0].get_data() == ccdata1
+    assert entries[2].get_data() == ccdata2
 
 
 def test_raw_node_propose_add_learner_node():
