@@ -853,7 +853,13 @@ def test_skip_bcast_commit():
 
 # test_set_priority checks the set_priority function in RawNode.
 def test_set_priority():
-    pass
+    l = default_logger()
+    s = new_storage()
+    raw_node = new_raw_node(1, [1], 10, 1, s, l)
+    priorities = [0, 1, 5, 10, 10000]
+    for p in priorities:
+        raw_node.set_priority(p)
+        assert raw_node.get_raft().get_priority() == p
 
 
 # TestNodeBoundedLogGrowthWithPartition tests a scenario where a leader is
