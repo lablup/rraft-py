@@ -65,13 +65,13 @@ impl Py_ReadState_Owner {
         format!("{:?}", self.inner)
     }
 
-    pub fn __richcmp__(&self, rhs: Py_ReadState_Mut, op: CompareOp) -> bool {
+    pub fn __richcmp__(&self, py: Python<'_>, rhs: Py_ReadState_Mut, op: CompareOp) -> PyObject {
         let rhs: ReadState = rhs.into();
 
         match op {
-            CompareOp::Eq => self.inner == rhs,
-            CompareOp::Ne => self.inner != rhs,
-            _ => panic!("Undefined operator"),
+            CompareOp::Eq => (self.inner == rhs).into_py(py),
+            CompareOp::Ne => (self.inner != rhs).into_py(py),
+            _ => py.NotImplemented(),
         }
     }
 
@@ -87,14 +87,19 @@ impl Py_ReadState_Ref {
         self.inner.map_as_ref(|inner| format!("{:?}", inner))
     }
 
-    pub fn __richcmp__(&self, rhs: Py_ReadState_Mut, op: CompareOp) -> PyResult<bool> {
+    pub fn __richcmp__(
+        &self,
+        py: Python<'_>,
+        rhs: Py_ReadState_Mut,
+        op: CompareOp,
+    ) -> PyResult<PyObject> {
         self.inner.map_as_ref(|inner| {
             let rhs: ReadState = rhs.into();
 
             match op {
-                CompareOp::Eq => inner == &rhs,
-                CompareOp::Ne => inner != &rhs,
-                _ => panic!("Undefined operator"),
+                CompareOp::Eq => (inner == &rhs).into_py(py),
+                CompareOp::Ne => (inner != &rhs).into_py(py),
+                _ => py.NotImplemented(),
             }
         })
     }

@@ -8,12 +8,17 @@ pub struct Py_StorageError(pub StorageError);
 
 #[pymethods]
 impl Py_StorageError {
-    pub fn __richcmp__(&mut self, rhs: &Py_StorageError, op: CompareOp) -> PyResult<bool> {
-        Ok(match op {
-            CompareOp::Eq => self.0 == rhs.0,
-            CompareOp::Ne => self.0 != rhs.0,
-            _ => panic!("Undefined operator"),
-        })
+    pub fn __richcmp__(
+        &mut self,
+        py: Python<'_>,
+        rhs: &Py_StorageError,
+        op: CompareOp,
+    ) -> PyObject {
+        match op {
+            CompareOp::Eq => (self.0 == rhs.0).into_py(py),
+            CompareOp::Ne => (self.0 != rhs.0).into_py(py),
+            _ => py.NotImplemented(),
+        }
     }
 
     pub fn __repr__(&self) -> String {
@@ -61,12 +66,12 @@ pub struct Py_RaftError(pub Error);
 
 #[pymethods]
 impl Py_RaftError {
-    pub fn __richcmp__(&mut self, rhs: &Py_RaftError, op: CompareOp) -> PyResult<bool> {
-        Ok(match op {
-            CompareOp::Eq => self.0 == rhs.0,
-            CompareOp::Ne => self.0 != rhs.0,
-            _ => panic!("Undefined operator"),
-        })
+    pub fn __richcmp__(&mut self, py: Python<'_>, rhs: &Py_RaftError, op: CompareOp) -> PyObject {
+        match op {
+            CompareOp::Eq => (self.0 == rhs.0).into_py(py),
+            CompareOp::Ne => (self.0 != rhs.0).into_py(py),
+            _ => py.NotImplemented(),
+        }
     }
 
     pub fn __repr__(&self) -> String {

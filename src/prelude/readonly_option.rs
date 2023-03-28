@@ -26,12 +26,12 @@ impl From<ReadOnlyOption> for Py_ReadOnlyOption {
 
 #[pymethods]
 impl Py_ReadOnlyOption {
-    pub fn __richcmp__(&self, rhs: &Py_ReadOnlyOption, op: CompareOp) -> PyResult<bool> {
-        Ok(match op {
-            CompareOp::Eq => self.0 == rhs.0,
-            CompareOp::Ne => self.0 != rhs.0,
-            _ => panic!("Undefined operator"),
-        })
+    pub fn __richcmp__(&self, py: Python<'_>, rhs: &Py_ReadOnlyOption, op: CompareOp) -> PyObject {
+        match op {
+            CompareOp::Eq => (self.0 == rhs.0).into_py(py),
+            CompareOp::Ne => (self.0 != rhs.0).into_py(py),
+            _ => py.NotImplemented(),
+        }
     }
 
     pub fn __hash__(&self) -> u64 {

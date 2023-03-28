@@ -64,12 +64,12 @@ impl From<MessageType> for Py_MessageType {
 
 #[pymethods]
 impl Py_MessageType {
-    pub fn __richcmp__(&self, rhs: &Py_MessageType, op: CompareOp) -> PyResult<bool> {
-        Ok(match op {
-            CompareOp::Eq => self.0 == rhs.0,
-            CompareOp::Ne => self.0 != rhs.0,
-            _ => panic!("Undefined operator"),
-        })
+    pub fn __richcmp__(&self, py: Python<'_>, rhs: &Py_MessageType, op: CompareOp) -> PyObject {
+        match op {
+            CompareOp::Eq => (self.0 == rhs.0).into_py(py),
+            CompareOp::Ne => (self.0 != rhs.0).into_py(py),
+            _ => py.NotImplemented(),
+        }
     }
 
     pub fn __hash__(&self) -> u64 {
@@ -198,23 +198,23 @@ impl Py_MessageType {
 
 // Checks if certain message type should be used internally.
 pub fn is_local_msg(t: MessageType) -> bool {
-    match t {
+    matches!(
+        t,
         MessageType::MsgHup
-        | MessageType::MsgBeat
-        | MessageType::MsgUnreachable
-        | MessageType::MsgSnapStatus
-        | MessageType::MsgCheckQuorum => true,
-        _ => false,
-    }
+            | MessageType::MsgBeat
+            | MessageType::MsgUnreachable
+            | MessageType::MsgSnapStatus
+            | MessageType::MsgCheckQuorum,
+    )
 }
 
 pub fn is_response_msg(t: MessageType) -> bool {
-    match t {
+    matches!(
+        t,
         MessageType::MsgAppendResponse
-        | MessageType::MsgRequestVoteResponse
-        | MessageType::MsgHeartbeatResponse
-        | MessageType::MsgUnreachable
-        | MessageType::MsgRequestPreVoteResponse => true,
-        _ => false,
-    }
+            | MessageType::MsgRequestVoteResponse
+            | MessageType::MsgHeartbeatResponse
+            | MessageType::MsgUnreachable
+            | MessageType::MsgRequestPreVoteResponse,
+    )
 }

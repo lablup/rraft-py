@@ -35,11 +35,16 @@ impl Py_SoftState_Owner {
         format!("{:?}", self.inner)
     }
 
-    pub fn __richcmp__(&self, rhs: &Py_SoftState_Ref, op: CompareOp) -> PyResult<bool> {
+    pub fn __richcmp__(
+        &self,
+        py: Python<'_>,
+        rhs: &Py_SoftState_Ref,
+        op: CompareOp,
+    ) -> PyResult<PyObject> {
         match op {
-            CompareOp::Eq => rhs.inner.map_as_ref(|x| x == &self.inner),
-            CompareOp::Ne => rhs.inner.map_as_ref(|x| x != &self.inner),
-            _ => panic!("Undefined operator"),
+            CompareOp::Eq => rhs.inner.map_as_ref(|x| (x == &self.inner).into_py(py)),
+            CompareOp::Ne => rhs.inner.map_as_ref(|x| (x != &self.inner).into_py(py)),
+            _ => Ok(py.NotImplemented()),
         }
     }
 
@@ -55,12 +60,17 @@ impl Py_SoftState_Ref {
         self.inner.map_as_ref(|inner| format!("{:?}", inner))
     }
 
-    pub fn __richcmp__(&self, rhs: &Py_SoftState_Ref, op: CompareOp) -> PyResult<bool> {
+    pub fn __richcmp__(
+        &self,
+        py: Python<'_>,
+        rhs: &Py_SoftState_Ref,
+        op: CompareOp,
+    ) -> PyResult<PyObject> {
         self.inner
             .map_as_ref(|inner| match op {
-                CompareOp::Eq => rhs.inner.map_as_ref(|x| x == inner),
-                CompareOp::Ne => rhs.inner.map_as_ref(|x| x != inner),
-                _ => panic!("Undefined operator"),
+                CompareOp::Eq => rhs.inner.map_as_ref(|x| (x == inner).into_py(py)),
+                CompareOp::Ne => rhs.inner.map_as_ref(|x| (x != inner).into_py(py)),
+                _ => Ok(py.NotImplemented()),
             })
             .and_then(to_pyresult)
     }

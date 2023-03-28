@@ -28,11 +28,16 @@ impl From<EntryType> for Py_EntryType {
 
 #[pymethods]
 impl Py_EntryType {
-    pub fn __richcmp__(&self, rhs: &Py_EntryType, op: CompareOp) -> PyResult<bool> {
+    pub fn __richcmp__(
+        &self,
+        py: Python<'_>,
+        rhs: &Py_EntryType,
+        op: CompareOp,
+    ) -> PyResult<PyObject> {
         Ok(match op {
-            CompareOp::Eq => self.0 == rhs.0,
-            CompareOp::Ne => self.0 != rhs.0,
-            _ => panic!("Undefined operator"),
+            CompareOp::Eq => (self.0 == rhs.0).into_py(py),
+            CompareOp::Ne => (self.0 != rhs.0).into_py(py),
+            _ => py.NotImplemented(),
         })
     }
 
