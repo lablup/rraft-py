@@ -25,7 +25,8 @@ use crate::{
 
 use super::{
     config::Py_Config_Mut, progress_tracker::Py_ProgressTracker_Ref,
-    raft_log::Py_RaftLog__MemStorage_Ref, soft_state::Py_SoftState_Ref, state_role::Py_StateRole,
+    raft_log::Py_RaftLog__MemStorage_Ref, read_state::Py_ReadState_Owner,
+    soft_state::Py_SoftState_Ref, state_role::Py_StateRole,
 };
 
 #[pyclass(name = "Raft__MemStorage_Owner")]
@@ -393,6 +394,17 @@ impl Py_Raft__MemStorage_Ref {
 
     pub fn set_leader_id(&mut self, v: u64) -> PyResult<()> {
         self.inner.map_as_mut(|inner| inner.leader_id = v)
+    }
+
+    pub fn get_read_states(&self, py: Python<'_>) -> PyResult<PyObject> {
+        self.inner.map_as_ref(|inner| {
+            inner
+                .read_states
+                .iter()
+                .map(|rs| Py_ReadState_Owner { inner: rs.clone() })
+                .collect::<Vec<_>>()
+                .into_py(py)
+        })
     }
 
     pub fn get_id(&self) -> PyResult<u64> {

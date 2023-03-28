@@ -1894,6 +1894,8 @@ class Raft__MemStorage:
         """Set whether batch append msg at runtime."""
     def get_readonly_read_index_queue(self) -> List[List[int]]:
         """ """
+    def get_readstates(self) -> List[ReadState_Owner]:
+        """ """
 
 class Raft__MemStorage_Owner(Raft__MemStorage):
     """
