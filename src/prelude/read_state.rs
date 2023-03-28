@@ -42,8 +42,8 @@ impl From<&mut Py_ReadState_Mut<'_>> for ReadState {
 
 #[pymethods]
 impl Py_ReadState_Owner {
-    #[new]
-    pub fn new() -> Self {
+    #[staticmethod]
+    pub fn default() -> Self {
         Py_ReadState_Owner {
             inner: ReadState::default(),
         }
