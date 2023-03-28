@@ -1,5 +1,4 @@
 use pyo3::prelude::*;
-use pyo3::types::PyBytes;
 
 use raft::prelude::{ConfChange, ConfChangeV2};
 use raft::storage::MemStorage;
@@ -165,7 +164,7 @@ impl Py_RawNode__MemStorage_Ref {
             .and_then(to_pyresult)
     }
 
-    pub fn propose(&mut self, context: &PyBytes, data: &PyBytes) -> PyResult<()> {
+    pub fn propose(&mut self, context: &PyAny, data: &PyAny) -> PyResult<()> {
         let context = context.extract::<Vec<u8>>()?;
         let data = data.extract::<Vec<u8>>()?;
 
@@ -174,11 +173,7 @@ impl Py_RawNode__MemStorage_Ref {
             .and_then(to_pyresult)
     }
 
-    pub fn propose_conf_change(
-        &mut self,
-        context: &PyBytes,
-        cc: Py_ConfChange_Mut,
-    ) -> PyResult<()> {
+    pub fn propose_conf_change(&mut self, context: &PyAny, cc: Py_ConfChange_Mut) -> PyResult<()> {
         let context = context.extract::<Vec<u8>>()?;
         let cc: ConfChange = cc.into();
 
@@ -189,7 +184,7 @@ impl Py_RawNode__MemStorage_Ref {
 
     pub fn propose_conf_change_v2(
         &mut self,
-        context: &PyBytes,
+        context: &PyAny,
         cc: Py_ConfChangeV2_Mut,
     ) -> PyResult<()> {
         let context = context.extract::<Vec<u8>>()?;
@@ -242,7 +237,7 @@ impl Py_RawNode__MemStorage_Ref {
             .map_as_mut(|inner| inner.on_persist_ready(number))
     }
 
-    pub fn read_index(&mut self, rctx: &PyBytes) -> PyResult<()> {
+    pub fn read_index(&mut self, rctx: &PyAny) -> PyResult<()> {
         let rctx = rctx.extract()?;
         self.inner.map_as_mut(|inner| inner.read_index(rctx))
     }

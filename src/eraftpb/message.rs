@@ -212,7 +212,7 @@ impl Py_Message_Ref {
             .map_as_ref(|inner| PyBytes::new(py, inner.get_context()).into())
     }
 
-    pub fn set_context(&mut self, context: &PyBytes) -> PyResult<()> {
+    pub fn set_context(&mut self, context: &PyAny) -> PyResult<()> {
         let v = context.extract::<Vec<u8>>()?;
         self.inner.map_as_mut(|inner| inner.set_context(v))
     }

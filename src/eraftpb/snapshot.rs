@@ -125,10 +125,10 @@ impl Py_Snapshot_Ref {
             .map_as_ref(|inner| PyBytes::new(py, inner.get_data()).into())
     }
 
-    pub fn set_data(&mut self, byte_arr: &PyBytes) -> PyResult<()> {
-        self.inner.map_as_mut(|inner| {
-            inner.set_data(byte_arr.as_bytes().to_vec());
-        })
+    pub fn set_data(&mut self, bytes: &PyAny) -> PyResult<()> {
+        let bytes = bytes.extract::<Vec<u8>>()?;
+
+        self.inner.map_as_mut(|inner| inner.set_data(bytes))
     }
 
     pub fn clear_data(&mut self) -> PyResult<()> {

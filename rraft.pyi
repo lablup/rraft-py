@@ -535,12 +535,12 @@ class RawNode__MemStorage:
         """
         Campaign causes this RawNode to transition to candidate state.
         """
-    def propose(self, context: bytes, data: bytes) -> None:
+    def propose(self, context: bytes | List[int], data: bytes | List[int]) -> None:
         """
         Propose proposes data be appended to the raft log.
         """
     def propose_conf_change(
-        self, context: bytes, cc: ConfChange_Owner | ConfChange_Ref
+        self, context: bytes | List[int], cc: ConfChange_Owner | ConfChange_Ref
     ) -> None:
         """
         ProposeConfChange proposes a config change.
@@ -550,7 +550,7 @@ class RawNode__MemStorage:
         leaving joint state.
         """
     def propose_conf_change_v2(
-        self, context: bytes, cc: ConfChangeV2_Owner | ConfChangeV2_Ref
+        self, context: bytes | List[int], cc: ConfChangeV2_Owner | ConfChangeV2_Ref
     ) -> None:
         """
         ProposeConfChange proposes a config change.
@@ -591,7 +591,7 @@ class RawNode__MemStorage:
         [`Self::has_ready`] and [`Self::ready`] should be called later to handle further
         updates that become valid after ready being persisted.
         """
-    def read_index(self, rctx: bytes) -> None:
+    def read_index(self, rctx: bytes | List[int]) -> None:
         """
         ReadIndex requests a read state. The read state will be set in ready.
         Read State has a read index. Once the application advances further than the read
@@ -645,7 +645,7 @@ class Peer:
         """ """
     def get_context(self) -> bytes:
         """ """
-    def set_context(self, context: bytes) -> None:
+    def set_context(self, context: bytes | List[int]) -> None:
         """ """
 
 class Peer_Owner(Peer):
@@ -823,7 +823,7 @@ class Message(Cloneable):
         """ """
     def get_context(self) -> bytes:
         """ """
-    def set_context(self, context: bytes) -> None:
+    def set_context(self, context: bytes | List[int]) -> None:
         """ """
     def clear_context(self) -> None:
         """ """
@@ -929,13 +929,13 @@ class Entry(Cloneable):
     def clone(self) -> Entry_Owner: ...
     def get_context(self) -> bytes:
         """ """
-    def set_context(self, context: bytes) -> None:
+    def set_context(self, context: bytes | List[int]) -> None:
         """ """
     def clear_context(self) -> None:
         """ """
     def get_data(self) -> bytes:
         """ """
-    def set_data(self, data: bytes) -> None:
+    def set_data(self, data: bytes | List[int]) -> None:
         """ """
     def clear_data(self) -> None:
         """ """
@@ -1031,17 +1031,17 @@ class ConfChangeV2(Cloneable):
     def clone(self) -> ConfChangeV2_Owner: ...
     def get_changes(self) -> bytes:
         """ """
-    def set_context(self, context: bytes) -> None:
-        """ """
-    def clear_context(self) -> None:
-        """ """
-    def get_context(self) -> List[ConfChangeSingle_Ref]:
-        """ """
     def set_changes(
         self, changes: List[ConfChangeSingle_Owner] | List[ConfChangeSingle_Ref]
     ) -> None:
         """ """
     def clear_changes(self) -> None:
+        """ """
+    def get_context(self) -> bytes:
+        """ """
+    def set_context(self, context: bytes | List[int]) -> None:
+        """ """
+    def clear_context(self) -> None:
         """ """
     def get_transition(self) -> ConfChangeTransition:
         """ """
@@ -1065,7 +1065,7 @@ class ConfChangeV2(Cloneable):
         """
         Gets conf change as `ConfChangeV2`.
         """
-    def as_v1(self) -> ConfChange_Ref:
+    def as_v1(self) -> Optional[ConfChange_Ref]:
         """
         Converts conf change to `ConfChange`.
 
@@ -1137,7 +1137,7 @@ class ConfChange(Cloneable):
         """ """
     def get_context(self) -> bytes:
         """ """
-    def set_context(self, context: bytes):
+    def set_context(self, context: bytes | List[int]) -> None:
         """ """
     def clear_context(self) -> None:
         """ """
@@ -1149,7 +1149,7 @@ class ConfChange(Cloneable):
         """
         Gets conf change as `ConfChangeV2`.
         """
-    def as_v1(self) -> ConfChange_Ref:
+    def as_v1(self) -> Optional[ConfChange_Ref]:
         """
         Converts conf change to `ConfChange`.
 
@@ -1331,7 +1331,7 @@ class ReadState(Cloneable):
         """ """
     def get_request_ctx(self) -> bytes:
         """ """
-    def set_request_ctx(self, request_ctx: bytes) -> None:
+    def set_request_ctx(self, request_ctx: bytes | List[int]) -> None:
         """ """
 
 class ReadState_Owner(ReadState):

@@ -1,3 +1,4 @@
+use protobuf::Message;
 use pyo3::{prelude::*, pyclass::CompareOp, types::PyBytes};
 use utils::{errors::to_pyresult, reference::RustRef};
 
@@ -157,7 +158,7 @@ impl Py_ConfChange_Ref {
             .map_as_ref(|inner| PyBytes::new(py, inner.get_context()).into())
     }
 
-    pub fn set_context(&mut self, context: &PyBytes) -> PyResult<()> {
+    pub fn set_context(&mut self, context: &PyAny) -> PyResult<()> {
         let context = context.extract::<Vec<u8>>()?;
         self.inner.map_as_mut(|inner| inner.set_context(context))
     }
@@ -197,6 +198,14 @@ impl Py_ConfChange_Ref {
     // TODO: Apply COW to below method
     pub fn as_v2(&mut self) -> PyResult<Py_ConfChangeV2_Owner> {
         self.clone().unwrap().make_ref().into_v2()
+    }
+
+    pub fn merge_from_bytes(&mut self, bytes: &PyAny) -> PyResult<()> {
+        let bytes = bytes.extract::<Vec<u8>>()?;
+
+        self.inner
+            .map_as_mut(|inner| inner.merge_from_bytes(bytes.as_slice()))
+            .and_then(to_pyresult)
     }
 }
 

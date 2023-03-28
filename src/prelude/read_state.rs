@@ -123,7 +123,7 @@ impl Py_ReadState_Ref {
             .map_as_ref(|inner| PyBytes::new(py, inner.request_ctx.as_slice()).to_object(py))
     }
 
-    pub fn set_request_ctx(&mut self, request_ctx: &PyBytes) -> PyResult<()> {
+    pub fn set_request_ctx(&mut self, request_ctx: &PyAny) -> PyResult<()> {
         let v = request_ctx.extract()?;
         self.inner.map_as_mut(|inner| inner.request_ctx = v)
     }
