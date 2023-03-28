@@ -3,19 +3,28 @@ import sys
 import pytest
 from typing import Any, List, Optional, Tuple, cast
 from rraft import (
+    NO_LIMIT,
+    ConfChange_Owner,
+    ConfChangeTransition,
+    ConfChangeType,
+    ConfChangeV2_Owner,
+    ConfState_Owner,
     Config_Ref,
     Entry_Owner,
     Entry_Ref,
+    EntryType,
     HardState_Ref,
     Logger_Ref,
     MemStorage_Owner,
     MessageType,
     RawNode__MemStorage_Owner,
+    RawNode__MemStorage_Ref,
     Ready_Ref,
     Snapshot_Owner,
     Snapshot_Ref,
     SoftState_Ref,
     default_logger,
+    new_conf_change_single,
     is_local_msg,
 )
 from test_utils import (
@@ -23,6 +32,8 @@ from test_utils import (
     add_node,
     conf_change_v2,
     conf_change,
+    conf_state,
+    conf_state_v2,
     empty_entry,
     new_entry,
     new_message_with_entries,
@@ -220,7 +231,213 @@ def test_raw_node_read_index_to_old_leader():
 # resulting ConfState matches expectations, and for joint configurations makes
 # sure that they are exited successfully.
 def test_raw_node_propose_and_conf_change():
-    pass
+    l = default_logger()
+
+    class Test:
+        def __init__(
+            self,
+            cc: ConfChange_Owner | ConfChangeV2_Owner,
+            exp: ConfState_Owner,
+            exp2: Optional[ConfState_Owner],
+        ) -> None:
+            self.cc = cc
+            self.exp = exp
+            self.exp2 = exp2
+
+    test_cases = [
+        # V1 config change.b
+        Test(
+            conf_change(ConfChangeType.AddNode, 2),
+            conf_state([1, 2], []),
+            None,
+        ),
+    ]
+
+    # Proposing the same as a V2 change works just the same, without entering
+    # a joint config.
+    single = new_conf_change_single(2, ConfChangeType.AddNode)
+    test_cases.append(
+        Test(
+            conf_change_v2([single]),
+            conf_state([1, 2], []),
+            None,
+        )
+    )
+
+    # Ditto if we add it as a learner instead.
+    single = new_conf_change_single(2, ConfChangeType.AddLearnerNode)
+    test_cases.append(
+        Test(
+            conf_change_v2([single]),
+            conf_state([1], [2]),
+            None,
+        )
+    )
+
+    # We can ask explicitly for joint consensus if we want it.
+    single = new_conf_change_single(2, ConfChangeType.AddLearnerNode)
+    cc = conf_change_v2([single])
+    cc.set_transition(ConfChangeTransition.Explicit)
+    cs = conf_state_v2([1], [2], [1], [], False)
+    test_cases.append(Test(cc, cs, conf_state([1], [2])))
+
+    # Ditto, but with implicit transition (the harness checks this).
+    single = new_conf_change_single(2, ConfChangeType.AddLearnerNode)
+    cc = conf_change_v2([single])
+    cc.set_transition(ConfChangeTransition.Implicit)
+    cs = conf_state_v2([1], [2], [1], [], True)
+    test_cases.append(Test(cc, cs, conf_state([1], [2])))
+
+    # Add a new node and demote n1. This exercises the interesting case in
+    # which we really need joint config changes and also need LearnersNext.
+    cc = conf_change_v2(
+        [
+            new_conf_change_single(2, ConfChangeType.AddNode),
+            new_conf_change_single(1, ConfChangeType.AddLearnerNode),
+            new_conf_change_single(3, ConfChangeType.AddLearnerNode),
+        ]
+    )
+    cs = conf_state_v2([2], [3], [1], [1], True)
+    test_cases.append(Test(cc, cs, conf_state([2], [1, 3])))
+
+    # Ditto explicit.
+    cc = conf_change_v2(
+        [
+            new_conf_change_single(2, ConfChangeType.AddNode),
+            new_conf_change_single(1, ConfChangeType.AddLearnerNode),
+            new_conf_change_single(3, ConfChangeType.AddLearnerNode),
+        ]
+    )
+    cc.set_transition(ConfChangeTransition.Explicit)
+    cs = conf_state_v2([2], [3], [1], [1], False)
+    test_cases.append(Test(cc, cs, conf_state([2], [1, 3])))
+
+    # Ditto implicit.
+    cc = conf_change_v2(
+        [
+            new_conf_change_single(2, ConfChangeType.AddNode),
+            new_conf_change_single(1, ConfChangeType.AddLearnerNode),
+            new_conf_change_single(3, ConfChangeType.AddLearnerNode),
+        ]
+    )
+    cc.set_transition(ConfChangeTransition.Implicit)
+    cs = conf_state_v2([2], [3], [1], [1], True)
+    test_cases.append(Test(cc, cs, conf_state([2], [1, 3])))
+
+    for v in test_cases:
+        cc, exp, exp2 = v.cc, v.exp, v.exp2
+        s = new_storage()
+
+        raw_node = new_raw_node(1, [1], 10, 1, s.clone(), l)
+        raw_node.campaign()
+        proposed = False
+        ccdata = []
+        # Propose the ConfChange, wait until it applies, save the resulting ConfState.
+        cs: Optional[ConfState_Owner] = None
+
+        while not cs:
+            rd = raw_node.ready()
+            s.wl(lambda core: core.append(rd.entries()))
+
+            def handle_committed_entries(
+                rn: RawNode__MemStorage_Ref, committed_entries: List[Entry_Owner]
+            ):
+                for e in committed_entries:
+                    nonlocal cs
+
+                    if e.get_entry_type() == EntryType.EntryConfChange:
+                        cc = ConfChange_Owner.default()
+                        cc.merge_from_bytes(e.get_data())
+                        cs = rn.apply_conf_change(cc)
+                    elif e.get_entry_type() == EntryType.EntryConfChangeV2:
+                        cc = ConfChangeV2_Owner.default()
+                        cc.merge_from_bytes(e.get_data())
+                        cs = rn.apply_conf_change_v2(cc)
+
+            handle_committed_entries(raw_node.make_ref(), rd.take_committed_entries())
+
+            is_leader = False
+
+            if ss := rd.ss():
+                is_leader = ss.get_leader_id() == raw_node.get_raft().get_id()
+
+            light_rd = raw_node.advance(rd.make_ref())
+            handle_committed_entries(
+                raw_node.make_ref(), light_rd.take_committed_entries()
+            )
+            raw_node.advance_apply()
+
+            # Once we are the leader, propose a command and a ConfChange.
+            if not proposed and is_leader:
+                raw_node.propose([], b"somedata")
+
+                if v1 := cc.as_v1():
+                    ccdata = v1.write_to_bytes()
+                    raw_node.propose_conf_change([], v1.clone())
+                else:
+                    v2 = cc.as_v2()
+                    ccdata = v2.write_to_bytes()
+                    raw_node.propose_conf_change_v2([], v2)
+
+                proposed = True
+
+        # Check that the last index is exactly the conf change we put in,
+        # down to the bits. Note that this comes from the Storage, which
+        # will not reflect any unstable entries that we'll only be presented
+        # with in the next Ready.
+        last_index = s.last_index()
+        entries = s.entries(last_index - 1, last_index + 1, NO_LIMIT)
+        assert len(entries) == 2
+        assert entries[0].get_data() == b"somedata"
+
+        if cc.as_v1():
+            assert entries[1].get_entry_type() == EntryType.EntryConfChange
+        else:
+            assert entries[1].get_entry_type() == EntryType.EntryConfChangeV2
+
+        assert ccdata == entries[1].get_data()
+        assert cs == exp
+
+        conf_index = last_index
+        if cc.as_v2().enter_joint():
+            # If this is an auto-leaving joint conf change, it will have
+            # appended the entry that auto-leaves, so add one to the last
+            # index that forms the basis of our expectations on
+            # pendingConfIndex. (Recall that lastIndex was taken from stable
+            # storage, but this auto-leaving entry isn't on stable storage
+            # yet).
+            conf_index += 1
+
+        assert conf_index == raw_node.get_raft().get_pending_conf_index()
+
+        # Move the RawNode along. If the ConfChange was simple, nothing else
+        # should happen. Otherwise, we're in a joint state, which is either
+        # left automatically or not. If not, we add the proposal that leaves
+        # it manually.
+        rd = raw_node.ready()
+        context = []
+        if not exp.get_auto_leave():
+            assert not rd.entries()
+            if not exp2:
+                continue
+
+            context = list(b"manual")
+            cc = conf_change_v2([])
+            cc.set_context(context)
+            raw_node.propose_conf_change_v2([], cc)
+            rd = raw_node.ready()
+
+        # Check that the right ConfChange comes out.
+        assert len(rd.entries()) == 1
+        assert rd.entries()[0].get_entry_type() == EntryType.EntryConfChangeV2
+        leave_cc = ConfChangeV2_Owner.default()
+        leave_cc.merge_from_bytes(rd.entries()[0].get_data())
+
+        assert context == list(leave_cc.get_context()), f"{cc.as_v2()}"
+        # Lie and pretend the ConfChange applied. It won't do so because now
+        # we require the joint quorum and we're only running one node.
+        cs = raw_node.apply_conf_change_v2(leave_cc)
+        assert cs == exp2
 
 
 # Tests the configuration change auto leave even leader lost leadership.
