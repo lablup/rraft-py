@@ -442,7 +442,97 @@ def test_raw_node_propose_and_conf_change():
 
 # Tests the configuration change auto leave even leader lost leadership.
 def test_raw_node_joint_auto_leave():
-    pass
+    l = default_logger()
+
+    single = new_conf_change_single(2, ConfChangeType.AddLearnerNode)
+    test_cc = conf_change_v2([single])
+    test_cc.set_transition(ConfChangeTransition.Implicit)
+    exp_cs = conf_state_v2([1], [2], [1], [], True)
+    exp_cs2 = conf_state([1], [2])
+
+    s = new_storage()
+    raw_node = new_raw_node(1, [1], 10, 1, s.clone(), l)
+    raw_node.campaign()
+    proposed = False
+    ccdata = test_cc.write_to_bytes()
+    # Propose the ConfChange, wait until it applies, save the resulting ConfState.
+    cs = None
+    while not cs:
+        rd = raw_node.ready()
+        s.wl(lambda core: core.append(rd.entries()))
+
+        def handle_committed_entries(
+            rn: RawNode__MemStorage_Ref, committed_entries: List[Entry_Owner]
+        ):
+            for e in committed_entries:
+                nonlocal cs
+                if e.get_entry_type() == EntryType.EntryConfChangeV2:
+                    cc = ConfChangeV2_Owner.default()
+                    cc.merge_from_bytes(e.get_data())
+
+                    # Force it step down.
+                    msg = new_message(1, 1, MessageType.MsgHeartbeatResponse, 0)
+                    msg.set_term(rn.get_raft().get_term() + 1)
+                    rn.step(msg)
+
+                    cs = rn.apply_conf_change_v2(cc)
+
+        handle_committed_entries(raw_node.make_ref(), rd.take_committed_entries())
+        is_leader = False
+
+        if ss := rd.ss():
+            is_leader = ss.get_leader_id() == raw_node.get_raft().get_id()
+
+        light_rd = raw_node.advance(rd.make_ref())
+        handle_committed_entries(raw_node.make_ref(), light_rd.take_committed_entries())
+        raw_node.advance_apply()
+
+        # Once we are the leader, propose a command and a ConfChange.
+        if not proposed and is_leader:
+            raw_node.propose([], b"somedata")
+            raw_node.propose_conf_change_v2([], test_cc.clone())
+
+            proposed = True
+
+    # Check that the last index is exactly the conf change we put in,
+    # down to the bits. Note that this comes from the Storage, which
+    # will not reflect any unstable entries that we'll only be presented
+    # with in the next Ready.
+    last_index = s.last_index()
+    entries = s.entries(last_index - 1, last_index + 1, NO_LIMIT)
+    assert len(entries) == 2
+    assert entries[0].get_data() == b"somedata"
+    assert entries[1].get_entry_type() == EntryType.EntryConfChangeV2
+    assert ccdata == entries[1].get_data()
+    assert exp_cs == cs
+    assert raw_node.get_raft().get_pending_conf_index() == 0
+
+    # Move the RawNode along. It should not leave joint because it's follower.
+    rd = raw_node.ready()
+    assert not rd.entries()
+    _ = raw_node.advance(rd.make_ref())
+
+    # Make it leader again. It should leave joint automatically after moving apply index.
+    raw_node.campaign()
+    rd = raw_node.ready()
+    s.wl(lambda core: core.append(rd.entries()))
+    _ = raw_node.advance(rd.make_ref())
+
+    rd = raw_node.ready()
+    s.wl(lambda core: core.append(rd.entries()))
+
+    # Check that the right ConfChange comes out.
+    assert len(rd.entries()) == 1
+    assert rd.entries()[0].get_entry_type() == EntryType.EntryConfChangeV2
+    leave_cc = ConfChangeV2_Owner.default()
+    leave_cc.merge_from_bytes(rd.entries()[0].get_data())
+
+    assert not leave_cc.get_context()
+
+    # Lie and pretend the ConfChange applied. It won't do so because now
+    # we require the joint quorum and we're only running one node.
+    cs = raw_node.apply_conf_change_v2(leave_cc)
+    assert cs == exp_cs2
 
 
 # Ensures that two proposes to add the same node should not affect the later propose
