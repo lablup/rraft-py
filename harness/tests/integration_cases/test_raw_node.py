@@ -731,7 +731,28 @@ def test_raw_node_start():
 
 
 def test_raw_node_restart():
-    pass
+    l = default_logger()
+    entries = [empty_entry(1, 1), new_entry(1, 2, "foo")]
+
+    store = new_storage()
+    store.wl(lambda core: core.set_hardstate(hard_state(1, 1, 0)))
+    store.wl(lambda core: core.append(entries))
+    raw_node = new_raw_node(1, [], 10, 1, store, l)
+
+    rd = raw_node.ready()
+    must_cmp_ready(
+        rd,
+        None,
+        None,
+        [],
+        entries[:1],
+        None,
+        True,
+        True,
+        False,
+    )
+    raw_node.advance(rd.make_ref())
+    assert not raw_node.has_ready()
 
 
 def test_raw_node_restart_from_snapshot():
