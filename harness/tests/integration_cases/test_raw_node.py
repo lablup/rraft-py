@@ -19,6 +19,7 @@ from rraft import (
     MessageType,
     RawNode__MemStorage_Owner,
     RawNode__MemStorage_Ref,
+    ReadState_Owner,
     Ready_Ref,
     Snapshot_Owner,
     Snapshot_Ref,
@@ -636,7 +637,40 @@ def test_raw_node_propose_add_learner_node():
 # Ensures that RawNode.read_index sends the MsgReadIndex message to the underlying
 # raft. It also ensures that ReadState can be read out.
 def test_raw_node_read_index():
-    pass
+    l = default_logger()
+    wrequest_ctx = list(b"somedata")
+    wrs = [ReadState_Owner.default()]
+    wrs[0].set_index(2)
+    wrs[0].set_request_ctx(wrequest_ctx)
+
+    s = new_storage()
+    raw_node = new_raw_node(1, [1], 10, 1, s.clone(), l)
+    raw_node.campaign()
+    while True:
+        rd = raw_node.ready()
+        s.wl(lambda core: core.append(rd.entries()))
+
+        if ss := rd.ss():
+            if ss.get_leader_id() == raw_node.get_raft().get_id():
+                raw_node.advance(rd.make_ref())
+
+                # Once we are the leader, issue a read index request
+                raw_node.read_index(wrequest_ctx)
+                break
+
+        raw_node.advance(rd.make_ref())
+
+    # ensure the read_states can be read out
+    assert raw_node.get_raft().get_read_states()
+    assert raw_node.has_ready()
+    rd = raw_node.ready()
+    assert rd.read_states() == wrs
+    s.wl(lambda core: core.append(rd.entries()))
+    raw_node.advance(rd.make_ref())
+
+    # ensure raft.read_states is reset after advance
+    assert not raw_node.has_ready()
+    assert not raw_node.get_raft().get_read_states()
 
 
 # Ensures that a node can be started correctly. Note that RawNode requires the
