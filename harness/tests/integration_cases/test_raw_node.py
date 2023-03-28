@@ -775,7 +775,80 @@ def test_raw_node_restart_from_snapshot():
 # test_skip_bcast_commit ensures that empty commit message is not sent out
 # when skip_bcast_commit is true.
 def test_skip_bcast_commit():
-    pass
+    l = default_logger()
+    config = new_test_config(1, 10, 1)
+    config.set_skip_bcast_commit(True)
+    s1 = MemStorage_Owner.new_with_conf_state(ConfState_Owner([1, 2, 3], []))
+    r1 = new_test_raft_with_config(config, s1, l)
+    s2 = new_storage()
+    r2 = new_test_raft(2, [1, 2, 3], 10, 1, s2, l)
+    s3 = new_storage()
+    r3 = new_test_raft(3, [1, 2, 3], 10, 1, s3, l)
+    nt = Network.new([r1, r2, r3], l)
+
+    # elect r1 as leader
+    nt.send([new_message(1, 1, MessageType.MsgHup, 0)])
+
+    # Without bcast commit, followers will not update its commit index immediately.
+    test_entries = Entry_Owner.default()
+    test_entries.set_data(b"testdata")
+    msg = new_message_with_entries(1, 1, MessageType.MsgPropose, [test_entries])
+    nt.send([msg.clone()])
+
+    assert nt.peers[1].raft_log.get_committed() == 2
+    assert nt.peers[2].raft_log.get_committed() == 1
+    assert nt.peers[3].raft_log.get_committed() == 1
+
+    # After bcast heartbeat, followers will be informed the actual commit index.
+    for _ in range(0, nt.peers[1].raft.randomized_election_timeout()):
+        nt.peers.get(1).raft.tick()
+
+    nt.send([new_message(1, 1, MessageType.MsgHup, 0)])
+    assert nt.peers[2].raft_log.get_committed() == 2
+    assert nt.peers[3].raft_log.get_committed() == 2
+
+    # The feature should be able to be adjusted at run time.
+    nt.peers.get(1).raft.skip_bcast_commit(False)
+    nt.send([msg.clone()])
+    assert nt.peers[1].raft_log.get_committed() == 3
+    assert nt.peers[2].raft_log.get_committed() == 3
+    assert nt.peers[3].raft_log.get_committed() == 3
+
+    nt.peers.get(1).raft.skip_bcast_commit(True)
+
+    # Later proposal should commit former proposal.
+    nt.send([msg.clone()])
+    nt.send([msg])
+    assert nt.peers[1].raft_log.get_committed() == 5
+    assert nt.peers[2].raft_log.get_committed() == 4
+    assert nt.peers[3].raft_log.get_committed() == 4
+
+    # When committing conf change, leader should always bcast commit.
+    cc = ConfChange_Owner.default()
+    cc.set_change_type(ConfChangeType.RemoveNode)
+    cc.set_node_id(3)
+    data = cc.write_to_bytes()
+    cc_entry = Entry_Owner.default()
+    cc_entry.set_entry_type(EntryType.EntryConfChange)
+    cc_entry.set_data(data)
+    nt.send(
+        [
+            new_message_with_entries(
+                1,
+                1,
+                MessageType.MsgPropose,
+                [cc_entry],
+            )
+        ]
+    )
+
+    assert nt.peers[1].raft.should_bcast_commit()
+    assert nt.peers[2].raft.should_bcast_commit()
+    assert nt.peers[3].raft.should_bcast_commit()
+
+    assert nt.peers[1].raft_log.get_committed() == 6
+    assert nt.peers[2].raft_log.get_committed() == 6
+    assert nt.peers[3].raft_log.get_committed() == 6
 
 
 # test_set_priority checks the set_priority function in RawNode.
