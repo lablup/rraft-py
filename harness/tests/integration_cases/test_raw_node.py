@@ -756,7 +756,20 @@ def test_raw_node_restart():
 
 
 def test_raw_node_restart_from_snapshot():
-    pass
+    l = default_logger()
+    snap = new_snapshot(2, 1, [1, 2])
+    entries = [new_entry(1, 3, "foo")]
+
+    store = new_storage()
+    store.wl(lambda core: core.apply_snapshot(snap))
+    store.wl(lambda core: core.append(entries))
+    store.wl(lambda core: core.set_hardstate(hard_state(1, 3, 0)))
+    raw_node = RawNode__MemStorage_Owner(new_test_config(1, 10, 1), store, l)
+
+    rd = raw_node.ready()
+    must_cmp_ready(rd.make_ref(), None, None, [], entries, None, True, True, False)
+    raw_node.advance(rd.make_ref())
+    assert not raw_node.has_ready()
 
 
 # test_skip_bcast_commit ensures that empty commit message is not sent out
