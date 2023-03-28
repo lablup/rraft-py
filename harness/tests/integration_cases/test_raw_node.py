@@ -75,11 +75,11 @@ def must_cmp_ready(
     assert r.committed_entries() == committed_entries
     assert r.must_sync() == must_sync
     assert r.snapshot() == snapshot or r.snapshot() == Snapshot_Owner.default()
-    assert len(r.msgs()) == 0 if msg_is_empty else len(r.msgs()) != 0
+    assert len(r.messages()) == 0 if msg_is_empty else len(r.messages()) != 0
     assert (
-        len(r.persisted_msgs()) == 0
+        len(r.persisted_messages()) == 0
         if persisted_msg_is_empty
-        else len(r.persisted_msgs()) != 0
+        else len(r.persisted_messages()) != 0
     )
 
 
@@ -595,7 +595,42 @@ def test_raw_node_propose_add_duplicate_node():
 
 
 def test_raw_node_propose_add_learner_node():
-    pass
+    l = default_logger()
+    s = new_storage()
+    raw_node = new_raw_node(1, [1], 10, 1, s.clone(), l)
+    rd = raw_node.ready()
+    must_cmp_ready(rd.make_ref(), None, None, [], [], None, True, True, False)
+    _ = raw_node.advance(rd.make_ref())
+
+    raw_node.campaign()
+
+    while True:
+        rd = raw_node.ready()
+        if ss := rd.ss():
+            if ss.get_leader_id() == raw_node.get_raft().get_id():
+                raw_node.advance(rd.make_ref())
+                break
+
+    # propose add learner node and check apply state
+    cc = conf_change(ConfChangeType.AddLearnerNode, 2)
+    raw_node.propose_conf_change([], cc)
+
+    rd = raw_node.ready()
+    s.wl(lambda core: core.append(rd.entries()))
+
+    light_rd = raw_node.advance(rd.make_ref())
+
+    assert (
+        len(light_rd.committed_entries()) == 1
+    ), f"should committed the conf change entry"
+
+    e = light_rd.committed_entries()[0]
+    assert e.get_entry_type() == EntryType.EntryConfChange
+    conf_change_ = ConfChange_Owner.default()
+    conf_change_.merge_from_bytes(e.get_data())
+    conf_state = raw_node.apply_conf_change(conf_change_)
+    assert conf_state.get_voters() == [1]
+    assert conf_state.get_learners() == [2]
 
 
 # Ensures that RawNode.read_index sends the MsgReadIndex message to the underlying
