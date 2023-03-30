@@ -50,6 +50,7 @@ from rraft import (
     Raft__MemStorage_Owner,
     Raft__MemStorage_Ref,
     RaftLog__MemStorage_Ref,
+    ReadOnlyOption,
     Snapshot_Owner,
     StateRole,
     default_logger,
@@ -2274,9 +2275,84 @@ def test_read_only_with_learner():
         ), f"#{i}: request_ctx = {rs.get_request_ctx()}, want {vec_wctx}"
 
 
-# TODO: Resolve `ReadState` not exposed issue and write remaining test codes.
 def test_read_only_option_lease():
-    pass
+    l = default_logger()
+    a_s, b_s, c_s = new_storage(), new_storage(), new_storage()
+    a = new_test_raft(1, [1, 2, 3], 10, 1, a_s, l)
+    b = new_test_raft(2, [1, 2, 3], 10, 1, b_s, l)
+    c = new_test_raft(3, [1, 2, 3], 10, 1, c_s, l)
+
+    a.raft.set_read_only_option(ReadOnlyOption.LeaseBased)
+    b.raft.set_read_only_option(ReadOnlyOption.LeaseBased)
+    c.raft.set_read_only_option(ReadOnlyOption.LeaseBased)
+
+    a.raft.set_check_quorum(True)
+    b.raft.set_check_quorum(True)
+    c.raft.set_check_quorum(True)
+
+    nt = Network.new([a, b, c], l)
+
+    # we can not let system choose the value of randomizedElectionTimeout
+    # otherwise it will introduce some uncertainty into this test case
+    # we need to ensure randomizedElectionTimeout > electionTimeout here
+    b_election_timeout = nt.peers[2].raft.election_timeout()
+    nt.peers.get(2).raft.set_randomized_election_timeout(b_election_timeout + 1)
+
+    for _ in range(0, b_election_timeout):
+        nt.peers.get(2).raft.tick()
+
+    nt.send([new_message(1, 1, MessageType.MsgHup, 0)])
+
+    assert nt.peers[1].raft.get_state() == StateRole.Leader
+
+    class Test:
+        def __init__(self, id: int, proposals: int, wri: int, wctx: str) -> None:
+            self.id = id
+            self.proposals = proposals
+            self.wri = wri
+            self.wctx = wctx
+
+    tests = [
+        Test(1, 10, 11, "ctx1"),
+        Test(2, 10, 21, "ctx2"),
+        Test(3, 10, 31, "ctx3"),
+        Test(1, 10, 41, "ctx4"),
+        Test(2, 10, 51, "ctx5"),
+        Test(3, 10, 61, "ctx6"),
+    ]
+
+    for i, v in enumerate(tests):
+        id, proposals, wri, wctx = v.id, v.proposals, v.wri, v.wctx
+
+        for _ in range(0, proposals):
+            nt.send([new_message(1, 1, MessageType.MsgPropose, 1)])
+
+        entry = new_entry(0, 0, wctx)
+        nt.send(
+            [
+                new_message_with_entries(
+                    id,
+                    id,
+                    MessageType.MsgReadIndex,
+                    [entry],
+                )
+            ]
+        )
+
+        read_states = nt.peers.get(id).raft.get_read_states()
+        nt.peers.get(id).raft.set_read_states([])
+
+        assert read_states, f"#{i}: read_states is empty, want non-empty"
+
+        rs = read_states[0]
+
+        assert rs.get_index() == wri, f"#{i}: read_index = {rs.get_index()}, want {wri}"
+
+        vec_wctx = wctx.encode("utf-8")
+
+        assert (
+            rs.get_request_ctx() == vec_wctx
+        ), f"#{i}: request_ctx = {rs.get_request_ctx()}, want {vec_wctx}"
 
 
 # TODO: Resolve `ReadState` not exposed issue and write remaining test codes.
