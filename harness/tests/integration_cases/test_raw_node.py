@@ -981,7 +981,86 @@ def test_raw_node_with_async_apply():
 # Test if the ready process is expected when a follower receives a snapshot
 # and some committed entries after its snapshot.
 def test_raw_node_entries_after_snapshot():
-    pass
+    l = default_logger()
+    s = new_storage()
+    s.wl(lambda core: core.apply_snapshot(new_snapshot(1, 1, [1, 2])))
+
+    raw_node = new_raw_node(1, [1, 2], 10, 1, s.clone(), l)
+
+    entries = []
+    for i in range(2, 20):
+        entries.append(new_entry(2, i, "hello"))
+
+    append_msg = new_message_with_entries(2, 1, MessageType.MsgAppend, entries)
+    append_msg.set_term(2)
+    append_msg.set_index(1)
+    append_msg.set_log_term(1)
+    append_msg.set_commit(5)
+    raw_node.step(append_msg)
+
+    rd = raw_node.ready()
+    ss = soft_state(2, StateRole.Follower)
+
+    must_cmp_ready(
+        rd.make_ref(),
+        ss.make_ref(),
+        hard_state(2, 5, 0),
+        entries,
+        [],
+        None,
+        True,
+        False,
+        True,
+    )
+
+    s.wl(lambda core: core.set_hardstate(rd.hs().clone()))
+    s.wl(lambda core: core.append(rd.entries()))
+    light_rd = raw_node.advance(rd.make_ref())
+    assert not light_rd.commit_index()
+    assert light_rd.committed_entries() == entries[:4]
+    assert not light_rd.messages()
+
+    snapshot = new_snapshot(10, 3, [1, 2])
+    snapshot_msg = new_message(2, 1, MessageType.MsgSnapshot, 0)
+    snapshot_msg.set_term(3)
+    snapshot_msg.set_snapshot(snapshot.clone())
+    raw_node.step(snapshot_msg)
+
+    entries = []
+    for i in range(11, 14):
+        entries.append(new_entry(3, i, "hello"))
+
+    append_msg = new_message_with_entries(2, 1, MessageType.MsgAppend, entries)
+    append_msg.set_term(3)
+    append_msg.set_index(10)
+    append_msg.set_log_term(3)
+    append_msg.set_commit(12)
+    raw_node.step(append_msg)
+
+    rd = raw_node.ready()
+    # If there is a snapshot, the committed entries should be empty.
+    must_cmp_ready(
+        rd.make_ref(),
+        None,
+        hard_state(3, 12, 0),
+        entries,
+        [],
+        snapshot,
+        True,
+        False,
+        True,
+    )
+    # Should have a MsgAppendResponse
+    assert rd.persisted_messages()[0].get_msg_type() == MessageType.MsgAppendResponse
+
+    s.wl(lambda core: core.set_hardstate(rd.hs().clone()))
+    s.wl(lambda core: core.apply_snapshot(rd.snapshot().clone()))
+    s.wl(lambda core: core.append(rd.entries()))
+
+    light_rd = raw_node.advance(rd.make_ref())
+    assert not light_rd.commit_index()
+    assert light_rd.committed_entries() == entries[:2]
+    assert not light_rd.messages()
 
 
 # Test if the given committed entries are persisted when some persisted
