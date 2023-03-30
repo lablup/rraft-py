@@ -2393,9 +2393,101 @@ def test_read_only_option_lease_without_check_quorum():
 
 # `test_read_only_for_new_leader` ensures that a leader only accepts MsgReadIndex message
 # when it commits at least one log entry at it term.
-# TODO: Resolve `ReadState` not exposed issue and write remaining test codes.
 def test_read_only_for_new_leader():
-    pass
+    l = default_logger()
+    heartbeat_ticks = 1
+    node_configs = [(1, 1, 1, 0), (2, 2, 2, 2), (3, 2, 2, 2)]
+    peers = []
+
+    class Test:
+        def __init__(
+            self, id: int, committed: int, applied: int, compact_index: int
+        ) -> None:
+            self.id = id
+            self.committed = committed
+            self.applied = applied
+            self.compact_index = compact_index
+
+    node_configs = [Test(1, 1, 1, 0), Test(2, 2, 2, 2), Test(3, 2, 2, 2)]
+
+    for v in node_configs:
+        id, committed, applied, compact_index = (
+            v.id,
+            v.committed,
+            v.applied,
+            v.compact_index,
+        )
+
+        cfg = new_test_config(id, 10, heartbeat_ticks)
+        cfg.set_applied(applied)
+
+        storage = MemStorage_Owner.new_with_conf_state(ConfState_Owner([1, 2, 3], []))
+        entries = [empty_entry(1, 1), empty_entry(1, 2)]
+        storage.wl(lambda core: core.append(entries))
+        hs = HardState_Owner.default()
+        hs.set_term(1)
+        hs.set_commit(committed)
+        storage.wl(lambda core: core.set_hardstate(hs))
+
+        if compact_index != 0:
+            storage.wl(lambda core: core.compact(compact_index))
+
+        i = new_test_raft_with_config(cfg, storage, l)
+        peers.append(i)
+
+    nt = Network.new(peers, l)
+
+    # Drop MsgAppend to forbid peer 1 to commit any log entry at its term
+    # after it becomes leader.
+    nt.ignore(MessageType.MsgAppend)
+    # Force peer 1 to become leader
+    nt.send([new_message(1, 1, MessageType.MsgHup, 0)])
+    assert nt.peers[1].raft.get_state() == StateRole.Leader
+
+    # Ensure peer 1 drops read only request.
+    windex = 4
+    wctx = "ctx"
+    nt.send(
+        [
+            new_message_with_entries(
+                1,
+                1,
+                MessageType.MsgReadIndex,
+                [new_entry(0, 0, wctx)],
+            )
+        ]
+    )
+
+    assert not nt.peers[1].raft.get_read_states()
+    nt.recover()
+
+    # Force peer 1 to commit a log entry at its term.
+    for _ in range(0, heartbeat_ticks):
+        nt.peers.get(1).raft.tick()
+
+    nt.send([new_message(1, 1, MessageType.MsgPropose, 1)])
+    assert nt.peers[1].raft_log.get_committed() == 4
+
+    commit = nt.peers[1].raft_log.term(nt.peers[1].raft_log.get_committed())
+    assert commit == nt.peers[1].raft.get_term()
+
+    # Ensure peer 1 accepts read only request after it commits a entry at its term.
+    nt.send(
+        [
+            new_message_with_entries(
+                1,
+                1,
+                MessageType.MsgReadIndex,
+                [new_entry(0, 0, wctx)],
+            )
+        ]
+    )
+
+    read_states = nt.peers.get(1).raft.get_read_states()
+    assert len(read_states) == 1
+    rs = read_states[0]
+    assert rs.get_index() == windex
+    assert rs.get_request_ctx() == wctx.encode("utf-8")
 
 
 # `test_advance_commit_index_by_read_index_response` ensures that read index response
