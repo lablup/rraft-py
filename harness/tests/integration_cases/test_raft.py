@@ -2355,9 +2355,40 @@ def test_read_only_option_lease():
         ), f"#{i}: request_ctx = {rs.get_request_ctx()}, want {vec_wctx}"
 
 
-# TODO: Resolve `ReadState` not exposed issue and write remaining test codes.
 def test_read_only_option_lease_without_check_quorum():
-    pass
+    l = default_logger()
+    a_s, b_s, c_s = new_storage(), new_storage(), new_storage()
+    a = new_test_raft(1, [1, 2, 3], 10, 1, a_s, l)
+    b = new_test_raft(2, [1, 2, 3], 10, 1, b_s, l)
+    c = new_test_raft(3, [1, 2, 3], 10, 1, c_s, l)
+
+    a.raft.set_read_only_option(ReadOnlyOption.LeaseBased)
+    b.raft.set_read_only_option(ReadOnlyOption.LeaseBased)
+    c.raft.set_read_only_option(ReadOnlyOption.LeaseBased)
+
+    nt = Network.new([a, b, c], l)
+    nt.send([new_message(1, 1, MessageType.MsgHup, 0)])
+
+    ctx = "ctx1"
+    entry = new_entry(0, 0, ctx)
+    nt.send(
+        [
+            new_message_with_entries(
+                2,
+                2,
+                MessageType.MsgReadIndex,
+                [entry],
+            )
+        ]
+    )
+
+    read_states = nt.peers[2].raft.get_read_states()
+    nt.peers[2].raft.set_read_states([])
+    assert read_states
+    rs = read_states[0]
+    assert rs.get_index() == 1
+    vec_ctx = ctx.encode("utf-8")
+    assert rs.get_request_ctx() == vec_ctx
 
 
 # `test_read_only_for_new_leader` ensures that a leader only accepts MsgReadIndex message
