@@ -549,6 +549,10 @@ impl Py_Raft__MemStorage_Ref {
         //     dict.into_py(py)
         // })
     }
+
+    pub fn set_max_committed_size_per_ready(&mut self, v: u64) -> PyResult<()> {
+        self.inner.map_as_mut(|inner| inner.set_max_committed_size_per_ready(v))
+    }
 }
 
 #[pyclass(name = "Raft")]
