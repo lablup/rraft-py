@@ -1288,7 +1288,135 @@ def test_async_ready_leader():
 # Test if async ready process is expected when a follower receives
 # some append msg and snapshot.
 def test_async_ready_follower():
-    pass
+    l = default_logger()
+    s = new_storage()
+    s.wl(lambda core: core.apply_snapshot(new_snapshot(1, 1, [1, 2])))
+
+    raw_node = new_raw_node(1, [1, 2], 10, 1, s.clone(), l)
+    first_index = 1
+    rd_number = 0
+    for cnt in range(0, 3):
+        for i in range(0, 10):
+            entries = [
+                new_entry(2, first_index + i * 3 + 1, "hello"),
+                new_entry(2, first_index + i * 3 + 2, "hello"),
+                new_entry(2, first_index + i * 3 + 3, "hello"),
+            ]
+            append_msg = new_message_with_entries(2, 1, MessageType.MsgAppend, entries)
+            append_msg.set_term(2)
+            append_msg.set_index(first_index + i * 3)
+            if cnt == 0 and i == 0:
+                append_msg.set_log_term(1)
+            else:
+                append_msg.set_log_term(2)
+
+            append_msg.set_commit(first_index + i * 3 + 3)
+            raw_node.step(append_msg)
+
+            rd = raw_node.ready()
+            assert rd.number() == rd_number + i + 1
+            assert rd.hs() == hard_state(2, first_index + i * 3 + 3, 0)
+            assert rd.entries() == entries
+            assert rd.committed_entries() == []
+            assert not rd.messages()
+            assert (
+                rd.persisted_messages()[0].get_msg_type()
+                == MessageType.MsgAppendResponse
+            )
+
+            s.wl(lambda core: core.set_hardstate(rd.hs()))
+            s.wl(lambda core: core.append(rd.entries()))
+            raw_node.advance_append_async(rd.make_ref())
+
+        # Unpersisted Ready number in range [1, 10]
+        raw_node.on_persist_ready(rd_number + 4)
+        rd = raw_node.ready()
+        assert not rd.hs()
+        assert rd.committed_entries()[0].get_index() == first_index + 1
+        assert rd.committed_entries()[-1].get_index() == first_index + 3 * 3 + 3
+        assert not rd.messages()
+        assert not rd.persisted_messages()
+
+        light_rd = raw_node.advance_append(rd.make_ref())
+        assert not light_rd.commit_index()
+        assert light_rd.committed_entries()[0].get_index() == first_index + 3 * 3 + 4
+        assert light_rd.committed_entries()[-1].get_index() == first_index + 10 * 3
+        assert not light_rd.messages()
+
+        first_index += 10 * 3
+        rd_number += 11
+
+    snapshot = new_snapshot(first_index + 5, 2, [1, 2])
+    snapshot_msg = new_message(2, 1, MessageType.MsgSnapshot, 0)
+    snapshot_msg.set_term(2)
+    snapshot_msg.set_snapshot(snapshot.clone())
+    raw_node.step(snapshot_msg)
+
+    rd = raw_node.ready()
+    assert rd.number() == rd_number + 1
+    must_cmp_ready(
+        rd.make_ref(),
+        None,
+        hard_state(2, first_index + 5, 0),
+        [],
+        [],
+        snapshot.clone(),
+        True,
+        False,
+        True,
+    )
+
+    s.wl(lambda core: core.set_hardstate(rd.hs().clone()))
+    s.wl(lambda core: core.apply_snapshot(snapshot))
+    s.wl(lambda core: core.append(rd.entries()))
+    raw_node.advance_append_async(rd.make_ref())
+
+    entries = []
+    for i in range(1, 10):
+        entries.append(new_entry(2, first_index + 5 + i, "hello"))
+
+    append_msg = new_message_with_entries(2, 1, MessageType.MsgAppend, entries)
+    append_msg.set_term(2)
+    append_msg.set_index(first_index + 5)
+    append_msg.set_log_term(2)
+    append_msg.set_commit(first_index + 5 + 3)
+    raw_node.step(append_msg)
+
+    rd = raw_node.ready()
+    assert rd.number() == rd_number + 2
+    must_cmp_ready(
+        rd.make_ref(),
+        None,
+        hard_state(2, first_index + 5 + 3, 0),
+        entries,
+        [],
+        None,
+        True,
+        False,
+        True,
+    )
+    s.wl(lambda core: core.set_hardstate(rd.hs().clone()))
+    s.wl(lambda core: core.append(rd.entries()))
+    raw_node.advance_append_async(rd.make_ref())
+
+    raw_node.on_persist_ready(rd_number + 1)
+    assert raw_node.get_raft().get_raft_log().get_persisted() == first_index + 5
+    raw_node.advance_apply_to(first_index + 5)
+
+    raw_node.on_persist_ready(rd_number + 2)
+
+    rd = raw_node.ready()
+    must_cmp_ready(
+        rd.make_ref(),
+        None,
+        None,
+        [],
+        entries[:3],
+        None,
+        True,
+        True,
+        False,
+    )
 
 
 # Test if a new leader immediately sends all messages recorded before without
