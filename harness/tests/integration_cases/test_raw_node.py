@@ -1422,7 +1422,100 @@ def test_async_ready_follower():
 # Test if a new leader immediately sends all messages recorded before without
 # persisting.
 def test_async_ready_become_leader():
-    pass
+    l = default_logger()
+    s = new_storage()
+    s.wl(lambda core: core.apply_snapshot(new_snapshot(5, 5, [1, 2, 3])))
+
+    raw_node = new_raw_node(1, [1, 2, 3], 10, 1, s.clone(), l)
+    for _ in range(1, raw_node.get_raft().election_timeout() * 2):
+        raw_node.get_raft().tick_election()
+
+    rd = raw_node.ready()
+    assert rd.number() == 1
+
+    ss = soft_state(0, StateRole.Candidate)
+    must_cmp_ready(
+        rd.make_ref(),
+        ss.make_ref(),
+        hard_state(6, 5, 1),
+        [],
+        [],
+        None,
+        True,
+        False,
+        True,
+    )
+    s.wl(lambda core: core.set_hardstate(rd.hs().clone()))
+
+    for msg in rd.persisted_messages():
+        assert msg.get_msg_type() == MessageType.MsgRequestVote
+
+    raw_node.advance_append(rd.make_ref())
+
+    # Peer 1 should reject to vote to peer 2
+    vote_request_2 = new_message(2, 1, MessageType.MsgRequestVote, 0)
+    vote_request_2.set_term(6)
+    vote_request_2.set_log_term(4)
+    vote_request_2.set_index(4)
+    raw_node.step(vote_request_2)
+
+    rd = raw_node.ready()
+    assert rd.number() == 2
+    must_cmp_ready(rd.make_ref(), None, None, [], [], None, True, False, False)
+    assert (
+        rd.persisted_messages()[0].get_msg_type() == MessageType.MsgRequestVoteResponse
+    )
+    raw_node.advance_append_async(rd.make_ref())
+
+    # Peer 1 should reject to vote to peer 3
+    vote_request_3 = new_message(3, 1, MessageType.MsgRequestVote, 0)
+    vote_request_3.set_term(6)
+    vote_request_3.set_log_term(4)
+    vote_request_3.set_index(4)
+    raw_node.step(vote_request_3)
+
+    rd = raw_node.ready()
+    assert rd.number() == 3
+    must_cmp_ready(rd.make_ref(), None, None, [], [], None, True, False, False)
+    assert (
+        rd.persisted_messages()[0].get_msg_type() == MessageType.MsgRequestVoteResponse
+    )
+
+    raw_node.advance_append_async(rd.make_ref())
+
+    # Peer 1 receives the vote from peer 2
+    vote_response_2 = new_message(2, 1, MessageType.MsgRequestVoteResponse, 0)
+    vote_response_2.set_term(6)
+    vote_response_2.set_reject(False)
+    raw_node.step(vote_response_2)
+
+    rd = raw_node.ready()
+    assert rd.number() == 4
+    assert len(rd.entries()) == 1
+
+    ss = soft_state(1, StateRole.Leader)
+    must_cmp_ready(
+        rd.make_ref(),
+        ss.make_ref(),
+        None,
+        rd.entries(),
+        [],
+        None,
+        False,
+        True,
+        True,
+    )
+    assert len(rd.messages()) == 2
+    for msg in rd.take_messages():
+        assert msg.get_msg_type() == MessageType.MsgAppend
+
+    s.wl(lambda core: core.append(rd.entries()))
+    s.wl(lambda core: core.append(rd.entries()))
+
+    light_rd = raw_node.advance_append(rd.make_ref())
+    assert not light_rd.commit_index()
+    assert not light_rd.committed_entries()
+    assert not light_rd.messages()
 
 
 def test_async_ready_multiple_snapshot():
