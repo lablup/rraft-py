@@ -2132,7 +2132,7 @@ def test_read_only_option_safe():
     # we can not let system choose the value of randomizedElectionTimeout
     # otherwise it will introduce some uncertainty into this test case
     # we need to ensure randomizedElectionTimeout > electionTimeout here
-    b_election_timeout = b.raft.election_timeout()
+    b_election_timeout = nt.peers[2].raft.election_timeout()
     nt.peers.get(2).raft.set_randomized_election_timeout(b_election_timeout + 1)
 
     for _ in range(0, b_election_timeout):
@@ -2169,6 +2169,7 @@ def test_read_only_option_safe():
         msg1 = new_message_with_entries(
             id, id, MessageType.MsgReadIndex, [new_entry(0, 0, wctx[0])]
         )
+
         msg2 = new_message_with_entries(
             id, id, MessageType.MsgReadIndex, [new_entry(0, 0, wctx[1])]
         )
@@ -2184,8 +2185,22 @@ def test_read_only_option_safe():
         else:
             nt.send([msg1.clone(), msg1.clone(), msg2.clone()])
 
-        # TODO: Resolve `ReadState` not exposed issue and write remaining test codes.
-        # read_states = nt.peers.get(id).raft.get_read_states()
+        read_states = nt.peers.get(id).raft.get_read_states()
+        nt.peers.get(id).raft.set_read_states([])
+
+        assert read_states, f"#{i}: read_states is empty, want non-empty"
+
+        assert len(read_states) == len(wctx)
+
+        for rs, wctx in zip(read_states, wctx):
+            assert (
+                rs.get_index() == wri
+            ), f"#{i}: read_index = {rs.get_index()}, want {wri}"
+
+            ctx_bytes = wctx.encode("utf-8")
+            assert (
+                rs.get_request_ctx() == ctx_bytes
+            ), f"#{i}: request_ctx = {rs.get_request_ctx()}, want {ctx_bytes}"
 
 
 # TODO: Resolve `ReadState` not exposed issue and write remaining test codes.
