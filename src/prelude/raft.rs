@@ -28,6 +28,7 @@ use super::{
     progress_tracker::Py_ProgressTracker_Ref,
     raft_log::Py_RaftLog__MemStorage_Ref,
     read_state::{Py_ReadState_Mut, Py_ReadState_Owner},
+    readonly_option::Py_ReadOnlyOption,
     soft_state::Py_SoftState_Ref,
     state_role::Py_StateRole,
 };
@@ -567,6 +568,16 @@ impl Py_Raft__MemStorage_Ref {
     pub fn set_max_committed_size_per_ready(&mut self, v: u64) -> PyResult<()> {
         self.inner
             .map_as_mut(|inner| inner.set_max_committed_size_per_ready(v))
+    }
+
+    pub fn get_read_only_option(&self) -> PyResult<Py_ReadOnlyOption> {
+        self.inner
+            .map_as_ref(|inner| Py_ReadOnlyOption(inner.read_only.option))
+    }
+
+    pub fn set_read_only_option(&mut self, option: &Py_ReadOnlyOption) -> PyResult<()> {
+        self.inner
+            .map_as_mut(|inner| inner.read_only.option = option.0)
     }
 }
 

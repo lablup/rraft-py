@@ -1904,6 +1904,10 @@ class Raft__MemStorage:
         """ """
     def set_read_states(self, read_states: List[ReadState_Owner] | List[ReadState_Ref]) -> None:
         """ """
+    def get_read_only_option(self) -> ReadOnlyOption:
+        """ """
+    def set_read_only_option(self, option: ReadOnlyOption) -> None:
+        """ """
 
 class Raft__MemStorage_Owner(Raft__MemStorage):
     """
