@@ -908,25 +908,30 @@ def test_bounded_uncommitted_entries_growth_with_partition():
     raw_node.propose([], data)
 
 
+# TODO: Add below test after upgrading raft-rs v0.7.
 def prepare_async_entries():
     pass
 
 
+# TODO: Add below test after upgrading raft-rs v0.7.
 # Test entries are handled properly when they are fetched asynchronously
 def test_raw_node_with_async_entries():
     pass
 
 
+# TODO: Add below test after upgrading raft-rs v0.7.
 # Test if async fetch entries works well when there is a remove node conf-change.
 def test_raw_node_with_async_entries_to_removed_node():
     pass
 
 
+# TODO: Add below test after upgrading raft-rs v0.7.
 # Test if async fetch entries works well when there is a leader step-down.
 def test_raw_node_with_async_entries_on_follower():
     pass
 
 
+# TODO: Add below test after upgrading raft-rs v0.7.
 def test_raw_node_async_entries_with_leader_change():
     pass
 
