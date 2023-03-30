@@ -2493,7 +2493,30 @@ def test_read_only_for_new_leader():
 # `test_advance_commit_index_by_read_index_response` ensures that read index response
 # can advance the follower's commit index if it has new enough logs
 def test_advance_commit_index_by_read_index_response():
-    pass
+    l = default_logger()
+    tt = Network.new([None, None, None, None, None], l)
+    tt.send([new_message(1, 1, MessageType.MsgHup, 0)])
+
+    # don't commit entries
+    tt.cut(1, 3)
+    tt.cut(1, 4)
+    tt.cut(1, 5)
+    tt.send([new_message(1, 1, MessageType.MsgPropose, 1)])
+    tt.send([new_message(1, 1, MessageType.MsgPropose, 1)])
+
+    tt.recover()
+    tt.cut(1, 2)
+
+    # commit entries for leader but not node 2
+    tt.send([new_message(3, 1, MessageType.MsgReadIndex, 1)])
+    assert tt.peers[1].raft_log.get_committed() == 3
+    assert tt.peers[2].raft_log.get_committed() == 1
+
+    tt.recover()
+    # use LeaseBased so leader won't send MsgHeartbeat to advance node 2's commit index
+    tt.peers.get(1).raft.set_read_only_option(ReadOnlyOption.LeaseBased)
+    tt.send([new_message(2, 1, MessageType.MsgReadIndex, 1)])
+    assert tt.peers[2].raft_log.get_committed() == 3
 
 
 def test_leader_append_response():
