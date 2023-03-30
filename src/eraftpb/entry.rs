@@ -1,7 +1,7 @@
+use protobuf::Message as _Message;
 use pyo3::prelude::*;
 use pyo3::pyclass::CompareOp;
 use pyo3::types::PyBytes;
-
 use raft::eraftpb::Entry;
 
 use utils::reference::RustRef;
@@ -189,5 +189,9 @@ impl Py_Entry_Ref {
 
     pub fn clear_index(&mut self) -> PyResult<()> {
         self.inner.map_as_mut(|inner| inner.clear_index())
+    }
+
+    pub fn compute_size(&self) -> PyResult<u32> {
+        self.inner.map_as_ref(|inner| inner.compute_size())
     }
 }

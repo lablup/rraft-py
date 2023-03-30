@@ -1,4 +1,7 @@
-use pyo3::{exceptions::{{PyException, PyRuntimeError}}, prelude::*};
+use pyo3::{
+    exceptions::{PyException, PyRuntimeError},
+    prelude::*,
+};
 
 #[inline]
 pub fn runtime_error(msg: &str) -> PyErr {

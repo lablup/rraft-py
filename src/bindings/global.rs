@@ -1,11 +1,9 @@
 use pyo3::prelude::*;
 
-use crate::eraftpb::conf_change::new_conf_change_single as _new_conf_change_single;
-use crate::eraftpb::conf_change_single::Py_ConfChangeSingle_Owner;
-use crate::eraftpb::conf_change_type::Py_ConfChangeType;
-use crate::eraftpb::message_type::{
-    is_local_msg as _is_local_msg, is_response_msg as _is_response_msg,
-};
+use eraftpb::conf_change::new_conf_change_single as _new_conf_change_single;
+use eraftpb::conf_change_single::Py_ConfChangeSingle_Owner;
+use eraftpb::conf_change_type::Py_ConfChangeType;
+use eraftpb::message_type::{is_local_msg as _is_local_msg, is_response_msg as _is_response_msg};
 use raft::default_logger as _default_logger;
 use raft::majority as _majority;
 use raft::vote_resp_msg_type as _vote_resp_msg_type;
@@ -14,8 +12,8 @@ use raft::{
     NO_LIMIT,
 };
 
-use crate::eraftpb::message_type::Py_MessageType;
-use crate::internal::slog::Py_Logger_Owner;
+use eraftpb::message_type::Py_MessageType;
+use external::slog::Py_Logger_Owner;
 
 // Global scope functions
 #[pyfunction]

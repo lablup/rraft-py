@@ -8,21 +8,19 @@ use raft::raw_node::RawNode;
 use utils::errors::to_pyresult;
 use utils::unsafe_cast::make_mut;
 
-use super::light_ready::Py_LightReady_Owner;
-use super::ready::{Py_Ready_Owner, Py_Ready_Ref};
-use crate::eraftpb::conf_change::Py_ConfChange_Mut;
-use crate::eraftpb::conf_change_v2::Py_ConfChangeV2_Mut;
-use crate::eraftpb::conf_state::Py_ConfState_Owner;
-use crate::eraftpb::message::Py_Message_Mut;
-use crate::eraftpb::snapshot::Py_Snapshot_Ref;
-use crate::internal::slog::Py_Logger_Mut;
-use crate::prelude::config::Py_Config_Mut;
-use crate::prelude::raft::Py_Raft__MemStorage_Ref;
+use super::raft::Py_Raft__MemStorage_Ref;
+use bindings::config::Py_Config_Mut;
+use bindings::light_ready::Py_LightReady_Owner;
+use bindings::ready::{Py_Ready_Owner, Py_Ready_Ref};
+use eraftpb::conf_change::Py_ConfChange_Mut;
+use eraftpb::conf_change_v2::Py_ConfChangeV2_Mut;
+use eraftpb::conf_state::Py_ConfState_Owner;
+use eraftpb::message::Py_Message_Mut;
+use eraftpb::snapshot::Py_Snapshot_Ref;
+use external::slog::Py_Logger_Mut;
 
-use crate::prelude::snapshot_status::Py_SnapshotStatus;
-use crate::prelude::status::Py_Status__MemStorage_Owner;
-use crate::storage::mem_storage::{Py_MemStorage_Mut, Py_MemStorage_Ref};
-use crate::storage::py_storage::Py_Storage;
+use bindings::snapshot_status::Py_SnapshotStatus;
+// use bindings::status::Py_Status__MemStorage_Owner;
 use utils::reference::RustRef;
 
 #[pyclass(name = "RawNode__MemStorage_Owner")]
@@ -37,12 +35,12 @@ pub struct Py_RawNode__MemStorage_Ref {
 
 #[pymethods]
 impl Py_RawNode__MemStorage_Owner {
-    #[new]
-    pub fn new(cfg: Py_Config_Mut, storage: Py_MemStorage_Mut, logger: Py_Logger_Mut) -> Self {
-        Py_RawNode__MemStorage_Owner {
-            inner: RawNode::new(&cfg.into(), storage.into(), &logger.into()).unwrap(),
-        }
-    }
+    // #[new]
+    // pub fn new(cfg: Py_Config_Mut, storage: Py_MemStorage_Mut, logger: Py_Logger_Mut) -> Self {
+    //     Py_RawNode__MemStorage_Owner {
+    //         inner: RawNode::new(&cfg.into(), storage.into(), &logger.into()).unwrap(),
+    //     }
+    // }
 
     pub fn make_ref(&mut self) -> Py_RawNode__MemStorage_Ref {
         Py_RawNode__MemStorage_Ref {
@@ -144,9 +142,9 @@ impl Py_RawNode__MemStorage_Ref {
         })
     }
 
-    pub fn status(&self) -> Py_Status__MemStorage_Owner {
-        todo!()
-    }
+    // pub fn status(&self) -> Py_Status__MemStorage_Owner {
+    //     todo!()
+    // }
 
     pub fn step(&mut self, msg: Py_Message_Mut) -> PyResult<()> {
         self.inner
@@ -248,25 +246,9 @@ impl Py_RawNode__MemStorage_Ref {
         })
     }
 
-    pub fn store(&mut self) -> PyResult<Py_MemStorage_Ref> {
-        self.inner.map_as_mut(|inner| Py_MemStorage_Ref {
-            inner: RustRef::new(inner.mut_store()),
-        })
-    }
+    // pub fn store(&mut self) -> PyResult<Py_MemStorage_Ref> {
+    //     self.inner.map_as_mut(|inner| Py_MemStorage_Ref {
+    //         inner: RustRef::new(inner.mut_store()),
+    //     })
+    // }
 }
-
-#[pyclass(name = "RawNode")]
-pub struct Py_RawNode__PyStorage_Owner {
-    pub inner: RawNode<Py_Storage>,
-}
-
-#[pymethods]
-impl Py_RawNode__PyStorage_Owner {}
-
-#[pyclass(name = "RawNode_Ref")]
-pub struct Py_RawNode__PyStorage_Ref {
-    pub inner: RustRef<RawNode<Py_Storage>>,
-}
-
-#[pymethods]
-impl Py_RawNode__PyStorage_Ref {}

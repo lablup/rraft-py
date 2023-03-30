@@ -1,16 +1,15 @@
 use pyo3::prelude::*;
 
-use crate::{
-    eraftpb::{
-        entry::{Py_Entry_Owner, Py_Entry_Ref},
-        hard_state::Py_HardState_Ref,
-        message::{Py_Message_Owner, Py_Message_Ref},
-        snapshot::Py_Snapshot_Ref,
-    },
-    prelude::{
-        read_state::{Py_ReadState_Owner, Py_ReadState_Ref},
-        soft_state::Py_SoftState_Owner,
-    },
+use eraftpb::{
+    entry::{Py_Entry_Owner, Py_Entry_Ref},
+    hard_state::Py_HardState_Ref,
+    message::{Py_Message_Owner, Py_Message_Ref},
+    snapshot::Py_Snapshot_Ref,
+};
+
+use super::{
+    read_state::{Py_ReadState_Owner, Py_ReadState_Ref},
+    soft_state::Py_SoftState_Owner,
 };
 use raft::{raw_node::Ready, SoftState};
 use utils::{reference::RustRef, unsafe_cast::make_mut};

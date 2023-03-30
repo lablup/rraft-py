@@ -1,0 +1,17 @@
+[package]
+name = "py-storage"
+version = "0.1.0"
+authors = ["jopemachine"]
+edition = "2018"
+
+[dependencies]
+pyo3 = { version = "0.18.2", features = ["extension-module"] }
+raft = { version = "0.6.0", features = ["prost-codec", "default-logger"], default-features = false }
+utils = { path = "../utils" }
+eraftpb = { path = "../eraftpb" }
+bindings = { path = "../bindings" }
+external = { path = "../external" }
+
+[lib]
+name = "py_storage"
+path = "lib.rs"
