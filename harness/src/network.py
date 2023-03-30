@@ -5,7 +5,6 @@ from rraft import (
     ConfState_Owner,
     Config_Ref,
     Logger_Owner,
-    Logger_Ref,
     MemStorage_Owner,
     Message_Owner,
     Message_Ref,

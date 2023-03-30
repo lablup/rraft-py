@@ -1900,6 +1900,10 @@ class Raft__MemStorage:
         """ """
     def set_max_committed_size_per_ready(self, max_committed_size_per_ready: int) -> None:
         """ """
+    def get_read_states(self) -> List[ReadState_Owner]:
+        """ """
+    def set_read_states(self, read_states: List[ReadState_Owner] | List[ReadState_Ref]) -> None:
+        """ """
 
 class Raft__MemStorage_Owner(Raft__MemStorage):
     """

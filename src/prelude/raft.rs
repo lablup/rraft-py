@@ -24,9 +24,12 @@ use crate::{
 };
 
 use super::{
-    config::Py_Config_Mut, progress_tracker::Py_ProgressTracker_Ref,
-    raft_log::Py_RaftLog__MemStorage_Ref, read_state::Py_ReadState_Owner,
-    soft_state::Py_SoftState_Ref, state_role::Py_StateRole,
+    config::Py_Config_Mut,
+    progress_tracker::Py_ProgressTracker_Ref,
+    raft_log::Py_RaftLog__MemStorage_Ref,
+    read_state::{Py_ReadState_Mut, Py_ReadState_Owner},
+    soft_state::Py_SoftState_Ref,
+    state_role::Py_StateRole,
 };
 
 #[pyclass(name = "Raft__MemStorage_Owner")]
@@ -407,6 +410,17 @@ impl Py_Raft__MemStorage_Ref {
         })
     }
 
+    pub fn set_read_states(&mut self, v: &PyList) -> PyResult<()> {
+        let mut read_states = v.extract::<Vec<Py_ReadState_Mut>>()?;
+
+        self.inner.map_as_mut(|inner| {
+            inner.read_states = read_states
+                .iter_mut()
+                .map(|rs| rs.into())
+                .collect::<Vec<_>>()
+        })
+    }
+
     pub fn get_id(&self) -> PyResult<u64> {
         self.inner.map_as_ref(|inner| inner.id)
     }
@@ -551,7 +565,8 @@ impl Py_Raft__MemStorage_Ref {
     }
 
     pub fn set_max_committed_size_per_ready(&mut self, v: u64) -> PyResult<()> {
-        self.inner.map_as_mut(|inner| inner.set_max_committed_size_per_ready(v))
+        self.inner
+            .map_as_mut(|inner| inner.set_max_committed_size_per_ready(v))
     }
 }
 
