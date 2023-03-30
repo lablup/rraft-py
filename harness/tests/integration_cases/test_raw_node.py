@@ -1519,7 +1519,84 @@ def test_async_ready_become_leader():
 
 
 def test_async_ready_multiple_snapshot():
-    pass
+    l = default_logger()
+    s = new_storage()
+    s.wl(lambda core: core.apply_snapshot(new_snapshot(1, 1, [1, 2])))
+
+    raw_node = new_raw_node(1, [1, 2], 10, 1, s.clone(), l)
+
+    snapshot = new_snapshot(10, 2, [1, 2])
+    snapshot_msg = new_message(2, 1, MessageType.MsgSnapshot, 0)
+    snapshot_msg.set_term(2)
+    snapshot_msg.set_snapshot(snapshot.clone())
+    raw_node.step(snapshot_msg)
+
+    entries = []
+    for i in range(11, 14):
+        entries.append(new_entry(2, i, "hello"))
+
+    append_msg = new_message_with_entries(2, 1, MessageType.MsgAppend, entries)
+    append_msg.set_term(2)
+    append_msg.set_index(10)
+    append_msg.set_log_term(2)
+    append_msg.set_commit(12)
+    raw_node.step(append_msg)
+
+    rd = raw_node.ready()
+    assert rd.number() == 1
+    # If there is a snapshot, the committed entries should be empty.
+    ss = soft_state(2, StateRole.Follower)
+    must_cmp_ready(
+        rd.make_ref(),
+        ss.make_ref(),
+        hard_state(2, 12, 0),
+        entries,
+        [],
+        snapshot,
+        True,
+        False,
+        True,
+    )
+    s.wl(lambda core: core.set_hardstate(rd.hs().clone()))
+    s.wl(lambda core: core.apply_snapshot(rd.snapshot().clone()))
+    s.wl(lambda core: core.append(rd.entries()))
+
+    raw_node.advance_append_async(rd.make_ref())
+
+    snapshot = new_snapshot(20, 1, [1, 2])
+    snapshot_msg = new_message(2, 1, MessageType.MsgSnapshot, 0)
+    snapshot_msg.set_term(2)
+    snapshot_msg.set_snapshot(snapshot.clone())
+    raw_node.step(snapshot_msg)
+
+    raw_node.on_persist_ready(1)
+
+    assert raw_node.get_raft().get_raft_log().get_persisted() == 13
+
+    raw_node.advance_apply_to(10)
+
+    rd = raw_node.ready()
+    assert rd.number() == 2
+    must_cmp_ready(
+        rd.make_ref(),
+        None,
+        hard_state(2, 20, 0),
+        [],
+        [],
+        snapshot,
+        True,
+        False,
+        True,
+    )
+    s.wl(lambda core: core.set_hardstate(rd.hs().clone()))
+    s.wl(lambda core: core.apply_snapshot(rd.snapshot().clone()))
+
+    light_rd = raw_node.advance_append(rd.make_ref())
+    assert not light_rd.commit_index()
+    assert not light_rd.committed_entries()
+    assert not light_rd.messages()
+
+    raw_node.advance_apply_to(20)
 
 
 def test_committed_entries_pagination():
