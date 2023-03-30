@@ -9,6 +9,7 @@ from rraft import (
     ConfChangeType,
     ConfChangeV2_Owner,
     ConfState_Owner,
+    Config_Owner,
     Config_Ref,
     Entry_Owner,
     Entry_Ref,
@@ -867,7 +868,41 @@ def test_set_priority():
 # protected from unbounded growth even as new entries continue to be proposed.
 # This protection is provided by the max_uncommitted_size configuration.
 def test_bounded_uncommitted_entries_growth_with_partition():
-    pass
+    l = default_logger()
+    config = Config_Owner(id=1, max_uncommitted_size=12)
+    s = new_storage()
+    raw_node = new_raw_node_with_config([1], config, s.clone(), l)
+
+    # wait raw_node to be leader
+    raw_node.campaign()
+    while True:
+        rd = raw_node.ready()
+        s.wl(lambda core: core.set_hardstate(rd.hs().clone()))
+        s.wl(lambda core: core.append(rd.entries()))
+
+        if rd.ss():
+            raw_node.advance(rd.make_ref())
+            break
+
+        raw_node.advance(rd.make_ref())
+
+    # should be accepted
+    data = b"hello world!"
+    raw_node.propose([], data)
+
+    # shoule be dropped
+    with pytest.raises(Exception) as e:
+        raw_node.propose([], data)
+
+    assert str(e.value) == "raft: proposal dropped"
+
+    # should be accepted when previous data has been committed
+    rd = raw_node.ready()
+    s.wl(lambda core: core.append(rd.entries()))
+    _ = raw_node.advance(rd.make_ref())
+
+    data = list(b"hello world!")
+    raw_node.propose([], data)
 
 
 def prepare_async_entries():
