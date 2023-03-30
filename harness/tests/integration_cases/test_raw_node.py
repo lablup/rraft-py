@@ -1146,7 +1146,143 @@ def test_raw_node_overwrite_entries():
 # Test if async ready process is expected when a leader receives
 # the append response and persist its entries.
 def test_async_ready_leader():
-    pass
+    l = default_logger()
+    s = new_storage()
+    s.wl(lambda core: core.apply_snapshot(new_snapshot(1, 1, [1, 2, 3])))
+
+    raw_node = new_raw_node(1, [1, 2, 3], 10, 1, s.clone(), l)
+    raw_node.get_raft().become_candidate()
+    raw_node.get_raft().become_leader()
+    rd = raw_node.ready()
+
+    if ss := rd.ss():
+        assert ss.get_leader_id() == raw_node.get_raft().get_leader_id()
+    else:
+        assert False
+
+    s.wl(lambda core: core.append(rd.entries()))
+    raw_node.advance(rd.make_ref())
+
+    assert raw_node.get_raft().get_term() == 2
+    first_index = raw_node.get_raft().get_raft_log().last_index()
+
+    data = b"hello world!"
+
+    # Set node 2 progress to replicate
+    raw_node.get_raft().prs().get(2).set_matched(1)
+    raw_node.get_raft().prs().get(2).become_replicate()
+
+    for i in range(0, 10):
+        for _ in range(0, 10):
+            raw_node.propose([], data)
+
+        rd = raw_node.ready()
+        assert rd.number() == i + 2
+        entries = list(map(lambda entry: entry.clone(), rd.entries()))
+        assert entries[0].get_index() == first_index + i * 10 + 1
+        assert entries[-1].get_index() == first_index + i * 10 + 10
+
+        # Leader‘s msg can be sent immediately.
+        must_cmp_ready(rd.make_ref(), None, None, entries, [], None, False, True, True)
+        for msg in rd.take_messages():
+            assert msg.get_msg_type() == MessageType.MsgAppend
+
+        s.wl(lambda core: core.append(entries))
+        raw_node.advance_append_async(rd.make_ref())
+
+    # Unpersisted Ready number in range [2, 11]
+    raw_node.on_persist_ready(4)
+    # No new committed entries due to two nodes in this cluster
+    assert not raw_node.has_ready()
+
+    # The index of uncommitted entries in range [first_index, first_index + 100]
+    append_response = new_message(2, 1, MessageType.MsgAppendResponse, 0)
+    append_response.set_term(2)
+    append_response.set_index(first_index + 100)
+
+    raw_node.step(append_response)
+
+    # Forward commit index due to append response
+    rd = raw_node.ready()
+    assert rd.hs() == hard_state(2, first_index + 30, 1)
+    assert rd.committed_entries()[0].get_index() == first_index
+    assert rd.committed_entries()[-1].get_index() == first_index + 30
+    assert rd.messages()
+
+    s.wl(lambda core: core.set_hardstate(rd.hs().clone()))
+    raw_node.advance_append_async(rd.make_ref())
+
+    # Forward commit index due to persist ready
+    raw_node.on_persist_ready(8)
+    rd = raw_node.ready()
+    assert rd.hs() == hard_state(2, first_index + 70, 1)
+    assert rd.committed_entries()[0].get_index() == first_index + 31
+    assert rd.committed_entries()[-1].get_index() == first_index + 70
+    assert rd.messages()
+    assert not rd.persisted_messages()
+    s.wl(lambda core: core.set_hardstate(rd.hs().clone()))
+
+    # Forward commit index due to persist last ready
+    light_rd = raw_node.advance_append(rd.make_ref())
+    assert light_rd.commit_index() == first_index + 100
+    assert light_rd.committed_entries()[0].get_index() == first_index + 71
+    assert light_rd.committed_entries()[-1].get_index() == first_index + 100
+    assert light_rd.messages()
+
+    # Test when 2 followers response the append entries msg and leader has
+    # not persisted them yet.
+    first_index += 100
+    for _ in range(0, 10):
+        raw_node.propose([], data)
+
+    rd = raw_node.ready()
+    assert rd.number() == 14
+    entries = list(map(lambda entry: entry.clone(), rd.entries()))
+    assert entries[0].get_index(), first_index + 1
+    assert entries[-1].get_index(), first_index + 10
+    # Leader‘s msg can be sent immediately.
+    must_cmp_ready(rd.make_ref(), None, None, entries, [], None, False, True, True)
+    for msg in rd.take_messages():
+        assert msg.get_msg_type() == MessageType.MsgAppend
+
+    s.wl(lambda core: core.append(entries))
+    raw_node.advance_append_async(rd.make_ref())
+
+    append_response = new_message(2, 1, MessageType.MsgAppendResponse, 0)
+    append_response.set_term(2)
+    append_response.set_index(first_index + 9)
+
+    raw_node.step(append_response)
+
+    append_response = new_message(3, 1, MessageType.MsgAppendResponse, 0)
+    append_response.set_term(2)
+    append_response.set_index(first_index + 10)
+
+    raw_node.step(append_response)
+
+    rd = raw_node.ready()
+    # It should has some append msgs and its commit index should be first_index + 9.
+    must_cmp_ready(
+        rd.make_ref(),
+        None,
+        hard_state(2, first_index + 9, 1),
+        [],
+        [],
+        None,
+        False,
+        True,
+        False,
+    )
+    for msg in rd.take_messages():
+        assert msg.get_msg_type() == MessageType.MsgAppend
+        assert msg.get_commit() == first_index + 9
+
+    # Forward commit index due to peer 1's append response and persisted entries
+    light_rd = raw_node.advance_append(rd.make_ref())
+    assert light_rd.commit_index() == first_index + 10
+    assert light_rd.committed_entries()[0].get_index() == first_index + 1
+    assert light_rd.committed_entries()[-1].get_index() == first_index + 10
+    assert light_rd.messages()
 
 
 # Test if async ready process is expected when a follower receives
