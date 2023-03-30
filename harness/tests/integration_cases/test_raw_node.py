@@ -62,6 +62,8 @@ sys.path.append(parent_dir)
 from interface import Interface
 from network import Network
 
+MAX_UINT64 = (1 << 64) - 1
+
 
 def must_cmp_ready(
     r: Ready_Ref,
@@ -952,7 +954,6 @@ def test_raw_node_with_async_apply():
     data = b"hello world!"
 
     for _ in range(1, 10):
-        MAX_UINT64 = (1 << 64) - 1
         cnt = random.randint(0, MAX_UINT64) % 10 + 1
 
         for _ in range(0, cnt):
@@ -1600,7 +1601,47 @@ def test_async_ready_multiple_snapshot():
 
 
 def test_committed_entries_pagination():
-    pass
+    l = default_logger()
+    s = new_storage()
+    raw_node = new_raw_node(1, [1, 2, 3], 10, 1, s, l)
+
+    entries = []
+    for i in range(2, 10):
+        entries.append(new_entry(1, i, None))
+
+    msg = new_message_with_entries(3, 1, MessageType.MsgAppend, entries)
+    msg.set_term(1)
+    msg.set_index(1)
+    msg.set_log_term(1)
+    msg.set_commit(9)
+    raw_node.step(msg)
+
+    # Test unpersisted entries won't be fetched.
+    # NOTE: maybe it's better to allow fetching unpersisted committed entries.
+    rd = raw_node.ready()
+    assert not rd.committed_entries()
+    assert raw_node.has_ready()
+
+    # Persist entries.
+    assert rd.entries()
+    raw_node.store().wl(lambda core: core.append(rd.entries()))
+
+    # Advance the ready, and we can get committed_entries as expected.
+    # Test using 0 as `committed_entries_max_size` works as expected.
+    raw_node.get_raft().set_max_committed_size_per_ready(0)
+    rd = raw_node.advance(rd.make_ref())
+    # `MemStorage::entries` uses `util::limit_size` to limit size of committed entries.
+    # So there will be at least one entry.
+    assert len(rd.committed_entries()) == 1
+
+    # Fetch a `Ready` again without size limit for committed entries.
+    assert raw_node.has_ready()
+    raw_node.get_raft().set_max_committed_size_per_ready(MAX_UINT64)
+    rd = raw_node.ready()
+    assert len(rd.committed_entries()) == 7
+
+    # No more `Ready`s.
+    assert not raw_node.has_ready()
 
 
 # Test with `commit_since_index`, committed entries can be fetched correctly after restart.
