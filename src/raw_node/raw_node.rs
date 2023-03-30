@@ -21,7 +21,7 @@ use crate::prelude::raft::Py_Raft__MemStorage_Ref;
 
 use crate::prelude::snapshot_status::Py_SnapshotStatus;
 use crate::prelude::status::Py_Status__MemStorage_Owner;
-use crate::storage::mem_storage::Py_MemStorage_Mut;
+use crate::storage::mem_storage::{Py_MemStorage_Mut, Py_MemStorage_Ref};
 use crate::storage::py_storage::Py_Storage;
 use utils::reference::RustRef;
 
@@ -245,6 +245,12 @@ impl Py_RawNode__MemStorage_Ref {
     pub fn get_raft(&mut self) -> PyResult<Py_Raft__MemStorage_Ref> {
         self.inner.map_as_mut(|inner| Py_Raft__MemStorage_Ref {
             inner: RustRef::new(&mut inner.raft),
+        })
+    }
+
+    pub fn store(&mut self) -> PyResult<Py_MemStorage_Ref> {
+        self.inner.map_as_mut(|inner| Py_MemStorage_Ref {
+            inner: RustRef::new(inner.mut_store()),
         })
     }
 }

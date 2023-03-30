@@ -616,6 +616,8 @@ class RawNode__MemStorage:
         """
     def get_raft(self) -> Raft__MemStorage_Ref:
         """ """
+    def store(self) -> MemStorage_Ref:
+        """Returns the store as a mutable reference."""
 
 class RawNode__MemStorage_Owner(RawNode__MemStorage):
     """
