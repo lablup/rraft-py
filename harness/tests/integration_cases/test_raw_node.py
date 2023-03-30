@@ -1,4 +1,5 @@
 import os
+import random
 import sys
 import pytest
 from typing import Any, List, Optional, Tuple, cast
@@ -929,7 +930,52 @@ def test_raw_node_async_entries_with_leader_change():
 
 
 def test_raw_node_with_async_apply():
-    pass
+    l = default_logger()
+    s = new_storage()
+    s.wl(lambda core: core.apply_snapshot(new_snapshot(1, 1, [1])))
+
+    raw_node = new_raw_node(1, [1], 10, 1, s.clone(), l)
+    raw_node.campaign()
+    rd = raw_node.ready()
+
+    # Single node should become leader.
+    if ss := rd.ss():
+        assert ss.get_leader_id() == raw_node.get_raft().get_leader_id()
+    else:
+        assert False
+
+    s.wl(lambda core: core.append(rd.entries()))
+    raw_node.advance(rd.make_ref())
+
+    last_index = raw_node.get_raft().get_raft_log().last_index()
+
+    data = b"hello world!"
+
+    for _ in range(1, 10):
+        MAX_UINT64 = (1 << 64) - 1
+        cnt = random.randint(0, MAX_UINT64) % 10 + 1
+
+        for _ in range(0, cnt):
+            raw_node.propose([], data)
+
+        rd = raw_node.ready()
+        entries = list(map(lambda entry: entry.clone(), rd.entries()))
+        assert entries[0].get_index() == last_index + 1
+        assert entries[-1].get_index() == last_index + cnt
+        must_cmp_ready(rd.make_ref(), None, None, entries, [], None, True, True, True)
+
+        s.wl(lambda core: core.append(entries))
+
+        light_rd = raw_node.advance_append(rd.make_ref())
+        assert entries == light_rd.committed_entries()
+        assert light_rd.commit_index() == last_index + cnt
+
+        # No matter how applied index changes, the index of next committed
+        # entries should be the same.
+        raw_node.advance_apply_to(last_index + 1)
+        assert not raw_node.has_ready()
+
+        last_index += cnt
 
 
 # Test if the ready process is expected when a follower receives a snapshot
