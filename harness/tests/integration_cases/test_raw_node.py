@@ -1066,7 +1066,81 @@ def test_raw_node_entries_after_snapshot():
 # Test if the given committed entries are persisted when some persisted
 # entries are overwritten by a new leader.
 def test_raw_node_overwrite_entries():
-    pass
+    l = default_logger()
+    s = new_storage()
+    s.wl(lambda core: core.apply_snapshot(new_snapshot(1, 1, [1, 2, 3])))
+
+    raw_node = new_raw_node(1, [1, 2, 3], 10, 1, s.clone(), l)
+
+    entries = [
+        new_entry(2, 2, "hello"),
+        new_entry(2, 3, "hello"),
+        new_entry(2, 4, "hello"),
+    ]
+    append_msg = new_message_with_entries(2, 1, MessageType.MsgAppend, entries)
+    append_msg.set_term(2)
+    append_msg.set_index(1)
+    append_msg.set_log_term(1)
+    append_msg.set_commit(1)
+    raw_node.step(append_msg)
+
+    rd = raw_node.ready()
+    ss = soft_state(2, StateRole.Follower)
+    must_cmp_ready(
+        rd.make_ref(),
+        ss.make_ref(),
+        hard_state(2, 1, 0),
+        entries,
+        [],
+        None,
+        True,
+        False,
+        True,
+    )
+    # Should have a MsgAppendResponse
+    assert rd.persisted_messages()[0].get_msg_type() == MessageType.MsgAppendResponse
+    s.wl(lambda core: core.set_hardstate(rd.hs().clone()))
+    s.wl(lambda core: core.append(rd.entries()))
+
+    light_rd = raw_node.advance(rd.make_ref())
+    assert not light_rd.commit_index()
+    assert not light_rd.committed_entries()
+    assert not light_rd.messages()
+
+    entries_2 = [
+        new_entry(3, 4, "hello"),
+        new_entry(3, 5, "hello"),
+        new_entry(3, 6, "hello"),
+    ]
+    append_msg = new_message_with_entries(3, 1, MessageType.MsgAppend, entries_2)
+    append_msg.set_term(3)
+    append_msg.set_index(3)
+    append_msg.set_log_term(2)
+    append_msg.set_commit(5)
+    raw_node.step(append_msg)
+
+    rd = raw_node.ready()
+    ss = soft_state(3, StateRole.Follower)
+    must_cmp_ready(
+        rd.make_ref(),
+        ss.make_ref(),
+        hard_state(3, 5, 0),
+        entries_2,
+        entries[:2],
+        None,
+        True,
+        False,
+        True,
+    )
+    # Should have a MsgAppendResponse
+    assert rd.persisted_messages()[0].get_msg_type() == MessageType.MsgAppendResponse
+    s.wl(lambda core: core.set_hardstate(rd.hs().clone()))
+    s.wl(lambda core: core.append(rd.entries()))
+
+    light_rd = raw_node.advance(rd.make_ref())
+    assert not light_rd.commit_index()
+    assert light_rd.committed_entries() == entries_2[:2]
+    assert not light_rd.messages()
 
 
 # Test if async ready process is expected when a leader receives
