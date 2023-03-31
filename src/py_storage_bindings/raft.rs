@@ -31,12 +31,12 @@ use crate::{
     raft_log::Py_RaftLog__PyStorage_Ref,
 };
 
-#[pyclass(name = "Raft__MemStorage_Owner")]
+#[pyclass(name = "Raft_Owner")]
 pub struct Py_Raft__PyStorage_Owner {
     pub inner: Raft<Py_Storage_Owner>,
 }
 
-#[pyclass(name = "Raft__MemStorage_Ref")]
+#[pyclass(name = "Raft_Ref")]
 pub struct Py_Raft__PyStorage_Ref {
     pub inner: RustRef<Raft<Py_Storage_Owner>>,
 }

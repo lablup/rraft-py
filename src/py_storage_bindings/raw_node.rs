@@ -23,12 +23,12 @@ use utils::reference::RustRef;
 use crate::py_storage::{Py_Storage_Owner, Py_Storage_Ref};
 use crate::raft::Py_Raft__PyStorage_Ref;
 
-#[pyclass(name = "RawNode__MemStorage_Owner")]
+#[pyclass(name = "RawNode_Owner")]
 pub struct Py_RawNode__PyStorage_Owner {
     pub inner: RawNode<Py_Storage_Owner>,
 }
 
-#[pyclass(name = "RawNode__MemStorage_Ref")]
+#[pyclass(name = "RawNode_Ref")]
 pub struct Py_RawNode__PyStorage_Ref {
     pub inner: RustRef<RawNode<Py_Storage_Owner>>,
 }
