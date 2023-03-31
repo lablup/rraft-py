@@ -3,7 +3,7 @@ use pyo3::prelude::*;
 use raft::storage::RaftState;
 use utils::reference::RustRef;
 
-use crate::eraftpb::{
+use prost_bindings::{
     conf_state::{Py_ConfState_Mut, Py_ConfState_Ref},
     hard_state::{Py_HardState_Mut, Py_HardState_Ref},
 };

@@ -8,7 +8,6 @@ See https://github.com/PyO3/pyo3/issues/2454
 from abc import ABCMeta, abstractmethod
 from typing import Any, Callable, Final, List, Optional, Set, Tuple
 
-# src/prelude/global.rs
 NO_LIMIT: Final[Any]
 CAMPAIGN_ELECTION: Final[Any]
 CAMPAIGN_PRE_ELECTION: Final[Any]
@@ -23,7 +22,7 @@ def majority(total: int) -> int:
 
 def default_logger() -> Logger_Owner:
     """
-    The default logger we fall back to when passed `None` in external facing constructors.
+    The default logger we fall back to when passed `None` in external_bindings facing constructors.
 
     Currently, this is a `log` adaptor behind a `Once` to ensure there is no clobbering.
     """
@@ -33,7 +32,6 @@ def vote_resp_msg_type(t: MessageType) -> MessageType:
     Maps vote and pre_vote message types to their correspond responses.
     """
 
-# src/internal/slog.rs
 class OverflowStrategy:
     """ """
 
@@ -41,14 +39,12 @@ class OverflowStrategy:
     Drop: Final[Any]
     DropAndReport: Final[Any]
 
-# src/prelude/snapshot_status.rs
 class SnapshotStatus:
     """ """
 
     Finish: Final[Any]
     Failure: Final[Any]
 
-# src/prelude/progress_state.rs
 class ProgressState:
     """ """
 
@@ -56,7 +52,6 @@ class ProgressState:
     Replicate: Final[Any]
     Snapshot: Final[Any]
 
-# src/prelude/state_role.rs
 class StateRole:
     """ """
 
@@ -65,14 +60,12 @@ class StateRole:
     Leader: Final[Any]
     PreCandidate: Final[Any]
 
-# src/prelude/readonly_option.rs
 class ReadOnlyOption:
     """ """
 
     Safe: Final[Any]
     LeaseBased: Final[Any]
 
-# src/eraftpb/message_type.rs
 class MessageType:
     """ """
 
@@ -96,7 +89,6 @@ class MessageType:
     MsgRequestPreVote: Final[Any]
     MsgRequestPreVoteResponse: Final[Any]
 
-# src/eraftpb/conf_change_transition.rs
 class ConfChangeTransition:
     """ """
 
@@ -104,7 +96,6 @@ class ConfChangeTransition:
     Explicit: Final[Any]
     Implicit: Final[Any]
 
-# src/eraftpb/conf_change_type.rs
 class ConfChangeType:
     """ """
 
@@ -112,7 +103,6 @@ class ConfChangeType:
     AddLearnerNode: Final[Any]
     RemoveNode: Final[Any]
 
-# src/eraftpb/entry_type.rs
 class EntryType:
     """ """
 
@@ -165,7 +155,6 @@ class Logger_Owner(Logger):
 class Logger_Ref(Logger):
     """ """
 
-# src/storage/raft_state.rs
 class RaftState(Cloneable):
     def clone(self) -> RaftState_Owner: ...
     def initialized(self) -> bool:
@@ -197,7 +186,6 @@ class RaftState_Ref(RaftState):
     Reference type of :class:`RaftState_Owner`.
     """
 
-# src/storage/mem_storage_core.rs
 class MemStorageCore:
     def append(self, ents: List[Entry_Owner] | List[Entry_Ref]) -> None:
         """
@@ -272,7 +260,6 @@ class MemStorageCore_Ref(MemStorageCore):
     Reference type of :class:`MemStorage_Owner`.
     """
 
-# src/storage/mem_storage.rs
 class MemStorage(Cloneable):
     def clone(self) -> MemStorage_Owner: ...
     def initialize_with_conf_state(
@@ -351,7 +338,6 @@ class MemStorage_Ref(MemStorage):
     Reference type of :class:`MemStorage_Owner`.
     """
 
-# src/raw_node/ready.rs
 class Ready:
     def hs(self) -> Optional[HardState_Ref]:
         """
@@ -442,7 +428,6 @@ class Ready_Ref(Ready):
     Reference type of :class:`Ready_Owner`.
     """
 
-# src/raw_node/raw_node.rs
 class RawNode__MemStorage:
     def advance_apply(self) -> None:
         """
@@ -639,7 +624,6 @@ class RawNode__MemStorage_Ref(RawNode__MemStorage):
     Reference type of :class:`RawNode__MemStorage_Owner`.
     """
 
-# src/raw_node/peer.rs
 class Peer:
     def get_id(self) -> int:
         """ """
@@ -663,7 +647,6 @@ class Peer_Ref(Peer):
     Reference type of :class:`Peer_Owner`.
     """
 
-# src/raw_node/light_ready.rs
 class LightReady:
     def commit_index(self) -> Optional[int]:
         """
@@ -706,7 +689,6 @@ class LightReady_Ref(LightReady):
     Reference type of :class:`LightReady_Owner`.
     """
 
-# src/eraftpb/snapshot_metadata.rs
 class SnapshotMetadata(Cloneable):
     def clone(self) -> SnapshotMetadata_Owner: ...
     def get_index(self) -> int:
@@ -743,7 +725,6 @@ class SnapshotMetadata_Ref(SnapshotMetadata):
     Reference type of :class:`SnapshotMetadata_Owner`.
     """
 
-# src/eraftpb/snapshot.rs
 class Snapshot(Cloneable):
     def clone(self) -> Snapshot_Owner: ...
     def get_data(self) -> bytes:
@@ -778,7 +759,6 @@ class Snapshot_Ref(Snapshot):
     Reference type of :class:`Snapshot_Owner`.
     """
 
-# src/eraftpb/message.rs
 class Message(Cloneable):
     def clone(self) -> Message_Owner: ...
     def get_commit(self) -> int:
@@ -891,7 +871,6 @@ class Message_Ref(Message):
     Reference type of :class:`Message_Owner`.
     """
 
-# src/eraftpb/hardstate.rs
 class HardState(Cloneable):
     def clone(self) -> HardState_Owner: ...
     def get_term(self) -> int:
@@ -926,7 +905,6 @@ class HardState_Ref(HardState):
     Reference type of :class:`HardState_Owner`.
     """
 
-# src/eraftpb/entry.rs
 class Entry(Cloneable):
     def clone(self) -> Entry_Owner: ...
     def get_context(self) -> bytes:
@@ -979,7 +957,6 @@ class Entry_Ref(Entry):
     Reference type of :class:`Entry_Owner`.
     """
 
-# src/eraftpb/conf_state.rs
 class ConfState(Cloneable):
     def clone(self) -> ConfState_Owner: ...
     def get_auto_leave(self) -> bool:
@@ -1028,7 +1005,6 @@ class ConfState_Ref(ConfState):
     Reference type of :class:`ConfState_Owner`.
     """
 
-# src/eraftpb/conf_change_v2.rs
 class ConfChangeV2(Cloneable):
     def clone(self) -> ConfChangeV2_Owner: ...
     def get_changes(self) -> bytes:
@@ -1087,7 +1063,6 @@ class ConfChangeV2_Ref(ConfChangeV2):
     Reference type of :class:`ConfChangeV2_Owner`.
     """
 
-# src/eraftpb/conf_change_single.rs
 class ConfChangeSingle(Cloneable):
     def clone(self) -> ConfChangeSingle_Owner: ...
     def get_node_id(self) -> int:
@@ -1116,7 +1091,6 @@ class ConfChangeSingle_Ref(ConfChangeSingle):
     Reference type of :class:`ConfChangeSingle_Owner`.
     """
 
-# src/eraftpb/conf_change.rs
 class ConfChange(Cloneable):
     def clone(self) -> ConfChange_Owner: ...
     def get_id(self) -> int:
@@ -1173,7 +1147,6 @@ class ConfChange_Ref(ConfChange):
     Reference type of :class:`ConfChange_Owner`.
     """
 
-# src/prelude/unstable.rs
 class Unstable:
     def maybe_first_index(self) -> Optional[int]:
         """
@@ -1260,7 +1233,6 @@ class Unstable_Ref(Unstable):
     Reference type of :class:`Unstable_Owner`.
     """
 
-# src/prelude/status.rs
 class Status__Memstorage:
     def get_applied(self) -> int:
         """ """
@@ -1298,7 +1270,6 @@ class Status__Memstorage_Ref(Status__Memstorage):
     Reference type of :class:`Status__Memstorage_Owner`.
     """
 
-# src/prelude/soft_state.rs
 class SoftState:
     def get_leader_id(self) -> int:
         """ """
@@ -1324,7 +1295,6 @@ class SoftState_Ref(SoftState):
     Reference type of :class:`SoftState_Owner`.
     """
 
-# src/prelude/read_state.rs
 class ReadState(Cloneable):
     def clone(self) -> ReadState_Owner: ...
     def get_index(self) -> int:
@@ -1353,7 +1323,6 @@ class ReadState_Ref(ReadState):
     Reference type of :class:`ReadState_Owner`.
     """
 
-# src/prelude/raft_log.rs
 class RaftLog__MemStorage:
     def entries(self, idx: int, max_size: Optional[int]) -> List[Entry_Owner]:
         """
@@ -1562,7 +1531,6 @@ class RaftLog__MemStorage_Ref(RaftLog__MemStorage):
     Reference type of :class:`RaftLog__MemStorage_Owner`.
     """
 
-# src/prelude/raft.rs
 class Raft__MemStorage:
     def append_entry(self, ents: List[Entry_Owner] | List[Entry_Ref]) -> bool:
         """
@@ -1928,7 +1896,6 @@ class Raft__MemStorage_Ref(Raft__MemStorage):
     Reference type of :class:`Raft__MemStorage_Owner`.
     """
 
-# src/prelude/progress_tracker.rs
 class ProgressTracker(Cloneable):
     def clone(self) -> ProgressTracker_Owner: ...
     def get(self, id: int) -> Optional[Progress_Ref]:
@@ -1997,7 +1964,6 @@ class ProgressTracker_Ref(ProgressTracker):
     Reference type of :class:`ProgressTracker_Owner`.
     """
 
-# src/prelude/progress.rs
 class Progress(Cloneable):
     def clone(self) -> Progress_Owner: ...
     def become_probe(self) -> None:
@@ -2099,7 +2065,6 @@ class Progress_Ref(Progress):
     Reference type of :class:`Progress_Owner`.
     """
 
-# src/prelude/joint_config.rs
 class JointConfig(Cloneable):
     def clone(self) -> JointConfig_Owner: ...
     def clear(self) -> None:
@@ -2128,7 +2093,6 @@ class JointConfig_Ref(JointConfig):
     Reference type of :class:`JointConfig_Owner`.
     """
 
-# src/prelude/majority_config.rs
 class MajorityConfig(Cloneable):
     def clone(self) -> MajorityConfig_Owner: ...
     def capacity(self) -> int:
@@ -2175,7 +2139,6 @@ class MajorityConfig_Ref(MajorityConfig):
     Reference type of :class:`MajorityConfig_Owner`.
     """
 
-# src/prelude/inflights.rs
 class Inflights(Cloneable):
     def clone(self) -> Inflights_Owner: ...
     def add(self, inflight: int) -> None:

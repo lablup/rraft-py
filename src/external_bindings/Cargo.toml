@@ -1,0 +1,19 @@
+[package]
+name = "external-bindings"
+version = "0.1.0"
+authors = ["jopemachine"]
+edition = "2018"
+
+[dependencies]
+pyo3 = { version = "0.18.2", features = ["extension-module"] }
+raft = { version = "0.6.0", features = ["prost-codec", "default-logger"], default-features = false }
+slog = { version = "2.2", features = ["max_level_debug", "release_max_level_debug"] }
+slog-envlogger = "2.1.0"
+slog-term = "2.9.0"
+slog-stdlog = "4"
+slog-async = "2.7.0"
+utils = { path = "../utils" }
+
+[lib]
+name = "external_bindings"
+path = "lib.rs"

@@ -1,12 +1,11 @@
 use pyo3::{prelude::*, types::PyList};
 
-use crate::{
-    eraftpb::{
-        entry::{Py_Entry_Mut, Py_Entry_Ref},
-        snapshot::{Py_Snapshot_Mut, Py_Snapshot_Ref},
-    },
-    internal::slog::{Py_Logger_Mut, Py_Logger_Ref},
+use prost_bindings::{
+    entry::{Py_Entry_Mut, Py_Entry_Ref},
+    snapshot::{Py_Snapshot_Mut, Py_Snapshot_Ref},
 };
+use external_bindings::slog::{Py_Logger_Mut, Py_Logger_Ref};
+
 use raft::Unstable;
 use utils::unsafe_cast::make_mut;
 

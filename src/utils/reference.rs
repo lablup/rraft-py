@@ -1,8 +1,8 @@
 // Ref:: https://github.com/huggingface/tokenizers/tree/main/bindings/python
+use crate::errors::destroyed_error as _destroyed_error;
 use pyo3::prelude::*;
 use pyo3::PyErr;
 use std::sync::{Arc, Mutex};
-use crate::errors::destroyed_error as _destroyed_error;
 
 #[derive(Clone)]
 pub struct RefMutContainer<T> {

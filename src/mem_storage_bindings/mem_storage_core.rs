@@ -3,7 +3,7 @@ use pyo3::{prelude::*, types::PyList};
 use raft::storage::MemStorageCore;
 use utils::{errors::to_pyresult, reference::RustRef};
 
-use crate::eraftpb::{
+use prost_bindings::{
     conf_state::Py_ConfState_Mut,
     entry::Py_Entry_Mut,
     hard_state::{Py_HardState_Mut, Py_HardState_Ref},

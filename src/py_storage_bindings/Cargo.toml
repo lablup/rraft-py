@@ -1,0 +1,17 @@
+[package]
+name = "py-storage-bindings"
+version = "0.1.0"
+authors = ["jopemachine"]
+edition = "2018"
+
+[dependencies]
+pyo3 = { version = "0.18.2", features = ["extension-module"] }
+raft = { version = "0.6.0", features = ["prost-codec", "default-logger"], default-features = false }
+utils = { path = "../utils" }
+bindings = { path = "../bindings" }
+prost-bindings = { path = "../prost_bindings" }
+external-bindings = { path = "../external_bindings" }
+
+[lib]
+name = "py_storage_bindings"
+path = "lib.rs"

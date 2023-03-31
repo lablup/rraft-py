@@ -28,7 +28,22 @@ slog-term = "2.9.0"
 slog-stdlog = "4"
 slog-async = "2.7.0"
 fxhash = "0.2.1"
+bindings = { path = "src/bindings" }
+prost-bindings = { path = "src/prost_bindings" }
+external-bindings = { path = "src/external_bindings" }
+mem-storage-bindings = { path = "src/mem_storage_bindings" }
+py-storage-bindings = { path = "src/py_storage_bindings" }
 utils = { path = "src/utils" }
+
+[workspace]
+members = [
+	"src/bindings",
+	"src/prost_bindings",
+	"src/external_bindings",
+	"src/mem_storage_bindings",
+	"src/py_storage_bindings",
+	"src/utils",
+]
 
 [lib]
 name = "rraft"

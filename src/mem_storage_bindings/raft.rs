@@ -7,31 +7,28 @@ use utils::{
 
 use raft::{storage::MemStorage, Raft};
 
-use crate::{
-    eraftpb::{
-        conf_change_v2::Py_ConfChangeV2_Mut,
-        conf_state::Py_ConfState_Ref,
-        entry::Py_Entry_Mut,
-        hard_state::Py_HardState_Mut,
-        message::{Py_Message_Mut, Py_Message_Owner, Py_Message_Ref},
-        snapshot::{Py_Snapshot_Mut, Py_Snapshot_Ref},
-    },
-    internal::slog::Py_Logger_Mut,
-    storage::{
-        mem_storage::{Py_MemStorage_Mut, Py_MemStorage_Ref},
-        py_storage::Py_Storage,
-    },
+use prost_bindings::{
+    conf_change_v2::Py_ConfChangeV2_Mut,
+    conf_state::Py_ConfState_Ref,
+    entry::Py_Entry_Mut,
+    hard_state::Py_HardState_Mut,
+    message::{Py_Message_Mut, Py_Message_Owner, Py_Message_Ref},
+    snapshot::{Py_Snapshot_Mut, Py_Snapshot_Ref},
 };
 
-use super::{
+use bindings::{
     config::Py_Config_Mut,
     progress_tracker::Py_ProgressTracker_Ref,
-    raft_log::Py_RaftLog__MemStorage_Ref,
     read_state::{Py_ReadState_Mut, Py_ReadState_Owner},
     readonly_option::Py_ReadOnlyOption,
     soft_state::Py_SoftState_Ref,
     state_role::Py_StateRole,
 };
+use external_bindings::slog::Py_Logger_Mut;
+
+use crate::raft_log::Py_RaftLog__MemStorage_Ref;
+
+use super::mem_storage::{Py_MemStorage_Mut, Py_MemStorage_Ref};
 
 #[pyclass(name = "Raft__MemStorage_Owner")]
 pub struct Py_Raft__MemStorage_Owner {
@@ -580,19 +577,3 @@ impl Py_Raft__MemStorage_Ref {
             .map_as_mut(|inner| inner.read_only.option = option.0)
     }
 }
-
-#[pyclass(name = "Raft")]
-pub struct Py_Raft__PyStorage_Owner {
-    pub inner: Raft<Py_Storage>,
-}
-
-#[pymethods]
-impl Py_Raft__PyStorage_Owner {}
-
-#[pyclass(name = "Raft_Ref")]
-pub struct Py_Raft__PyStorage_Ref {
-    pub inner: RustRef<Raft<Py_Storage>>,
-}
-
-#[pymethods]
-impl Py_Raft__PyStorage_Ref {}

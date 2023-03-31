@@ -3,18 +3,16 @@ use pyo3::types::PyList;
 use utils::errors::to_pyresult;
 use utils::unsafe_cast::make_mut;
 
-use crate::eraftpb::entry::Py_Entry_Owner;
-use crate::eraftpb::snapshot::Py_Snapshot_Ref;
-use crate::internal::slog::Py_Logger_Mut;
+use prost_bindings::snapshot::Py_Snapshot_Ref;
+use external_bindings::slog::Py_Logger_Mut;
 
-use crate::storage::mem_storage::{Py_MemStorage_Mut, Py_MemStorage_Ref};
-use crate::storage::py_storage::Py_Storage;
+use super::mem_storage::{Py_MemStorage_Mut, Py_MemStorage_Ref};
 use raft::storage::MemStorage;
 use raft::RaftLog;
 use utils::reference::RustRef;
 
-use super::super::eraftpb::entry::{Py_Entry_Mut, Py_Entry_Ref};
-use super::unstable::Py_Unstable_Ref;
+use bindings::unstable::Py_Unstable_Ref;
+use prost_bindings::entry::{Py_Entry_Mut, Py_Entry_Owner, Py_Entry_Ref};
 
 #[pyclass(name = "RaftLog__MemStorage_Owner")]
 pub struct Py_RaftLog__MemStorage_Owner {
@@ -321,18 +319,3 @@ impl Py_RaftLog__MemStorage_Ref {
         })
     }
 }
-
-#[pyclass(name = "RaftLog_Owner")]
-pub struct Py_RaftLog__PyStorage_Owner {
-    pub inner: RaftLog<Py_Storage>,
-}
-
-#[pymethods]
-impl Py_RaftLog__PyStorage_Owner {}
-
-#[pyclass(name = "RaftLog_Ref")]
-pub struct Py_RaftLog__PyStorage_Ref {
-    pub inner: RustRef<RaftLog<Py_Storage>>,
-}
-
-impl Py_RaftLog__PyStorage_Ref {}
