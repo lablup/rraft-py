@@ -575,10 +575,6 @@ class RawNode:
         """
         Snapshot specifies the snapshot to be saved to stable storage.
         """
-    def status(self) -> Status__Memstorage_Owner:
-        """
-        Status returns the current status of the given group.
-        """
     def step(self, msg: Message_Owner | Message_Ref) -> None:
         """
         Step advances the state machine using the given message.
@@ -670,8 +666,6 @@ class RawNode:
         Request a snapshot from a leader.
         The snapshot's index must be greater or equal to the request_index.
         """
-    def store(self) -> MemStorage_Ref:
-        """Returns the store as a mutable reference."""
 
 class RawNode__MemStorage_Owner(RawNode):
     """
@@ -689,13 +683,26 @@ class RawNode__MemStorage_Owner(RawNode):
     def make_ref(self) -> RawNode__MemStorage_Ref: ...
     def get_raft(self) -> Raft__MemStorage_Ref:
         """ """
+    def store(self) -> MemStorage_Ref:
+        """Returns the store as a mutable reference."""
+    def status(self) -> Status__Memstorage_Owner:
+        """
+        Status returns the current status of the given group.
+        """
 
 class RawNode__MemStorage_Ref(RawNode):
     """
     Reference type of :class:`RawNode__MemStorage_Owner`.
     """
+
     def get_raft(self) -> Raft__MemStorage_Ref:
         """ """
+    def store(self) -> MemStorage_Ref:
+        """Returns the store as a mutable reference."""
+    def status(self) -> Status__Memstorage_Owner:
+        """
+        Status returns the current status of the given group.
+        """
 
 class RawNode_Owner(RawNode):
     """
@@ -713,13 +720,26 @@ class RawNode_Owner(RawNode):
     def make_ref(self) -> RawNode_Ref: ...
     def get_raft(self) -> Raft_Ref:
         """ """
+    def store(self) -> Storage_Ref:
+        """Returns the store as a mutable reference."""
+    # def status(self) -> Status__Memstorage_Owner:
+    #     """
+    #     Status returns the current status of the given group.
+    #     """
 
 class RawNode_Ref(RawNode):
     """
     Reference type of :class:`RawNode_Owner`.
     """
+
     def get_raft(self) -> Raft_Ref:
         """ """
+    def store(self) -> Storage_Ref:
+        """Returns the store as a mutable reference."""
+    # def status(self) -> Status__Memstorage_Owner:
+    #     """
+    #     Status returns the current status of the given group.
+    #     """
 
 class Peer:
     def get_id(self) -> int:
@@ -1627,6 +1647,7 @@ class RaftLog__MemStorage_Ref(RaftLog):
     """
     Reference type of :class:`RaftLog__MemStorage_Owner`.
     """
+
     def get_store(self) -> MemStorage_Ref:
         """
         Grab a read-only reference to the underlying storage.
@@ -1648,6 +1669,7 @@ class RaftLog_Ref(RaftLog):
     """
     Reference type of :class:`RaftLog_Owner`.
     """
+
     def get_store(self) -> Storage_Ref:
         """
         Grab a read-only reference to the underlying storage.
