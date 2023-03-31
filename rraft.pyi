@@ -186,7 +186,7 @@ class RaftState_Ref(RaftState):
     Reference type of :class:`RaftState_Owner`.
     """
 
-class MemStorageCore:
+class StorageCore:
     def append(self, ents: List[Entry_Owner] | List[Entry_Ref]) -> None:
         """
         Append the new entries to storage.
@@ -245,7 +245,7 @@ class MemStorageCore:
         Trigger a SnapshotTemporarilyUnavailable error.
         """
 
-class MemStorageCore_Owner(MemStorageCore):
+class MemStorageCore_Owner(StorageCore):
     """
     The Memory Storage Core instance holds the actual state of the storage struct. To access this
     value, use the `rl` and `wl` functions on the main MemStorage implementation.
@@ -255,13 +255,25 @@ class MemStorageCore_Owner(MemStorageCore):
     @staticmethod
     def default() -> MemStorageCore_Owner: ...
 
-class MemStorageCore_Ref(MemStorageCore):
+class MemStorageCore_Ref(StorageCore):
     """
     Reference type of :class:`MemStorage_Owner`.
     """
 
-class MemStorage(Cloneable):
-    def clone(self) -> MemStorage_Owner: ...
+class StorageCore_Owner(StorageCore):
+    """ """
+
+    def make_ref(self) -> StorageCore_Ref: ...
+    @staticmethod
+    def default() -> StorageCore_Owner: ...
+
+class StorageCore_Ref(StorageCore):
+    """
+    Reference type of :class:`StorageCore_Owner`.
+    """
+
+class Storage(Cloneable):
+    def clone(self) -> Any: ...
     def initialize_with_conf_state(
         self, conf_state: ConfState_Owner | ConfState_Ref
     ) -> None:
@@ -296,18 +308,8 @@ class MemStorage(Cloneable):
         """
         Implements the Storage trait.
         """
-    def wl(self, f: Callable[[MemStorageCore_Ref], None]) -> None:
-        """
-        Opens up a write lock on the storage and returns guard handle. Use this
-        with functions that take a mutable reference to self.
-        """
-    def rl(self, f: Callable[[MemStorageCore_Ref], None]) -> None:
-        """
-        Opens up a read lock on the storage and returns a guard handle. Use this
-        with functions that don't require mutation.
-        """
 
-class MemStorage_Owner(MemStorage):
+class MemStorage_Owner(Storage):
     """
     `MemStorage` is a thread-safe but incomplete implementation of `Storage`, mainly for tests.
 
@@ -320,6 +322,7 @@ class MemStorage_Owner(MemStorage):
 
     def __init__(self) -> None: ...
     def make_ref(self) -> MemStorage_Ref: ...
+    def clone(self) -> MemStorage_Owner: ...
     @staticmethod
     def default() -> MemStorage_Owner: ...
     @staticmethod
@@ -332,11 +335,79 @@ class MemStorage_Owner(MemStorage):
 
         You should use the same input to initialize all nodes.
         """
+    def wl(self, f: Callable[[MemStorageCore_Ref], None]) -> None:
+        """
+        Opens up a write lock on the storage and returns guard handle. Use this
+        with functions that take a mutable reference to self.
+        """
+    def rl(self, f: Callable[[MemStorageCore_Ref], None]) -> None:
+        """
+        Opens up a read lock on the storage and returns a guard handle. Use this
+        with functions that don't require mutation.
+        """
 
-class MemStorage_Ref(MemStorage):
+class MemStorage_Ref(Storage):
     """
     Reference type of :class:`MemStorage_Owner`.
     """
+
+    def clone(self) -> MemStorage_Owner: ...
+    def wl(self, f: Callable[[MemStorageCore_Ref], None]) -> None:
+        """
+        Opens up a write lock on the storage and returns guard handle. Use this
+        with functions that take a mutable reference to self.
+        """
+    def rl(self, f: Callable[[MemStorageCore_Ref], None]) -> None:
+        """
+        Opens up a read lock on the storage and returns a guard handle. Use this
+        with functions that don't require mutation.
+        """
+
+class Storage_Owner(Storage):
+    """ """
+
+    def __init__(self) -> None: ...
+    def make_ref(self) -> Storage_Ref: ...
+    def clone(self) -> Storage_Owner: ...
+    @staticmethod
+    def default() -> Storage_Owner: ...
+    @staticmethod
+    def new_with_conf_state(
+        conf_state: ConfState_Owner | ConfState_Ref,
+    ) -> Storage_Owner:
+        """
+        Create a new `MemStorage` with a given `Config`. The given `Config` will be used to
+        initialize the storage.
+
+        You should use the same input to initialize all nodes.
+        """
+    def wl(self, f: Callable[[StorageCore_Ref], None]) -> None:
+        """
+        Opens up a write lock on the storage and returns guard handle. Use this
+        with functions that take a mutable reference to self.
+        """
+    def rl(self, f: Callable[[StorageCore_Ref], None]) -> None:
+        """
+        Opens up a read lock on the storage and returns a guard handle. Use this
+        with functions that don't require mutation.
+        """
+
+class Storage_Ref(Storage):
+    """
+    Reference type of :class:`Storage_Owner`.
+    """
+
+    def clone(self) -> Storage_Owner: ...
+    def wl(self, f: Callable[[StorageCore_Ref], None]) -> None:
+        """
+        Opens up a write lock on the storage and returns guard handle. Use this
+        with functions that take a mutable reference to self.
+        """
+    def rl(self, f: Callable[[StorageCore_Ref], None]) -> None:
+        """
+        Opens up a read lock on the storage and returns a guard handle. Use this
+        with functions that don't require mutation.
+        """
 
 class Ready:
     def hs(self) -> Optional[HardState_Ref]:
@@ -428,7 +499,7 @@ class Ready_Ref(Ready):
     Reference type of :class:`Ready_Owner`.
     """
 
-class RawNode__MemStorage:
+class RawNode:
     def advance_apply(self) -> None:
         """
         Advance apply to the index of the last committed entries given before.
@@ -599,12 +670,10 @@ class RawNode__MemStorage:
         Request a snapshot from a leader.
         The snapshot's index must be greater or equal to the request_index.
         """
-    def get_raft(self) -> Raft__MemStorage_Ref:
-        """ """
     def store(self) -> MemStorage_Ref:
         """Returns the store as a mutable reference."""
 
-class RawNode__MemStorage_Owner(RawNode__MemStorage):
+class RawNode__MemStorage_Owner(RawNode):
     """
     RawNode is a thread-unsafe Node.
     The methods of this struct correspond to the methods of Node and are described
@@ -618,11 +687,39 @@ class RawNode__MemStorage_Owner(RawNode__MemStorage):
         logger: Logger_Owner | Logger_Ref,
     ) -> None: ...
     def make_ref(self) -> RawNode__MemStorage_Ref: ...
+    def get_raft(self) -> Raft__MemStorage_Ref:
+        """ """
 
-class RawNode__MemStorage_Ref(RawNode__MemStorage):
+class RawNode__MemStorage_Ref(RawNode):
     """
     Reference type of :class:`RawNode__MemStorage_Owner`.
     """
+    def get_raft(self) -> Raft__MemStorage_Ref:
+        """ """
+
+class RawNode_Owner(RawNode):
+    """
+    RawNode is a thread-unsafe Node.
+    The methods of this struct correspond to the methods of Node and are described
+    more fully there.
+    """
+
+    def __init__(
+        self,
+        cfg: Config_Owner | Config_Ref,
+        store: Storage_Owner | Storage_Ref,
+        logger: Logger_Owner | Logger_Ref,
+    ) -> None: ...
+    def make_ref(self) -> RawNode_Ref: ...
+    def get_raft(self) -> Raft_Ref:
+        """ """
+
+class RawNode_Ref(RawNode):
+    """
+    Reference type of :class:`RawNode_Owner`.
+    """
+    def get_raft(self) -> Raft_Ref:
+        """ """
 
 class Peer:
     def get_id(self) -> int:
@@ -1035,19 +1132,19 @@ class ConfChangeV2(Cloneable):
         """ """
     def write_to_bytes(self) -> bytes:
         """ """
-    def into_v2(self) -> ConfChangeV2_Owner:
-        """
-        Converts conf change to `ConfChangeV2`.
-        """
-    def as_v2(self) -> ConfChangeV2_Owner:
-        """
-        Gets conf change as `ConfChangeV2`.
-        """
     def as_v1(self) -> Optional[ConfChange_Ref]:
         """
         Converts conf change to `ConfChange`.
 
         `ConfChangeV2` can't be changed back to `ConfChange`.
+        """
+    def as_v2(self) -> ConfChangeV2_Owner:
+        """
+        Gets conf change as `ConfChangeV2`.
+        """
+    def into_v2(self) -> ConfChangeV2_Owner:
+        """
+        Converts conf change to `ConfChangeV2`.
         """
 
 class ConfChangeV2_Owner(ConfChangeV2):
@@ -1117,19 +1214,19 @@ class ConfChange(Cloneable):
         """ """
     def clear_context(self) -> None:
         """ """
-    def into_v2(self) -> ConfChangeV2_Owner:
-        """
-        Converts conf change to `ConfChangeV2`.
-        """
-    def as_v2(self) -> ConfChangeV2_Owner:
-        """
-        Gets conf change as `ConfChangeV2`.
-        """
     def as_v1(self) -> Optional[ConfChange_Ref]:
         """
         Converts conf change to `ConfChange`.
 
         `ConfChangeV2` can't be changed back to `ConfChange`.
+        """
+    def as_v2(self) -> ConfChangeV2_Owner:
+        """
+        Gets conf change as `ConfChangeV2`.
+        """
+    def into_v2(self) -> ConfChangeV2_Owner:
+        """
+        Converts conf change to `ConfChangeV2`.
         """
     def write_to_bytes(self) -> bytes:
         """ """
@@ -1233,7 +1330,7 @@ class Unstable_Ref(Unstable):
     Reference type of :class:`Unstable_Owner`.
     """
 
-class Status__Memstorage:
+class Status:
     def get_applied(self) -> int:
         """ """
     def set_applied(self, applied: int) -> None:
@@ -1323,7 +1420,7 @@ class ReadState_Ref(ReadState):
     Reference type of :class:`ReadState_Owner`.
     """
 
-class RaftLog__MemStorage:
+class RaftLog:
     def entries(self, idx: int, max_size: Optional[int]) -> List[Entry_Owner]:
         """
         Returns entries starting from a particular index and not exceeding a bytesize.
@@ -1499,10 +1596,6 @@ class RaftLog__MemStorage:
         """
         Returns the snapshot that are not persisted.
         """
-    def get_store(self) -> MemStorage_Ref:
-        """
-        Grab a read-only reference to the underlying storage.
-        """
     def get_applied(self) -> int:
         """ """
     def set_applied(self, applied: int) -> None:
@@ -1516,7 +1609,7 @@ class RaftLog__MemStorage:
     def set_persisted(self, persisted: int) -> None:
         """ """
 
-class RaftLog__MemStorage_Owner(RaftLog__MemStorage):
+class RaftLog__MemStorage_Owner(RaftLog):
     """
     Raft log implementation
     """
@@ -1525,13 +1618,42 @@ class RaftLog__MemStorage_Owner(RaftLog__MemStorage):
         self, store: MemStorage_Ref, logger: Logger_Owner | Logger_Ref
     ) -> None: ...
     def make_ref(self) -> RaftLog__MemStorage_Ref: ...
+    def get_store(self) -> MemStorage_Ref:
+        """
+        Grab a read-only reference to the underlying storage.
+        """
 
-class RaftLog__MemStorage_Ref(RaftLog__MemStorage):
+class RaftLog__MemStorage_Ref(RaftLog):
     """
     Reference type of :class:`RaftLog__MemStorage_Owner`.
     """
+    def get_store(self) -> MemStorage_Ref:
+        """
+        Grab a read-only reference to the underlying storage.
+        """
 
-class Raft__MemStorage:
+class RaftLog_Owner(RaftLog):
+    """ """
+
+    def __init__(
+        self, store: Storage_Ref, logger: Logger_Owner | Logger_Ref
+    ) -> None: ...
+    def make_ref(self) -> RaftLog_Ref: ...
+    def get_store(self) -> Storage_Ref:
+        """
+        Grab a read-only reference to the underlying storage.
+        """
+
+class RaftLog_Ref(RaftLog):
+    """
+    Reference type of :class:`RaftLog_Owner`.
+    """
+    def get_store(self) -> Storage_Ref:
+        """
+        Grab a read-only reference to the underlying storage.
+        """
+
+class Raft:
     def append_entry(self, ents: List[Entry_Owner] | List[Entry_Ref]) -> bool:
         """
         Appends a slice of entries to the log.
@@ -1866,18 +1988,22 @@ class Raft__MemStorage:
         """ """
     def get_readstates(self) -> List[ReadState_Owner]:
         """ """
-    def set_max_committed_size_per_ready(self, max_committed_size_per_ready: int) -> None:
+    def set_max_committed_size_per_ready(
+        self, max_committed_size_per_ready: int
+    ) -> None:
         """ """
     def get_read_states(self) -> List[ReadState_Owner]:
         """ """
-    def set_read_states(self, read_states: List[ReadState_Owner] | List[ReadState_Ref]) -> None:
+    def set_read_states(
+        self, read_states: List[ReadState_Owner] | List[ReadState_Ref]
+    ) -> None:
         """ """
     def get_read_only_option(self) -> ReadOnlyOption:
         """ """
     def set_read_only_option(self, option: ReadOnlyOption) -> None:
         """ """
 
-class Raft__MemStorage_Owner(Raft__MemStorage):
+class Raft__MemStorage_Owner(Raft):
     """
     A struct that represents the raft consensus itself. Stores details concerning the current
     and possible state the system can take.
@@ -1891,9 +2017,28 @@ class Raft__MemStorage_Owner(Raft__MemStorage):
     ) -> None: ...
     def make_ref(self) -> Raft__MemStorage_Ref: ...
 
-class Raft__MemStorage_Ref(Raft__MemStorage):
+class Raft__MemStorage_Ref(Raft):
     """
     Reference type of :class:`Raft__MemStorage_Owner`.
+    """
+
+class Raft_Owner(Raft):
+    """
+    A struct that represents the raft consensus itself. Stores details concerning the current
+    and possible state the system can take.
+    """
+
+    def __init__(
+        self,
+        cfg: Config_Owner | Config_Ref,
+        store: Storage_Owner | Storage_Ref,
+        logger: Logger_Owner | Logger_Ref,
+    ) -> None: ...
+    def make_ref(self) -> Raft__MemStorage_Ref: ...
+
+class Raft_Ref(Raft):
+    """
+    Reference type of :class:`Raft_Owner`.
     """
 
 class ProgressTracker(Cloneable):
@@ -2144,7 +2289,7 @@ class Inflights(Cloneable):
     def add(self, inflight: int) -> None:
         """Adds an inflight into inflights"""
     def cap(self) -> int:
-        """"""
+        """The buffer capacity."""
     def full(self) -> bool:
         """Returns true if the inflights is full."""
     def reset(self) -> None:
