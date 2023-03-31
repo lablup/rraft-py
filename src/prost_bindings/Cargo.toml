@@ -11,12 +11,6 @@ pyo3 = { version = "0.18.2", features = ["extension-module"] }
 pyo3-asyncio = { version = "0.18.0", features = ["tokio-runtime"] }
 raft = { version = "0.6.0", features = ["prost-codec", "default-logger"], default-features = false }
 tokio = "1.4"
-slog = { version = "2.2", features = ["max_level_debug", "release_max_level_debug"] }
-slog-envlogger = "2.1.0"
-slog-term = "2.9.0"
-slog-stdlog = "4"
-slog-async = "2.7.0"
-fxhash = "0.2.1"
 utils = { path = "../utils" }
 
 [lib]
