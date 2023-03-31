@@ -59,22 +59,22 @@ fn rraft(_py: Python, m: &PyModule) -> PyResult<()> {
     m.add_class::<prost_bindings::snapshot::Py_Snapshot_Owner>()?;
     m.add_class::<prost_bindings::snapshot::Py_Snapshot_Ref>()?;
 
-    m.add_class::<mem_storage::raft_log::Py_RaftLog__MemStorage_Owner>()?;
-    m.add_class::<mem_storage::raft_log::Py_RaftLog__MemStorage_Ref>()?;
-    m.add_class::<mem_storage::raft::Py_Raft__MemStorage_Owner>()?;
-    m.add_class::<mem_storage::raft::Py_Raft__MemStorage_Ref>()?;
-    m.add_class::<mem_storage::raw_node::Py_RawNode__MemStorage_Owner>()?;
-    m.add_class::<mem_storage::raw_node::Py_RawNode__MemStorage_Ref>()?;
-    m.add_class::<mem_storage::mem_storage_core::Py_MemStorageCore_Owner>()?;
-    m.add_class::<mem_storage::mem_storage_core::Py_MemStorageCore_Ref>()?;
-    m.add_class::<mem_storage::mem_storage::Py_MemStorage_Owner>()?;
-    m.add_class::<mem_storage::mem_storage::Py_MemStorage_Ref>()?;
+    m.add_class::<mem_storage_bindings::raft_log::Py_RaftLog__MemStorage_Owner>()?;
+    m.add_class::<mem_storage_bindings::raft_log::Py_RaftLog__MemStorage_Ref>()?;
+    m.add_class::<mem_storage_bindings::raft::Py_Raft__MemStorage_Owner>()?;
+    m.add_class::<mem_storage_bindings::raft::Py_Raft__MemStorage_Ref>()?;
+    m.add_class::<mem_storage_bindings::raw_node::Py_RawNode__MemStorage_Owner>()?;
+    m.add_class::<mem_storage_bindings::raw_node::Py_RawNode__MemStorage_Ref>()?;
+    m.add_class::<mem_storage_bindings::mem_storage_core::Py_MemStorageCore_Owner>()?;
+    m.add_class::<mem_storage_bindings::mem_storage_core::Py_MemStorageCore_Ref>()?;
+    m.add_class::<mem_storage_bindings::mem_storage::Py_MemStorage_Owner>()?;
+    m.add_class::<mem_storage_bindings::mem_storage::Py_MemStorage_Ref>()?;
 
-    // m.add_class::<py_storage::raft::Py_Raft__PyStorage_Owner>()?;
-    // m.add_class::<py_storage::raft::Py_Raft__PyStorage_Ref>()?;
-    // m.add_class::<py_storage::raft_log::Py_RaftLog__PyStorage_Owner>()?;
-    // m.add_class::<py_storage::raft_log::Py_RaftLog__PyStorage_Ref>()?;
-    // m.add_class::<py_storage::py_storage::Py_Storage>()?;
+    // m.add_class::<py_storage_bindings::raft::Py_Raft__PyStorage_Owner>()?;
+    // m.add_class::<py_storage_bindings::raft::Py_Raft__PyStorage_Ref>()?;
+    // m.add_class::<py_storage_bindings::raft_log::Py_RaftLog__PyStorage_Owner>()?;
+    // m.add_class::<py_storage_bindings::raft_log::Py_RaftLog__PyStorage_Ref>()?;
+    // m.add_class::<py_storage_bindings::py_storage::Py_Storage>()?;
 
     m.add_class::<external_bindings::slog::Py_Logger_Owner>()?;
     m.add_class::<external_bindings::slog::Py_Logger_Ref>()?;

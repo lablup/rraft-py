@@ -445,7 +445,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "mem-storage"
+name = "mem-storage-bindings"
 version = "0.1.0"
 dependencies = [
  "bindings",
@@ -699,7 +699,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "py-storage"
+name = "py-storage-bindings"
 version = "0.1.0"
 dependencies = [
  "bindings",
@@ -905,11 +905,11 @@ dependencies = [
  "bindings",
  "external-bindings",
  "fxhash",
- "mem-storage",
+ "mem-storage-bindings",
  "prost 0.11.8",
  "prost-bindings",
  "protobuf",
- "py-storage",
+ "py-storage-bindings",
  "pyo3",
  "pyo3-asyncio",
  "raft",

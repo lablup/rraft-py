@@ -1,5 +1,5 @@
 [package]
-name = "py-storage"
+name = "mem-storage-bindings"
 version = "0.1.0"
 authors = ["jopemachine"]
 edition = "2018"
@@ -13,5 +13,5 @@ bindings = { path = "../bindings" }
 external-bindings = { path = "../external_bindings" }
 
 [lib]
-name = "py_storage"
+name = "mem_storage_bindings"
 path = "lib.rs"

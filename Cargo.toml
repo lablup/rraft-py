@@ -31,8 +31,8 @@ fxhash = "0.2.1"
 bindings = { path = "src/bindings" }
 prost-bindings = { path = "src/prost_bindings" }
 external-bindings = { path = "src/external_bindings" }
-mem-storage = { path = "src/mem_storage" }
-py-storage = { path = "src/py_storage" }
+mem-storage-bindings = { path = "src/mem_storage_bindings" }
+py-storage-bindings = { path = "src/py_storage_bindings" }
 utils = { path = "src/utils" }
 
 [workspace]
@@ -40,8 +40,8 @@ members = [
 	"src/bindings",
 	"src/prost_bindings",
 	"src/external_bindings",
-	"src/mem_storage",
-	"src/py_storage",
+	"src/mem_storage_bindings",
+	"src/py_storage_bindings",
 	"src/utils",
 ]
 
