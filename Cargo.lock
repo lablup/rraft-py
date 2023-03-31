@@ -44,10 +44,10 @@ checksum = "d468802bab17cbc0cc575e9b053f41e72aa36bfa6b7f55e3529ffa43161b97fa"
 name = "bindings"
 version = "0.1.0"
 dependencies = [
- "eraftpb",
  "external",
  "fxhash",
  "prost 0.11.8",
+ "prost-bindings",
  "protobuf",
  "pyo3",
  "pyo3-asyncio",
@@ -136,25 +136,6 @@ name = "either"
 version = "1.8.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "7fcaabb2fef8c910e7f4c7ce9f67a1283a1715879a7c230ca9d6d1ae31f16d91"
-
-[[package]]
-name = "eraftpb"
-version = "0.1.0"
-dependencies = [
- "fxhash",
- "prost 0.11.8",
- "protobuf",
- "pyo3",
- "pyo3-asyncio",
- "raft",
- "slog",
- "slog-async",
- "slog-envlogger",
- "slog-stdlog",
- "slog-term",
- "tokio",
- "utils",
-]
 
 [[package]]
 name = "errno"
@@ -468,8 +449,8 @@ name = "mem-storage"
 version = "0.1.0"
 dependencies = [
  "bindings",
- "eraftpb",
  "external",
+ "prost-bindings",
  "pyo3",
  "raft",
  "utils",
@@ -626,6 +607,25 @@ dependencies = [
 ]
 
 [[package]]
+name = "prost-bindings"
+version = "0.1.0"
+dependencies = [
+ "fxhash",
+ "prost 0.11.8",
+ "protobuf",
+ "pyo3",
+ "pyo3-asyncio",
+ "raft",
+ "slog",
+ "slog-async",
+ "slog-envlogger",
+ "slog-stdlog",
+ "slog-term",
+ "tokio",
+ "utils",
+]
+
+[[package]]
 name = "prost-build"
 version = "0.7.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -703,8 +703,8 @@ name = "py-storage"
 version = "0.1.0"
 dependencies = [
  "bindings",
- "eraftpb",
  "external",
+ "prost-bindings",
  "pyo3",
  "raft",
  "utils",
@@ -903,11 +903,11 @@ name = "rraft-py"
 version = "0.1.0"
 dependencies = [
  "bindings",
- "eraftpb",
  "external",
  "fxhash",
  "mem-storage",
  "prost 0.11.8",
+ "prost-bindings",
  "protobuf",
  "py-storage",
  "pyo3",

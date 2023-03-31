@@ -1,4 +1,4 @@
-use eraftpb::{
+use prost_bindings::{
     entry::{Py_Entry_Owner, Py_Entry_Ref},
     message::{Py_Message_Owner, Py_Message_Ref},
 };

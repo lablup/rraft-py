@@ -29,7 +29,7 @@ slog-stdlog = "4"
 slog-async = "2.7.0"
 fxhash = "0.2.1"
 bindings = { path = "src/bindings" }
-eraftpb = { path = "src/eraftpb" }
+prost-bindings = { path = "src/prost_bindings" }
 external = { path = "src/external" }
 mem-storage = { path = "src/mem_storage" }
 py-storage = { path = "src/py_storage" }
@@ -38,7 +38,7 @@ utils = { path = "src/utils" }
 [workspace]
 members = [
 	"src/bindings",
-	"src/eraftpb",
+	"src/prost_bindings",
 	"src/external",
 	"src/mem_storage",
 	"src/py_storage",

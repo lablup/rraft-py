@@ -1,6 +1,6 @@
 use pyo3::{prelude::*, types::PyList};
 
-use eraftpb::{
+use prost_bindings::{
     entry::{Py_Entry_Mut, Py_Entry_Ref},
     snapshot::{Py_Snapshot_Mut, Py_Snapshot_Ref},
 };

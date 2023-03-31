@@ -18,7 +18,7 @@ slog-stdlog = "4"
 slog-async = "2.7.0"
 fxhash = "0.2.1"
 utils = { path = "../utils" }
-eraftpb = { path = "../eraftpb" }
+prost-bindings = { path = "../prost_bindings" }
 external = { path = "../external" }
 
 [lib]

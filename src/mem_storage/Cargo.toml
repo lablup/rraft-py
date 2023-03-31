@@ -8,7 +8,7 @@ edition = "2018"
 pyo3 = { version = "0.18.2", features = ["extension-module"] }
 raft = { version = "0.6.0", features = ["prost-codec", "default-logger"], default-features = false }
 utils = { path = "../utils" }
-eraftpb = { path = "../eraftpb" }
+prost-bindings = { path = "../prost_bindings" }
 bindings = { path = "../bindings" }
 external = { path = "../external" }
 

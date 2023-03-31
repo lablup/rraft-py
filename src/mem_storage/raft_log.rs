@@ -3,7 +3,7 @@ use pyo3::types::PyList;
 use utils::errors::to_pyresult;
 use utils::unsafe_cast::make_mut;
 
-use eraftpb::snapshot::Py_Snapshot_Ref;
+use prost_bindings::snapshot::Py_Snapshot_Ref;
 use external::slog::Py_Logger_Mut;
 
 use super::mem_storage::{Py_MemStorage_Mut, Py_MemStorage_Ref};
@@ -12,7 +12,7 @@ use raft::RaftLog;
 use utils::reference::RustRef;
 
 use bindings::unstable::Py_Unstable_Ref;
-use eraftpb::entry::{Py_Entry_Mut, Py_Entry_Owner, Py_Entry_Ref};
+use prost_bindings::entry::{Py_Entry_Mut, Py_Entry_Owner, Py_Entry_Ref};
 
 #[pyclass(name = "RaftLog__MemStorage_Owner")]
 pub struct Py_RaftLog__MemStorage_Owner {

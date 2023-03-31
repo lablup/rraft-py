@@ -1,6 +1,6 @@
 use pyo3::prelude::*;
 
-use eraftpb::{
+use prost_bindings::{
     entry::{Py_Entry_Owner, Py_Entry_Ref},
     hard_state::Py_HardState_Ref,
     message::{Py_Message_Owner, Py_Message_Ref},

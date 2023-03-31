@@ -72,7 +72,7 @@ class ReadOnlyOption:
     Safe: Final[Any]
     LeaseBased: Final[Any]
 
-# src/eraftpb/message_type.rs
+# src/prost_bindings/message_type.rs
 class MessageType:
     """ """
 
@@ -96,7 +96,7 @@ class MessageType:
     MsgRequestPreVote: Final[Any]
     MsgRequestPreVoteResponse: Final[Any]
 
-# src/eraftpb/conf_change_transition.rs
+# src/prost_bindings/conf_change_transition.rs
 class ConfChangeTransition:
     """ """
 
@@ -104,7 +104,7 @@ class ConfChangeTransition:
     Explicit: Final[Any]
     Implicit: Final[Any]
 
-# src/eraftpb/conf_change_type.rs
+# src/prost_bindings/conf_change_type.rs
 class ConfChangeType:
     """ """
 
@@ -112,7 +112,7 @@ class ConfChangeType:
     AddLearnerNode: Final[Any]
     RemoveNode: Final[Any]
 
-# src/eraftpb/entry_type.rs
+# src/prost_bindings/entry_type.rs
 class EntryType:
     """ """
 
@@ -706,7 +706,7 @@ class LightReady_Ref(LightReady):
     Reference type of :class:`LightReady_Owner`.
     """
 
-# src/eraftpb/snapshot_metadata.rs
+# src/prost_bindings/snapshot_metadata.rs
 class SnapshotMetadata(Cloneable):
     def clone(self) -> SnapshotMetadata_Owner: ...
     def get_index(self) -> int:
@@ -743,7 +743,7 @@ class SnapshotMetadata_Ref(SnapshotMetadata):
     Reference type of :class:`SnapshotMetadata_Owner`.
     """
 
-# src/eraftpb/snapshot.rs
+# src/prost_bindings/snapshot.rs
 class Snapshot(Cloneable):
     def clone(self) -> Snapshot_Owner: ...
     def get_data(self) -> bytes:
@@ -778,7 +778,7 @@ class Snapshot_Ref(Snapshot):
     Reference type of :class:`Snapshot_Owner`.
     """
 
-# src/eraftpb/message.rs
+# src/prost_bindings/message.rs
 class Message(Cloneable):
     def clone(self) -> Message_Owner: ...
     def get_commit(self) -> int:
@@ -891,7 +891,7 @@ class Message_Ref(Message):
     Reference type of :class:`Message_Owner`.
     """
 
-# src/eraftpb/hardstate.rs
+# src/prost_bindings/hardstate.rs
 class HardState(Cloneable):
     def clone(self) -> HardState_Owner: ...
     def get_term(self) -> int:
@@ -926,7 +926,7 @@ class HardState_Ref(HardState):
     Reference type of :class:`HardState_Owner`.
     """
 
-# src/eraftpb/entry.rs
+# src/prost_bindings/entry.rs
 class Entry(Cloneable):
     def clone(self) -> Entry_Owner: ...
     def get_context(self) -> bytes:
@@ -979,7 +979,7 @@ class Entry_Ref(Entry):
     Reference type of :class:`Entry_Owner`.
     """
 
-# src/eraftpb/conf_state.rs
+# src/prost_bindings/conf_state.rs
 class ConfState(Cloneable):
     def clone(self) -> ConfState_Owner: ...
     def get_auto_leave(self) -> bool:
@@ -1028,7 +1028,7 @@ class ConfState_Ref(ConfState):
     Reference type of :class:`ConfState_Owner`.
     """
 
-# src/eraftpb/conf_change_v2.rs
+# src/prost_bindings/conf_change_v2.rs
 class ConfChangeV2(Cloneable):
     def clone(self) -> ConfChangeV2_Owner: ...
     def get_changes(self) -> bytes:
@@ -1087,7 +1087,7 @@ class ConfChangeV2_Ref(ConfChangeV2):
     Reference type of :class:`ConfChangeV2_Owner`.
     """
 
-# src/eraftpb/conf_change_single.rs
+# src/prost_bindings/conf_change_single.rs
 class ConfChangeSingle(Cloneable):
     def clone(self) -> ConfChangeSingle_Owner: ...
     def get_node_id(self) -> int:
@@ -1116,7 +1116,7 @@ class ConfChangeSingle_Ref(ConfChangeSingle):
     Reference type of :class:`ConfChangeSingle_Owner`.
     """
 
-# src/eraftpb/conf_change.rs
+# src/prost_bindings/conf_change.rs
 class ConfChange(Cloneable):
     def clone(self) -> ConfChange_Owner: ...
     def get_id(self) -> int:

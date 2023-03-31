@@ -5,7 +5,7 @@ use pyo3::prelude::*;
 use raft::{prelude::ConfState, storage::MemStorage, storage::Storage};
 use utils::{errors::to_pyresult, reference::RustRef, unsafe_cast::make_mut};
 
-use eraftpb::{conf_state::Py_ConfState_Mut, entry::Py_Entry_Owner, snapshot::Py_Snapshot_Owner};
+use prost_bindings::{conf_state::Py_ConfState_Mut, entry::Py_Entry_Owner, snapshot::Py_Snapshot_Owner};
 
 use super::mem_storage_core::Py_MemStorageCore_Ref;
 

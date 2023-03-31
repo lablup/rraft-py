@@ -1,5 +1,5 @@
 [package]
-name = "eraftpb"
+name = "prost-bindings"
 version = "0.1.0"
 authors = ["jopemachine"]
 edition = "2018"
@@ -20,5 +20,5 @@ fxhash = "0.2.1"
 utils = { path = "../utils" }
 
 [lib]
-name = "eraftpb"
+name = "prost_bindings"
 path = "lib.rs"

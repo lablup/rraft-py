@@ -7,7 +7,7 @@ use utils::{
 
 use raft::{storage::MemStorage, Raft};
 
-use eraftpb::{
+use prost_bindings::{
     conf_change_v2::Py_ConfChangeV2_Mut,
     conf_state::Py_ConfState_Ref,
     entry::Py_Entry_Mut,
