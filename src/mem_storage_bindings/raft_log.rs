@@ -3,8 +3,8 @@ use pyo3::types::PyList;
 use utils::errors::to_pyresult;
 use utils::unsafe_cast::make_mut;
 
-use prost_bindings::snapshot::Py_Snapshot_Ref;
 use external_bindings::slog::Py_Logger_Mut;
+use prost_bindings::snapshot::Py_Snapshot_Ref;
 
 use super::mem_storage::{Py_MemStorage_Mut, Py_MemStorage_Ref};
 use raft::storage::MemStorage;

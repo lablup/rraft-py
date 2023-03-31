@@ -12,12 +12,12 @@ use super::raft::Py_Raft__MemStorage_Ref;
 use bindings::config::Py_Config_Mut;
 use bindings::light_ready::Py_LightReady_Owner;
 use bindings::ready::{Py_Ready_Owner, Py_Ready_Ref};
+use external_bindings::slog::Py_Logger_Mut;
 use prost_bindings::conf_change::Py_ConfChange_Mut;
 use prost_bindings::conf_change_v2::Py_ConfChangeV2_Mut;
 use prost_bindings::conf_state::Py_ConfState_Owner;
 use prost_bindings::message::Py_Message_Mut;
 use prost_bindings::snapshot::Py_Snapshot_Ref;
-use external_bindings::slog::Py_Logger_Mut;
 
 use bindings::snapshot_status::Py_SnapshotStatus;
 // use bindings::status::Py_Status__MemStorage_Owner;

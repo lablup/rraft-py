@@ -5,7 +5,7 @@ use utils::{
     unsafe_cast::make_mut,
 };
 
-use raft::{storage::MemStorage, Raft};
+use raft::Raft;
 
 use prost_bindings::{
     conf_change_v2::Py_ConfChangeV2_Mut,
@@ -26,31 +26,36 @@ use bindings::{
 };
 use external_bindings::slog::Py_Logger_Mut;
 
+use crate::{
+    py_storage::{Py_Storage_Owner, Py_Storage_Ref},
+    raft_log::Py_RaftLog__PyStorage_Ref,
+};
+
 #[pyclass(name = "Raft__MemStorage_Owner")]
-pub struct Py_Raft__MemStorage_Owner {
-    pub inner: Raft<MemStorage>,
+pub struct Py_Raft__PyStorage_Owner {
+    pub inner: Raft<Py_Storage_Owner>,
 }
 
 #[pyclass(name = "Raft__MemStorage_Ref")]
-pub struct Py_Raft__MemStorage_Ref {
-    pub inner: RustRef<Raft<MemStorage>>,
+pub struct Py_Raft__PyStorage_Ref {
+    pub inner: RustRef<Raft<Py_Storage_Owner>>,
 }
 
 #[pymethods]
-impl Py_Raft__MemStorage_Owner {
-    // #[new]
-    // pub fn new(
-    //     cfg: Py_Config_Mut,
-    //     store: Py_MemStorage_Mut,
-    //     logger: Py_Logger_Mut,
-    // ) -> PyResult<Self> {
-    //     Raft::new(&cfg.into(), store.into(), &logger.into())
-    //         .map(|r| Py_Raft__MemStorage_Owner { inner: r })
-    //         .map_err(|e| runtime_error(&e.to_string()))
-    // }
+impl Py_Raft__PyStorage_Owner {
+    #[new]
+    pub fn new(
+        cfg: Py_Config_Mut,
+        store: &Py_Storage_Owner,
+        logger: Py_Logger_Mut,
+    ) -> PyResult<Self> {
+        Raft::new(&cfg.into(), store.clone(), &logger.into())
+            .map(|r| Py_Raft__PyStorage_Owner { inner: r })
+            .map_err(|e| runtime_error(&e.to_string()))
+    }
 
-    pub fn make_ref(&mut self) -> Py_Raft__MemStorage_Ref {
-        Py_Raft__MemStorage_Ref {
+    pub fn make_ref(&mut self) -> Py_Raft__PyStorage_Ref {
+        Py_Raft__PyStorage_Ref {
             inner: RustRef::new(&mut self.inner),
         }
     }
@@ -62,7 +67,7 @@ impl Py_Raft__MemStorage_Owner {
 }
 
 #[pymethods]
-impl Py_Raft__MemStorage_Ref {
+impl Py_Raft__PyStorage_Ref {
     pub fn __repr__(&mut self) -> PyResult<String> {
         self.inner.map_as_mut(|inner| {
             format!(
@@ -489,11 +494,11 @@ impl Py_Raft__MemStorage_Ref {
         })
     }
 
-    // pub fn get_raft_log(&mut self) -> PyResult<Py_RaftLog__MemStorage_Ref> {
-    //     self.inner.map_as_mut(|inner| Py_RaftLog__MemStorage_Ref {
-    //         inner: RustRef::new(&mut inner.raft_log),
-    //     })
-    // }
+    pub fn get_raft_log(&mut self) -> PyResult<Py_RaftLog__PyStorage_Ref> {
+        self.inner.map_as_mut(|inner| Py_RaftLog__PyStorage_Ref {
+            inner: RustRef::new(&mut inner.raft_log),
+        })
+    }
 
     pub fn set_raft_log(&mut self) -> PyResult<()> {
         todo!()
@@ -527,11 +532,11 @@ impl Py_Raft__MemStorage_Ref {
         self.inner.map_as_mut(|inner| inner.pre_vote)
     }
 
-    // pub fn store(&mut self) -> PyResult<Py_MemStorage_Ref> {
-    //     self.inner.map_as_mut(|inner| Py_MemStorage_Ref {
-    //         inner: RustRef::new(inner.mut_store()),
-    //     })
-    // }
+    pub fn store(&mut self) -> PyResult<Py_Storage_Ref> {
+        self.inner.map_as_mut(|inner| Py_Storage_Ref {
+            inner: RustRef::new(inner.mut_store()),
+        })
+    }
 
     pub fn set_pre_vote(&mut self, v: bool) -> PyResult<()> {
         self.inner.map_as_mut(|inner| inner.pre_vote = v)
