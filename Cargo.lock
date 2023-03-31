@@ -44,7 +44,7 @@ checksum = "d468802bab17cbc0cc575e9b053f41e72aa36bfa6b7f55e3529ffa43161b97fa"
 name = "bindings"
 version = "0.1.0"
 dependencies = [
- "external",
+ "external-bindings",
  "fxhash",
  "prost 0.11.8",
  "prost-bindings",
@@ -159,7 +159,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "external"
+name = "external-bindings"
 version = "0.1.0"
 dependencies = [
  "pyo3",
@@ -449,7 +449,7 @@ name = "mem-storage"
 version = "0.1.0"
 dependencies = [
  "bindings",
- "external",
+ "external-bindings",
  "prost-bindings",
  "pyo3",
  "raft",
@@ -703,7 +703,7 @@ name = "py-storage"
 version = "0.1.0"
 dependencies = [
  "bindings",
- "external",
+ "external-bindings",
  "prost-bindings",
  "pyo3",
  "raft",
@@ -903,7 +903,7 @@ name = "rraft-py"
 version = "0.1.0"
 dependencies = [
  "bindings",
- "external",
+ "external-bindings",
  "fxhash",
  "mem-storage",
  "prost 0.11.8",

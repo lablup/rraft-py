@@ -17,7 +17,7 @@ use prost_bindings::conf_change_v2::Py_ConfChangeV2_Mut;
 use prost_bindings::conf_state::Py_ConfState_Owner;
 use prost_bindings::message::Py_Message_Mut;
 use prost_bindings::snapshot::Py_Snapshot_Ref;
-use external::slog::Py_Logger_Mut;
+use external_bindings::slog::Py_Logger_Mut;
 
 use bindings::snapshot_status::Py_SnapshotStatus;
 // use bindings::status::Py_Status__MemStorage_Owner;

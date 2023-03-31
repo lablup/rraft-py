@@ -4,7 +4,7 @@ use utils::errors::to_pyresult;
 use utils::unsafe_cast::make_mut;
 
 use prost_bindings::snapshot::Py_Snapshot_Ref;
-use external::slog::Py_Logger_Mut;
+use external_bindings::slog::Py_Logger_Mut;
 
 use raft::storage::Storage;
 use raft::RaftLog;

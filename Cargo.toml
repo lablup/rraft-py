@@ -30,7 +30,7 @@ slog-async = "2.7.0"
 fxhash = "0.2.1"
 bindings = { path = "src/bindings" }
 prost-bindings = { path = "src/prost_bindings" }
-external = { path = "src/external" }
+external-bindings = { path = "src/external_bindings" }
 mem-storage = { path = "src/mem_storage" }
 py-storage = { path = "src/py_storage" }
 utils = { path = "src/utils" }
@@ -39,7 +39,7 @@ utils = { path = "src/utils" }
 members = [
 	"src/bindings",
 	"src/prost_bindings",
-	"src/external",
+	"src/external_bindings",
 	"src/mem_storage",
 	"src/py_storage",
 	"src/utils",

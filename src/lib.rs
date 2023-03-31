@@ -76,9 +76,9 @@ fn rraft(_py: Python, m: &PyModule) -> PyResult<()> {
     // m.add_class::<py_storage::raft_log::Py_RaftLog__PyStorage_Ref>()?;
     // m.add_class::<py_storage::py_storage::Py_Storage>()?;
 
-    m.add_class::<external::slog::Py_Logger_Owner>()?;
-    m.add_class::<external::slog::Py_Logger_Ref>()?;
-    m.add_class::<external::slog::Py_OverflowStrategy>()?;
+    m.add_class::<external_bindings::slog::Py_Logger_Owner>()?;
+    m.add_class::<external_bindings::slog::Py_Logger_Ref>()?;
+    m.add_class::<external_bindings::slog::Py_OverflowStrategy>()?;
 
     m.add_function(wrap_pyfunction!(bindings::global::majority, m)?)?;
     m.add_function(wrap_pyfunction!(bindings::global::default_logger, m)?)?;

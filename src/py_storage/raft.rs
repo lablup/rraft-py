@@ -24,7 +24,7 @@ use bindings::{
     soft_state::Py_SoftState_Ref,
     state_role::Py_StateRole,
 };
-use external::slog::Py_Logger_Mut;
+use external_bindings::slog::Py_Logger_Mut;
 
 #[pyclass(name = "Raft__MemStorage_Owner")]
 pub struct Py_Raft__MemStorage_Owner {

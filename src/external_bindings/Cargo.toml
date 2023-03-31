@@ -1,5 +1,5 @@
 [package]
-name = "external"
+name = "external-bindings"
 version = "0.1.0"
 authors = ["jopemachine"]
 edition = "2018"
@@ -15,5 +15,5 @@ slog-async = "2.7.0"
 utils = { path = "../utils" }
 
 [lib]
-name = "external"
+name = "external_bindings"
 path = "lib.rs"

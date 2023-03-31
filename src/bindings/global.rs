@@ -13,7 +13,7 @@ use raft::{
 };
 
 use prost_bindings::message_type::Py_MessageType;
-use external::slog::Py_Logger_Owner;
+use external_bindings::slog::Py_Logger_Owner;
 
 // Global scope functions
 #[pyfunction]

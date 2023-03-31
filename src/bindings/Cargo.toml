@@ -19,7 +19,7 @@ slog-async = "2.7.0"
 fxhash = "0.2.1"
 utils = { path = "../utils" }
 prost-bindings = { path = "../prost_bindings" }
-external = { path = "../external" }
+external-bindings = { path = "../external_bindings" }
 
 [lib]
 name = "bindings"

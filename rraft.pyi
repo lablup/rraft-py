@@ -23,7 +23,7 @@ def majority(total: int) -> int:
 
 def default_logger() -> Logger_Owner:
     """
-    The default logger we fall back to when passed `None` in external facing constructors.
+    The default logger we fall back to when passed `None` in external_bindings facing constructors.
 
     Currently, this is a `log` adaptor behind a `Once` to ensure there is no clobbering.
     """

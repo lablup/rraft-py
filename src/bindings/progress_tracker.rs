@@ -4,7 +4,7 @@ use std::{collections::HashSet, hash::BuildHasherDefault};
 use pyo3::types::PyDict;
 use pyo3::{prelude::*, types::PySet};
 
-use external::slog::Py_Logger_Mut;
+use external_bindings::slog::Py_Logger_Mut;
 use fxhash::FxHasher;
 use raft::ProgressTracker;
 use utils::reference::RustRef;

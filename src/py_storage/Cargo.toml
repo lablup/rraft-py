@@ -10,7 +10,7 @@ raft = { version = "0.6.0", features = ["prost-codec", "default-logger"], defaul
 utils = { path = "../utils" }
 prost-bindings = { path = "../prost_bindings" }
 bindings = { path = "../bindings" }
-external = { path = "../external" }
+external-bindings = { path = "../external_bindings" }
 
 [lib]
 name = "py_storage"
