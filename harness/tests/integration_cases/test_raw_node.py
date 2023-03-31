@@ -1664,4 +1664,53 @@ def test_committed_entries_pagination():
 # - The next `Ready` asks the app to apply index 11 (omitting index 10), losing a
 #   write.
 def test_committed_entries_pagination_after_restart():
-    pass
+    class IgnoreSizeHintMemStorage:
+        def __init__(self, store: MemStorage_Owner) -> None:
+            self.inner = store
+
+        def entries(self, low: int, high: int, _max_size: int) -> List[Entry_Owner]:
+            return self.inner.entries(low, high, MAX_UINT64)
+
+        def term(self, idx: int) -> int:
+            return self.inner.term(idx)
+
+        def first_index(self) -> int:
+            return self.inner.first_index()
+
+        def last_index(self) -> int:
+            return self.inner.last_index()
+
+        def snapshot(self, request_index: int) -> Snapshot_Owner:
+            return self.inner.snapshot(request_index)
+
+    l = default_logger()
+    s = IgnoreSizeHintMemStorage(MemStorage_Owner.default())
+    s.inner.wl(lambda core: core.apply_snapshot(new_snapshot(1, 1, [1, 2, 3])))
+
+    entries, size = ([], 0)
+    for i in range(2, 10 + 1):
+        e = new_entry(1, i, "test data")
+        size += e.compute_size()
+        entries.append(e)
+
+    s.inner.wl(lambda core: core.append(entries))
+    s.inner.wl(lambda core: core.hard_state().set_commit(10))
+
+    s.inner.wl(lambda core: core.append([new_entry(1, 11, "boom")]))
+
+    config = new_test_config(1, 10, 1)
+    raw_node = RawNode__MemStorage_Owner(config, s.inner, l)
+
+    # `IgnoreSizeHintMemStorage` will ignore `max_committed_size_per_ready` but
+    # `RaftLog::slice won't.`
+    raw_node.get_raft().set_max_committed_size_per_ready(size - 1)
+
+    highest_applied = 1
+    while highest_applied != 11:
+        rd = raw_node.ready()
+        committed_entries = rd.take_committed_entries()
+        next = committed_entries[0].get_index()
+        assert highest_applied + 1 == next
+
+        highest_applied = committed_entries[-1].get_index()
+        raw_node.get_raft().get_raft_log().commit_to(11)
