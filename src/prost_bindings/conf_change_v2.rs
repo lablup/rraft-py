@@ -208,7 +208,6 @@ impl Py_ConfChangeV2_Ref {
 
     pub fn merge_from_bytes(&mut self, bytes: &PyAny) -> PyResult<()> {
         let bytes = bytes.extract::<Vec<u8>>()?;
-        let mut is = protobuf::CodedInputStream::from_bytes(bytes.as_slice());
 
         self.inner
             .map_as_mut(|inner| inner.merge_from_bytes(bytes.as_slice()))

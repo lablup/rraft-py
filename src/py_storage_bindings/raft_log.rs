@@ -3,38 +3,37 @@ use pyo3::types::PyList;
 use utils::errors::to_pyresult;
 use utils::unsafe_cast::make_mut;
 
-use prost_bindings::snapshot::Py_Snapshot_Ref;
 use external_bindings::slog::Py_Logger_Mut;
+use prost_bindings::snapshot::Py_Snapshot_Ref;
 
-use raft::storage::Storage;
 use raft::RaftLog;
 use utils::reference::RustRef;
 
-use super::py_storage::Py_Storage;
+use super::py_storage::{Py_Storage_Owner, Py_Storage_Ref};
 use bindings::unstable::Py_Unstable_Ref;
 use prost_bindings::entry::{Py_Entry_Mut, Py_Entry_Owner, Py_Entry_Ref};
 
-#[pyclass(name = "RaftLog__Py_Storage_Owner")]
-pub struct Py_RaftLog__Py_Storage_Owner {
-    pub inner: RaftLog<Py_Storage>,
+#[pyclass(name = "RaftLog_Owner")]
+pub struct Py_RaftLog__PyStorage_Owner {
+    pub inner: RaftLog<Py_Storage_Owner>,
 }
 
-#[pyclass(name = "RaftLog__Py_Storage_Ref")]
-pub struct Py_RaftLog__Py_Storage_Ref {
-    pub inner: RustRef<RaftLog<Py_Storage>>,
+#[pyclass(name = "RaftLog_Ref")]
+pub struct Py_RaftLog__PyStorage_Ref {
+    pub inner: RustRef<RaftLog<Py_Storage_Owner>>,
 }
 
 #[pymethods]
-impl Py_RaftLog__Py_Storage_Owner {
-    // #[new]
-    // pub fn new(store: Py_Storage_Mut, logger: Py_Logger_Mut) -> Self {
-    //     Py_RaftLog__Py_Storage_Owner {
-    //         inner: RaftLog::new(store.into(), logger.into()),
-    //     }
-    // }
+impl Py_RaftLog__PyStorage_Owner {
+    #[new]
+    pub fn new(store: &Py_Storage_Owner, logger: Py_Logger_Mut) -> Self {
+        Py_RaftLog__PyStorage_Owner {
+            inner: RaftLog::new(store.clone(), logger.into()),
+        }
+    }
 
-    pub fn make_ref(&mut self) -> Py_RaftLog__Py_Storage_Ref {
-        Py_RaftLog__Py_Storage_Ref {
+    pub fn make_ref(&mut self) -> Py_RaftLog__PyStorage_Ref {
+        Py_RaftLog__PyStorage_Ref {
             inner: RustRef::new(&mut self.inner),
         }
     }
@@ -50,7 +49,7 @@ impl Py_RaftLog__Py_Storage_Owner {
 }
 
 #[pymethods]
-impl Py_RaftLog__Py_Storage_Ref {
+impl Py_RaftLog__PyStorage_Ref {
     pub fn __repr__(&self) -> PyResult<String> {
         self.inner
             .map_as_ref(|inner| format!("{:?}", inner.to_string(),))
@@ -307,15 +306,15 @@ impl Py_RaftLog__Py_Storage_Ref {
         self.inner.map_as_mut(|inner| inner.persisted = v)
     }
 
-    // pub fn store(&mut self) -> PyResult<Py_Storage_Ref> {
-    //     self.inner.map_as_mut(|inner| Py_Storage_Ref {
-    //         inner: RustRef::new(inner.mut_store()),
-    //     })
-    // }
+    pub fn store(&mut self) -> PyResult<Py_Storage_Ref> {
+        self.inner.map_as_mut(|inner| Py_Storage_Ref {
+            inner: RustRef::new(inner.mut_store()),
+        })
+    }
 
-    // pub fn get_store(&mut self) -> PyResult<Py_Storage_Ref> {
-    //     self.inner.map_as_mut(|inner| Py_Storage_Ref {
-    //         inner: RustRef::new(inner.mut_store()),
-    //     })
-    // }
+    pub fn get_store(&mut self) -> PyResult<Py_Storage_Ref> {
+        self.inner.map_as_mut(|inner| Py_Storage_Ref {
+            inner: RustRef::new(inner.mut_store()),
+        })
+    }
 }

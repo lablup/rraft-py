@@ -52,11 +52,6 @@ dependencies = [
  "pyo3",
  "pyo3-asyncio",
  "raft",
- "slog",
- "slog-async",
- "slog-envlogger",
- "slog-stdlog",
- "slog-term",
  "tokio",
  "utils",
 ]
@@ -163,7 +158,6 @@ name = "external-bindings"
 version = "0.1.0"
 dependencies = [
  "pyo3",
- "raft",
  "slog",
  "slog-async",
  "slog-envlogger",
@@ -610,17 +604,11 @@ dependencies = [
 name = "prost-bindings"
 version = "0.1.0"
 dependencies = [
- "fxhash",
  "prost 0.11.8",
  "protobuf",
  "pyo3",
  "pyo3-asyncio",
  "raft",
- "slog",
- "slog-async",
- "slog-envlogger",
- "slog-stdlog",
- "slog-term",
  "tokio",
  "utils",
 ]
