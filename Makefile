@@ -13,3 +13,6 @@ lint:
 
 lint-fix:
 	cargo clippy --fix --lib -p rraft-py
+
+lint-fix-py:
+	python -m black **/*.py

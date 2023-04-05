@@ -1,6 +1,14 @@
 from typing import Optional
 
-from rraft import Entry_Owner, MemStorage_Owner, Message_Ref, Snapshot_Owner, SnapshotMetadata_Owner, RaftError, StorageError
+from rraft import (
+    Entry_Owner,
+    MemStorage_Owner,
+    Message_Ref,
+    Snapshot_Owner,
+    SnapshotMetadata_Owner,
+    RaftError,
+    StorageError,
+)
 
 
 def new_entry(index: int, term: int) -> Entry_Owner:

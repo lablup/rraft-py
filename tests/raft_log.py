@@ -181,9 +181,7 @@ def test_compaction_side_effects():
     for i in range(unstable_index, last_index):
         raft_log.append([new_entry(i + 1, i + 1)])
 
-    assert raft_log.maybe_commit(
-        last_index, last_term
-    ), "maybe_commit return false"
+    assert raft_log.maybe_commit(last_index, last_term), "maybe_commit return false"
 
     offset = 500
     raft_log.get_store().wl(lambda core: core.compact(offset))
@@ -192,9 +190,7 @@ def test_compaction_side_effects():
 
     for j in range(offset, raft_log.last_index() + 1):
         assert j == raft_log.term(j)
-        assert raft_log.match_term(
-            j, j
-        ), f"match_term({j}) = false, want true"
+        assert raft_log.match_term(j, j), f"match_term({j}) = false, want true"
 
     unstable_ents = raft_log.unstable_entries()
     assert last_index - unstable_index == len(unstable_ents)

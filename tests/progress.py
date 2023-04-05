@@ -73,9 +73,7 @@ def test_progress_become_probe():
         p.become_probe()
 
         if p.get_state() != ProgressState.Probe:
-            assert (
-                False
-            ), f"#{i}: state = {p.get_state()}, want {ProgressState.Probe}"
+            assert False, f"#{i}: state = {p.get_state()}, want {ProgressState.Probe}"
 
         if p.get_matched() != matched:
             assert False, f"#{i}: match = {p.get_matched()}, want {matched}"
@@ -126,12 +124,8 @@ def test_progress_update():
         ok = p.maybe_update(update)
 
         assert ok == wok, f"#{i}: ok = {ok}, want {wok}"
-        assert (
-            p.get_matched() == wm
-        ), f"#{i}: match = {p.get_matched()}, want {wm}"
-        assert (
-            p.get_next_idx() == wn
-        ), f"#{i}: next = {p.get_next_idx()}, want {wn}"
+        assert p.get_matched() == wm, f"#{i}: match = {p.get_matched()}, want {wm}"
+        assert p.get_next_idx() == wn, f"#{i}: next = {p.get_next_idx()}, want {wn}"
 
 
 def test_progress_maybe_decr():
