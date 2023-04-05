@@ -110,7 +110,7 @@ class EntryType:
     EntryConfChangeV2: Final[Any]
     EntryNormal: Final[Any]
 
-class Cloneable(metaclass=ABCMeta):
+class __Cloneable(metaclass=ABCMeta):
     @abstractmethod
     def clone(self) -> Any: ...
 
@@ -155,7 +155,7 @@ class Logger_Owner(__Logger):
 class Logger_Ref(__Logger):
     """ """
 
-class __RaftState(Cloneable):
+class __RaftState(__Cloneable):
     def clone(self) -> RaftState_Owner: ...
     def initialized(self) -> bool:
         """
@@ -272,7 +272,7 @@ class StorageCore_Ref(__StorageCore):
     Reference type of :class:`StorageCore_Owner`.
     """
 
-class __Storage(Cloneable):
+class __Storage(__Cloneable):
     def clone(self) -> Any: ...
     def initialize_with_conf_state(
         self, conf_state: ConfState_Owner | ConfState_Ref
@@ -801,7 +801,7 @@ class LightReady_Ref(__LightReady):
     Reference type of :class:`LightReady_Owner`.
     """
 
-class __SnapshotMetadata(Cloneable):
+class __SnapshotMetadata(__Cloneable):
     def clone(self) -> SnapshotMetadata_Owner: ...
     def get_index(self) -> int:
         """ """
@@ -837,7 +837,7 @@ class SnapshotMetadata_Ref(__SnapshotMetadata):
     Reference type of :class:`SnapshotMetadata_Owner`.
     """
 
-class __Snapshot(Cloneable):
+class __Snapshot(__Cloneable):
     def clone(self) -> Snapshot_Owner: ...
     def get_data(self) -> bytes:
         """ """
@@ -871,7 +871,7 @@ class Snapshot_Ref(__Snapshot):
     Reference type of :class:`Snapshot_Owner`.
     """
 
-class __Message(Cloneable):
+class __Message(__Cloneable):
     def clone(self) -> Message_Owner: ...
     def get_commit(self) -> int:
         """ """
@@ -983,7 +983,7 @@ class Message_Ref(Message):
     Reference type of :class:`Message_Owner`.
     """
 
-class __HardState(Cloneable):
+class __HardState(__Cloneable):
     def clone(self) -> HardState_Owner: ...
     def get_term(self) -> int:
         """ """
@@ -1017,7 +1017,7 @@ class HardState_Ref(__HardState):
     Reference type of :class:`HardState_Owner`.
     """
 
-class __Entry(Cloneable):
+class __Entry(__Cloneable):
     def clone(self) -> Entry_Owner: ...
     def get_context(self) -> bytes:
         """ """
@@ -1069,7 +1069,7 @@ class Entry_Ref(__Entry):
     Reference type of :class:`Entry_Owner`.
     """
 
-class __ConfState(Cloneable):
+class __ConfState(__Cloneable):
     def clone(self) -> ConfState_Owner: ...
     def get_auto_leave(self) -> bool:
         """ """
@@ -1117,7 +1117,7 @@ class ConfState_Ref(__ConfState):
     Reference type of :class:`ConfState_Owner`.
     """
 
-class __ConfChangeV2(Cloneable):
+class __ConfChangeV2(__Cloneable):
     def clone(self) -> ConfChangeV2_Owner: ...
     def get_changes(self) -> bytes:
         """ """
@@ -1175,7 +1175,7 @@ class ConfChangeV2_Ref(__ConfChangeV2):
     Reference type of :class:`ConfChangeV2_Owner`.
     """
 
-class __ConfChangeSingle(Cloneable):
+class __ConfChangeSingle(__Cloneable):
     def clone(self) -> ConfChangeSingle_Owner: ...
     def get_node_id(self) -> int:
         """ """
@@ -1203,7 +1203,7 @@ class ConfChangeSingle_Ref(__ConfChangeSingle):
     Reference type of :class:`ConfChangeSingle_Owner`.
     """
 
-class __ConfChange(Cloneable):
+class __ConfChange(__Cloneable):
     def clone(self) -> ConfChange_Owner: ...
     def get_id(self) -> int:
         """ """
@@ -1407,7 +1407,7 @@ class SoftState_Ref(__SoftState):
     Reference type of :class:`SoftState_Owner`.
     """
 
-class __ReadState(Cloneable):
+class __ReadState(__Cloneable):
     def clone(self) -> ReadState_Owner: ...
     def get_index(self) -> int:
         """ """
@@ -2058,7 +2058,7 @@ class Raft_Ref(__Raft):
     Reference type of :class:`Raft_Owner`.
     """
 
-class __ProgressTracker(Cloneable):
+class __ProgressTracker(__Cloneable):
     def clone(self) -> ProgressTracker_Owner: ...
     def get(self, id: int) -> Optional[Progress_Ref]:
         """"""
@@ -2126,7 +2126,7 @@ class ProgressTracker_Ref(__ProgressTracker):
     Reference type of :class:`ProgressTracker_Owner`.
     """
 
-class __Progress(Cloneable):
+class __Progress(__Cloneable):
     def clone(self) -> Progress_Owner: ...
     def become_probe(self) -> None:
         """Changes the progress to a probe."""
@@ -2227,7 +2227,7 @@ class Progress_Ref(__Progress):
     Reference type of :class:`Progress_Owner`.
     """
 
-class __JointConfig(Cloneable):
+class __JointConfig(__Cloneable):
     def clone(self) -> JointConfig_Owner: ...
     def clear(self) -> None:
         """Clears all IDs."""
@@ -2255,7 +2255,7 @@ class JointConfig_Ref(__JointConfig):
     Reference type of :class:`JointConfig_Owner`.
     """
 
-class __MajorityConfig(Cloneable):
+class __MajorityConfig(__Cloneable):
     def clone(self) -> MajorityConfig_Owner: ...
     def capacity(self) -> int:
         """"""
@@ -2301,7 +2301,7 @@ class MajorityConfig_Ref(__MajorityConfig):
     Reference type of :class:`MajorityConfig_Owner`.
     """
 
-class __Inflights(Cloneable):
+class __Inflights(__Cloneable):
     def clone(self) -> Inflights_Owner: ...
     def add(self, inflight: int) -> None:
         """Adds an inflight into inflights"""
@@ -2329,7 +2329,7 @@ class Inflights_Ref(__Inflights):
     Reference type of :class:`Inflights_Ref`.
     """
 
-class __Config(Cloneable):
+class __Config(__Cloneable):
     def clone(self) -> Config_Owner: ...
     def min_election_tick(self) -> int:
         """The minimum number of ticks before an election."""
