@@ -191,12 +191,6 @@ impl Py_ConfChangeV2_Ref {
             .and_then(to_pyresult)
     }
 
-    pub fn into_v2(&mut self) -> PyResult<Py_ConfChangeV2_Owner> {
-        self.inner.map_as_mut(|inner| Py_ConfChangeV2_Owner {
-            inner: inner.clone(),
-        })
-    }
-
     pub fn as_v1(&mut self) -> PyResult<Option<Py_ConfChange_Ref>> {
         self.inner.map_as_mut(|_inner| None)
     }
@@ -204,6 +198,12 @@ impl Py_ConfChangeV2_Ref {
     // TODO: Apply COW to below method
     pub fn as_v2(&mut self) -> PyResult<Py_ConfChangeV2_Owner> {
         self.clone().unwrap().make_ref().into_v2()
+    }
+
+    pub fn into_v2(&mut self) -> PyResult<Py_ConfChangeV2_Owner> {
+        self.inner.map_as_mut(|inner| Py_ConfChangeV2_Owner {
+            inner: inner.clone(),
+        })
     }
 
     pub fn merge_from_bytes(&mut self, bytes: &PyAny) -> PyResult<()> {

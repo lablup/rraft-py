@@ -176,17 +176,6 @@ impl Py_ConfChange_Ref {
             .and_then(to_pyresult)
     }
 
-    pub fn into_v2(&mut self) -> PyResult<Py_ConfChangeV2_Owner> {
-        self.inner.map_as_mut(|inner| {
-            let mut cc = ConfChangeV2::default();
-            let single = new_conf_change_single(inner.node_id, inner.get_change_type());
-            cc.mut_changes().push(single);
-            cc.set_context(inner.take_context());
-
-            Py_ConfChangeV2_Owner { inner: cc }
-        })
-    }
-
     pub fn as_v1(&mut self) -> PyResult<Option<Py_ConfChange_Ref>> {
         self.inner.map_as_mut(|inner| {
             Some(Py_ConfChange_Ref {
@@ -198,6 +187,17 @@ impl Py_ConfChange_Ref {
     // TODO: Apply COW to below method
     pub fn as_v2(&mut self) -> PyResult<Py_ConfChangeV2_Owner> {
         self.clone().unwrap().make_ref().into_v2()
+    }
+
+    pub fn into_v2(&mut self) -> PyResult<Py_ConfChangeV2_Owner> {
+        self.inner.map_as_mut(|inner| {
+            let mut cc = ConfChangeV2::default();
+            let single = new_conf_change_single(inner.node_id, inner.get_change_type());
+            cc.mut_changes().push(single);
+            cc.set_context(inner.take_context());
+
+            Py_ConfChangeV2_Owner { inner: cc }
+        })
     }
 
     pub fn merge_from_bytes(&mut self, bytes: &PyAny) -> PyResult<()> {
