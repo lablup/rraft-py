@@ -1,5 +1,5 @@
 build:
-	maturin build -b=pyo3
+	maturin build -b=pyo3 --features "use-prost"
 	pip install .
 
 test:
