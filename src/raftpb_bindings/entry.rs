@@ -180,7 +180,10 @@ impl Py_Entry_Ref {
     pub fn clear_index(&mut self) -> PyResult<()> {
         self.inner.map_as_mut(|inner| inner.clear_index())
     }
+}
 
+#[pymethods]
+impl Py_Entry_Ref {
     pub fn compute_size(&self) -> PyResult<u32> {
         self.inner.map_as_ref(|inner| inner.compute_size())
     }
@@ -204,12 +207,10 @@ impl Py_Entry_Ref {
 #[pymethods]
 impl Py_Entry_Ref {
     pub fn set_context(&mut self, byte_arr: &PyAny) -> PyResult<()> {
-        let v = byte_arr.extract::<Vec<u8>>()?;
-        self.inner.map_as_mut(|inner| inner.set_context(v))
+        todo!()
     }
 
     pub fn set_data(&mut self, byte_arr: &PyAny) -> PyResult<()> {
-        let v = byte_arr.extract::<Vec<u8>>()?;
-        self.inner.map_as_mut(|inner| inner.set_data(v))
+        todo!()
     }
 }

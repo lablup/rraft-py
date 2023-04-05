@@ -1,5 +1,9 @@
 use protobuf::Message;
-use pyo3::{prelude::*, pyclass::CompareOp, types::{PyBytes, PyList}};
+use pyo3::{
+    prelude::*,
+    pyclass::CompareOp,
+    types::{PyBytes, PyList},
+};
 use raft::eraftpb::ConfChangeV2;
 use utils::{errors::to_pyresult, reference::RustRef, unsafe_cast::make_mut};
 
@@ -177,7 +181,10 @@ impl Py_ConfChangeV2_Ref {
             })
             .and_then(to_pyresult)
     }
+}
 
+#[pymethods]
+impl Py_ConfChangeV2_Ref {
     pub fn as_v1(&mut self) -> PyResult<Option<Py_ConfChange_Ref>> {
         self.inner.map_as_mut(|_inner| None)
     }
@@ -192,7 +199,10 @@ impl Py_ConfChangeV2_Ref {
             inner: inner.clone(),
         })
     }
+}
 
+#[pymethods]
+impl Py_ConfChangeV2_Ref {
     pub fn merge_from_bytes(&mut self, bytes: &PyAny) -> PyResult<()> {
         let bytes = bytes.extract::<Vec<u8>>()?;
 
@@ -225,17 +235,10 @@ impl Py_ConfChangeV2_Ref {
 #[pymethods]
 impl Py_ConfChangeV2_Ref {
     pub fn set_changes(&mut self, v: &PyList) -> PyResult<()> {
-        self.inner.map_as_mut(|inner| {
-            inner.set_changes(
-                v.iter()
-                    .map(|cs| cs.extract::<Py_ConfChangeSingle_Mut>().unwrap().into())
-                    .collect::<Vec<_>>(),
-            )
-        })
+        todo!()
     }
 
     pub fn set_context(&mut self, v: &PyAny) -> PyResult<()> {
-        let context = v.extract::<Vec<u8>>()?;
-        self.inner.map_as_mut(|inner| inner.set_context(context))
+        todo!()
     }
 }

@@ -161,7 +161,10 @@ impl Py_ConfChange_Ref {
     pub fn clear_context(&mut self) -> PyResult<()> {
         self.inner.map_as_mut(|inner| inner.clear_context())
     }
+}
 
+#[pymethods]
+impl Py_ConfChange_Ref {
     pub fn write_to_bytes(&mut self, py: Python) -> PyResult<PyObject> {
         self.inner
             .map_as_mut(|inner| {
@@ -171,6 +174,17 @@ impl Py_ConfChange_Ref {
             .and_then(to_pyresult)
     }
 
+    pub fn merge_from_bytes(&mut self, bytes: &PyAny) -> PyResult<()> {
+        let bytes = bytes.extract::<Vec<u8>>()?;
+
+        self.inner
+            .map_as_mut(|inner| inner.merge_from_bytes(bytes.as_slice()))
+            .and_then(to_pyresult)
+    }
+}
+
+#[pymethods]
+impl Py_ConfChange_Ref {
     pub fn as_v1(&mut self) -> PyResult<Option<Py_ConfChange_Ref>> {
         self.inner.map_as_mut(|inner| {
             Some(Py_ConfChange_Ref {
@@ -194,14 +208,6 @@ impl Py_ConfChange_Ref {
             Py_ConfChangeV2_Owner { inner: cc }
         })
     }
-
-    pub fn merge_from_bytes(&mut self, bytes: &PyAny) -> PyResult<()> {
-        let bytes = bytes.extract::<Vec<u8>>()?;
-
-        self.inner
-            .map_as_mut(|inner| inner.merge_from_bytes(bytes.as_slice()))
-            .and_then(to_pyresult)
-    }
 }
 
 #[cfg(feature = "use-prost")]
@@ -217,8 +223,7 @@ impl Py_ConfChange_Ref {
 #[pymethods]
 impl Py_ConfChange_Ref {
     pub fn set_context(&mut self, context: &PyAny) -> PyResult<()> {
-        let context = context.extract::<Vec<u8>>()?;
-        self.inner.map_as_mut(|inner| inner.set_context(context))
+        todo!()
     }
 }
 

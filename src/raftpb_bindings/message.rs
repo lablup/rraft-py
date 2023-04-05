@@ -314,7 +314,10 @@ impl Py_Message_Ref {
     pub fn has_snapshot(&self) -> PyResult<bool> {
         self.inner.map_as_ref(|inner| inner.has_snapshot())
     }
+}
 
+#[pymethods]
+impl Py_Message_Ref {
     pub fn compute_size(&self) -> PyResult<u32> {
         self.inner.map_as_ref(|inner| inner.compute_size())
     }
@@ -350,20 +353,10 @@ impl Py_Message_Ref {
 #[pymethods]
 impl Py_Message_Ref {
     pub fn set_context(&mut self, context: &PyAny) -> PyResult<()> {
-        let v = context.extract::<Vec<u8>>()?;
-        self.inner.map_as_mut(|inner| inner.set_context(v))
+        todo!()
     }
 
     pub fn set_entries(&mut self, ents: &PyList) -> PyResult<()> {
-        self.inner.map_as_mut(|inner| {
-            let entries = ents
-                .extract::<Vec<Py_Entry_Mut>>()
-                .unwrap()
-                .iter_mut()
-                .map(|x| x.into())
-                .collect::<Vec<_>>();
-
-            inner.set_entries(entries)
-        })
+        todo!()
     }
 }

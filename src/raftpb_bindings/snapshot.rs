@@ -167,7 +167,6 @@ impl Py_Snapshot_Ref {
 #[pymethods]
 impl Py_Snapshot_Ref {
     pub fn set_data(&mut self, bytes: &PyAny) -> PyResult<()> {
-        let bytes = bytes.extract::<Vec<u8>>()?;
-        self.inner.map_as_mut(|inner| inner.set_data(bytes))
+        todo!()
     }
 }
