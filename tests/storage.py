@@ -19,7 +19,7 @@ def new_entry(index: int, term: int) -> Entry_Owner:
 
 
 def size_of(m: Message_Ref):
-    m.compute_size()
+    return m.compute_size()
 
 
 def new_snapshot(index: int, term: int) -> Snapshot_Owner:
