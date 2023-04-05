@@ -1,3 +1,4 @@
+use protobuf::Message;
 use pyo3::pyclass::CompareOp;
 use pyo3::{prelude::*, types::PyList};
 
@@ -48,7 +49,7 @@ impl Py_ConfState_Owner {
     pub fn new(voters: Option<&PyList>, learners: Option<&PyList>) -> PyResult<Self> {
         if voters.and(learners).is_none() {
             Ok(Py_ConfState_Owner {
-                inner: ConfState::new_(),
+                inner: ConfState::new(),
             })
         } else if voters.or(learners).is_none() {
             Err(runtime_error(

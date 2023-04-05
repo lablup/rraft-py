@@ -1,7 +1,7 @@
 use pyo3::{prelude::*, types::PyList};
 
 use external_bindings::slog::{Py_Logger_Mut, Py_Logger_Ref};
-use prost_bindings::{
+use raftpb_bindings::{
     entry::{Py_Entry_Mut, Py_Entry_Ref},
     snapshot::{Py_Snapshot_Mut, Py_Snapshot_Ref},
 };

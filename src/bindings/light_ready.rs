@@ -1,9 +1,9 @@
-use prost_bindings::{
+use pyo3::prelude::*;
+use raft::raw_node::LightReady;
+use raftpb_bindings::{
     entry::{Py_Entry_Owner, Py_Entry_Ref},
     message::{Py_Message_Owner, Py_Message_Ref},
 };
-use pyo3::prelude::*;
-use raft::raw_node::LightReady;
 use utils::reference::RustRef;
 use utils::unsafe_cast::make_mut;
 

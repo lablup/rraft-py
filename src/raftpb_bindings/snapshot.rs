@@ -1,3 +1,4 @@
+use protobuf::Message;
 use pyo3::{prelude::*, pyclass::CompareOp, types::PyBytes};
 
 use raft::eraftpb::Snapshot;
@@ -46,7 +47,7 @@ impl Py_Snapshot_Owner {
     #[new]
     pub fn new() -> Self {
         Py_Snapshot_Owner {
-            inner: Snapshot::new_(),
+            inner: Snapshot::new(),
         }
     }
 
@@ -125,12 +126,6 @@ impl Py_Snapshot_Ref {
             .map_as_ref(|inner| PyBytes::new(py, inner.get_data()).into())
     }
 
-    pub fn set_data(&mut self, bytes: &PyAny) -> PyResult<()> {
-        let bytes = bytes.extract::<Vec<u8>>()?;
-
-        self.inner.map_as_mut(|inner| inner.set_data(bytes))
-    }
-
     pub fn clear_data(&mut self) -> PyResult<()> {
         self.inner.map_as_mut(|inner| inner.clear_data())
     }
@@ -156,5 +151,23 @@ impl Py_Snapshot_Ref {
 
     pub fn is_empty(&self) -> PyResult<bool> {
         self.inner.map_as_ref(|inner| inner.is_empty())
+    }
+}
+
+#[cfg(feature = "use-prost")]
+#[pymethods]
+impl Py_Snapshot_Ref {
+    pub fn set_data(&mut self, bytes: &PyAny) -> PyResult<()> {
+        let bytes = bytes.extract::<Vec<u8>>()?;
+        self.inner.map_as_mut(|inner| inner.set_data(bytes))
+    }
+}
+
+#[cfg(not(feature = "use-prost"))]
+#[pymethods]
+impl Py_Snapshot_Ref {
+    pub fn set_data(&mut self, bytes: &PyAny) -> PyResult<()> {
+        let bytes = bytes.extract::<Vec<u8>>()?;
+        self.inner.map_as_mut(|inner| inner.set_data(bytes))
     }
 }

@@ -1,3 +1,4 @@
+use protobuf::Message;
 use pyo3::{prelude::*, pyclass::CompareOp};
 
 use raft::eraftpb::SnapshotMetadata;
@@ -47,7 +48,7 @@ impl Py_SnapshotMetadata_Owner {
     #[new]
     pub fn new() -> Self {
         Py_SnapshotMetadata_Owner {
-            inner: SnapshotMetadata::new_(),
+            inner: SnapshotMetadata::new(),
         }
     }
 

@@ -3,12 +3,12 @@ use pyo3::prelude::*;
 use raft::storage::Storage;
 use utils::errors::to_pyresult;
 
-use prost_bindings::entry::Py_Entry_Ref;
-use prost_bindings::snapshot::{Py_Snapshot_Owner, Py_Snapshot_Ref};
+use raftpb_bindings::entry::Py_Entry_Ref;
+use raftpb_bindings::snapshot::{Py_Snapshot_Owner, Py_Snapshot_Ref};
 use utils::reference::RustRef;
 
 use bindings::raft_state::{Py_RaftState_Mut, Py_RaftState_Ref};
-use prost_bindings::entry::Py_Entry_Mut;
+use raftpb_bindings::entry::Py_Entry_Mut;
 
 #[derive(Clone)]
 #[pyclass(name = "Storage_Owner")]

@@ -4,14 +4,14 @@ use utils::errors::to_pyresult;
 use utils::unsafe_cast::make_mut;
 
 use external_bindings::slog::Py_Logger_Mut;
-use prost_bindings::snapshot::Py_Snapshot_Ref;
+use raftpb_bindings::snapshot::Py_Snapshot_Ref;
 
 use raft::RaftLog;
 use utils::reference::RustRef;
 
 use super::py_storage::{Py_Storage_Owner, Py_Storage_Ref};
 use bindings::unstable::Py_Unstable_Ref;
-use prost_bindings::entry::{Py_Entry_Mut, Py_Entry_Owner, Py_Entry_Ref};
+use raftpb_bindings::entry::{Py_Entry_Mut, Py_Entry_Owner, Py_Entry_Ref};
 
 #[pyclass(name = "RaftLog_Owner")]
 pub struct Py_RaftLog__PyStorage_Owner {

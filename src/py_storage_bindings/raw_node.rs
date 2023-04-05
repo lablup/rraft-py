@@ -11,11 +11,11 @@ use bindings::config::Py_Config_Mut;
 use bindings::light_ready::Py_LightReady_Owner;
 use bindings::ready::{Py_Ready_Owner, Py_Ready_Ref};
 use external_bindings::slog::Py_Logger_Mut;
-use prost_bindings::conf_change::Py_ConfChange_Mut;
-use prost_bindings::conf_change_v2::Py_ConfChangeV2_Mut;
-use prost_bindings::conf_state::Py_ConfState_Owner;
-use prost_bindings::message::Py_Message_Mut;
-use prost_bindings::snapshot::Py_Snapshot_Ref;
+use raftpb_bindings::conf_change::Py_ConfChange_Mut;
+use raftpb_bindings::conf_change_v2::Py_ConfChangeV2_Mut;
+use raftpb_bindings::conf_state::Py_ConfState_Owner;
+use raftpb_bindings::message::Py_Message_Mut;
+use raftpb_bindings::snapshot::Py_Snapshot_Ref;
 
 use bindings::snapshot_status::Py_SnapshotStatus;
 use utils::reference::RustRef;

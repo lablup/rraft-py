@@ -1,3 +1,4 @@
+use protobuf::Message;
 use pyo3::{prelude::*, pyclass::CompareOp};
 
 use raft::eraftpb::HardState;
@@ -45,7 +46,7 @@ impl Py_HardState_Owner {
     #[new]
     pub fn new() -> Self {
         Py_HardState_Owner {
-            inner: HardState::new_(),
+            inner: HardState::new(),
         }
     }
 

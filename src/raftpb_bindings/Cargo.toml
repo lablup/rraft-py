@@ -1,17 +1,21 @@
 [package]
-name = "py-storage-bindings"
+name = "raftpb-bindings"
 version = "0.1.0"
 authors = ["jopemachine"]
 edition = "2018"
 
+[features]
+use-prost=["dep:prost"]
+
 [dependencies]
+prost = { version = "0.11", optional = true }
+protobuf = "2"
 pyo3 = { version = "0.18.2", features = ["extension-module", "multiple-pymethods"] }
+pyo3-asyncio = { version = "0.18.0", features = ["tokio-runtime"] }
+tokio = "1.4"
 raft = { version = "0.6.0", features = ["prost-codec", "default-logger"], default-features = false }
 utils = { path = "../utils" }
-bindings = { path = "../bindings" }
-raftpb-bindings = { path = "../raftpb_bindings" }
-external-bindings = { path = "../external_bindings" }
 
 [lib]
-name = "py_storage_bindings"
+name = "raftpb_bindings"
 path = "lib.rs"

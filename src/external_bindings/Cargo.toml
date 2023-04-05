@@ -5,7 +5,7 @@ authors = ["jopemachine"]
 edition = "2018"
 
 [dependencies]
-pyo3 = { version = "0.18.2", features = ["extension-module"] }
+pyo3 = { version = "0.18.2", features = ["extension-module", "multiple-pymethods"] }
 slog = { version = "2.2", features = ["max_level_debug", "release_max_level_debug"] }
 slog-envlogger = "2.1.0"
 slog-term = "2.9.0"

@@ -1,3 +1,4 @@
+use protobuf::Message;
 use pyo3::{prelude::*, pyclass::CompareOp};
 use utils::reference::RustRef;
 
@@ -46,7 +47,7 @@ impl Py_ConfChangeSingle_Owner {
     #[new]
     pub fn new() -> Self {
         Py_ConfChangeSingle_Owner {
-            inner: ConfChangeSingle::new_(),
+            inner: ConfChangeSingle::new(),
         }
     }
 

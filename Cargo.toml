@@ -15,10 +15,13 @@ Unofficial Python Binding of the tikv/raft-rs
 categories = ["algorithms", "database-implementations"]
 edition = "2018"
 
+[features]
+use-prost=["dep:prost"]
+
 [dependencies]
-prost = "0.11"
+prost = { version = "0.11", optional = true }
 protobuf = "2"
-pyo3 = { version = "0.18.2", features = ["extension-module"] }
+pyo3 = { version = "0.18.2", features = ["extension-module", "multiple-pymethods"] }
 pyo3-asyncio = { version = "0.18.0", features = ["tokio-runtime"] }
 raft = { version = "0.6.0", features = ["prost-codec", "default-logger"], default-features = false }
 tokio = "1.4"
@@ -29,7 +32,7 @@ slog-stdlog = "4"
 slog-async = "2.7.0"
 fxhash = "0.2.1"
 bindings = { path = "src/bindings" }
-prost-bindings = { path = "src/prost_bindings" }
+raftpb-bindings = { path = "src/raftpb_bindings" }
 external-bindings = { path = "src/external_bindings" }
 mem-storage-bindings = { path = "src/mem_storage_bindings" }
 py-storage-bindings = { path = "src/py_storage_bindings" }
@@ -38,7 +41,7 @@ utils = { path = "src/utils" }
 [workspace]
 members = [
 	"src/bindings",
-	"src/prost_bindings",
+	"src/raftpb_bindings",
 	"src/external_bindings",
 	"src/mem_storage_bindings",
 	"src/py_storage_bindings",

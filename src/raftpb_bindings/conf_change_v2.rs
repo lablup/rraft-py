@@ -1,9 +1,5 @@
 use protobuf::Message;
-use pyo3::{
-    prelude::*,
-    pyclass::CompareOp,
-    types::{PyBytes, PyList},
-};
+use pyo3::{prelude::*, pyclass::CompareOp, types::{PyBytes, PyList}};
 use raft::eraftpb::ConfChangeV2;
 use utils::{errors::to_pyresult, reference::RustRef, unsafe_cast::make_mut};
 
@@ -54,7 +50,7 @@ impl Py_ConfChangeV2_Owner {
     #[new]
     pub fn new() -> Self {
         Py_ConfChangeV2_Owner {
-            inner: ConfChangeV2::new_(),
+            inner: ConfChangeV2::new(),
         }
     }
 
@@ -88,6 +84,12 @@ impl Py_ConfChangeV2_Owner {
     fn __getattr__(this: PyObject, py: Python<'_>, attr: &str) -> PyResult<PyObject> {
         let reference = this.call_method0(py, "make_ref")?;
         reference.getattr(py, attr)
+    }
+}
+
+impl Default for Py_ConfChangeV2_Owner {
+    fn default() -> Self {
+        Self::new()
     }
 }
 
@@ -133,16 +135,6 @@ impl Py_ConfChangeV2_Ref {
         })
     }
 
-    pub fn set_changes(&mut self, v: &PyList) -> PyResult<()> {
-        self.inner.map_as_mut(|inner| {
-            inner.set_changes(
-                v.iter()
-                    .map(|cs| cs.extract::<Py_ConfChangeSingle_Mut>().unwrap().into())
-                    .collect::<Vec<_>>(),
-            )
-        })
-    }
-
     pub fn clear_changes(&mut self) -> PyResult<()> {
         self.inner.map_as_mut(|inner| inner.clear_changes())
     }
@@ -150,11 +142,6 @@ impl Py_ConfChangeV2_Ref {
     pub fn get_context(&self, py: Python) -> PyResult<Py<PyBytes>> {
         self.inner
             .map_as_ref(|inner| PyBytes::new(py, inner.get_context()).into())
-    }
-
-    pub fn set_context(&mut self, v: &PyAny) -> PyResult<()> {
-        let context = v.extract::<Vec<u8>>()?;
-        self.inner.map_as_mut(|inner| inner.set_context(context))
     }
 
     pub fn clear_context(&mut self) -> PyResult<()> {
@@ -212,5 +199,43 @@ impl Py_ConfChangeV2_Ref {
         self.inner
             .map_as_mut(|inner| inner.merge_from_bytes(bytes.as_slice()))
             .and_then(to_pyresult)
+    }
+}
+
+#[cfg(feature = "use-prost")]
+#[pymethods]
+impl Py_ConfChangeV2_Ref {
+    pub fn set_changes(&mut self, v: &PyList) -> PyResult<()> {
+        self.inner.map_as_mut(|inner| {
+            inner.set_changes(
+                v.iter()
+                    .map(|cs| cs.extract::<Py_ConfChangeSingle_Mut>().unwrap().into())
+                    .collect::<Vec<_>>(),
+            )
+        })
+    }
+
+    pub fn set_context(&mut self, v: &PyAny) -> PyResult<()> {
+        let context = v.extract::<Vec<u8>>()?;
+        self.inner.map_as_mut(|inner| inner.set_context(context))
+    }
+}
+
+#[cfg(not(feature = "use-prost"))]
+#[pymethods]
+impl Py_ConfChangeV2_Ref {
+    pub fn set_changes(&mut self, v: &PyList) -> PyResult<()> {
+        self.inner.map_as_mut(|inner| {
+            inner.set_changes(
+                v.iter()
+                    .map(|cs| cs.extract::<Py_ConfChangeSingle_Mut>().unwrap().into())
+                    .collect::<Vec<_>>(),
+            )
+        })
+    }
+
+    pub fn set_context(&mut self, v: &PyAny) -> PyResult<()> {
+        let context = v.extract::<Vec<u8>>()?;
+        self.inner.map_as_mut(|inner| inner.set_context(context))
     }
 }

@@ -49,7 +49,7 @@ impl Py_Entry_Owner {
     #[new]
     pub fn new() -> Self {
         Py_Entry_Owner {
-            inner: Entry::new_(),
+            inner: Entry::new(),
         }
     }
 
@@ -120,11 +120,6 @@ impl Py_Entry_Ref {
             .map_as_ref(|inner| PyBytes::new(py, inner.get_context()).into())
     }
 
-    pub fn set_context(&mut self, byte_arr: &PyAny) -> PyResult<()> {
-        let v = byte_arr.extract::<Vec<u8>>()?;
-        self.inner.map_as_mut(|inner| inner.set_context(v))
-    }
-
     pub fn clear_context(&mut self) -> PyResult<()> {
         self.inner.map_as_mut(|inner| inner.clear_context())
     }
@@ -132,11 +127,6 @@ impl Py_Entry_Ref {
     pub fn get_data(&self, py: Python) -> PyResult<Py<PyBytes>> {
         self.inner
             .map_as_ref(|inner| PyBytes::new(py, inner.get_data()).into())
-    }
-
-    pub fn set_data(&mut self, byte_arr: &PyAny) -> PyResult<()> {
-        let v = byte_arr.extract::<Vec<u8>>()?;
-        self.inner.map_as_mut(|inner| inner.set_data(v))
     }
 
     pub fn clear_data(&mut self) -> PyResult<()> {
@@ -193,5 +183,33 @@ impl Py_Entry_Ref {
 
     pub fn compute_size(&self) -> PyResult<u32> {
         self.inner.map_as_ref(|inner| inner.compute_size())
+    }
+}
+
+#[cfg(feature = "use-prost")]
+#[pymethods]
+impl Py_Entry_Ref {
+    pub fn set_context(&mut self, byte_arr: &PyAny) -> PyResult<()> {
+        let v = byte_arr.extract::<Vec<u8>>()?;
+        self.inner.map_as_mut(|inner| inner.set_context(v))
+    }
+
+    pub fn set_data(&mut self, byte_arr: &PyAny) -> PyResult<()> {
+        let v = byte_arr.extract::<Vec<u8>>()?;
+        self.inner.map_as_mut(|inner| inner.set_data(v))
+    }
+}
+
+#[cfg(not(feature = "use-prost"))]
+#[pymethods]
+impl Py_Entry_Ref {
+    pub fn set_context(&mut self, byte_arr: &PyAny) -> PyResult<()> {
+        let v = byte_arr.extract::<Vec<u8>>()?;
+        self.inner.map_as_mut(|inner| inner.set_context(v))
+    }
+
+    pub fn set_data(&mut self, byte_arr: &PyAny) -> PyResult<()> {
+        let v = byte_arr.extract::<Vec<u8>>()?;
+        self.inner.map_as_mut(|inner| inner.set_data(v))
     }
 }

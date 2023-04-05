@@ -5,15 +5,15 @@ authors = ["jopemachine"]
 edition = "2018"
 
 [dependencies]
-prost = "0.11"
+prost = { version = "0.11", optional = true }
 protobuf = "2"
-pyo3 = { version = "0.18.2", features = ["extension-module"] }
+pyo3 = { version = "0.18.2", features = ["extension-module", "multiple-pymethods"] }
 pyo3-asyncio = { version = "0.18.0", features = ["tokio-runtime"] }
 raft = { version = "0.6.0", features = ["prost-codec", "default-logger"], default-features = false }
 tokio = "1.4"
 fxhash = "0.2.1"
 utils = { path = "../utils" }
-prost-bindings = { path = "../prost_bindings" }
+raftpb-bindings = { path = "../raftpb_bindings" }
 external-bindings = { path = "../external_bindings" }
 
 [lib]
