@@ -1,5 +1,5 @@
 from typing import Any, Dict, List, Optional, cast
-from interface import Interface
+from harness.src.interface import Interface
 from rraft import (
     Config_Owner,
     ConfState_Owner,

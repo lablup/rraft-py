@@ -1,8 +1,7 @@
-import os
-import sys
 import warnings
 
 import pytest
+from harness.src.network import Network
 
 from rraft import (
     MessageType,
@@ -12,20 +11,13 @@ from rraft import (
     INVALID_INDEX,
 )
 
-from test_utils import (
+from harness.utils import (
     new_snapshot,
     new_storage,
     new_test_raft,
     new_message,
     new_test_raft_with_prevote,
-    # Interface,
 )
-
-parent_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "../src"))
-sys.path.append(parent_dir)
-
-from interface import Interface
-from network import Network
 
 
 def testing_snap() -> Snapshot_Owner:

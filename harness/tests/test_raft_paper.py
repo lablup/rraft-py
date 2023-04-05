@@ -1,7 +1,7 @@
-import os
-import sys
 import pytest
 from typing import Dict, List
+from harness.src.interface import Interface
+from harness.src.network import Network
 from rraft import (
     ConfState_Owner,
     Entry_Owner,
@@ -15,7 +15,7 @@ from rraft import (
     INVALID_ID,
 )
 
-from test_utils import (
+from harness.utils import (
     ltoa,
     new_message,
     new_storage,
@@ -26,14 +26,7 @@ from test_utils import (
     SOME_DATA,
     new_test_config,
     new_test_raft_with_config,
-    # Interface,
-    # Network,
 )
-
-parent_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "../src"))
-sys.path.append(parent_dir)
-from interface import Interface
-from network import Network
 
 
 def commit_noop_entry(r: Interface, s: MemStorage_Ref):

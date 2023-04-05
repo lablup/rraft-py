@@ -1,9 +1,9 @@
 import math
-import os
-import sys
 import pytest
 from typing import Any, List, Optional, Tuple, cast
-from test_utils import (
+from harness.src.interface import Interface
+from harness.src.network import Network
+from harness.utils import (
     add_learner,
     add_node,
     conf_change_v2,
@@ -21,11 +21,9 @@ from test_utils import (
     new_test_raft,
     remove_node,
     SOME_DATA,
-    # Interface,
-    # Network,
 )
 
-from test_raft_paper import (
+from harness.tests.test_raft_paper import (
     commit_noop_entry,
 )
 
@@ -58,11 +56,6 @@ from rraft import (
     new_conf_change_single,
     INVALID_ID,
 )
-
-parent_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "../src"))
-sys.path.append(parent_dir)
-from interface import Interface
-from network import Network
 
 
 def read_messages(raft: Raft__MemStorage_Owner) -> List[Message_Owner]:

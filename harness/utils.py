@@ -25,16 +25,8 @@ from rraft import (
     NO_LIMIT,
 )
 
-import os
-import sys
-
-parent_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "../src"))
-sys.path.append(parent_dir)
-
-from interface import Interface
-
-# from harness.src.network import Network
-# from harness.src.interface import Interface
+from harness.src.network import Network
+from harness.src.interface import Interface
 
 
 def ltoa(raft_log: RaftLog__MemStorage_Ref) -> str:

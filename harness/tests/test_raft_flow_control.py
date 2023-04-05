@@ -1,4 +1,4 @@
-from test_utils import new_message, new_storage, new_test_raft
+from harness.utils import new_message, new_storage, new_test_raft
 from rraft import MessageType, default_logger
 
 

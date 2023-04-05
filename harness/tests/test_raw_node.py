@@ -1,8 +1,7 @@
-import os
 import random
-import sys
 import pytest
-from typing import Any, List, Optional, Tuple, cast
+from typing import List, Optional
+from harness.src.network import Network
 from rraft import (
     NO_LIMIT,
     ConfChange_Owner,
@@ -31,9 +30,7 @@ from rraft import (
     new_conf_change_single,
     is_local_msg,
 )
-from test_utils import (
-    add_learner,
-    add_node,
+from harness.utils import (
     conf_change_v2,
     conf_change,
     conf_state,
@@ -46,21 +43,12 @@ from test_utils import (
     new_storage,
     new_test_config,
     new_test_raft_with_config,
-    new_test_raft_with_logs,
-    new_test_raft_with_prevote,
     new_test_raft,
-    remove_node,
     SOME_DATA,
     hard_state,
     soft_state,
-    # Interface,
-    # Network,
 )
 
-parent_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "../src"))
-sys.path.append(parent_dir)
-from interface import Interface
-from network import Network
 
 MAX_UINT64 = (1 << 64) - 1
 

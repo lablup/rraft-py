@@ -1,4 +1,4 @@
-from test_utils import hard_state, new_message, new_test_raft, new_storage
+from harness.utils import hard_state, new_message, new_test_raft, new_storage
 from rraft import MessageType, default_logger
 
 

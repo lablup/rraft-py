@@ -3,7 +3,7 @@ build:
 	pip install .
 
 test:
-	pytest
+	python -m pytest
 
 fmt:
 	cargo fmt
