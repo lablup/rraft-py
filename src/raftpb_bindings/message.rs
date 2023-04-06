@@ -212,6 +212,11 @@ impl Py_Message_Ref {
             .map_as_ref(|inner| PyBytes::new(py, inner.get_context()).into())
     }
 
+    pub fn set_context(&mut self, context: &PyAny) -> PyResult<()> {
+        let v = context.extract::<Vec<u8>>()?;
+        self.inner.map_as_mut(|inner| inner.set_context(v))
+    }
+
     pub fn clear_context(&mut self) -> PyResult<()> {
         self.inner.map_as_mut(|inner| inner.clear_context())
     }
@@ -239,6 +244,19 @@ impl Py_Message_Ref {
                 .collect::<Vec<_>>();
 
             entries.into_py(py)
+        })
+    }
+
+    pub fn set_entries(&mut self, ents: &PyList) -> PyResult<()> {
+        self.inner.map_as_mut(|inner| {
+            let entries = ents
+                .extract::<Vec<Py_Entry_Mut>>()
+                .unwrap()
+                .iter_mut()
+                .map(|x| x.into())
+                .collect::<Vec<_>>();
+
+            inner.set_entries(entries)
         })
     }
 
@@ -324,39 +342,5 @@ impl Py_Message_Ref {
 
     pub fn get_cached_size(&self) -> PyResult<u32> {
         self.inner.map_as_ref(|inner| inner.get_cached_size())
-    }
-}
-
-#[cfg(feature = "use-prost")]
-#[pymethods]
-impl Py_Message_Ref {
-    pub fn set_context(&mut self, context: &PyAny) -> PyResult<()> {
-        let v = context.extract::<Vec<u8>>()?;
-        self.inner.map_as_mut(|inner| inner.set_context(v))
-    }
-
-    pub fn set_entries(&mut self, ents: &PyList) -> PyResult<()> {
-        self.inner.map_as_mut(|inner| {
-            let entries = ents
-                .extract::<Vec<Py_Entry_Mut>>()
-                .unwrap()
-                .iter_mut()
-                .map(|x| x.into())
-                .collect::<Vec<_>>();
-
-            inner.set_entries(entries)
-        })
-    }
-}
-
-#[cfg(not(feature = "use-prost"))]
-#[pymethods]
-impl Py_Message_Ref {
-    pub fn set_context(&mut self, context: &PyAny) -> PyResult<()> {
-        todo!()
-    }
-
-    pub fn set_entries(&mut self, ents: &PyList) -> PyResult<()> {
-        todo!()
     }
 }

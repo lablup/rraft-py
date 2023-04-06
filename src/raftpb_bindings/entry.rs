@@ -189,7 +189,6 @@ impl Py_Entry_Ref {
     }
 }
 
-#[cfg(feature = "use-prost")]
 #[pymethods]
 impl Py_Entry_Ref {
     pub fn set_context(&mut self, byte_arr: &PyAny) -> PyResult<()> {
@@ -200,17 +199,5 @@ impl Py_Entry_Ref {
     pub fn set_data(&mut self, byte_arr: &PyAny) -> PyResult<()> {
         let v = byte_arr.extract::<Vec<u8>>()?;
         self.inner.map_as_mut(|inner| inner.set_data(v))
-    }
-}
-
-#[cfg(not(feature = "use-prost"))]
-#[pymethods]
-impl Py_Entry_Ref {
-    pub fn set_context(&mut self, byte_arr: &PyAny) -> PyResult<()> {
-        todo!()
-    }
-
-    pub fn set_data(&mut self, byte_arr: &PyAny) -> PyResult<()> {
-        todo!()
     }
 }
