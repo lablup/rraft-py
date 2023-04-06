@@ -1,10 +1,10 @@
-use protobuf::Message as _Message;
+use prost::Message as ProstMessage;
+use protobuf::Message as PbMessage;
 use pyo3::prelude::*;
 use pyo3::pyclass::CompareOp;
 use pyo3::types::PyBytes;
 use raft::eraftpb::Entry;
-
-use utils::reference::RustRef;
+use utils::{errors::to_pyresult, reference::RustRef};
 
 use super::entry_type::Py_EntryType;
 
@@ -60,6 +60,13 @@ impl Py_Entry_Owner {
         }
     }
 
+    #[staticmethod]
+    pub fn decode(v: &[u8]) -> PyResult<Py_Entry_Owner> {
+        Ok(Py_Entry_Owner {
+            inner: to_pyresult(ProstMessage::decode(v))?,
+        })
+    }
+
     pub fn make_ref(&mut self) -> Py_Entry_Ref {
         Py_Entry_Ref {
             inner: RustRef::new(&mut self.inner),
@@ -113,6 +120,11 @@ impl Py_Entry_Ref {
         Ok(Py_Entry_Owner {
             inner: self.inner.map_as_ref(|x| x.clone())?,
         })
+    }
+
+    pub fn encode(&self, py: Python) -> PyResult<PyObject> {
+        self.inner
+            .map_as_ref(|inner| inner.encode_to_vec().into_py(py))
     }
 
     pub fn get_context(&self, py: Python) -> PyResult<Py<PyBytes>> {

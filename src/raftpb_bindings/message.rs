@@ -1,4 +1,5 @@
-use protobuf::Message as _Message;
+use prost::Message as ProstMessage;
+use protobuf::Message as PbMessage;
 use pyo3::{
     prelude::*,
     pyclass::CompareOp,
@@ -6,7 +7,7 @@ use pyo3::{
 };
 
 use raft::eraftpb::Message;
-use utils::unsafe_cast::make_mut;
+use utils::{errors::to_pyresult, unsafe_cast::make_mut};
 
 use utils::reference::RustRef;
 
@@ -68,6 +69,13 @@ impl Py_Message_Owner {
         }
     }
 
+    #[staticmethod]
+    pub fn decode(v: &[u8]) -> PyResult<Py_Message_Owner> {
+        Ok(Py_Message_Owner {
+            inner: to_pyresult(ProstMessage::decode(v))?,
+        })
+    }
+
     pub fn make_ref(&mut self) -> Py_Message_Ref {
         Py_Message_Ref {
             inner: RustRef::new(&mut self.inner),
@@ -121,6 +129,11 @@ impl Py_Message_Ref {
         Ok(Py_Message_Owner {
             inner: self.inner.map_as_ref(|x| x.clone())?,
         })
+    }
+
+    pub fn encode(&self, py: Python) -> PyResult<PyObject> {
+        self.inner
+            .map_as_ref(|inner| inner.encode_to_vec().into_py(py))
     }
 
     pub fn get_commit(&self) -> PyResult<u64> {

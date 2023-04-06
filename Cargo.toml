@@ -34,6 +34,7 @@ external-bindings = { path = "src/external_bindings" }
 mem-storage-bindings = { path = "src/mem_storage_bindings" }
 py-storage-bindings = { path = "src/py_storage_bindings" }
 utils = { path = "src/utils" }
+bincode = "1.3.3"
 
 [workspace]
 members = [

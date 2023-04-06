@@ -1,9 +1,10 @@
-use protobuf::Message;
+use prost::Message as ProstMessage;
+use protobuf::Message as PbMessage;
 use pyo3::{prelude::*, pyclass::CompareOp};
 
 use raft::eraftpb::HardState;
 
-use utils::reference::RustRef;
+use utils::{errors::to_pyresult, reference::RustRef};
 
 #[derive(Clone)]
 #[pyclass(name = "HardState_Owner")]
@@ -55,6 +56,13 @@ impl Py_HardState_Owner {
         Py_HardState_Owner {
             inner: HardState::default(),
         }
+    }
+
+    #[staticmethod]
+    pub fn decode(v: &[u8]) -> PyResult<Py_HardState_Owner> {
+        Ok(Py_HardState_Owner {
+            inner: to_pyresult(ProstMessage::decode(v))?,
+        })
     }
 
     pub fn make_ref(&mut self) -> Py_HardState_Ref {
@@ -115,6 +123,11 @@ impl Py_HardState_Ref {
         Ok(Py_HardState_Owner {
             inner: self.inner.map_as_ref(|x| x.clone())?,
         })
+    }
+
+    pub fn encode(&self, py: Python) -> PyResult<PyObject> {
+        self.inner
+            .map_as_ref(|inner| inner.encode_to_vec().into_py(py))
     }
 
     pub fn get_commit(&self) -> PyResult<u64> {

@@ -1,6 +1,7 @@
-use protobuf::Message;
+use prost::Message as ProstMessage;
+use protobuf::Message as PbMessage;
 use pyo3::{prelude::*, pyclass::CompareOp};
-use utils::reference::RustRef;
+use utils::{errors::to_pyresult, reference::RustRef};
 
 use super::conf_change_type::Py_ConfChangeType;
 
@@ -56,6 +57,13 @@ impl Py_ConfChangeSingle_Owner {
         Py_ConfChangeSingle_Owner {
             inner: ConfChangeSingle::default(),
         }
+    }
+
+    #[staticmethod]
+    pub fn decode(v: &[u8]) -> PyResult<Py_ConfChangeSingle_Owner> {
+        Ok(Py_ConfChangeSingle_Owner {
+            inner: to_pyresult(ProstMessage::decode(v))?,
+        })
     }
 
     pub fn make_ref(&mut self) -> Py_ConfChangeSingle_Ref {
@@ -116,6 +124,11 @@ impl Py_ConfChangeSingle_Ref {
         Ok(Py_ConfChangeSingle_Owner {
             inner: self.inner.map_as_ref(|x| x.clone())?,
         })
+    }
+
+    pub fn encode(&self, py: Python) -> PyResult<PyObject> {
+        self.inner
+            .map_as_ref(|inner| inner.encode_to_vec().into_py(py))
     }
 
     pub fn get_node_id(&self) -> PyResult<u64> {

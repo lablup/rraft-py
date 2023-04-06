@@ -1,4 +1,5 @@
-use protobuf::Message;
+use prost::Message as ProstMessage;
+use protobuf::Message as PbMessage;
 use pyo3::{prelude::*, pyclass::CompareOp, types::PyBytes};
 use utils::{errors::to_pyresult, reference::RustRef};
 
@@ -61,6 +62,13 @@ impl Py_ConfChange_Owner {
         }
     }
 
+    #[staticmethod]
+    pub fn decode(v: &[u8]) -> PyResult<Py_ConfChange_Owner> {
+        Ok(Py_ConfChange_Owner {
+            inner: to_pyresult(ProstMessage::decode(v))?,
+        })
+    }
+
     pub fn make_ref(&mut self) -> Py_ConfChange_Ref {
         Py_ConfChange_Ref {
             inner: RustRef::new(&mut self.inner),
@@ -114,6 +122,11 @@ impl Py_ConfChange_Ref {
         Ok(Py_ConfChange_Owner {
             inner: self.inner.map_as_ref(|inner| inner.clone())?,
         })
+    }
+
+    pub fn encode(&self, py: Python) -> PyResult<PyObject> {
+        self.inner
+            .map_as_ref(|inner| inner.encode_to_vec().into_py(py))
     }
 
     pub fn get_id(&self) -> PyResult<u64> {

@@ -1,10 +1,11 @@
-use protobuf::Message;
+use prost::Message as ProstMessage;
+use protobuf::Message as PbMessage;
 use pyo3::pyclass::CompareOp;
 use pyo3::{prelude::*, types::PyList};
 
 use raft::eraftpb::ConfState;
 
-use utils::errors::runtime_error;
+use utils::errors::{runtime_error, to_pyresult};
 use utils::reference::RustRef;
 
 #[derive(Clone)]
@@ -71,6 +72,13 @@ impl Py_ConfState_Owner {
         }
     }
 
+    #[staticmethod]
+    pub fn decode(v: &[u8]) -> PyResult<Py_ConfState_Owner> {
+        Ok(Py_ConfState_Owner {
+            inner: to_pyresult(ProstMessage::decode(v))?,
+        })
+    }
+
     pub fn make_ref(&mut self) -> Py_ConfState_Ref {
         Py_ConfState_Ref {
             inner: RustRef::new(&mut self.inner),
@@ -124,6 +132,11 @@ impl Py_ConfState_Ref {
         Ok(Py_ConfState_Owner {
             inner: self.inner.map_as_ref(|inner| inner.clone())?,
         })
+    }
+
+    pub fn encode(&self, py: Python) -> PyResult<PyObject> {
+        self.inner
+            .map_as_ref(|inner| inner.encode_to_vec().into_py(py))
     }
 
     pub fn get_auto_leave(&self) -> PyResult<bool> {

@@ -95,6 +95,9 @@ fn rraft(_py: Python, m: &PyModule) -> PyResult<()> {
         m
     )?)?;
 
+    m.add_function(wrap_pyfunction!(utils::deserialize::deserialize_u64, m)?)?;
+    m.add_function(wrap_pyfunction!(utils::deserialize::deserialize_str, m)?)?;
+
     add_constants(m)?;
 
     Ok(())

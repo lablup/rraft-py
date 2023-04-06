@@ -1,8 +1,9 @@
-use protobuf::Message;
+use prost::Message as ProstMessage;
+use protobuf::Message as PbMessage;
 use pyo3::{prelude::*, pyclass::CompareOp, types::PyBytes};
 
 use raft::eraftpb::Snapshot;
-use utils::reference::RustRef;
+use utils::{errors::to_pyresult, reference::RustRef};
 
 use super::snapshot_metadata::{Py_SnapshotMetadata_Mut, Py_SnapshotMetadata_Ref};
 
@@ -56,6 +57,13 @@ impl Py_Snapshot_Owner {
         Py_Snapshot_Owner {
             inner: Snapshot::default(),
         }
+    }
+
+    #[staticmethod]
+    pub fn decode(v: &[u8]) -> PyResult<Py_Snapshot_Owner> {
+        Ok(Py_Snapshot_Owner {
+            inner: to_pyresult(ProstMessage::decode(v))?,
+        })
     }
 
     pub fn make_ref(&mut self) -> Py_Snapshot_Ref {
@@ -119,6 +127,11 @@ impl Py_Snapshot_Ref {
         Ok(Py_Snapshot_Owner {
             inner: self.inner.map_as_ref(|inner| inner.clone())?,
         })
+    }
+
+    pub fn encode(&self, py: Python) -> PyResult<PyObject> {
+        self.inner
+            .map_as_ref(|inner| inner.encode_to_vec().into_py(py))
     }
 
     pub fn get_data(&self, py: Python) -> PyResult<Py<PyBytes>> {
