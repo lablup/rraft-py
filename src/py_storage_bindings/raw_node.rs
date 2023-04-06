@@ -110,7 +110,7 @@ impl Py_RawNode__PyStorage_Ref {
             .map_as_mut(|inner| inner.set_batch_append(batch_append))
     }
 
-    pub fn set_priority(&mut self, priority: u64) -> PyResult<()> {
+    pub fn set_priority(&mut self, priority: i64) -> PyResult<()> {
         self.inner.map_as_mut(|inner| inner.set_priority(priority))
     }
 
@@ -123,9 +123,9 @@ impl Py_RawNode__PyStorage_Ref {
         self.inner.map_as_mut(|inner| inner.report_unreachable(id))
     }
 
-    pub fn request_snapshot(&mut self, request_index: u64) -> PyResult<()> {
+    pub fn request_snapshot(&mut self) -> PyResult<()> {
         self.inner
-            .map_as_mut(|inner| inner.request_snapshot(request_index))
+            .map_as_mut(|inner| inner.request_snapshot())
             .and_then(to_pyresult)
     }
 

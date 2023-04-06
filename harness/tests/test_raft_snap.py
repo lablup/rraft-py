@@ -162,9 +162,9 @@ def test_request_snapshot():
     sm.raft.restore(testing_snap())
     sm.persist()
 
-    # Raft can not step request snapshot if there is no leader.
+    # Raft can not step request snapshot if last raft log's term mismatch current term.
     with pytest.raises(Exception) as e:
-        sm.raft.request_snapshot(INVALID_INDEX + 1)
+        sm.raft.request_snapshot()
 
     assert str(e.value) == "raft: request snapshot dropped"
 
@@ -173,7 +173,7 @@ def test_request_snapshot():
 
     # Raft can not step request snapshot if itself is a leader.
     with pytest.raises(Exception) as e:
-        sm.raft.request_snapshot(INVALID_INDEX + 1)
+        sm.raft.request_snapshot()
 
     assert str(e.value) == "raft: request snapshot dropped"
 
@@ -184,6 +184,7 @@ def test_request_snapshot():
     assert sm.raft.prs().get(2).get_state() == ProgressState.Replicate
 
     request_snapshot_idx = sm.raft_log.get_committed()
+
     m = new_message(2, 1, MessageType.MsgAppendResponse, 0)
     m.set_index(11)
     m.set_reject(True)

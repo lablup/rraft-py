@@ -318,9 +318,9 @@ impl Py_Raft__MemStorage_Ref {
             .map_as_mut(|inner| inner.handle_append_entries(&msg.into()))
     }
 
-    pub fn request_snapshot(&mut self, request_index: u64) -> PyResult<()> {
+    pub fn request_snapshot(&mut self) -> PyResult<()> {
         self.inner
-            .map_as_mut(|inner| inner.request_snapshot(request_index))
+            .map_as_mut(|inner| inner.request_snapshot())
             .and_then(to_pyresult)
     }
 
@@ -379,11 +379,11 @@ impl Py_Raft__MemStorage_Ref {
         self.inner.map_as_mut(|inner| inner.vote = v)
     }
 
-    pub fn get_priority(&self) -> PyResult<u64> {
+    pub fn get_priority(&self) -> PyResult<i64> {
         self.inner.map_as_ref(|inner| inner.priority)
     }
 
-    pub fn set_priority(&mut self, priority: u64) -> PyResult<()> {
+    pub fn set_priority(&mut self, priority: i64) -> PyResult<()> {
         self.inner.map_as_mut(|inner| {
             inner.set_priority(priority);
         })

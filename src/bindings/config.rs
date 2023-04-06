@@ -102,7 +102,7 @@ impl Py_Config_Owner {
         read_only_option: Option<&Py_ReadOnlyOption>,
         skip_bcast_commit: Option<bool>,
         batch_append: Option<bool>,
-        priority: Option<u64>,
+        priority: Option<i64>,
         max_uncommitted_size: Option<u64>,
         max_committed_size_per_ready: Option<u64>,
     ) -> Self {
@@ -284,11 +284,11 @@ impl Py_Config_Ref {
         self.inner.map_as_mut(|inner| inner.skip_bcast_commit = v)
     }
 
-    pub fn get_priority(&self) -> PyResult<u64> {
+    pub fn get_priority(&self) -> PyResult<i64> {
         self.inner.map_as_ref(|inner| inner.priority)
     }
 
-    pub fn set_priority(&mut self, priority: u64) -> PyResult<()> {
+    pub fn set_priority(&mut self, priority: i64) -> PyResult<()> {
         self.inner.map_as_mut(|inner| inner.priority = priority)
     }
 

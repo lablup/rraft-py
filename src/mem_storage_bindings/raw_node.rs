@@ -66,7 +66,6 @@ impl Py_RawNode__MemStorage_Ref {
             .map_as_mut(|inner| inner.advance_apply_to(applied))
     }
 
-    /// WARNING: This function replace rd with default Ready.
     pub fn advance(&mut self, rd: &mut Py_Ready_Ref) -> PyResult<Py_LightReady_Owner> {
         let rd = rd
             .inner
@@ -77,7 +76,6 @@ impl Py_RawNode__MemStorage_Ref {
         })
     }
 
-    /// WARNING: This function replace rd with default Ready.
     pub fn advance_append(&mut self, rd: &mut Py_Ready_Ref) -> PyResult<Py_LightReady_Owner> {
         let rd = rd
             .inner
@@ -88,7 +86,6 @@ impl Py_RawNode__MemStorage_Ref {
         })
     }
 
-    /// WARNING: This function replace rd with default Ready.
     pub fn advance_append_async(&mut self, rd: &mut Py_Ready_Ref) -> PyResult<()> {
         let rd = rd
             .inner
@@ -111,7 +108,7 @@ impl Py_RawNode__MemStorage_Ref {
             .map_as_mut(|inner| inner.set_batch_append(batch_append))
     }
 
-    pub fn set_priority(&mut self, priority: u64) -> PyResult<()> {
+    pub fn set_priority(&mut self, priority: i64) -> PyResult<()> {
         self.inner.map_as_mut(|inner| inner.set_priority(priority))
     }
 
@@ -124,9 +121,9 @@ impl Py_RawNode__MemStorage_Ref {
         self.inner.map_as_mut(|inner| inner.report_unreachable(id))
     }
 
-    pub fn request_snapshot(&mut self, request_index: u64) -> PyResult<()> {
+    pub fn request_snapshot(&mut self) -> PyResult<()> {
         self.inner
-            .map_as_mut(|inner| inner.request_snapshot(request_index))
+            .map_as_mut(|inner| inner.request_snapshot())
             .and_then(to_pyresult)
     }
 

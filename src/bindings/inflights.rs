@@ -108,8 +108,8 @@ impl Py_Inflights_Ref {
         self.inner.map_as_mut(|inner| inner.add(inflight))
     }
 
-    pub fn cap(&self) -> PyResult<usize> {
-        self.inner.map_as_ref(|inner| inner.cap())
+    pub fn set_cap(&mut self, incoming_cap: usize) -> PyResult<()> {
+        self.inner.map_as_mut(|inner| inner.set_cap(incoming_cap))
     }
 
     pub fn full(&self) -> PyResult<bool> {

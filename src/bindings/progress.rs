@@ -122,10 +122,6 @@ impl Py_Progress_Ref {
             .map_as_mut(|inner| inner.become_snapshot(snapshot_idx))
     }
 
-    pub fn maybe_snapshot_abort(&self) -> PyResult<bool> {
-        self.inner.map_as_ref(|inner| inner.maybe_snapshot_abort())
-    }
-
     pub fn maybe_update(&mut self, n: u64) -> PyResult<bool> {
         self.inner.map_as_mut(|inner| inner.maybe_update(n))
     }

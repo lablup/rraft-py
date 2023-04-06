@@ -4,7 +4,6 @@ use std::{collections::HashSet, hash::BuildHasherDefault};
 use pyo3::types::PyDict;
 use pyo3::{prelude::*, types::PySet};
 
-use external_bindings::slog::Py_Logger_Mut;
 use fxhash::FxHasher;
 use raft::ProgressTracker;
 use utils::reference::RustRef;
@@ -52,9 +51,9 @@ impl From<&mut Py_ProgressTracker_Mut<'_>> for ProgressTracker {
 #[pymethods]
 impl Py_ProgressTracker_Owner {
     #[new]
-    pub fn new(max_inflight: usize, logger: Py_Logger_Mut) -> Self {
+    pub fn new(max_inflight: usize) -> Self {
         Py_ProgressTracker_Owner {
-            inner: ProgressTracker::new(max_inflight, logger.into()),
+            inner: ProgressTracker::new(max_inflight),
         }
     }
 

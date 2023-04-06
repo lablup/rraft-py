@@ -36,6 +36,7 @@ from rraft import (
     Config_Owner,
     Entry_Owner,
     EntryType,
+    GetEntriesContext_Owner,
     HardState_Owner,
     Logger_Owner,
     Logger_Ref,
@@ -3005,7 +3006,8 @@ def test_step_ignore_config():
     we = empty_entry(1, 3)
     we.set_entry_type(EntryType.EntryNormal)
     wents = [we]
-    entries = r.raft_log.entries(index + 1, None)
+    ctx = GetEntriesContext_Owner.empty(False)
+    entries = r.raft_log.entries(index + 1, ctx.make_ref(), None)
     assert entries == wents
     assert r.raft.get_pending_conf_index() == pending_conf_index
 
@@ -4521,7 +4523,7 @@ def prepare_request_snapshot() -> Tuple[Network, Snapshot_Owner]:
     msg = new_message_with_entries(1, 1, MessageType.MsgPropose, [test_entries])
     nt.send([msg])
 
-    s = nt.storage[1].snapshot(0)
+    s = nt.storage[1].snapshot(0, 0)
 
     return (nt, s)
 
@@ -4534,7 +4536,7 @@ def test_follower_request_snapshot():
     prev_snapshot_idx = s.get_metadata().get_index()
     request_idx = nt.peers[1].raft_log.get_committed()
     assert prev_snapshot_idx < request_idx
-    nt.peers[2].raft.request_snapshot(request_idx)
+    nt.peers[2].raft.request_snapshot()
 
     # Send the request snapshot message.
     req_snap = nt.peers[2].raft.get_msgs().pop()
@@ -4573,7 +4575,7 @@ def test_request_snapshot_unavailable():
     request_idx = nt.peers[1].raft_log.get_committed()
     assert prev_snapshot_idx < request_idx
 
-    nt.peers[2].raft.request_snapshot(request_idx)
+    nt.peers[2].raft.request_snapshot()
 
     # Send the request snapshot message.
     req_snap = nt.peers[2].raft.get_msgs().pop()
@@ -4606,8 +4608,7 @@ def test_request_snapshot_matched_change():
     nt.peers[2].raft_log.set_committed(nt.peers[2].raft_log.get_committed() - 1)
 
     # Request the latest snapshot.
-    request_idx = nt.peers[2].raft_log.get_committed()
-    nt.peers[2].raft.request_snapshot(request_idx)
+    nt.peers[2].raft.request_snapshot()
     req_snap = nt.peers[2].raft.get_msgs().pop()
     # The request snapshot is ignored because it is considered as out of order.
     nt.peers[1].step(req_snap)
@@ -4630,8 +4631,7 @@ def test_request_snapshot_none_replicate():
     nt.peers[1].raft.prs().get(2).set_state(ProgressState.Snapshot)
 
     # Request the latest snapshot.
-    request_idx = nt.peers[2].raft_log.get_committed()
-    nt.peers[2].raft.request_snapshot(request_idx)
+    nt.peers[2].raft.request_snapshot()
     req_snap = nt.peers[2].raft.get_msgs().pop()
     nt.peers[1].raft.step(req_snap)
     assert nt.peers[1].raft.prs().get(2).get_pending_request_snapshot() != 0
@@ -4652,8 +4652,7 @@ def test_request_snapshot_step_down():
 
     # Recover and request the latest snapshot.
     nt.recover()
-    request_idx = nt.peers[2].raft_log.get_committed()
-    nt.peers[2].raft.request_snapshot(request_idx)
+    nt.peers[2].raft.request_snapshot()
     nt.send([new_message(3, 3, MessageType.MsgBeat, 0)])
     assert (
         nt.peers[2].raft.get_pending_request_snapshot() == INVALID_INDEX
@@ -4664,8 +4663,7 @@ def test_request_snapshot_step_down():
 def test_request_snapshot_on_role_change():
     nt, _ = prepare_request_snapshot()
 
-    request_idx = nt.peers[2].raft_log.get_committed()
-    nt.peers[2].raft.request_snapshot(request_idx)
+    nt.peers[2].raft.request_snapshot()
 
     # Becoming follower does not reset pending_request_snapshot.
     term, id = nt.peers[1].raft.get_term(), nt.peers[2].raft.get_id()

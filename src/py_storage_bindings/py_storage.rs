@@ -1,6 +1,8 @@
+use bindings::get_entries_context::Py_GetEntriesContext_Ref;
 use pyo3::prelude::*;
 
 use raft::storage::Storage;
+use raft::GetEntriesContext;
 use utils::errors::to_pyresult;
 
 use raftpb_bindings::entry::Py_Entry_Ref;
@@ -53,11 +55,16 @@ impl Py_Storage_Ref {
         &self,
         low: u64,
         high: u64,
+        context: &mut Py_GetEntriesContext_Ref,
         max_size: Option<u64>,
         py: Python,
     ) -> PyResult<PyObject> {
+        let context = context.inner.map_as_mut(|context| unsafe {
+            std::ptr::replace(context, GetEntriesContext::empty(false))
+        })?;
+
         to_pyresult(
-            Storage::entries(self, low, high, max_size).map(|mut entries| {
+            Storage::entries(self, low, high, max_size, context).map(|mut entries| {
                 let py_entries = entries
                     .iter_mut()
                     .map(|x| Py_Entry_Ref {
@@ -81,9 +88,9 @@ impl Py_Storage_Ref {
         to_pyresult(Storage::last_index(self))
     }
 
-    pub fn snapshot(&self, request_index: u64) -> PyResult<Py_Snapshot_Ref> {
+    pub fn snapshot(&self, request_index: u64, to: u64) -> PyResult<Py_Snapshot_Ref> {
         to_pyresult(
-            Storage::snapshot(self, request_index).map(|mut snapshot| Py_Snapshot_Ref {
+            Storage::snapshot(self, request_index, to).map(|mut snapshot| Py_Snapshot_Ref {
                 inner: RustRef::new(&mut snapshot),
             }),
         )
@@ -109,6 +116,7 @@ impl Storage for Py_Storage_Owner {
         low: u64,
         high: u64,
         max_size: impl Into<Option<u64>>,
+        _context: GetEntriesContext,
     ) -> raft::Result<Vec<raft::prelude::Entry>> {
         let max_size: Option<u64> = max_size.into();
 
@@ -164,12 +172,12 @@ impl Storage for Py_Storage_Owner {
         })
     }
 
-    fn snapshot(&self, request_index: u64) -> raft::Result<raft::prelude::Snapshot> {
+    fn snapshot(&self, request_index: u64, to: u64) -> raft::Result<raft::prelude::Snapshot> {
         Python::with_gil(|py| {
             let py_result: &PyAny = self
                 .storage
                 .as_ref(py)
-                .call_method("snapshot", (request_index,), None)
+                .call_method("snapshot", (request_index, to), None)
                 .unwrap();
 
             let res: PyResult<Py_Snapshot_Owner> = py_result.extract();
@@ -201,6 +209,7 @@ impl Storage for Py_Storage_Ref {
         low: u64,
         high: u64,
         max_size: impl Into<Option<u64>>,
+        _context: GetEntriesContext,
     ) -> raft::Result<Vec<raft::prelude::Entry>> {
         let max_size: Option<u64> = max_size.into();
 
@@ -269,13 +278,13 @@ impl Storage for Py_Storage_Ref {
         .unwrap()
     }
 
-    fn snapshot(&self, request_index: u64) -> raft::Result<raft::prelude::Snapshot> {
+    fn snapshot(&self, request_index: u64, to: u64) -> raft::Result<raft::prelude::Snapshot> {
         Python::with_gil(|py| {
             self.inner.map_as_ref(|inner| {
                 let py_result: &PyAny = inner
                     .storage
                     .as_ref(py)
-                    .call_method("snapshot", (request_index,), None)
+                    .call_method("snapshot", (request_index, to), None)
                     .unwrap();
 
                 let res: PyResult<Py_Snapshot_Owner> = py_result.extract();

@@ -35,6 +35,8 @@ fn rraft(_py: Python, m: &PyModule) -> PyResult<()> {
     m.add_class::<bindings::state_role::Py_StateRole>()?;
     m.add_class::<bindings::unstable::Py_Unstable_Owner>()?;
     m.add_class::<bindings::unstable::Py_Unstable_Ref>()?;
+    m.add_class::<bindings::get_entries_context::Py_GetEntriesContext_Owner>()?;
+    m.add_class::<bindings::get_entries_context::Py_GetEntriesContext_Ref>()?;
 
     m.add_class::<raftpb_bindings::conf_change_single::Py_ConfChangeSingle_Owner>()?;
     m.add_class::<raftpb_bindings::conf_change_single::Py_ConfChangeSingle_Ref>()?;

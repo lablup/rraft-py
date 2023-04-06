@@ -287,7 +287,11 @@ class __Storage(__Cloneable):
         Implements the Storage trait.
         """
     def entries(
-        self, low: int, high: int, max_size: Optional[int]
+        self,
+        low: int,
+        high: int,
+        context: GetEntriesContext_Ref,
+        max_size: Optional[int],
     ) -> List[Entry_Owner]:
         """
         Implements the Storage trait.
@@ -304,7 +308,7 @@ class __Storage(__Cloneable):
         """
         Implements the Storage trait.
         """
-    def snapshot(self, request_index: int) -> Snapshot_Owner:
+    def snapshot(self, request_index: int, to: int) -> Snapshot_Owner:
         """
         Implements the Storage trait.
         """
@@ -656,10 +660,11 @@ class __RawNode:
 
         [`Self::has_ready`] should be called first to check if it's necessary to handle the ready.
         """
-    def request_snapshot(self, request_snapshot: int) -> Ready_Owner:
+    def request_snapshot(self) -> Ready_Owner:
         """
         Request a snapshot from a leader.
-        The snapshot's index must be greater or equal to the request_index.
+        The snapshot's index must be greater or equal to the request_index (last_index) or
+        the leader's term must be greater than the request term (last_index's term).
         """
 
 class RawNode__MemStorage_Owner(__RawNode):
@@ -1015,6 +1020,24 @@ class HardState_Owner(__HardState):
 class HardState_Ref(__HardState):
     """
     Reference type of :class:`HardState_Owner`.
+    """
+
+class __GetEntriesContext:
+    """
+    Records the context of the caller who calls entries() of Storage trait.
+    """
+
+    def can_async(self) -> bool:
+        """ """
+
+class GetEntriesContext_Owner(__GetEntriesContext):
+    @staticmethod
+    def empty() -> GetEntriesContext_Owner: ...
+    def make_ref(self) -> ConfChange_Ref: ...
+
+class GetEntriesContext_Ref(__GetEntriesContext):
+    """
+    Reference type of :class:`GetEntriesContext_Owner`.
     """
 
 class __Entry(__Cloneable):
@@ -1436,7 +1459,9 @@ class ReadState_Ref(__ReadState):
     """
 
 class __RaftLog:
-    def entries(self, idx: int, max_size: Optional[int]) -> List[Entry_Owner]:
+    def entries(
+        self, idx: int, context: GetEntriesContext_Ref, max_size: Optional[int]
+    ) -> List[Entry_Owner]:
         """
         Returns entries starting from a particular index and not exceeding a bytesize.
         """
@@ -1554,7 +1579,7 @@ class __RaftLog:
 
         Panics if it finds a conflicting index less than committed index.
         """
-    def snapshot(self, request_index: int) -> Snapshot_Ref:
+    def snapshot(self, request_index: int, to: int) -> Snapshot_Ref:
         """
         Returns the current snapshot
         """
@@ -1900,7 +1925,7 @@ class __Raft:
         """ """
     def handle_append_entries(self, msg: Message_Owner | Message_Ref) -> None:
         """ """
-    def request_snapshot(self, request_index: int) -> None:
+    def request_snapshot(self) -> None:
         """
         Request a snapshot from a leader.
         """
@@ -2116,9 +2141,7 @@ class ProgressTracker_Owner(__ProgressTracker):
     which could be `Leader`, `Follower` and `Learner`.
     """
 
-    def __init__(
-        self, max_inflight: int, logger: Logger_Owner | Logger_Ref
-    ) -> None: ...
+    def __init__(self, max_inflight: int) -> None: ...
     def make_ref(self) -> ProgressTracker_Ref: ...
 
 class ProgressTracker_Ref(__ProgressTracker):
@@ -2134,8 +2157,6 @@ class __Progress(__Cloneable):
         """Changes the progress to a Replicate."""
     def become_snapshot(self, snapshot_idx: int) -> None:
         """Changes the progress to a snapshot."""
-    def maybe_snapshot_abort(self) -> bool:
-        """"""
     def maybe_update(self, n: int) -> bool:
         """
         Returns false if the given n index comes from an outdated message.
@@ -2305,8 +2326,8 @@ class __Inflights(__Cloneable):
     def clone(self) -> Inflights_Owner: ...
     def add(self, inflight: int) -> None:
         """Adds an inflight into inflights"""
-    def cap(self) -> int:
-        """The buffer capacity."""
+    def set_cap(self, incoming_cap: int) -> None:
+        """ """
     def full(self) -> bool:
         """Returns true if the inflights is full."""
     def reset(self) -> None:

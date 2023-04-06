@@ -10,7 +10,7 @@ protobuf = "2"
 pyo3 = { version = "0.18.2", features = ["extension-module", "multiple-pymethods"] }
 pyo3-asyncio = { version = "0.18.0", features = ["tokio-runtime"] }
 tokio = "1.4"
-raft = { version = "0.6.0", features = ["prost-codec", "default-logger"], default-features = false }
+raft = { version = "0.7.0", features = ["prost-codec", "default-logger"], default-features = false }
 utils = { path = "../utils" }
 
 [lib]

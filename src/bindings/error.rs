@@ -135,6 +135,9 @@ impl Py_RaftError {
                 Py_RaftError(Error::Store(StorageError::SnapshotTemporarilyUnavailable))
             }
             StorageError::Unavailable => Py_RaftError(Error::Store(StorageError::Unavailable)),
+            StorageError::LogTemporarilyUnavailable => {
+                Py_RaftError(Error::Store(StorageError::LogTemporarilyUnavailable))
+            }
             StorageError::Other(_) => panic!("Undefined"),
         }
     }

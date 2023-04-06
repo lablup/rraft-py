@@ -195,11 +195,11 @@ impl Py_Message_Ref {
         self.inner.map_as_mut(|inner| inner.clear_log_term())
     }
 
-    pub fn get_priority(&self) -> PyResult<u64> {
+    pub fn get_priority(&self) -> PyResult<i64> {
         self.inner.map_as_ref(|inner| inner.get_priority())
     }
 
-    pub fn set_priority(&mut self, v: u64) -> PyResult<()> {
+    pub fn set_priority(&mut self, v: i64) -> PyResult<()> {
         self.inner.map_as_mut(|inner| inner.set_priority(v))
     }
 

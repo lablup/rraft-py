@@ -2,7 +2,7 @@ use std::ops::{Deref, DerefMut};
 
 use pyo3::prelude::*;
 
-use raft::{prelude::ConfState, storage::MemStorage, storage::Storage};
+use raft::{prelude::ConfState, storage::MemStorage, storage::Storage, GetEntriesContext};
 use utils::{errors::to_pyresult, reference::RustRef, unsafe_cast::make_mut};
 
 use raftpb_bindings::{
@@ -11,7 +11,7 @@ use raftpb_bindings::{
 
 use super::mem_storage_core::Py_MemStorageCore_Ref;
 
-use bindings::raft_state::Py_RaftState_Owner;
+use bindings::{get_entries_context::Py_GetEntriesContext_Ref, raft_state::Py_RaftState_Owner};
 
 #[derive(Clone)]
 #[pyclass(name = "MemStorage_Owner")]
@@ -125,11 +125,11 @@ impl Py_MemStorage_Ref {
             .and_then(to_pyresult)
     }
 
-    pub fn snapshot(&self, request_index: u64) -> PyResult<Py_Snapshot_Owner> {
+    pub fn snapshot(&self, request_index: u64, _to: u64) -> PyResult<Py_Snapshot_Owner> {
         self.inner
             .map_as_ref(|inner| {
                 inner
-                    .snapshot(request_index)
+                    .snapshot(request_index, _to)
                     .map(|snapshot| Py_Snapshot_Owner { inner: snapshot })
             })
             .and_then(to_pyresult)
@@ -139,12 +139,17 @@ impl Py_MemStorage_Ref {
         &self,
         low: u64,
         high: u64,
+        context: &mut Py_GetEntriesContext_Ref,
         max_size: Option<u64>,
         py: Python,
     ) -> PyResult<PyObject> {
+        let context = context.inner.map_as_mut(|context| unsafe {
+            std::ptr::replace(context, GetEntriesContext::empty(false))
+        })?;
+
         self.inner
             .map_as_ref(|inner| {
-                inner.entries(low, high, max_size).map(|entries| {
+                inner.entries(low, high, max_size, context).map(|entries| {
                     entries
                         .into_iter()
                         .map(|entry| Py_Entry_Owner { inner: entry })

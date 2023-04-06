@@ -14,6 +14,7 @@ from rraft import (
     Entry_Owner,
     Entry_Ref,
     EntryType,
+    GetEntriesContext_Owner,
     HardState_Ref,
     Logger_Ref,
     MemStorage_Owner,
@@ -381,7 +382,8 @@ def test_raw_node_propose_and_conf_change():
         # will not reflect any unstable entries that we'll only be presented
         # with in the next Ready.
         last_index = s.last_index()
-        entries = s.entries(last_index - 1, last_index + 1, NO_LIMIT)
+        ctx = GetEntriesContext_Owner.empty(False)
+        entries = s.entries(last_index - 1, last_index + 1, ctx.make_ref(), NO_LIMIT)
         assert len(entries) == 2
         assert entries[0].get_data() == b"somedata"
 
@@ -494,7 +496,8 @@ def test_raw_node_joint_auto_leave():
     # will not reflect any unstable entries that we'll only be presented
     # with in the next Ready.
     last_index = s.last_index()
-    entries = s.entries(last_index - 1, last_index + 1, NO_LIMIT)
+    ctx = GetEntriesContext_Owner.empty(False)
+    entries = s.entries(last_index - 1, last_index + 1, ctx.make_ref(), NO_LIMIT)
     assert len(entries) == 2
     assert entries[0].get_data() == b"somedata"
     assert entries[1].get_entry_type() == EntryType.EntryConfChangeV2
@@ -583,7 +586,8 @@ def test_raw_node_propose_add_duplicate_node():
     last_index = s.last_index()
 
     # the last three entries should be: ConfChange cc1, cc1, cc2
-    entries = s.entries(last_index - 2, last_index + 1, None)
+    ctx = GetEntriesContext_Owner.empty(False)
+    entries = s.entries(last_index - 2, last_index + 1, ctx.make_ref(), None)
     assert len(entries) == 3
     assert entries[0].get_data() == ccdata1
     assert entries[2].get_data() == ccdata2

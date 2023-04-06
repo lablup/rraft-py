@@ -1,3 +1,4 @@
+use bindings::get_entries_context::Py_GetEntriesContext_Ref;
 use pyo3::prelude::*;
 use pyo3::types::PyList;
 use utils::errors::to_pyresult;
@@ -7,8 +8,8 @@ use external_bindings::slog::Py_Logger_Mut;
 use raftpb_bindings::snapshot::Py_Snapshot_Ref;
 
 use super::mem_storage::{Py_MemStorage_Mut, Py_MemStorage_Ref};
-use raft::storage::MemStorage;
 use raft::RaftLog;
+use raft::{storage::MemStorage, GetEntriesContext};
 use utils::reference::RustRef;
 
 use bindings::unstable::Py_Unstable_Ref;
@@ -56,10 +57,20 @@ impl Py_RaftLog__MemStorage_Ref {
             .map_as_ref(|inner| format!("{:?}", inner.to_string(),))
     }
 
-    pub fn entries(&self, idx: u64, max_size: Option<u64>, py: Python) -> PyResult<PyObject> {
+    pub fn entries(
+        &self,
+        idx: u64,
+        context: &mut Py_GetEntriesContext_Ref,
+        max_size: Option<u64>,
+        py: Python,
+    ) -> PyResult<PyObject> {
+        let context = context.inner.map_as_mut(|context| unsafe {
+            std::ptr::replace(context, GetEntriesContext::empty(false))
+        })?;
+
         self.inner
             .map_as_ref(|inner| {
-                inner.entries(idx, max_size).map(|entries| {
+                inner.entries(idx, max_size, context).map(|entries| {
                     entries
                         .into_iter()
                         .map(|entry| Py_Entry_Owner { inner: entry })
@@ -209,11 +220,11 @@ impl Py_RaftLog__MemStorage_Ref {
         })
     }
 
-    pub fn snapshot(&self, request_index: u64) -> PyResult<Py_Snapshot_Ref> {
+    pub fn snapshot(&self, request_index: u64, to: u64) -> PyResult<Py_Snapshot_Ref> {
         self.inner
             .map_as_ref(|inner| {
                 inner
-                    .snapshot(request_index)
+                    .snapshot(request_index, to)
                     .map(|mut snapshot| Py_Snapshot_Ref {
                         inner: RustRef::new(&mut snapshot),
                     })
