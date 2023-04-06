@@ -5,6 +5,9 @@ build:
 test:
 	python -m pytest
 
+bench:
+	python -m pytest benches/suites/*.py
+
 fmt:
 	cargo fmt
 
