@@ -53,7 +53,7 @@ def test_raft_creation4(benchmark):
     benchmark(quick_raft, storage, logger)
 
 
-@pytest.mark.benchmark(group="Raft")
+@pytest.mark.benchmark(group="Raft", warmup=True)
 def test_raft_campaign1_1(benchmark):
     logger = default_logger()
     storage = new_storage(3, 1)
@@ -65,7 +65,7 @@ def test_raft_campaign1_1(benchmark):
     benchmark(bench, storage, logger)
 
 
-@pytest.mark.benchmark(group="Raft")
+@pytest.mark.benchmark(group="Raft", warmup=True)
 def test_raft_campaign1_2(benchmark):
     logger = default_logger()
     storage = new_storage(3, 1)
@@ -77,7 +77,7 @@ def test_raft_campaign1_2(benchmark):
     benchmark(bench, storage, logger)
 
 
-@pytest.mark.benchmark(group="Raft")
+@pytest.mark.benchmark(group="Raft", warmup=True)
 def test_raft_campaign1_3(benchmark):
     logger = default_logger()
     storage = new_storage(3, 1)
@@ -89,7 +89,7 @@ def test_raft_campaign1_3(benchmark):
     benchmark(bench, storage, logger)
 
 
-@pytest.mark.benchmark(group="Raft")
+@pytest.mark.benchmark(group="Raft", warmup=True)
 def test_raft_campaign2_1(benchmark):
     logger = default_logger()
     storage = new_storage(5, 2)
@@ -101,7 +101,7 @@ def test_raft_campaign2_1(benchmark):
     benchmark(bench, storage, logger)
 
 
-@pytest.mark.benchmark(group="Raft")
+@pytest.mark.benchmark(group="Raft", warmup=True)
 def test_raft_campaign2_2(benchmark):
     logger = default_logger()
     storage = new_storage(5, 2)
@@ -113,7 +113,7 @@ def test_raft_campaign2_2(benchmark):
     benchmark(bench, storage, logger)
 
 
-@pytest.mark.benchmark(group="Raft")
+@pytest.mark.benchmark(group="Raft", warmup=True)
 def test_raft_campaign2_3(benchmark):
     logger = default_logger()
     storage = new_storage(5, 2)
@@ -125,7 +125,7 @@ def test_raft_campaign2_3(benchmark):
     benchmark(bench, storage, logger)
 
 
-@pytest.mark.benchmark(group="Raft")
+@pytest.mark.benchmark(group="Raft", warmup=True)
 def test_raft_campaign3_1(benchmark):
     logger = default_logger()
     storage = new_storage(7, 3)
@@ -137,7 +137,7 @@ def test_raft_campaign3_1(benchmark):
     benchmark(bench, storage, logger)
 
 
-@pytest.mark.benchmark(group="Raft")
+@pytest.mark.benchmark(group="Raft", warmup=True)
 def test_raft_campaign3_2(benchmark):
     logger = default_logger()
     storage = new_storage(7, 3)
@@ -149,7 +149,7 @@ def test_raft_campaign3_2(benchmark):
     benchmark(bench, storage, logger)
 
 
-@pytest.mark.benchmark(group="Raft")
+@pytest.mark.benchmark(group="Raft", warmup=True)
 def test_raft_campaign3_3(benchmark):
     logger = default_logger()
     storage = new_storage(7, 3)
