@@ -1948,6 +1948,12 @@ class __Raft:
         """
         Stops the transfer of a leader.
         """
+    def campaign(self, typ: str) -> None:
+        """
+        Campaign to attempt to become a leader.
+
+        If prevote is enabled, this is handled as well.
+        """
     def get_lead_transferee(self) -> Optional[int]:
         """ """
     def set_lead_transferee(self, lead_transferee: int) -> None:

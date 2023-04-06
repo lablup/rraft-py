@@ -1,11 +1,14 @@
-use pyo3::{prelude::*, types::PyList};
+use pyo3::{
+    prelude::*,
+    types::{PyList, PyString},
+};
 use utils::{
     errors::{runtime_error, to_pyresult},
     reference::RustRef,
     unsafe_cast::make_mut,
 };
 
-use raft::Raft;
+use raft::{Raft, CAMPAIGN_ELECTION, CAMPAIGN_PRE_ELECTION, CAMPAIGN_TRANSFER};
 
 use raftpb_bindings::{
     conf_change_v2::Py_ConfChangeV2_Mut,
@@ -576,5 +579,15 @@ impl Py_Raft__PyStorage_Ref {
     pub fn set_read_only_option(&mut self, option: &Py_ReadOnlyOption) -> PyResult<()> {
         self.inner
             .map_as_mut(|inner| inner.read_only.option = option.0)
+    }
+
+    pub fn campaign(&mut self, campaign_type: &PyString) -> PyResult<()> {
+        let campaign_type = campaign_type.to_str()?;
+        self.inner.map_as_mut(|inner| match campaign_type {
+            "CampaignElection" => inner.campaign(CAMPAIGN_ELECTION),
+            "CampaignPreElection" => inner.campaign(CAMPAIGN_PRE_ELECTION),
+            "CampaignTransfer" => inner.campaign(CAMPAIGN_TRANSFER),
+            _ => panic!("Invalid campaign type"),
+        })
     }
 }
