@@ -806,7 +806,16 @@ class LightReady_Ref(__LightReady):
     Reference type of :class:`LightReady_Owner`.
     """
 
-class __SnapshotMetadata(__Cloneable):
+class __Encoder:
+    def encode(self) -> bytes:
+        """ """
+
+class __Decoder:
+    @staticmethod
+    def decode(v: List[int] | bytes) -> Any:
+        """ """
+
+class __SnapshotMetadata(__Cloneable, __Encoder, __Decoder):
     def clone(self) -> SnapshotMetadata_Owner: ...
     def get_index(self) -> int:
         """ """
@@ -835,6 +844,8 @@ class SnapshotMetadata_Owner(__SnapshotMetadata):
     def __init__(self) -> None: ...
     @staticmethod
     def default() -> SnapshotMetadata_Owner: ...
+    @staticmethod
+    def decode(v: List[int] | bytes) -> SnapshotMetadata_Owner: ...
     def make_ref(self) -> SnapshotMetadata_Ref: ...
 
 class SnapshotMetadata_Ref(__SnapshotMetadata):
@@ -842,7 +853,7 @@ class SnapshotMetadata_Ref(__SnapshotMetadata):
     Reference type of :class:`SnapshotMetadata_Owner`.
     """
 
-class __Snapshot(__Cloneable):
+class __Snapshot(__Cloneable, __Encoder, __Decoder):
     def clone(self) -> Snapshot_Owner: ...
     def get_data(self) -> bytes:
         """ """
@@ -869,6 +880,8 @@ class Snapshot_Owner(__Snapshot):
     def __init__(self) -> None: ...
     @staticmethod
     def default() -> Snapshot_Owner: ...
+    @staticmethod
+    def decode(v: List[int] | bytes) -> Snapshot_Owner: ...
     def make_ref(self) -> Snapshot_Ref: ...
 
 class Snapshot_Ref(__Snapshot):
@@ -876,7 +889,7 @@ class Snapshot_Ref(__Snapshot):
     Reference type of :class:`Snapshot_Owner`.
     """
 
-class __Message(__Cloneable):
+class __Message(__Cloneable, __Encoder, __Decoder):
     def clone(self) -> Message_Owner: ...
     def get_commit(self) -> int:
         """ """
@@ -982,13 +995,15 @@ class Message_Owner(__Message):
     def make_ref(self) -> Message_Ref: ...
     @staticmethod
     def default() -> Message_Owner: ...
+    @staticmethod
+    def decode(v: List[int] | bytes) -> Message_Owner: ...
 
 class Message_Ref(Message):
     """
     Reference type of :class:`Message_Owner`.
     """
 
-class __HardState(__Cloneable):
+class __HardState(__Cloneable, __Encoder, __Decoder):
     def clone(self) -> HardState_Owner: ...
     def get_term(self) -> int:
         """ """
@@ -1016,6 +1031,8 @@ class HardState_Owner(__HardState):
     def make_ref(self) -> HardState_Ref: ...
     @staticmethod
     def default() -> HardState_Owner: ...
+    @staticmethod
+    def decode(v: List[int] | bytes) -> HardState_Owner: ...
 
 class HardState_Ref(__HardState):
     """
@@ -1040,7 +1057,7 @@ class GetEntriesContext_Ref(__GetEntriesContext):
     Reference type of :class:`GetEntriesContext_Owner`.
     """
 
-class __Entry(__Cloneable):
+class __Entry(__Cloneable, __Encoder, __Decoder):
     def clone(self) -> Entry_Owner: ...
     def get_context(self) -> bytes:
         """ """
@@ -1086,13 +1103,15 @@ class Entry_Owner(__Entry):
     def make_ref(self) -> Entry_Ref: ...
     @staticmethod
     def default() -> Entry_Owner: ...
+    @staticmethod
+    def decode(v: List[int] | bytes) -> Entry_Owner: ...
 
 class Entry_Ref(__Entry):
     """
     Reference type of :class:`Entry_Owner`.
     """
 
-class __ConfState(__Cloneable):
+class __ConfState(__Cloneable, __Encoder, __Decoder):
     def clone(self) -> ConfState_Owner: ...
     def get_auto_leave(self) -> bool:
         """ """
@@ -1134,13 +1153,15 @@ class ConfState_Owner(__ConfState):
     def make_ref(self) -> ConfState_Ref: ...
     @staticmethod
     def default() -> ConfState_Owner: ...
+    @staticmethod
+    def decode(v: List[int] | bytes) -> ConfState_Owner: ...
 
 class ConfState_Ref(__ConfState):
     """
     Reference type of :class:`ConfState_Owner`.
     """
 
-class __ConfChangeV2(__Cloneable):
+class __ConfChangeV2(__Cloneable, __Encoder, __Decoder):
     def clone(self) -> ConfChangeV2_Owner: ...
     def get_changes(self) -> bytes:
         """ """
@@ -1192,13 +1213,15 @@ class ConfChangeV2_Owner(__ConfChangeV2):
     @staticmethod
     def default() -> ConfChangeV2_Owner: ...
     def make_ref(self) -> ConfChangeV2_Ref: ...
+    @staticmethod
+    def decode(v: List[int] | bytes) -> ConfChangeV2_Owner: ...
 
 class ConfChangeV2_Ref(__ConfChangeV2):
     """
     Reference type of :class:`ConfChangeV2_Owner`.
     """
 
-class __ConfChangeSingle(__Cloneable):
+class __ConfChangeSingle(__Cloneable, __Encoder, __Decoder):
     def clone(self) -> ConfChangeSingle_Owner: ...
     def get_node_id(self) -> int:
         """ """
@@ -1220,13 +1243,15 @@ class ConfChangeSingle_Owner(__ConfChangeSingle):
     def make_ref(self) -> ConfChangeSingle_Ref: ...
     @staticmethod
     def default() -> ConfChangeSingle_Owner: ...
+    @staticmethod
+    def decode(v: List[int] | bytes) -> ConfChangeSingle_Owner: ...
 
 class ConfChangeSingle_Ref(__ConfChangeSingle):
     """
     Reference type of :class:`ConfChangeSingle_Owner`.
     """
 
-class __ConfChange(__Cloneable):
+class __ConfChange(__Cloneable, __Encoder, __Decoder):
     def clone(self) -> ConfChange_Owner: ...
     def get_id(self) -> int:
         """ """
@@ -1276,6 +1301,8 @@ class ConfChange_Owner(__ConfChange):
     def make_ref(self) -> ConfChange_Ref: ...
     @staticmethod
     def default() -> ConfChange_Owner: ...
+    @staticmethod
+    def decode(v: List[int] | bytes) -> ConfChange_Owner: ...
 
 class ConfChange_Ref(__ConfChange):
     """
@@ -1366,43 +1393,6 @@ class Unstable_Owner(__Unstable):
 class Unstable_Ref(__Unstable):
     """
     Reference type of :class:`Unstable_Owner`.
-    """
-
-class __Status:
-    def get_applied(self) -> int:
-        """ """
-    def set_applied(self, applied: int) -> None:
-        """ """
-    def get_id(self) -> int:
-        """ """
-    def set_id(self, id: int) -> None:
-        """ """
-    def get_hs(self) -> HardState_Ref:
-        """ """
-    def set_hs(self, hs: HardState_Ref) -> None:
-        """ """
-    def get_ss(self) -> SoftState_Ref:
-        """ """
-    def set_ss(self, ss: SoftState_Ref) -> None:
-        """ """
-    def get_progress(self) -> Optional[ProgressTracker_Ref]:
-        """ """
-    def set_progress(
-        self, tracker: Optional[ProgressTracker_Owner] | Optional[ProgressTracker_Ref]
-    ) -> None:
-        """ """
-
-class Status__Memstorage_Owner(__Status):
-    """
-    Represents the current status of the raft
-    """
-
-    def __init__(self, raft: Raft__MemStorage_Owner) -> None: ...
-    def make_ref(self) -> Status__Memstorage_Ref: ...
-
-class Status__Memstorage_Ref(__Status):
-    """
-    Reference type of :class:`Status__Memstorage_Owner`.
     """
 
 class __SoftState:
@@ -2497,3 +2487,41 @@ class Config_Ref(__Config):
     """
     Config contains the parameters to start a raft.
     """
+
+# TODO: Add below implementation if needed, otherwise remove below codes.
+# class __Status:
+#     def get_applied(self) -> int:
+#         """ """
+#     def set_applied(self, applied: int) -> None:
+#         """ """
+#     def get_id(self) -> int:
+#         """ """
+#     def set_id(self, id: int) -> None:
+#         """ """
+#     def get_hs(self) -> HardState_Ref:
+#         """ """
+#     def set_hs(self, hs: HardState_Ref) -> None:
+#         """ """
+#     def get_ss(self) -> SoftState_Ref:
+#         """ """
+#     def set_ss(self, ss: SoftState_Ref) -> None:
+#         """ """
+#     def get_progress(self) -> Optional[ProgressTracker_Ref]:
+#         """ """
+#     def set_progress(
+#         self, tracker: Optional[ProgressTracker_Owner] | Optional[ProgressTracker_Ref]
+#     ) -> None:
+#         """ """
+
+# class Status__Memstorage_Owner(__Status):
+#     """
+#     Represents the current status of the raft
+#     """
+
+#     def __init__(self, raft: Raft__MemStorage_Owner) -> None: ...
+#     def make_ref(self) -> Status__Memstorage_Ref: ...
+
+# class Status__Memstorage_Ref(__Status):
+#     """
+#     Reference type of :class:`Status__Memstorage_Owner`.
+#     """
