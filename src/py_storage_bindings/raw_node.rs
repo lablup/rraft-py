@@ -1,4 +1,4 @@
-use pyo3::prelude::*;
+use pyo3::{intern, prelude::*};
 
 use raft::prelude::{ConfChange, ConfChangeV2};
 use raft::Ready;
@@ -49,7 +49,7 @@ impl Py_RawNode__PyStorage {
     }
 
     fn __getattr__(this: PyObject, py: Python<'_>, attr: &str) -> PyResult<PyObject> {
-        let reference = this.call_method0(py, "make_ref")?;
+        let reference = this.call_method0(py, intern!(py, "make_ref"))?;
         reference.getattr(py, attr)
     }
 }

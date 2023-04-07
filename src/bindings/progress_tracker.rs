@@ -1,6 +1,7 @@
 use std::collections::HashMap;
 use std::{collections::HashSet, hash::BuildHasherDefault};
 
+use pyo3::intern;
 use pyo3::types::PyDict;
 use pyo3::{prelude::*, types::PySet};
 
@@ -70,7 +71,7 @@ impl Py_ProgressTracker {
     }
 
     fn __getattr__(this: PyObject, py: Python<'_>, attr: &str) -> PyResult<PyObject> {
-        let reference = this.call_method0(py, "make_ref")?;
+        let reference = this.call_method0(py, intern!(py, "make_ref"))?;
         reference.getattr(py, attr)
     }
 }

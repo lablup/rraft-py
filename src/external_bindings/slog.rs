@@ -1,4 +1,4 @@
-use pyo3::{prelude::*, types::PyString};
+use pyo3::{intern, prelude::*, types::PyString};
 use slog::*;
 use slog_async::OverflowStrategy;
 
@@ -100,7 +100,7 @@ impl Py_Logger {
     }
 
     fn __getattr__(this: PyObject, py: Python<'_>, attr: &str) -> PyResult<PyObject> {
-        let reference = this.call_method0(py, "make_ref")?;
+        let reference = this.call_method0(py, intern!(py, "make_ref"))?;
         reference.getattr(py, attr)
     }
 }

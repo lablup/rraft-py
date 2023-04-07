@@ -5,6 +5,10 @@ install:
 	maturin build
 	pip install .
 
+install-release:
+	maturin build --release --strip
+	pip install .
+
 clean:
 	cargo clean
 

@@ -1,8 +1,8 @@
 use prost::Message as ProstMessage;
 use protobuf::Message as PbMessage;
-use pyo3::prelude::*;
 use pyo3::pyclass::CompareOp;
 use pyo3::types::PyBytes;
+use pyo3::{intern, prelude::*};
 use raft::eraftpb::Entry;
 use utils::{errors::to_pyresult, reference::RustRef};
 
@@ -88,7 +88,7 @@ impl Py_Entry {
     }
 
     fn __getattr__(this: PyObject, py: Python<'_>, attr: &str) -> PyResult<PyObject> {
-        let reference = this.call_method0(py, "make_ref")?;
+        let reference = this.call_method0(py, intern!(py, "make_ref"))?;
         reference.getattr(py, attr)
     }
 }

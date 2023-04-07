@@ -1,4 +1,5 @@
 use pyo3::{
+    intern,
     prelude::*,
     types::{PyList, PyString},
 };
@@ -65,7 +66,7 @@ impl Py_Raft__MemStorage {
     }
 
     fn __getattr__(this: PyObject, py: Python<'_>, attr: &str) -> PyResult<PyObject> {
-        let reference = this.call_method0(py, "make_ref")?;
+        let reference = this.call_method0(py, intern!(py, "make_ref"))?;
         reference.getattr(py, attr)
     }
 }

@@ -1,6 +1,6 @@
 use std::ops::{Deref, DerefMut};
 
-use pyo3::prelude::*;
+use pyo3::{intern, prelude::*};
 
 use raft::{prelude::ConfState, storage::MemStorage, storage::Storage, GetEntriesContext};
 use utils::{errors::to_pyresult, reference::RustRef, unsafe_cast::make_mut};
@@ -77,7 +77,7 @@ impl Py_MemStorage {
     }
 
     fn __getattr__(this: PyObject, py: Python<'_>, attr: &str) -> PyResult<PyObject> {
-        let reference = this.call_method0(py, "make_ref")?;
+        let reference = this.call_method0(py, intern!(py, "make_ref"))?;
         reference.getattr(py, attr)
     }
 }

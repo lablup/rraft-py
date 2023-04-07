@@ -1,4 +1,4 @@
-use pyo3::prelude::*;
+use pyo3::{intern, prelude::*};
 use raft::GetEntriesContext;
 
 use utils::reference::RustRef;
@@ -33,7 +33,7 @@ impl Py_GetEntriesContext {
     }
 
     fn __getattr__(this: PyObject, py: Python<'_>, attr: &str) -> PyResult<PyObject> {
-        let reference = this.call_method0(py, "make_ref")?;
+        let reference = this.call_method0(py, intern!(py, "make_ref"))?;
         reference.getattr(py, attr)
     }
 }

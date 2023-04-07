@@ -1,4 +1,4 @@
-use pyo3::{prelude::*, types::PyBytes};
+use pyo3::{intern, prelude::*, types::PyBytes};
 
 use raft::raw_node::Peer;
 
@@ -34,7 +34,7 @@ impl Py_Peer {
     }
 
     fn __getattr__(this: PyObject, py: Python<'_>, attr: &str) -> PyResult<PyObject> {
-        let reference = this.call_method0(py, "make_ref")?;
+        let reference = this.call_method0(py, intern!(py, "make_ref"))?;
         reference.getattr(py, attr)
     }
 }

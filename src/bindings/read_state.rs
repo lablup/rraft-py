@@ -1,4 +1,4 @@
-use pyo3::{prelude::*, pyclass::CompareOp, types::PyBytes};
+use pyo3::{intern, prelude::*, pyclass::CompareOp, types::PyBytes};
 
 use raft::ReadState;
 
@@ -76,7 +76,7 @@ impl Py_ReadState {
     }
 
     fn __getattr__(this: PyObject, py: Python<'_>, attr: &str) -> PyResult<PyObject> {
-        let reference = this.call_method0(py, "make_ref")?;
+        let reference = this.call_method0(py, intern!(py, "make_ref"))?;
         reference.getattr(py, attr)
     }
 }

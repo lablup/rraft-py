@@ -1,6 +1,6 @@
 use prost::Message as ProstMessage;
 use protobuf::Message as PbMessage;
-use pyo3::{prelude::*, pyclass::CompareOp};
+use pyo3::{intern, prelude::*, pyclass::CompareOp};
 
 use raft::eraftpb::HardState;
 
@@ -91,7 +91,7 @@ impl Py_HardState {
     }
 
     fn __getattr__(this: PyObject, py: Python<'_>, attr: &str) -> PyResult<PyObject> {
-        let reference = this.call_method0(py, "make_ref")?;
+        let reference = this.call_method0(py, intern!(py, "make_ref"))?;
         reference.getattr(py, attr)
     }
 }

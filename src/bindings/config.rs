@@ -1,4 +1,4 @@
-use pyo3::prelude::*;
+use pyo3::{intern, prelude::*};
 
 use raft::Config;
 use utils::errors::to_pyresult;
@@ -148,7 +148,7 @@ impl Py_Config {
     }
 
     fn __getattr__(this: PyObject, py: Python<'_>, attr: &str) -> PyResult<PyObject> {
-        let reference = this.call_method0(py, "make_ref")?;
+        let reference = this.call_method0(py, intern!(py, "make_ref"))?;
         reference.getattr(py, attr)
     }
 }
