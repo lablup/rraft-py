@@ -6,8 +6,8 @@ use utils::{errors::to_pyresult, reference::RustRef};
 
 use super::state_role::Py_StateRole;
 
-#[pyclass(name = "SoftState_Owner")]
-pub struct Py_SoftState_Owner {
+#[pyclass(name = "SoftState")]
+pub struct Py_SoftState {
     pub inner: SoftState,
 }
 
@@ -17,10 +17,10 @@ pub struct Py_SoftState_Ref {
 }
 
 #[pymethods]
-impl Py_SoftState_Owner {
+impl Py_SoftState {
     #[staticmethod]
     pub fn default() -> Self {
-        Py_SoftState_Owner {
+        Py_SoftState {
             inner: SoftState::default(),
         }
     }

@@ -1,21 +1,21 @@
 use pyo3::prelude::*;
 
 use raftpb_bindings::{
-    entry::{Py_Entry_Owner, Py_Entry_Ref},
+    entry::{Py_Entry, Py_Entry_Ref},
     hard_state::Py_HardState_Ref,
-    message::{Py_Message_Owner, Py_Message_Ref},
+    message::{Py_Message, Py_Message_Ref},
     snapshot::Py_Snapshot_Ref,
 };
 
 use super::{
-    read_state::{Py_ReadState_Owner, Py_ReadState_Ref},
-    soft_state::Py_SoftState_Owner,
+    read_state::{Py_ReadState, Py_ReadState_Ref},
+    soft_state::Py_SoftState,
 };
 use raft::{raw_node::Ready, SoftState};
 use utils::{reference::RustRef, unsafe_cast::make_mut};
 
-#[pyclass(name = "Ready_Owner")]
-pub struct Py_Ready_Owner {
+#[pyclass(name = "Ready")]
+pub struct Py_Ready {
     pub inner: Ready,
 }
 
@@ -25,10 +25,10 @@ pub struct Py_Ready_Ref {
 }
 
 #[pymethods]
-impl Py_Ready_Owner {
+impl Py_Ready {
     #[staticmethod]
     pub fn default() -> Self {
-        Py_Ready_Owner {
+        Py_Ready {
             inner: Ready::default(),
         }
     }
@@ -63,9 +63,9 @@ impl Py_Ready_Ref {
         })
     }
 
-    pub fn ss(&mut self) -> PyResult<Option<Py_SoftState_Owner>> {
+    pub fn ss(&mut self) -> PyResult<Option<Py_SoftState>> {
         self.inner.map_as_mut(|inner| {
-            inner.ss().map(|ss| Py_SoftState_Owner {
+            inner.ss().map(|ss| Py_SoftState {
                 inner: SoftState {
                     leader_id: ss.leader_id,
                     raft_state: ss.raft_state,
@@ -105,7 +105,7 @@ impl Py_Ready_Ref {
             inner
                 .take_committed_entries()
                 .into_iter()
-                .map(|entry| Py_Entry_Owner { inner: entry })
+                .map(|entry| Py_Entry { inner: entry })
                 .collect::<Vec<_>>()
                 .into_py(py)
         })
@@ -128,7 +128,7 @@ impl Py_Ready_Ref {
             inner
                 .take_entries()
                 .into_iter()
-                .map(|entry| Py_Entry_Owner { inner: entry })
+                .map(|entry| Py_Entry { inner: entry })
                 .collect::<Vec<_>>()
                 .into_py(py)
         })
@@ -152,7 +152,7 @@ impl Py_Ready_Ref {
             inner
                 .take_messages()
                 .into_iter()
-                .map(|msg| Py_Message_Owner { inner: msg })
+                .map(|msg| Py_Message { inner: msg })
                 .collect::<Vec<_>>()
                 .into_py(py)
         })
@@ -176,7 +176,7 @@ impl Py_Ready_Ref {
             inner
                 .take_persisted_messages()
                 .into_iter()
-                .map(|msg| Py_Message_Owner { inner: msg })
+                .map(|msg| Py_Message { inner: msg })
                 .collect::<Vec<_>>()
                 .into_py(py)
         })
@@ -200,7 +200,7 @@ impl Py_Ready_Ref {
             inner
                 .take_read_states()
                 .into_iter()
-                .map(|rs| Py_ReadState_Owner { inner: rs })
+                .map(|rs| Py_ReadState { inner: rs })
                 .collect::<Vec<_>>()
                 .into_py(py)
         })

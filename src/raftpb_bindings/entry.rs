@@ -9,8 +9,8 @@ use utils::{errors::to_pyresult, reference::RustRef};
 use super::entry_type::Py_EntryType;
 
 #[derive(Clone)]
-#[pyclass(name = "Entry_Owner")]
-pub struct Py_Entry_Owner {
+#[pyclass(name = "Entry")]
+pub struct Py_Entry {
     pub inner: Entry,
 }
 
@@ -22,7 +22,7 @@ pub struct Py_Entry_Ref {
 
 #[derive(FromPyObject)]
 pub enum Py_Entry_Mut<'p> {
-    Owned(PyRefMut<'p, Py_Entry_Owner>),
+    Owned(PyRefMut<'p, Py_Entry>),
     RefMut(Py_Entry_Ref),
 }
 
@@ -45,24 +45,24 @@ impl From<&mut Py_Entry_Mut<'_>> for Entry {
 }
 
 #[pymethods]
-impl Py_Entry_Owner {
+impl Py_Entry {
     #[new]
     pub fn new() -> Self {
-        Py_Entry_Owner {
+        Py_Entry {
             inner: Entry::new(),
         }
     }
 
     #[staticmethod]
     pub fn default() -> Self {
-        Py_Entry_Owner {
+        Py_Entry {
             inner: Entry::default(),
         }
     }
 
     #[staticmethod]
-    pub fn decode(v: &[u8]) -> PyResult<Py_Entry_Owner> {
-        Ok(Py_Entry_Owner {
+    pub fn decode(v: &[u8]) -> PyResult<Py_Entry> {
+        Ok(Py_Entry {
             inner: to_pyresult(ProstMessage::decode(v))?,
         })
     }
@@ -116,8 +116,8 @@ impl Py_Entry_Ref {
         })
     }
 
-    pub fn clone(&self) -> PyResult<Py_Entry_Owner> {
-        Ok(Py_Entry_Owner {
+    pub fn clone(&self) -> PyResult<Py_Entry> {
+        Ok(Py_Entry {
             inner: self.inner.map_as_ref(|x| x.clone())?,
         })
     }

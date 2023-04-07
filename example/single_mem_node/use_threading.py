@@ -7,13 +7,13 @@ from rraft import (
     Entry_Ref,
     HardState_Ref,
     Logger_Ref,
-    MemStorage_Owner,
-    ConfState_Owner,
+    MemStorage,
+    ConfState,
     EntryType,
-    Config_Owner,
-    Logger_Owner,
+    Config,
+    Logger,
     Message_Ref,
-    RawNode__MemStorage_Owner,
+    RawNode__MemStorage,
     OverflowStrategy,
 )
 
@@ -24,7 +24,7 @@ def now() -> int:
     return int(datetime.now(tz=timezone.utc).timestamp() * 1000)
 
 
-def send_propose(logger: Logger_Owner | Logger_Ref) -> None:
+def send_propose(logger: Logger | Logger_Ref) -> None:
     def _send_propose():
         # Wait some time and send the request to the Raft.
         sleep(10)
@@ -58,7 +58,7 @@ def send_propose(logger: Logger_Owner | Logger_Ref) -> None:
 
 
 def on_ready(
-    raft_group_ref: RawNode__MemStorage_Owner, cbs: Dict[str, Callable]
+    raft_group_ref: RawNode__MemStorage, cbs: Dict[str, Callable]
 ) -> None:
     if not raft_group_ref.has_ready():
         return
@@ -66,8 +66,8 @@ def on_ready(
     store_ref = raft_group_ref.get_raft().get_raft_log().get_store()
 
     # Get the `Ready` with `RawNode::ready` interface.
-    ready_owner = raft_group_ref.ready()
-    ready_ref = ready_owner.make_ref()
+    ready = raft_group_ref.ready()
+    ready_ref = ready.make_ref()
 
     def handle_messages(msg_refs: List[Message_Ref]):
         for _msg_ref in msg_refs:
@@ -80,8 +80,8 @@ def on_ready(
 
     if ready_ref.snapshot():
         # This is a snapshot, we need to apply the snapshot at first.
-        cloned_ready_owner = raft_group_ref.ready()
-        store_ref.wl(lambda core: core.apply_snapshot(cloned_ready_owner.snapshot()))
+        cloned_ready = raft_group_ref.ready()
+        store_ref.wl(lambda core: core.apply_snapshot(cloned_ready.snapshot()))
 
     _last_apply_index = 0
 
@@ -119,8 +119,8 @@ def on_ready(
         handle_messages(msg_refs)
 
     # Advance the Raft.
-    light_rd_owner = raft_group_ref.advance(ready_ref)
-    light_rd_ref = light_rd_owner
+    light_rd = raft_group_ref.advance(ready_ref)
+    light_rd_ref = light_rd
 
     # Update commit index.
     if commit := light_rd_ref.commit_index():
@@ -139,12 +139,12 @@ if __name__ == "__main__":
     # Create a storage for Raft, and here we just use a simple memory storage.
     # You need to build your own persistent storage in your production.
     # Please check the Storage trait in src/storage.rs to see how to implement one.
-    storage = MemStorage_Owner.new_with_conf_state(
-        ConfState_Owner(voters=[1], learners=[])
+    storage = MemStorage.new_with_conf_state(
+        ConfState(voters=[1], learners=[])
     )
 
     # Create the configuration for the Raft node.
-    cfg = Config_Owner(
+    cfg = Config(
         # The unique ID for the Raft node.
         id=1,
         # Election tick is for how long the follower may campaign again after
@@ -163,11 +163,11 @@ if __name__ == "__main__":
         applied=0,
     )
 
-    logger = Logger_Owner(chan_size=4096, overflow_strategy=OverflowStrategy.Block)
+    logger = Logger(chan_size=4096, overflow_strategy=OverflowStrategy.Block)
 
     # Create the Raft node.
-    raw_node_owner = RawNode__MemStorage_Owner(cfg, storage, logger)
-    raw_node_ref = raw_node_owner
+    raw_node = RawNode__MemStorage(cfg, storage, logger)
+    raw_node_ref = raw_node
 
     # Use another thread to propose a Raft request.
     send_propose(logger)

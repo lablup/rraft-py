@@ -1,9 +1,9 @@
 from typing import List
 
 from rraft import (
-    Message_Owner,
+    Message,
     Message_Ref,
-    Raft__MemStorage_Owner,
+    Raft__MemStorage,
     RaftLog__MemStorage_Ref,
 )
 
@@ -20,7 +20,7 @@ from rraft import (
 
 class Interface:
     # Create a new interface to a new raft.
-    def __init__(self, r: Raft__MemStorage_Owner) -> None:
+    def __init__(self, r: Raft__MemStorage) -> None:
         self.raft = r
 
     def __repr__(self) -> str:
@@ -33,12 +33,12 @@ class Interface:
         return self.raft.get_raft_log()
 
     # Step the raft, if it exists.
-    def step(self, message: Message_Owner | Message_Ref) -> None:
+    def step(self, message: Message | Message_Ref) -> None:
         if self.raft:
             self.raft.step(message)
 
     # Read messages out of the raft.
-    def read_messages(self) -> List[Message_Owner]:
+    def read_messages(self) -> List[Message]:
         if self.raft:
             return self.raft.take_msgs()
         return []

@@ -10,22 +10,22 @@ use utils::unsafe_cast::make_mut;
 
 use super::raft::Py_Raft__MemStorage_Ref;
 use bindings::config::Py_Config_Mut;
-use bindings::light_ready::Py_LightReady_Owner;
-use bindings::ready::{Py_Ready_Owner, Py_Ready_Ref};
+use bindings::light_ready::Py_LightReady;
+use bindings::ready::{Py_Ready, Py_Ready_Ref};
 use external_bindings::slog::Py_Logger_Mut;
 use raftpb_bindings::conf_change::Py_ConfChange_Mut;
 use raftpb_bindings::conf_change_v2::Py_ConfChangeV2_Mut;
-use raftpb_bindings::conf_state::Py_ConfState_Owner;
+use raftpb_bindings::conf_state::Py_ConfState;
 use raftpb_bindings::message::Py_Message_Mut;
 use raftpb_bindings::snapshot::Py_Snapshot_Ref;
 
 use bindings::snapshot_status::Py_SnapshotStatus;
-// use bindings::status::Py_Status__MemStorage_Owner;
+// use bindings::status::Py_Status__MemStorage;
 use super::mem_storage::{Py_MemStorage_Mut, Py_MemStorage_Ref};
 use utils::reference::RustRef;
 
-#[pyclass(name = "RawNode__MemStorage_Owner")]
-pub struct Py_RawNode__MemStorage_Owner {
+#[pyclass(name = "RawNode__MemStorage")]
+pub struct Py_RawNode__MemStorage {
     pub inner: RawNode<MemStorage>,
 }
 
@@ -35,10 +35,10 @@ pub struct Py_RawNode__MemStorage_Ref {
 }
 
 #[pymethods]
-impl Py_RawNode__MemStorage_Owner {
+impl Py_RawNode__MemStorage {
     #[new]
     pub fn new(cfg: Py_Config_Mut, storage: Py_MemStorage_Mut, logger: Py_Logger_Mut) -> Self {
-        Py_RawNode__MemStorage_Owner {
+        Py_RawNode__MemStorage {
             inner: RawNode::new(&cfg.into(), storage.into(), &logger.into()).unwrap(),
         }
     }
@@ -66,22 +66,22 @@ impl Py_RawNode__MemStorage_Ref {
             .map_as_mut(|inner| inner.advance_apply_to(applied))
     }
 
-    pub fn advance(&mut self, rd: &mut Py_Ready_Ref) -> PyResult<Py_LightReady_Owner> {
+    pub fn advance(&mut self, rd: &mut Py_Ready_Ref) -> PyResult<Py_LightReady> {
         let rd = rd
             .inner
             .map_as_mut(|rd| unsafe { std::ptr::replace(rd, Ready::default()) })?;
 
-        self.inner.map_as_mut(|inner| Py_LightReady_Owner {
+        self.inner.map_as_mut(|inner| Py_LightReady {
             inner: inner.advance(rd),
         })
     }
 
-    pub fn advance_append(&mut self, rd: &mut Py_Ready_Ref) -> PyResult<Py_LightReady_Owner> {
+    pub fn advance_append(&mut self, rd: &mut Py_Ready_Ref) -> PyResult<Py_LightReady> {
         let rd = rd
             .inner
             .map_as_mut(|rd| unsafe { std::ptr::replace(rd, Ready::default()) })?;
 
-        self.inner.map_as_mut(|inner| Py_LightReady_Owner {
+        self.inner.map_as_mut(|inner| Py_LightReady {
             inner: inner.advance_append(rd),
         })
     }
@@ -140,7 +140,7 @@ impl Py_RawNode__MemStorage_Ref {
         })
     }
 
-    // pub fn status(&self) -> Py_Status__MemStorage_Owner {
+    // pub fn status(&self) -> Py_Status__MemStorage {
     //     todo!()
     // }
 
@@ -195,35 +195,32 @@ impl Py_RawNode__MemStorage_Ref {
         self.inner.map_as_mut(|inner| inner.ping())
     }
 
-    pub fn ready(&mut self) -> PyResult<Py_Ready_Owner> {
-        self.inner.map_as_mut(|inner| Py_Ready_Owner {
+    pub fn ready(&mut self) -> PyResult<Py_Ready> {
+        self.inner.map_as_mut(|inner| Py_Ready {
             inner: inner.ready(),
         })
     }
 
-    pub fn apply_conf_change(&mut self, cc: Py_ConfChange_Mut) -> PyResult<Py_ConfState_Owner> {
+    pub fn apply_conf_change(&mut self, cc: Py_ConfChange_Mut) -> PyResult<Py_ConfState> {
         self.inner
             .map_as_mut(|inner| {
                 let cc: ConfChange = cc.into();
 
                 inner
                     .apply_conf_change(&cc)
-                    .map(|cs| Py_ConfState_Owner { inner: cs })
+                    .map(|cs| Py_ConfState { inner: cs })
             })
             .and_then(to_pyresult)
     }
 
-    pub fn apply_conf_change_v2(
-        &mut self,
-        cc: Py_ConfChangeV2_Mut,
-    ) -> PyResult<Py_ConfState_Owner> {
+    pub fn apply_conf_change_v2(&mut self, cc: Py_ConfChangeV2_Mut) -> PyResult<Py_ConfState> {
         self.inner
             .map_as_mut(|inner| {
                 let cc: ConfChangeV2 = cc.into();
 
                 inner
                     .apply_conf_change(&cc)
-                    .map(|cs| Py_ConfState_Owner { inner: cs })
+                    .map(|cs| Py_ConfState { inner: cs })
             })
             .and_then(to_pyresult)
     }

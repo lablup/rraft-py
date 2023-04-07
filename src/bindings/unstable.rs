@@ -11,8 +11,8 @@ use utils::unsafe_cast::make_mut;
 
 use utils::reference::RustRef;
 
-#[pyclass(name = "Unstable_Owner")]
-pub struct Py_Unstable_Owner {
+#[pyclass(name = "Unstable")]
+pub struct Py_Unstable {
     pub inner: Unstable,
 }
 
@@ -22,10 +22,10 @@ pub struct Py_Unstable_Ref {
 }
 
 #[pymethods]
-impl Py_Unstable_Owner {
+impl Py_Unstable {
     #[new]
     pub fn new(offset: u64, logger: Py_Logger_Mut) -> Self {
-        Py_Unstable_Owner {
+        Py_Unstable {
             inner: Unstable::new(offset, logger.into()),
         }
     }

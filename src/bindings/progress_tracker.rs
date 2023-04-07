@@ -13,8 +13,8 @@ use super::joint_config::Py_JointConfig_Ref;
 use super::progress::Py_Progress_Ref;
 
 #[derive(Clone)]
-#[pyclass(name = "ProgressTracker_Owner")]
-pub struct Py_ProgressTracker_Owner {
+#[pyclass(name = "ProgressTracker")]
+pub struct Py_ProgressTracker {
     pub inner: ProgressTracker,
 }
 
@@ -26,7 +26,7 @@ pub struct Py_ProgressTracker_Ref {
 
 #[derive(FromPyObject)]
 pub enum Py_ProgressTracker_Mut<'p> {
-    Owned(PyRefMut<'p, Py_ProgressTracker_Owner>),
+    Owned(PyRefMut<'p, Py_ProgressTracker>),
     RefMut(Py_ProgressTracker_Ref),
 }
 
@@ -49,10 +49,10 @@ impl From<&mut Py_ProgressTracker_Mut<'_>> for ProgressTracker {
 }
 
 #[pymethods]
-impl Py_ProgressTracker_Owner {
+impl Py_ProgressTracker {
     #[new]
     pub fn new(max_inflight: usize) -> Self {
-        Py_ProgressTracker_Owner {
+        Py_ProgressTracker {
             inner: ProgressTracker::new(max_inflight),
         }
     }
@@ -77,8 +77,8 @@ impl Py_ProgressTracker_Owner {
 
 #[pymethods]
 impl Py_ProgressTracker_Ref {
-    pub fn clone(&self) -> PyResult<Py_ProgressTracker_Owner> {
-        Ok(Py_ProgressTracker_Owner {
+    pub fn clone(&self) -> PyResult<Py_ProgressTracker> {
+        Ok(Py_ProgressTracker {
             inner: self.inner.map_as_ref(|x| x.clone())?,
         })
     }

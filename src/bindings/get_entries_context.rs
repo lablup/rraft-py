@@ -3,8 +3,8 @@ use raft::GetEntriesContext;
 
 use utils::reference::RustRef;
 
-#[pyclass(name = "GetEntriesContext_Owner")]
-pub struct Py_GetEntriesContext_Owner {
+#[pyclass(name = "GetEntriesContext")]
+pub struct Py_GetEntriesContext {
     pub inner: GetEntriesContext,
 }
 
@@ -14,10 +14,10 @@ pub struct Py_GetEntriesContext_Ref {
 }
 
 #[pymethods]
-impl Py_GetEntriesContext_Owner {
+impl Py_GetEntriesContext {
     #[staticmethod]
     pub fn empty(can_async: bool) -> Self {
-        Py_GetEntriesContext_Owner {
+        Py_GetEntriesContext {
             inner: GetEntriesContext::empty(can_async),
         }
     }

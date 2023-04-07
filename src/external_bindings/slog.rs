@@ -50,8 +50,8 @@ impl Py_OverflowStrategy {
 }
 
 #[derive(Clone)]
-#[pyclass(name = "Logger_Owner")]
-pub struct Py_Logger_Owner {
+#[pyclass(name = "Logger")]
+pub struct Py_Logger {
     pub inner: Logger,
 }
 
@@ -63,7 +63,7 @@ pub struct Py_Logger_Ref {
 
 #[derive(FromPyObject)]
 pub enum Py_Logger_Mut<'p> {
-    Owned(PyRefMut<'p, Py_Logger_Owner>),
+    Owned(PyRefMut<'p, Py_Logger>),
     RefMut(Py_Logger_Ref),
 }
 
@@ -77,7 +77,7 @@ impl From<Py_Logger_Mut<'_>> for Logger {
 }
 
 #[pymethods]
-impl Py_Logger_Owner {
+impl Py_Logger {
     #[new]
     pub fn new(chan_size: usize, overflow_strategy: &Py_OverflowStrategy) -> Self {
         let decorator = slog_term::TermDecorator::new().build();
@@ -90,7 +90,7 @@ impl Py_Logger_Owner {
 
         let logger = slog::Logger::root(drain, o!());
 
-        Py_Logger_Owner { inner: logger }
+        Py_Logger { inner: logger }
     }
 
     pub fn make_ref(&mut self) -> Py_Logger_Ref {

@@ -5,8 +5,8 @@ use raft::Inflights;
 use utils::reference::RustRef;
 
 #[derive(Clone)]
-#[pyclass(name = "Inflights_Owner")]
-pub struct Py_Inflights_Owner {
+#[pyclass(name = "Inflights")]
+pub struct Py_Inflights {
     pub inner: Inflights,
 }
 
@@ -18,7 +18,7 @@ pub struct Py_Inflights_Ref {
 
 #[derive(FromPyObject)]
 pub enum Py_Inflights_Mut<'p> {
-    Owned(PyRefMut<'p, Py_Inflights_Owner>),
+    Owned(PyRefMut<'p, Py_Inflights>),
     RefMut(Py_Inflights_Ref),
 }
 
@@ -41,10 +41,10 @@ impl From<&mut Py_Inflights_Mut<'_>> for Inflights {
 }
 
 #[pymethods]
-impl Py_Inflights_Owner {
+impl Py_Inflights {
     #[new]
     pub fn new(cap: usize) -> Self {
-        Py_Inflights_Owner {
+        Py_Inflights {
             inner: Inflights::new(cap),
         }
     }
@@ -98,8 +98,8 @@ impl Py_Inflights_Ref {
         })
     }
 
-    pub fn clone(&self) -> PyResult<Py_Inflights_Owner> {
-        Ok(Py_Inflights_Owner {
+    pub fn clone(&self) -> PyResult<Py_Inflights> {
+        Ok(Py_Inflights {
             inner: self.inner.map_as_ref(|inner| inner.clone())?,
         })
     }

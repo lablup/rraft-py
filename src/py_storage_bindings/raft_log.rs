@@ -9,25 +9,25 @@ use raftpb_bindings::snapshot::Py_Snapshot_Ref;
 use raft::{GetEntriesContext, RaftLog};
 use utils::reference::RustRef;
 
-use super::py_storage::{Py_Storage_Owner, Py_Storage_Ref};
+use super::py_storage::{Py_Storage, Py_Storage_Ref};
 use bindings::{get_entries_context::Py_GetEntriesContext_Ref, unstable::Py_Unstable_Ref};
-use raftpb_bindings::entry::{Py_Entry_Mut, Py_Entry_Owner, Py_Entry_Ref};
+use raftpb_bindings::entry::{Py_Entry, Py_Entry_Mut, Py_Entry_Ref};
 
-#[pyclass(name = "RaftLog_Owner")]
-pub struct Py_RaftLog__PyStorage_Owner {
-    pub inner: RaftLog<Py_Storage_Owner>,
+#[pyclass(name = "RaftLog")]
+pub struct Py_RaftLog__PyStorage {
+    pub inner: RaftLog<Py_Storage>,
 }
 
 #[pyclass(name = "RaftLog_Ref")]
 pub struct Py_RaftLog__PyStorage_Ref {
-    pub inner: RustRef<RaftLog<Py_Storage_Owner>>,
+    pub inner: RustRef<RaftLog<Py_Storage>>,
 }
 
 #[pymethods]
-impl Py_RaftLog__PyStorage_Owner {
+impl Py_RaftLog__PyStorage {
     #[new]
-    pub fn new(store: &Py_Storage_Owner, logger: Py_Logger_Mut) -> Self {
-        Py_RaftLog__PyStorage_Owner {
+    pub fn new(store: &Py_Storage, logger: Py_Logger_Mut) -> Self {
+        Py_RaftLog__PyStorage {
             inner: RaftLog::new(store.clone(), logger.into()),
         }
     }
@@ -71,7 +71,7 @@ impl Py_RaftLog__PyStorage_Ref {
                 inner.entries(idx, max_size, context).map(|entries| {
                     entries
                         .into_iter()
-                        .map(|entry| Py_Entry_Owner { inner: entry })
+                        .map(|entry| Py_Entry { inner: entry })
                         .collect::<Vec<_>>()
                         .into_py(py)
                 })
@@ -84,7 +84,7 @@ impl Py_RaftLog__PyStorage_Ref {
             inner
                 .all_entries()
                 .into_iter()
-                .map(|entry| Py_Entry_Owner { inner: entry })
+                .map(|entry| Py_Entry { inner: entry })
                 .collect::<Vec<_>>()
                 .into_py(py)
         })
@@ -95,7 +95,7 @@ impl Py_RaftLog__PyStorage_Ref {
             inner.next_entries(max_size).map(|entries| {
                 entries
                     .into_iter()
-                    .map(|entry| Py_Entry_Owner { inner: entry })
+                    .map(|entry| Py_Entry { inner: entry })
                     .collect::<Vec<_>>()
                     .into_py(py)
             })
@@ -114,7 +114,7 @@ impl Py_RaftLog__PyStorage_Ref {
                 .map(|entries| {
                     entries
                         .into_iter()
-                        .map(|entry| Py_Entry_Owner { inner: entry })
+                        .map(|entry| Py_Entry { inner: entry })
                         .collect::<Vec<_>>()
                         .into_py(py)
                 })

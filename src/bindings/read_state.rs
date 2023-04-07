@@ -5,8 +5,8 @@ use raft::ReadState;
 use utils::reference::RustRef;
 
 #[derive(Clone)]
-#[pyclass(name = "ReadState_Owner")]
-pub struct Py_ReadState_Owner {
+#[pyclass(name = "ReadState")]
+pub struct Py_ReadState {
     pub inner: ReadState,
 }
 
@@ -18,7 +18,7 @@ pub struct Py_ReadState_Ref {
 
 #[derive(FromPyObject)]
 pub enum Py_ReadState_Mut<'p> {
-    Owned(PyRefMut<'p, Py_ReadState_Owner>),
+    Owned(PyRefMut<'p, Py_ReadState>),
     RefMut(Py_ReadState_Ref),
 }
 
@@ -41,10 +41,10 @@ impl From<&mut Py_ReadState_Mut<'_>> for ReadState {
 }
 
 #[pymethods]
-impl Py_ReadState_Owner {
+impl Py_ReadState {
     #[staticmethod]
     pub fn default() -> Self {
-        Py_ReadState_Owner {
+        Py_ReadState {
             inner: ReadState::default(),
         }
     }
@@ -55,8 +55,8 @@ impl Py_ReadState_Owner {
         }
     }
 
-    pub fn clone(&self) -> Py_ReadState_Owner {
-        Py_ReadState_Owner {
+    pub fn clone(&self) -> Py_ReadState {
+        Py_ReadState {
             inner: self.inner.clone(),
         }
     }
@@ -104,8 +104,8 @@ impl Py_ReadState_Ref {
         })
     }
 
-    pub fn clone(&self) -> PyResult<Py_ReadState_Owner> {
-        Ok(Py_ReadState_Owner {
+    pub fn clone(&self) -> PyResult<Py_ReadState> {
+        Ok(Py_ReadState {
             inner: self.inner.map_as_ref(|x| x.clone())?,
         })
     }

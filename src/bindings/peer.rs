@@ -4,8 +4,8 @@ use raft::raw_node::Peer;
 
 use utils::reference::RustRef;
 
-#[pyclass(name = "Peer_Owner")]
-pub struct Py_Peer_Owner {
+#[pyclass(name = "Peer")]
+pub struct Py_Peer {
     pub inner: Peer,
 }
 
@@ -15,10 +15,10 @@ pub struct Py_Peer_Ref {
 }
 
 #[pymethods]
-impl Py_Peer_Owner {
+impl Py_Peer {
     #[new]
     pub fn new() -> Self {
-        Py_Peer_Owner {
+        Py_Peer {
             inner: Peer::default(),
         }
     }

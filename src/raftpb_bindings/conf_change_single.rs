@@ -8,8 +8,8 @@ use super::conf_change_type::Py_ConfChangeType;
 use raft::eraftpb::ConfChangeSingle;
 
 #[derive(Clone)]
-#[pyclass(name = "ConfChangeSingle_Owner")]
-pub struct Py_ConfChangeSingle_Owner {
+#[pyclass(name = "ConfChangeSingle")]
+pub struct Py_ConfChangeSingle {
     pub inner: ConfChangeSingle,
 }
 
@@ -21,7 +21,7 @@ pub struct Py_ConfChangeSingle_Ref {
 
 #[derive(FromPyObject)]
 pub enum Py_ConfChangeSingle_Mut<'p> {
-    Owned(PyRefMut<'p, Py_ConfChangeSingle_Owner>),
+    Owned(PyRefMut<'p, Py_ConfChangeSingle>),
     RefMut(Py_ConfChangeSingle_Ref),
 }
 
@@ -44,24 +44,24 @@ impl From<&mut Py_ConfChangeSingle_Mut<'_>> for ConfChangeSingle {
 }
 
 #[pymethods]
-impl Py_ConfChangeSingle_Owner {
+impl Py_ConfChangeSingle {
     #[new]
     pub fn new() -> Self {
-        Py_ConfChangeSingle_Owner {
+        Py_ConfChangeSingle {
             inner: ConfChangeSingle::new(),
         }
     }
 
     #[staticmethod]
     pub fn default() -> Self {
-        Py_ConfChangeSingle_Owner {
+        Py_ConfChangeSingle {
             inner: ConfChangeSingle::default(),
         }
     }
 
     #[staticmethod]
-    pub fn decode(v: &[u8]) -> PyResult<Py_ConfChangeSingle_Owner> {
-        Ok(Py_ConfChangeSingle_Owner {
+    pub fn decode(v: &[u8]) -> PyResult<Py_ConfChangeSingle> {
+        Ok(Py_ConfChangeSingle {
             inner: to_pyresult(ProstMessage::decode(v))?,
         })
     }
@@ -120,8 +120,8 @@ impl Py_ConfChangeSingle_Ref {
         })
     }
 
-    pub fn clone(&self) -> PyResult<Py_ConfChangeSingle_Owner> {
-        Ok(Py_ConfChangeSingle_Owner {
+    pub fn clone(&self) -> PyResult<Py_ConfChangeSingle> {
+        Ok(Py_ConfChangeSingle {
             inner: self.inner.map_as_ref(|x| x.clone())?,
         })
     }

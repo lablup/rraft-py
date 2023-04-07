@@ -6,29 +6,29 @@ use raft::GetEntriesContext;
 use utils::errors::to_pyresult;
 
 use raftpb_bindings::entry::Py_Entry_Ref;
-use raftpb_bindings::snapshot::{Py_Snapshot_Owner, Py_Snapshot_Ref};
+use raftpb_bindings::snapshot::{Py_Snapshot, Py_Snapshot_Ref};
 use utils::reference::RustRef;
 
 use bindings::raft_state::{Py_RaftState_Mut, Py_RaftState_Ref};
 use raftpb_bindings::entry::Py_Entry_Mut;
 
 #[derive(Clone)]
-#[pyclass(name = "Storage_Owner")]
-pub struct Py_Storage_Owner {
+#[pyclass(name = "Storage")]
+pub struct Py_Storage {
     pub storage: Py<PyAny>,
 }
 
 #[derive(Clone)]
 #[pyclass(name = "Storage_Ref")]
 pub struct Py_Storage_Ref {
-    pub inner: RustRef<Py_Storage_Owner>,
+    pub inner: RustRef<Py_Storage>,
 }
 
 #[pymethods]
-impl Py_Storage_Owner {
+impl Py_Storage {
     #[new]
     pub fn new(storage: Py<PyAny>) -> Self {
-        Py_Storage_Owner { storage }
+        Py_Storage { storage }
     }
 
     pub fn make_ref(&mut self) -> Py_Storage_Ref {
@@ -97,7 +97,7 @@ impl Py_Storage_Ref {
     }
 }
 
-impl Storage for Py_Storage_Owner {
+impl Storage for Py_Storage {
     fn initial_state(&self) -> raft::Result<raft::RaftState> {
         Python::with_gil(|py| {
             let py_result: &PyAny = self
@@ -180,7 +180,7 @@ impl Storage for Py_Storage_Owner {
                 .call_method("snapshot", (request_index, to), None)
                 .unwrap();
 
-            let res: PyResult<Py_Snapshot_Owner> = py_result.extract();
+            let res: PyResult<Py_Snapshot> = py_result.extract();
             Ok(res.unwrap().inner)
         })
     }
@@ -287,7 +287,7 @@ impl Storage for Py_Storage_Ref {
                     .call_method("snapshot", (request_index, to), None)
                     .unwrap();
 
-                let res: PyResult<Py_Snapshot_Owner> = py_result.extract();
+                let res: PyResult<Py_Snapshot> = py_result.extract();
                 Ok(res.unwrap().inner)
             })
         })

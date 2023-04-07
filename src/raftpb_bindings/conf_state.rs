@@ -9,8 +9,8 @@ use utils::errors::{runtime_error, to_pyresult};
 use utils::reference::RustRef;
 
 #[derive(Clone)]
-#[pyclass(name = "ConfState_Owner")]
-pub struct Py_ConfState_Owner {
+#[pyclass(name = "ConfState")]
+pub struct Py_ConfState {
     pub inner: ConfState,
 }
 
@@ -22,7 +22,7 @@ pub struct Py_ConfState_Ref {
 
 #[derive(FromPyObject)]
 pub enum Py_ConfState_Mut<'p> {
-    Owned(PyRefMut<'p, Py_ConfState_Owner>),
+    Owned(PyRefMut<'p, Py_ConfState>),
     RefMut(Py_ConfState_Ref),
 }
 
@@ -45,11 +45,11 @@ impl From<&mut Py_ConfState_Mut<'_>> for ConfState {
 }
 
 #[pymethods]
-impl Py_ConfState_Owner {
+impl Py_ConfState {
     #[new]
     pub fn new(voters: Option<&PyList>, learners: Option<&PyList>) -> PyResult<Self> {
         if voters.and(learners).is_none() {
-            Ok(Py_ConfState_Owner {
+            Ok(Py_ConfState {
                 inner: ConfState::new(),
             })
         } else if voters.or(learners).is_none() {
@@ -59,7 +59,7 @@ impl Py_ConfState_Owner {
         } else {
             let voters = voters.unwrap().extract::<Vec<u64>>().unwrap();
             let learners = learners.unwrap().extract::<Vec<u64>>().unwrap();
-            Ok(Py_ConfState_Owner {
+            Ok(Py_ConfState {
                 inner: ConfState::from((voters, learners)),
             })
         }
@@ -67,14 +67,14 @@ impl Py_ConfState_Owner {
 
     #[staticmethod]
     pub fn default() -> Self {
-        Py_ConfState_Owner {
+        Py_ConfState {
             inner: ConfState::default(),
         }
     }
 
     #[staticmethod]
-    pub fn decode(v: &[u8]) -> PyResult<Py_ConfState_Owner> {
-        Ok(Py_ConfState_Owner {
+    pub fn decode(v: &[u8]) -> PyResult<Py_ConfState> {
+        Ok(Py_ConfState {
             inner: to_pyresult(ProstMessage::decode(v))?,
         })
     }
@@ -128,8 +128,8 @@ impl Py_ConfState_Ref {
         })
     }
 
-    pub fn clone(&self) -> PyResult<Py_ConfState_Owner> {
-        Ok(Py_ConfState_Owner {
+    pub fn clone(&self) -> PyResult<Py_ConfState> {
+        Ok(Py_ConfState {
             inner: self.inner.map_as_ref(|inner| inner.clone())?,
         })
     }

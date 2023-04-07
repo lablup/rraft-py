@@ -29,28 +29,28 @@ from harness.tests.test_raft_paper import (
 
 from rraft import (
     INVALID_INDEX,
-    ConfChange_Owner,
+    ConfChange,
     ConfChangeTransition,
     ConfChangeType,
-    ConfState_Owner,
-    Config_Owner,
-    Entry_Owner,
+    ConfState,
+    Config,
+    Entry,
     EntryType,
-    GetEntriesContext_Owner,
-    HardState_Owner,
-    Logger_Owner,
+    GetEntriesContext,
+    HardState,
+    Logger,
     Logger_Ref,
-    MemStorage_Owner,
+    MemStorage,
     MemStorage_Ref,
     MemStorageCore_Ref,
-    Message_Owner,
+    Message,
     MessageType,
     ProgressState,
-    Raft__MemStorage_Owner,
+    Raft__MemStorage,
     Raft__MemStorage_Ref,
     RaftLog__MemStorage_Ref,
     ReadOnlyOption,
-    Snapshot_Owner,
+    Snapshot,
     StateRole,
     default_logger,
     vote_resp_msg_type,
@@ -59,7 +59,7 @@ from rraft import (
 )
 
 
-def read_messages(raft: Raft__MemStorage_Owner) -> List[Message_Owner]:
+def read_messages(raft: Raft__MemStorage) -> List[Message]:
     return raft.take_msgs()
 
 
@@ -68,12 +68,12 @@ def ents_with_config(
     pre_vote: bool,
     id: int,
     peers: List[int],
-    l: Logger_Owner | Logger_Ref,
+    l: Logger | Logger_Ref,
 ) -> Interface:
-    store = MemStorage_Owner.new_with_conf_state(ConfState_Owner(peers, []))
+    store = MemStorage.new_with_conf_state(ConfState(peers, []))
 
     for i, term in enumerate(terms):
-        e = Entry_Owner.default()
+        e = Entry.default()
         e.set_index(i + 1)
         e.set_term(term)
         store.wl(lambda core: core.append([e]))
@@ -110,10 +110,10 @@ def voted_with_config(
     pre_vote: bool,
     id: int,
     peers: List[int],
-    l: Logger_Owner | Logger_Ref,
+    l: Logger | Logger_Ref,
 ) -> Interface:
-    cs = ConfState_Owner(peers, [])
-    store = MemStorage_Owner.new_with_conf_state(cs)
+    cs = ConfState(peers, [])
+    store = MemStorage.new_with_conf_state(cs)
 
     def hard_state_set_vote(core: MemStorageCore_Ref):
         core.hard_state().set_vote(vote)
@@ -130,7 +130,7 @@ def voted_with_config(
 
 
 # Persist committed index and fetch next entries.
-def next_ents(r: Raft__MemStorage_Ref, s: MemStorage_Ref) -> List[Entry_Owner]:
+def next_ents(r: Raft__MemStorage_Ref, s: MemStorage_Ref) -> List[Entry]:
     unstable_refs = r.get_raft_log().unstable_entries()
     unstable = list(map(lambda e: e.clone(), unstable_refs))
 
@@ -168,7 +168,7 @@ def test_progress_committed_index():
 
     # #1 test append entries
     # append entries between 1 and 2
-    test_entries = Entry_Owner.default()
+    test_entries = Entry.default()
     test_entries.set_data(b"testdata")
     m = new_message_with_entries(1, 1, MessageType.MsgPropose, [test_entries])
     nt.cut(1, 3)
@@ -332,12 +332,12 @@ def test_progress_paused():
     raft.raft.become_candidate()
     raft.raft.become_leader()
 
-    m = Message_Owner.default()
+    m = Message.default()
     m.set_from(1)
     m.set_to(1)
     m.set_msg_type(MessageType.MsgPropose)
 
-    e = Entry_Owner.default()
+    e = Entry.default()
     e.set_data(b"some_data")
     m.set_entries([e])
 
@@ -354,8 +354,8 @@ def test_progress_flow_control():
     cfg = new_test_config(1, 5, 1)
     cfg.set_max_inflight_msgs(3)
     cfg.set_max_size_per_msg(2048)
-    cs = ConfState_Owner([1, 2], [])
-    s = MemStorage_Owner.new_with_conf_state(cs)
+    cs = ConfState([1, 2], [])
+    s = MemStorage.new_with_conf_state(cs)
 
     r = new_test_raft_with_config(cfg, s, l)
     r.raft.become_candidate()
@@ -482,7 +482,7 @@ def test_leader_election_with_config(pre_vote: bool):
 
     for i, v in enumerate(tests):
         network, state, term = v.network, v.state, v.term
-        m = Message_Owner.default()
+        m = Message.default()
         m.set_from(1)
         m.set_to(1)
         m.set_msg_type(MessageType.MsgHup)
@@ -694,7 +694,7 @@ def test_log_replication():
 
     class Test:
         def __init__(
-            self, network: Network, msgs: List[Message_Owner], wcommitted: int
+            self, network: Network, msgs: List[Message], wcommitted: int
         ) -> None:
             self.network = network
             self.msgs = msgs
@@ -1034,7 +1034,7 @@ def test_proposal():
     for j, v in enumerate(tests):
         nw, success = v.nw, v.success
 
-        def send(nw: Network, m: Message_Owner) -> None:
+        def send(nw: Network, m: Message) -> None:
             try:
                 nw.send([m])
                 assert success
@@ -1088,7 +1088,7 @@ def test_commit():
 
     class Test:
         def __init__(
-            self, matches: List[int], logs: List[Entry_Owner], sm_term: int, w: int
+            self, matches: List[int], logs: List[Entry], sm_term: int, w: int
         ) -> None:
             self.matches = matches
             self.logs = logs
@@ -1117,10 +1117,10 @@ def test_commit():
 
     for i, v in enumerate(tests):
         matches, logs, sm_term, w = v.matches, v.logs, v.sm_term, v.w
-        cs = ConfState_Owner([1], [])
-        store = MemStorage_Owner.new_with_conf_state(cs)
+        cs = ConfState([1], [])
+        store = MemStorage.new_with_conf_state(cs)
         store.wl(lambda core: core.append(logs))
-        hs = HardState_Owner.default()
+        hs = HardState.default()
         hs.set_term(sm_term)
         store.wl(lambda core: core.set_hardstate(hs))
         cfg = new_test_config(1, 5, 1)
@@ -1190,8 +1190,8 @@ def test_handle_msg_append():
         index: int,
         commit: int,
         ents: Optional[List[Tuple[int, int]]],
-    ) -> Message_Owner:
-        m = Message_Owner.default()
+    ) -> Message:
+        m = Message.default()
         m.set_msg_type(MessageType.MsgAppend)
         m.set_term(term)
         m.set_log_term(log_term)
@@ -1201,7 +1201,7 @@ def test_handle_msg_append():
         if ents:
             m.set_entries(
                 cast(
-                    List[Entry_Owner],
+                    List[Entry],
                     list(map(lambda item: empty_entry(item[1], item[0]), ents)),
                 )
             )
@@ -1209,7 +1209,7 @@ def test_handle_msg_append():
 
     class Test:
         def __init__(
-            self, m: Message_Owner, w_index: bool, w_commit: int, w_reject: int
+            self, m: Message, w_index: bool, w_commit: int, w_reject: int
         ) -> None:
             self.m = m
             self.w_index = w_index
@@ -1239,7 +1239,7 @@ def test_handle_msg_append():
 
     for j, v in enumerate(tests):
         m, w_index, w_commit, w_reject = v.m, v.w_index, v.w_commit, v.w_reject
-        storage = MemStorage_Owner()
+        storage = MemStorage()
         sm = new_test_raft_with_logs(
             1,
             [1],
@@ -1279,7 +1279,7 @@ def test_handle_heartbeat():
         to: int,
         term: int,
         commit: int,
-    ) -> Message_Owner:
+    ) -> Message:
         m = new_message(f, to, MessageType.MsgHeartbeat, 0)
         m.set_term(term)
         m.set_commit(commit)
@@ -1287,7 +1287,7 @@ def test_handle_heartbeat():
         return m
 
     class Test:
-        def __init__(self, m: Message_Owner, w_commit: int) -> None:
+        def __init__(self, m: Message, w_commit: int) -> None:
             self.m = m
             self.w_commit = w_commit
 
@@ -1298,8 +1298,8 @@ def test_handle_heartbeat():
 
     for i, v in enumerate(tests):
         m, w_commit = v.m, v.w_commit
-        cs = ConfState_Owner([1, 2], [])
-        store = MemStorage_Owner.new_with_conf_state(cs)
+        cs = ConfState([1, 2], [])
+        store = MemStorage.new_with_conf_state(cs)
         store.wl(
             lambda core: core.append(
                 [
@@ -1512,8 +1512,8 @@ def test_recv_msg_request_vote_for_type(msg_type: MessageType):
             v.vote_for,
             v.w_reject,
         )
-        cs = ConfState_Owner([1], [])
-        store = MemStorage_Owner.new_with_conf_state(cs)
+        cs = ConfState([1], [])
+        store = MemStorage.new_with_conf_state(cs)
         ents = [empty_entry(2, 1), empty_entry(2, 2)]
         store.wl(lambda core: core.append(ents))
 
@@ -2415,10 +2415,10 @@ def test_read_only_for_new_leader():
         cfg = new_test_config(id, 10, heartbeat_ticks)
         cfg.set_applied(applied)
 
-        storage = MemStorage_Owner.new_with_conf_state(ConfState_Owner([1, 2, 3], []))
+        storage = MemStorage.new_with_conf_state(ConfState([1, 2, 3], []))
         entries = [empty_entry(1, 1), empty_entry(1, 2)]
         storage.wl(lambda core: core.append(entries))
-        hs = HardState_Owner.default()
+        hs = HardState.default()
         hs.set_term(1)
         hs.set_commit(committed)
         storage.wl(lambda core: core.set_hardstate(hs))
@@ -2557,8 +2557,8 @@ def test_leader_append_response():
             v.wcommitted,
         )
         # Initial raft logs: last index = 3, committed = 1.
-        cs = ConfState_Owner([1, 2, 3], [])
-        store = MemStorage_Owner.new_with_conf_state(cs)
+        cs = ConfState([1, 2, 3], [])
+        store = MemStorage.new_with_conf_state(cs)
         ents = [empty_entry(0, 1), empty_entry(1, 2)]
         store.wl(lambda core: core.append(ents))
         sm = new_test_raft(1, [1, 2, 3], 10, 1, store, l)
@@ -2675,8 +2675,8 @@ def test_recv_msg_beat():
 
     for i, v in enumerate(tests):
         state, w_msg = v.state, v.w_msg
-        cs = ConfState_Owner([1, 2, 3], [])
-        store = MemStorage_Owner.new_with_conf_state(cs)
+        cs = ConfState([1, 2, 3], [])
+        store = MemStorage.new_with_conf_state(cs)
         ents = [empty_entry(0, 1), empty_entry(1, 2)]
         store.wl(lambda core: core.append(ents))
 
@@ -2975,7 +2975,7 @@ def test_step_config():
     r.raft.become_leader()
     index = r.raft_log.last_index()
     m = new_message(1, 1, MessageType.MsgPropose, 0)
-    e = Entry_Owner.default()
+    e = Entry.default()
     e.set_entry_type(EntryType.EntryConfChange)
     m.set_entries([*m.get_entries(), e])
     r.step(m)
@@ -2994,7 +2994,7 @@ def test_step_ignore_config():
     r.raft.become_leader()
     assert not r.raft.has_pending_conf()
     m = new_message(1, 1, MessageType.MsgPropose, 0)
-    e = Entry_Owner.default()
+    e = Entry.default()
     e.set_entry_type(EntryType.EntryConfChange)
     m.set_entries([*m.get_entries(), e])
     assert not r.raft.has_pending_conf()
@@ -3006,7 +3006,7 @@ def test_step_ignore_config():
     we = empty_entry(1, 3)
     we.set_entry_type(EntryType.EntryNormal)
     wents = [we]
-    ctx = GetEntriesContext_Owner.empty(False)
+    ctx = GetEntriesContext.empty(False)
     entries = r.raft_log.entries(index + 1, ctx.make_ref(), None)
     assert entries == wents
     assert r.raft.get_pending_conf_index() == pending_conf_index
@@ -3031,7 +3031,7 @@ def test_new_leader_pending_config():
         add_entry, wpending_index = v.add_entry, v.wpending_index
         storage = new_storage()
         r = new_test_raft(1, [1, 2], 10, 1, storage, l)
-        e = Entry_Owner.default()
+        e = Entry.default()
         if add_entry:
             e.set_entry_type(EntryType.EntryNormal)
             r.raft.append_entry([e])
@@ -3316,11 +3316,11 @@ def test_leader_transfer_to_non_existing_node():
 
 def test_leader_transfer_to_learner():
     l = default_logger()
-    s = MemStorage_Owner.new_with_conf_state(ConfState_Owner([1], [2]))
+    s = MemStorage.new_with_conf_state(ConfState([1], [2]))
     c = new_test_config(1, 10, 1)
     leader = new_test_raft_with_config(c, s, l)
 
-    s = MemStorage_Owner.new_with_conf_state(ConfState_Owner([1], [2]))
+    s = MemStorage.new_with_conf_state(ConfState([1], [2]))
     c = new_test_config(2, 10, 1)
     learner = new_test_raft_with_config(c, s, l)
 
@@ -3571,7 +3571,7 @@ def new_test_learner_raft(
     ), f"new_test_raft with empty peers on initialized store"
 
     if peers and not storage.initial_state().initialized():
-        storage.initialize_with_conf_state(ConfState_Owner(peers, learners))
+        storage.initialize_with_conf_state(ConfState(peers, learners))
 
     cfg = new_test_config(id, election, heartbeat)
     return new_test_raft_with_config(cfg, storage, logger)
@@ -3581,7 +3581,7 @@ def new_test_learner_raft_with_prevote(
     id: int, peers: List[int], learners: List[int], logger: Logger_Ref, prevote: bool
 ) -> Interface:
     storage = new_storage()
-    storage.initialize_with_conf_state(ConfState_Owner(peers, learners))
+    storage.initialize_with_conf_state(ConfState(peers, learners))
     cfg = new_test_config(id, 10, 1)
     cfg.set_pre_vote(prevote)
     return new_test_raft_with_config(cfg, storage, logger)
@@ -3802,7 +3802,7 @@ def test_learner_receive_snapshot():
     for _ in range(0, timeout):
         network.peers[1].raft.tick()
 
-    msg = Message_Owner.default()
+    msg = Message.default()
     msg.set_from(1)
     msg.set_to(1)
     msg.set_msg_type(MessageType.MsgBeat)
@@ -3989,7 +3989,7 @@ def test_learner_respond_vote():
 def test_election_tick_range():
     l = default_logger()
     cfg = new_test_config(1, 10, 1)
-    s = MemStorage_Owner.new_with_conf_state(ConfState_Owner([1, 2, 3], []))
+    s = MemStorage.new_with_conf_state(ConfState([1, 2, 3], []))
     raft = new_test_raft_with_config(cfg, s, l)
     for _ in range(0, 1000):
         raft.raft.reset_randomized_election_timeout()
@@ -4090,7 +4090,7 @@ def test_prevote_with_check_quorum():
         cfg = new_test_config(id, 10, 1)
         cfg.set_pre_vote(True)
         cfg.set_check_quorum(True)
-        s = MemStorage_Owner.new_with_conf_state(ConfState_Owner([1, 2, 3], []))
+        s = MemStorage.new_with_conf_state(ConfState([1, 2, 3], []))
         i = new_test_raft_with_config(cfg, s, l)
         i.raft.become_follower(1, INVALID_ID)
         return i
@@ -4147,10 +4147,10 @@ def test_prevote_with_check_quorum():
 def test_new_raft_with_bad_config_errors():
     l = default_logger()
     invalid_config = new_test_config(INVALID_ID, 1, 1)
-    s = MemStorage_Owner.new_with_conf_state(ConfState_Owner([1, 2], []))
+    s = MemStorage.new_with_conf_state(ConfState([1, 2], []))
 
     with pytest.raises(Exception) as e:
-        Raft__MemStorage_Owner(invalid_config, s, l)
+        Raft__MemStorage(invalid_config, s, l)
 
     assert str(e.value) == "invalid node id"
 
@@ -4190,9 +4190,9 @@ def test_conf_change_check_before_campaign():
     assert nt.peers[1].raft.get_state() == StateRole.Leader
 
     m = new_message(1, 1, MessageType.MsgPropose, 0)
-    e = Entry_Owner.default()
+    e = Entry.default()
     e.set_entry_type(EntryType.EntryConfChange)
-    cc = ConfChange_Owner.default()
+    cc = ConfChange.default()
     cc.set_change_type(ConfChangeType.RemoveNode)
     cc.set_node_id(3)
     e.set_data(cc.write_to_bytes())
@@ -4242,7 +4242,7 @@ def test_conf_change_check_before_campaign():
 def test_advance_commit_index_by_vote_request(use_prevote: bool):
     l = default_logger()
 
-    cases: List[ConfChange_Owner] = [
+    cases: List[ConfChange] = [
         conf_change(ConfChangeType.AddNode, 4),
         conf_change_v2(
             [
@@ -4262,7 +4262,7 @@ def test_advance_commit_index_by_vote_request(use_prevote: bool):
 
         nt = Network.new(peers, l)
         nt.send([new_message(1, 1, MessageType.MsgHup, 0)])
-        e = Entry_Owner.default()
+        e = Entry.default()
 
         if v1 := cc.as_v1():
             e.set_entry_type(EntryType.EntryConfChange)
@@ -4359,7 +4359,7 @@ def test_advance_commit_index_by_vote_request(use_prevote: bool):
 @pytest.mark.parametrize("use_prevote", [True, False])
 def test_advance_commit_index_by_vote_response(use_prevote: bool):
     l = default_logger()
-    cases: List[ConfChange_Owner] = [
+    cases: List[ConfChange] = [
         conf_change(ConfChangeType.RemoveNode, 4),
         # Explicit leave joint
         conf_change_v2([]),
@@ -4393,7 +4393,7 @@ def test_advance_commit_index_by_vote_response(use_prevote: bool):
 
         nt.send([new_message(1, 1, MessageType.MsgHup, 0)])
 
-        e = Entry_Owner.default()
+        e = Entry.default()
 
         if v1 := cc.as_v1():
             e.set_entry_type(EntryType.EntryConfChange)
@@ -4482,11 +4482,11 @@ def test_advance_commit_index_by_vote_response(use_prevote: bool):
         ), f"#{i} node 2 state: {nt.peers[2].raft.get_state()} want Leader"
 
 
-def prepare_request_snapshot() -> Tuple[Network, Snapshot_Owner]:
+def prepare_request_snapshot() -> Tuple[Network, Snapshot]:
     l = default_logger()
 
     def index_term_11(id: int, ids: List[int]) -> Interface:
-        store = MemStorage_Owner()
+        store = MemStorage()
         store.wl(lambda core: core.apply_snapshot(new_snapshot(11, 11, ids)))
         raft = new_test_raft(id, ids, 5, 1, store, l)
         raft.raft.reset(11)
@@ -4504,7 +4504,7 @@ def prepare_request_snapshot() -> Tuple[Network, Snapshot_Owner]:
     # elect r1 as leader
     nt.send([new_message(1, 1, MessageType.MsgHup, 0)])
 
-    test_entries = Entry_Owner.default()
+    test_entries = Entry.default()
 
     test_entries.set_data(b"testdata")
     msg = new_message_with_entries(1, 1, MessageType.MsgPropose, [test_entries])
@@ -4518,7 +4518,7 @@ def prepare_request_snapshot() -> Tuple[Network, Snapshot_Owner]:
     nt.peers[1].raft_log.set_applied(14)
 
     # Commit a new raft log.
-    test_entries = Entry_Owner.default()
+    test_entries = Entry.default()
     test_entries.set_data(b"testdata")
     msg = new_message_with_entries(1, 1, MessageType.MsgPropose, [test_entries])
     nt.send([msg])
@@ -4547,7 +4547,7 @@ def test_follower_request_snapshot():
     nt.peers[1].raft.step(req_snap)
 
     # New proposes can not be replicated to peer 2.
-    test_entries = Entry_Owner.default()
+    test_entries = Entry.default()
     test_entries.set_data(b"testdata")
     msg = new_message_with_entries(1, 1, MessageType.MsgPropose, [test_entries])
     nt.send([msg.clone()])
@@ -4643,7 +4643,7 @@ def test_request_snapshot_step_down():
 
     # Commit a new entry and leader steps down while peer 2 is isolated.
     nt.isolate(2)
-    test_entries = Entry_Owner.default()
+    test_entries = Entry.default()
     test_entries.set_data(b"testdata")
     msg = new_message_with_entries(1, 1, MessageType.MsgPropose, [test_entries])
     nt.send([msg])
@@ -4718,12 +4718,12 @@ def test_group_commit():
 
     for i, v in enumerate(tests):
         matches, group_ids, g_w, q_w = v.matches, v.group_ids, v.g_w, v.q_w
-        store = MemStorage_Owner.new_with_conf_state(ConfState_Owner([1], []))
+        store = MemStorage.new_with_conf_state(ConfState([1], []))
         min_index = min(matches)
         max_index = max(matches)
         logs = [empty_entry(1, i) for i in range(min_index, max_index + 1)]
         store.wl(lambda core: core.append(logs))
-        hs = HardState_Owner.default()
+        hs = HardState.default()
         hs.set_term(1)
         store.wl(lambda core: core.set_hardstate(hs))
         cfg = new_test_config(1, 5, 1)
@@ -4813,9 +4813,9 @@ def test_group_commit_consistent():
             v.role,
             v.exp,
         )
-        store = MemStorage_Owner.new_with_conf_state(ConfState_Owner([1], []))
+        store = MemStorage.new_with_conf_state(ConfState([1], []))
         store.wl(lambda core: core.append(logs))
-        hs = HardState_Owner.default()
+        hs = HardState.default()
         hs.set_term(2)
         hs.set_commit(committed)
         store.wl(lambda core: core.set_hardstate(hs))
@@ -4976,7 +4976,7 @@ def test_read_when_quorum_becomes_less():
     l = default_logger()
     network = Network.new([None, None], l)
 
-    m = Message_Owner.default()
+    m = Message.default()
     m.set_from(1)
     m.set_to(1)
     m.set_msg_type(MessageType.MsgHup)
@@ -4984,10 +4984,10 @@ def test_read_when_quorum_becomes_less():
     assert network.peers[1].raft_log.get_committed() == 1
 
     # Read index on the peer.
-    m = Message_Owner.default()
+    m = Message.default()
     m.set_to(1)
     m.set_msg_type(MessageType.MsgReadIndex)
-    e = Entry_Owner.default()
+    e = Entry.default()
     e.set_data(b"abcdefg")
     m.set_entries([e])
     network.dispatch([m])
@@ -5007,12 +5007,12 @@ def test_read_when_quorum_becomes_less():
 
 def test_uncommitted_entries_size_limit():
     l = default_logger()
-    config = Config_Owner.default()
+    config = Config.default()
     config.set_id(1)
     config.set_max_uncommitted_size(12)
     nt = Network.new_with_config([None, None, None], config, l)
     data = b"hello world!"
-    entry = Entry_Owner.default()
+    entry = Entry.default()
     entry.set_data(data)
     msg = new_message_with_entries(1, 1, MessageType.MsgPropose, [entry])
     nt.send([new_message(1, 1, MessageType.MsgHup, 0)])
@@ -5027,12 +5027,12 @@ def test_uncommitted_entries_size_limit():
     assert str(e.value) == "raft: proposal dropped"
 
     # but entry with empty size should be accepted
-    entry = Entry_Owner.default()
+    entry = Entry.default()
     empty_msgs = new_message_with_entries(1, 1, MessageType.MsgPropose, [entry])
     nt.dispatch([empty_msgs])
 
     # after reduce, new proposal should be accepted
-    entry = Entry_Owner.default()
+    entry = Entry.default()
     entry.set_data(data)
     entry.set_index(3)
     nt.peers[1].raft.reduce_uncommitted_size([entry]) == 0
@@ -5040,13 +5040,13 @@ def test_uncommitted_entries_size_limit():
 
     # a huge proposal should be accepted when there is no uncommitted entry,
     # even it's bigger than max_uncommitted_size
-    entry = Entry_Owner.default()
+    entry = Entry.default()
     entry.set_data(b"hello world and raft")
     long_msg = new_message_with_entries(1, 1, MessageType.MsgPropose, [entry])
     nt.dispatch([long_msg])
 
     # but another huge one will be dropped
-    entry = Entry_Owner.default()
+    entry = Entry.default()
     entry.set_data(b"hello world and raft")
     long_msg = new_message_with_entries(1, 1, MessageType.MsgPropose, [entry])
     with pytest.raises(Exception) as e:
@@ -5055,19 +5055,19 @@ def test_uncommitted_entries_size_limit():
     assert str(e.value) == "raft: proposal dropped"
 
     # entry with empty size should still be accepted
-    entry = Entry_Owner.default()
+    entry = Entry.default()
     empty_msg = new_message_with_entries(1, 1, MessageType.MsgPropose, [entry])
     nt.dispatch([empty_msg])
 
 
 def test_uncommitted_entry_after_leader_election():
     l = default_logger()
-    config = Config_Owner.default()
+    config = Config.default()
     config.set_id(1)
     config.set_max_uncommitted_size(12)
     nt = Network.new_with_config([None, None, None, None, None], config, l)
     data = b"hello world!"
-    entry = Entry_Owner.default()
+    entry = Entry.default()
     entry.set_data(data)
     msg = new_message_with_entries(1, 1, MessageType.MsgPropose, [entry])
 
@@ -5094,13 +5094,13 @@ def test_uncommitted_entry_after_leader_election():
 
 def test_uncommitted_state_advance_ready_from_last_term():
     l = default_logger()
-    config = Config_Owner.default()
+    config = Config.default()
     config.set_id(1)
     config.set_max_uncommitted_size(12)
     nt = Network.new_with_config([None, None, None, None, None], config, l)
 
     data = b"hello world!"
-    ent = Entry_Owner.default()
+    ent = Entry.default()
     ent.set_data(data)
 
     nt.send([new_message(1, 1, MessageType.MsgHup, 0)])
@@ -5370,10 +5370,10 @@ def test_fast_log_rejection():
             v.next_append_index,
         )
         l = default_logger()
-        s1 = MemStorage_Owner.new_with_conf_state(ConfState_Owner([1, 2, 3], []))
+        s1 = MemStorage.new_with_conf_state(ConfState([1, 2, 3], []))
         s1.wl(lambda core: core.append(leader_log))
 
-        s2 = MemStorage_Owner.new_with_conf_state(ConfState_Owner([1, 2, 3], []))
+        s2 = MemStorage.new_with_conf_state(ConfState([1, 2, 3], []))
         s2.wl(lambda core: core.append(follower_log))
 
         n1 = new_test_raft(1, [1, 2, 3], 10, 1, s1, l)

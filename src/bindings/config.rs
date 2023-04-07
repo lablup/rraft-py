@@ -8,8 +8,8 @@ use utils::reference::RustRef;
 use super::readonly_option::Py_ReadOnlyOption;
 
 #[derive(Clone)]
-#[pyclass(name = "Config_Owner")]
-pub struct Py_Config_Owner {
+#[pyclass(name = "Config")]
+pub struct Py_Config {
     pub inner: Config,
 }
 
@@ -21,7 +21,7 @@ pub struct Py_Config_Ref {
 
 #[derive(FromPyObject)]
 pub enum Py_Config_Mut<'p> {
-    Owned(PyRefMut<'p, Py_Config_Owner>),
+    Owned(PyRefMut<'p, Py_Config>),
     RefMut(Py_Config_Ref),
 }
 
@@ -85,7 +85,7 @@ fn format_config<T: Into<Config>>(cfg: T) -> String {
 }
 
 #[pymethods]
-impl Py_Config_Owner {
+impl Py_Config {
     #![allow(clippy::too_many_arguments)]
     #[new]
     pub fn new(
@@ -127,12 +127,12 @@ impl Py_Config_Owner {
 
         config.read_only_option = read_only_option.map_or(config.read_only_option, |opt| opt.0);
 
-        Py_Config_Owner { inner: config }
+        Py_Config { inner: config }
     }
 
     #[staticmethod]
-    pub fn default() -> Py_Config_Owner {
-        Py_Config_Owner {
+    pub fn default() -> Py_Config {
+        Py_Config {
             inner: Config::default(),
         }
     }
@@ -159,8 +159,8 @@ impl Py_Config_Ref {
         self.inner.map_as_ref(|inner| format_config(inner.clone()))
     }
 
-    pub fn clone(&self) -> PyResult<Py_Config_Owner> {
-        Ok(Py_Config_Owner {
+    pub fn clone(&self) -> PyResult<Py_Config> {
+        Ok(Py_Config {
             inner: self.inner.map_as_ref(|inner| inner.clone())?,
         })
     }

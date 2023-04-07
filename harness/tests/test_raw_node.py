@@ -4,26 +4,26 @@ from typing import List, Optional
 from harness.src.network import Network
 from rraft import (
     NO_LIMIT,
-    ConfChange_Owner,
+    ConfChange,
     ConfChangeTransition,
     ConfChangeType,
-    ConfChangeV2_Owner,
-    ConfState_Owner,
-    Config_Owner,
+    ConfChangeV2,
+    ConfState,
+    Config,
     Config_Ref,
-    Entry_Owner,
+    Entry,
     Entry_Ref,
     EntryType,
-    GetEntriesContext_Owner,
+    GetEntriesContext,
     HardState_Ref,
     Logger_Ref,
-    MemStorage_Owner,
+    MemStorage,
     MessageType,
-    RawNode__MemStorage_Owner,
+    RawNode__MemStorage,
     RawNode__MemStorage_Ref,
-    ReadState_Owner,
+    ReadState,
     Ready_Ref,
-    Snapshot_Owner,
+    Snapshot,
     Snapshot_Ref,
     SoftState_Ref,
     StateRole,
@@ -70,7 +70,7 @@ def must_cmp_ready(
     assert r.entries() == entries
     assert r.committed_entries() == committed_entries
     assert r.must_sync() == must_sync
-    assert r.snapshot() == snapshot or r.snapshot() == Snapshot_Owner.default()
+    assert r.snapshot() == snapshot or r.snapshot() == Snapshot.default()
     assert len(r.messages()) == 0 if msg_is_empty else len(r.messages()) != 0
     assert (
         len(r.persisted_messages()) == 0
@@ -84,9 +84,9 @@ def new_raw_node(
     peers: List[int],
     election_tick: int,
     heartbeat_tick: int,
-    storage: MemStorage_Owner,
+    storage: MemStorage,
     logger: Logger_Ref,
-) -> RawNode__MemStorage_Owner:
+) -> RawNode__MemStorage:
     config = new_test_config(id, election_tick, heartbeat_tick)
     return new_raw_node_with_config(peers, config, storage, logger)
 
@@ -94,9 +94,9 @@ def new_raw_node(
 def new_raw_node_with_config(
     peers: List[int],
     config: Config_Ref,
-    storage: MemStorage_Owner,
+    storage: MemStorage,
     logger: Logger_Ref,
-) -> RawNode__MemStorage_Owner:
+) -> RawNode__MemStorage:
     assert not (
         storage.initial_state().initialized() and not peers
     ), f"new_raw_node with empty peers on initialized store"
@@ -104,7 +104,7 @@ def new_raw_node_with_config(
     if peers and not storage.initial_state().initialized():
         storage.wl(lambda core: core.apply_snapshot(new_snapshot(1, 1, peers)))
 
-    return RawNode__MemStorage_Owner(config, storage, logger)
+    return RawNode__MemStorage(config, storage, logger)
 
 
 def get_msg_types() -> List[MessageType]:
@@ -166,7 +166,7 @@ def test_raw_node_read_index_to_old_leader():
     # elect r1 as leader
     nt.send([new_message(1, 1, MessageType.MsgHup, 0)])
 
-    test_entries = Entry_Owner.default()
+    test_entries = Entry.default()
     test_entries.set_data(b"testdata")
 
     # send readindex request to r2(follower)
@@ -232,9 +232,9 @@ def test_raw_node_propose_and_conf_change():
     class Test:
         def __init__(
             self,
-            cc: ConfChange_Owner | ConfChangeV2_Owner,
-            exp: ConfState_Owner,
-            exp2: Optional[ConfState_Owner],
+            cc: ConfChange | ConfChangeV2,
+            exp: ConfState,
+            exp2: Optional[ConfState],
         ) -> None:
             self.cc = cc
             self.exp = exp
@@ -329,24 +329,24 @@ def test_raw_node_propose_and_conf_change():
         proposed = False
         ccdata = []
         # Propose the ConfChange, wait until it applies, save the resulting ConfState.
-        cs: Optional[ConfState_Owner] = None
+        cs: Optional[ConfState] = None
 
         while not cs:
             rd = raw_node.ready()
             s.wl(lambda core: core.append(rd.entries()))
 
             def handle_committed_entries(
-                rn: RawNode__MemStorage_Ref, committed_entries: List[Entry_Owner]
+                rn: RawNode__MemStorage_Ref, committed_entries: List[Entry]
             ):
                 for e in committed_entries:
                     nonlocal cs
 
                     if e.get_entry_type() == EntryType.EntryConfChange:
-                        cc = ConfChange_Owner.default()
+                        cc = ConfChange.default()
                         cc.merge_from_bytes(e.get_data())
                         cs = rn.apply_conf_change(cc)
                     elif e.get_entry_type() == EntryType.EntryConfChangeV2:
-                        cc = ConfChangeV2_Owner.default()
+                        cc = ConfChangeV2.default()
                         cc.merge_from_bytes(e.get_data())
                         cs = rn.apply_conf_change_v2(cc)
 
@@ -382,7 +382,7 @@ def test_raw_node_propose_and_conf_change():
         # will not reflect any unstable entries that we'll only be presented
         # with in the next Ready.
         last_index = s.last_index()
-        ctx = GetEntriesContext_Owner.empty(False)
+        ctx = GetEntriesContext.empty(False)
         entries = s.entries(last_index - 1, last_index + 1, ctx.make_ref(), NO_LIMIT)
         assert len(entries) == 2
         assert entries[0].get_data() == b"somedata"
@@ -427,7 +427,7 @@ def test_raw_node_propose_and_conf_change():
         # Check that the right ConfChange comes out.
         assert len(rd.entries()) == 1
         assert rd.entries()[0].get_entry_type() == EntryType.EntryConfChangeV2
-        leave_cc = ConfChangeV2_Owner.default()
+        leave_cc = ConfChangeV2.default()
         leave_cc.merge_from_bytes(rd.entries()[0].get_data())
 
         assert context == list(leave_cc.get_context()), f"{cc.as_v2()}"
@@ -459,12 +459,12 @@ def test_raw_node_joint_auto_leave():
         s.wl(lambda core: core.append(rd.entries()))
 
         def handle_committed_entries(
-            rn: RawNode__MemStorage_Ref, committed_entries: List[Entry_Owner]
+            rn: RawNode__MemStorage_Ref, committed_entries: List[Entry]
         ):
             for e in committed_entries:
                 nonlocal cs
                 if e.get_entry_type() == EntryType.EntryConfChangeV2:
-                    cc = ConfChangeV2_Owner.default()
+                    cc = ConfChangeV2.default()
                     cc.merge_from_bytes(e.get_data())
 
                     # Force it step down.
@@ -496,7 +496,7 @@ def test_raw_node_joint_auto_leave():
     # will not reflect any unstable entries that we'll only be presented
     # with in the next Ready.
     last_index = s.last_index()
-    ctx = GetEntriesContext_Owner.empty(False)
+    ctx = GetEntriesContext.empty(False)
     entries = s.entries(last_index - 1, last_index + 1, ctx.make_ref(), NO_LIMIT)
     assert len(entries) == 2
     assert entries[0].get_data() == b"somedata"
@@ -522,7 +522,7 @@ def test_raw_node_joint_auto_leave():
     # Check that the right ConfChange comes out.
     assert len(rd.entries()) == 1
     assert rd.entries()[0].get_entry_type() == EntryType.EntryConfChangeV2
-    leave_cc = ConfChangeV2_Owner.default()
+    leave_cc = ConfChangeV2.default()
     leave_cc.merge_from_bytes(rd.entries()[0].get_data())
 
     assert not leave_cc.get_context()
@@ -551,17 +551,17 @@ def test_raw_node_propose_add_duplicate_node():
                 break
         raw_node.advance(rd.make_ref())
 
-    def propose_conf_change_and_apply(cc: ConfChange_Owner):
+    def propose_conf_change_and_apply(cc: ConfChange):
         raw_node.propose_conf_change([], cc)
         rd = raw_node.ready()
         s.wl(lambda core: core.append(rd.entries()))
 
         def handle_committed_entries(
-            rn: RawNode__MemStorage_Ref, committed_entries: List[Entry_Owner]
+            rn: RawNode__MemStorage_Ref, committed_entries: List[Entry]
         ):
             for e in committed_entries:
                 if e.get_entry_type() == EntryType.EntryConfChange:
-                    conf_change = ConfChange_Owner.default()
+                    conf_change = ConfChange.default()
                     conf_change.merge_from_bytes(e.get_data())
                     rn.apply_conf_change(conf_change)
 
@@ -586,7 +586,7 @@ def test_raw_node_propose_add_duplicate_node():
     last_index = s.last_index()
 
     # the last three entries should be: ConfChange cc1, cc1, cc2
-    ctx = GetEntriesContext_Owner.empty(False)
+    ctx = GetEntriesContext.empty(False)
     entries = s.entries(last_index - 2, last_index + 1, ctx.make_ref(), None)
     assert len(entries) == 3
     assert entries[0].get_data() == ccdata1
@@ -625,7 +625,7 @@ def test_raw_node_propose_add_learner_node():
 
     e = light_rd.committed_entries()[0]
     assert e.get_entry_type() == EntryType.EntryConfChange
-    conf_change_ = ConfChange_Owner.default()
+    conf_change_ = ConfChange.default()
     conf_change_.merge_from_bytes(e.get_data())
     conf_state = raw_node.apply_conf_change(conf_change_)
     assert conf_state.get_voters() == [1]
@@ -637,7 +637,7 @@ def test_raw_node_propose_add_learner_node():
 def test_raw_node_read_index():
     l = default_logger()
     wrequest_ctx = list(b"somedata")
-    wrs = [ReadState_Owner.default()]
+    wrs = [ReadState.default()]
     wrs[0].set_index(2)
     wrs[0].set_request_ctx(wrequest_ctx)
 
@@ -760,7 +760,7 @@ def test_raw_node_restart_from_snapshot():
     store.wl(lambda core: core.apply_snapshot(snap))
     store.wl(lambda core: core.append(entries))
     store.wl(lambda core: core.set_hardstate(hard_state(1, 3, 0)))
-    raw_node = RawNode__MemStorage_Owner(new_test_config(1, 10, 1), store, l)
+    raw_node = RawNode__MemStorage(new_test_config(1, 10, 1), store, l)
 
     rd = raw_node.ready()
     must_cmp_ready(rd.make_ref(), None, None, [], entries, None, True, True, False)
@@ -774,7 +774,7 @@ def test_skip_bcast_commit():
     l = default_logger()
     config = new_test_config(1, 10, 1)
     config.set_skip_bcast_commit(True)
-    s1 = MemStorage_Owner.new_with_conf_state(ConfState_Owner([1, 2, 3], []))
+    s1 = MemStorage.new_with_conf_state(ConfState([1, 2, 3], []))
     r1 = new_test_raft_with_config(config, s1, l)
     s2 = new_storage()
     r2 = new_test_raft(2, [1, 2, 3], 10, 1, s2, l)
@@ -786,7 +786,7 @@ def test_skip_bcast_commit():
     nt.send([new_message(1, 1, MessageType.MsgHup, 0)])
 
     # Without bcast commit, followers will not update its commit index immediately.
-    test_entries = Entry_Owner.default()
+    test_entries = Entry.default()
     test_entries.set_data(b"testdata")
     msg = new_message_with_entries(1, 1, MessageType.MsgPropose, [test_entries])
     nt.send([msg.clone()])
@@ -820,11 +820,11 @@ def test_skip_bcast_commit():
     assert nt.peers[3].raft_log.get_committed() == 4
 
     # When committing conf change, leader should always bcast commit.
-    cc = ConfChange_Owner.default()
+    cc = ConfChange.default()
     cc.set_change_type(ConfChangeType.RemoveNode)
     cc.set_node_id(3)
     data = cc.write_to_bytes()
-    cc_entry = Entry_Owner.default()
+    cc_entry = Entry.default()
     cc_entry.set_entry_type(EntryType.EntryConfChange)
     cc_entry.set_data(data)
     nt.send(
@@ -864,7 +864,7 @@ def test_set_priority():
 # This protection is provided by the max_uncommitted_size configuration.
 def test_bounded_uncommitted_entries_growth_with_partition():
     l = default_logger()
-    config = Config_Owner(id=1, max_uncommitted_size=12)
+    config = Config(id=1, max_uncommitted_size=12)
     s = new_storage()
     raw_node = new_raw_node_with_config([1], config, s.clone(), l)
 
@@ -1657,10 +1657,10 @@ def test_committed_entries_pagination():
 #   write.
 def test_committed_entries_pagination_after_restart():
     class IgnoreSizeHintMemStorage:
-        def __init__(self, store: MemStorage_Owner) -> None:
+        def __init__(self, store: MemStorage) -> None:
             self.inner = store
 
-        def entries(self, low: int, high: int, _max_size: int) -> List[Entry_Owner]:
+        def entries(self, low: int, high: int, _max_size: int) -> List[Entry]:
             return self.inner.entries(low, high, MAX_UINT64)
 
         def term(self, idx: int) -> int:
@@ -1672,11 +1672,11 @@ def test_committed_entries_pagination_after_restart():
         def last_index(self) -> int:
             return self.inner.last_index()
 
-        def snapshot(self, request_index: int) -> Snapshot_Owner:
+        def snapshot(self, request_index: int) -> Snapshot:
             return self.inner.snapshot(request_index)
 
     l = default_logger()
-    s = IgnoreSizeHintMemStorage(MemStorage_Owner.default())
+    s = IgnoreSizeHintMemStorage(MemStorage.default())
     s.inner.wl(lambda core: core.apply_snapshot(new_snapshot(1, 1, [1, 2, 3])))
 
     entries, size = ([], 0)
@@ -1691,7 +1691,7 @@ def test_committed_entries_pagination_after_restart():
     s.inner.wl(lambda core: core.append([new_entry(1, 11, "boom")]))
 
     config = new_test_config(1, 10, 1)
-    raw_node = RawNode__MemStorage_Owner(config, s.inner, l)
+    raw_node = RawNode__MemStorage(config, s.inner, l)
 
     # `IgnoreSizeHintMemStorage` will ignore `max_committed_size_per_ready` but
     # `RaftLog::slice won't.`

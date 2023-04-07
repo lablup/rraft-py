@@ -9,8 +9,8 @@ use raftpb_bindings::{
 };
 
 #[derive(Clone)]
-#[pyclass(name = "RaftState_Owner")]
-pub struct Py_RaftState_Owner {
+#[pyclass(name = "RaftState")]
+pub struct Py_RaftState {
     pub inner: RaftState,
 }
 
@@ -22,7 +22,7 @@ pub struct Py_RaftState_Ref {
 
 #[derive(FromPyObject)]
 pub enum Py_RaftState_Mut<'p> {
-    Owned(PyRefMut<'p, Py_RaftState_Owner>),
+    Owned(PyRefMut<'p, Py_RaftState>),
     RefMut(Py_RaftState_Ref),
 }
 
@@ -45,17 +45,17 @@ impl From<&mut Py_RaftState_Mut<'_>> for RaftState {
 }
 
 #[pymethods]
-impl Py_RaftState_Owner {
+impl Py_RaftState {
     #[new]
     pub fn new(hard_state: Py_HardState_Mut, conf_state: Py_ConfState_Mut) -> Self {
-        Py_RaftState_Owner {
+        Py_RaftState {
             inner: RaftState::new(hard_state.into(), conf_state.into()),
         }
     }
 
     #[staticmethod]
     pub fn default() -> Self {
-        Py_RaftState_Owner {
+        Py_RaftState {
             inner: RaftState::default(),
         }
     }
@@ -82,8 +82,8 @@ impl Py_RaftState_Ref {
         self.inner.map_as_ref(|inner| format!("{:?}", inner))
     }
 
-    pub fn clone(&self) -> PyResult<Py_RaftState_Owner> {
-        Ok(Py_RaftState_Owner {
+    pub fn clone(&self) -> PyResult<Py_RaftState> {
+        Ok(Py_RaftState {
             inner: self.inner.map_as_ref(|x| x.clone())?,
         })
     }

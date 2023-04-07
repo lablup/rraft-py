@@ -7,8 +7,8 @@ use std::{collections::HashSet, hash::BuildHasherDefault};
 use utils::reference::RustRef;
 
 #[derive(Clone)]
-#[pyclass(name = "MajorityConfig_Owner")]
-pub struct Py_MajorityConfig_Owner {
+#[pyclass(name = "MajorityConfig")]
+pub struct Py_MajorityConfig {
     pub inner: MajorityConfig,
 }
 
@@ -20,7 +20,7 @@ pub struct Py_MajorityConfig_Ref {
 
 #[derive(FromPyObject)]
 pub enum Py_MajorityConfig_Mut<'p> {
-    Owned(PyRefMut<'p, Py_MajorityConfig_Owner>),
+    Owned(PyRefMut<'p, Py_MajorityConfig>),
     RefMut(Py_MajorityConfig_Ref),
 }
 
@@ -43,10 +43,10 @@ impl From<&mut Py_MajorityConfig_Mut<'_>> for MajorityConfig {
 }
 
 #[pymethods]
-impl Py_MajorityConfig_Owner {
+impl Py_MajorityConfig {
     #[new]
     pub fn new(voters: &PySet) -> Self {
-        Py_MajorityConfig_Owner {
+        Py_MajorityConfig {
             inner: MajorityConfig::new(
                 voters
                     .extract::<HashSet<u64, BuildHasherDefault<FxHasher>>>()
@@ -121,8 +121,8 @@ impl Py_MajorityConfig_Ref {
         self.inner.map_as_ref(|inner| inner.len())
     }
 
-    pub fn clone(&self) -> PyResult<Py_MajorityConfig_Owner> {
-        Ok(Py_MajorityConfig_Owner {
+    pub fn clone(&self) -> PyResult<Py_MajorityConfig> {
+        Ok(Py_MajorityConfig {
             inner: self.inner.map_as_ref(|inner| inner.clone())?,
         })
     }

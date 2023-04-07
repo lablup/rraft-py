@@ -1,28 +1,28 @@
 import pytest
 from rraft import (
-    ConfState_Owner,
+    ConfState,
     Logger_Ref,
-    MemStorage_Owner,
-    Config_Owner,
-    Raft__MemStorage_Owner,
+    MemStorage,
+    Config,
+    Raft__MemStorage,
     default_logger,
 )
 
 
-def new_storage(voters: int, learners: int) -> MemStorage_Owner:
-    cc = ConfState_Owner.default()
+def new_storage(voters: int, learners: int) -> MemStorage:
+    cc = ConfState.default()
     for i in range(1, voters + 1):
         cc.set_voters([*cc.get_voters(), i])
     for i in range(1, learners + 1):
         cc.set_learners([*cc.get_learners(), voters + i])
 
-    return MemStorage_Owner.new_with_conf_state(cc)
+    return MemStorage.new_with_conf_state(cc)
 
 
-def quick_raft(storage: MemStorage_Owner, logger: Logger_Ref):
+def quick_raft(storage: MemStorage, logger: Logger_Ref):
     id = 1
-    config = Config_Owner(id)
-    return Raft__MemStorage_Owner(config, storage, logger)
+    config = Config(id)
+    return Raft__MemStorage(config, storage, logger)
 
 
 @pytest.mark.benchmark(group="Raft", warmup=True)

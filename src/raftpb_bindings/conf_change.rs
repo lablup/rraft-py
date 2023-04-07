@@ -3,7 +3,7 @@ use protobuf::Message as PbMessage;
 use pyo3::{prelude::*, pyclass::CompareOp, types::PyBytes};
 use utils::{errors::to_pyresult, reference::RustRef};
 
-use super::{conf_change_type::Py_ConfChangeType, conf_change_v2::Py_ConfChangeV2_Owner};
+use super::{conf_change_type::Py_ConfChangeType, conf_change_v2::Py_ConfChangeV2};
 
 use raft::{
     eraftpb::ConfChange,
@@ -11,8 +11,8 @@ use raft::{
 };
 
 #[derive(Clone)]
-#[pyclass(name = "ConfChange_Owner")]
-pub struct Py_ConfChange_Owner {
+#[pyclass(name = "ConfChange")]
+pub struct Py_ConfChange {
     pub inner: ConfChange,
 }
 
@@ -24,7 +24,7 @@ pub struct Py_ConfChange_Ref {
 
 #[derive(FromPyObject)]
 pub enum Py_ConfChange_Mut<'p> {
-    Owned(PyRefMut<'p, Py_ConfChange_Owner>),
+    Owned(PyRefMut<'p, Py_ConfChange>),
     RefMut(Py_ConfChange_Ref),
 }
 
@@ -47,24 +47,24 @@ impl From<&mut Py_ConfChange_Mut<'_>> for ConfChange {
 }
 
 #[pymethods]
-impl Py_ConfChange_Owner {
+impl Py_ConfChange {
     #[new]
     pub fn new() -> Self {
-        Py_ConfChange_Owner {
+        Py_ConfChange {
             inner: ConfChange::new(),
         }
     }
 
     #[staticmethod]
     pub fn default() -> Self {
-        Py_ConfChange_Owner {
+        Py_ConfChange {
             inner: ConfChange::default(),
         }
     }
 
     #[staticmethod]
-    pub fn decode(v: &[u8]) -> PyResult<Py_ConfChange_Owner> {
-        Ok(Py_ConfChange_Owner {
+    pub fn decode(v: &[u8]) -> PyResult<Py_ConfChange> {
+        Ok(Py_ConfChange {
             inner: to_pyresult(ProstMessage::decode(v))?,
         })
     }
@@ -118,8 +118,8 @@ impl Py_ConfChange_Ref {
         })
     }
 
-    pub fn clone(&mut self) -> PyResult<Py_ConfChange_Owner> {
-        Ok(Py_ConfChange_Owner {
+    pub fn clone(&mut self) -> PyResult<Py_ConfChange> {
+        Ok(Py_ConfChange {
             inner: self.inner.map_as_ref(|inner| inner.clone())?,
         })
     }
@@ -212,18 +212,18 @@ impl Py_ConfChange_Ref {
     }
 
     // TODO: Apply COW to below method
-    pub fn as_v2(&mut self) -> PyResult<Py_ConfChangeV2_Owner> {
+    pub fn as_v2(&mut self) -> PyResult<Py_ConfChangeV2> {
         self.clone().unwrap().make_ref().into_v2()
     }
 
-    pub fn into_v2(&mut self) -> PyResult<Py_ConfChangeV2_Owner> {
+    pub fn into_v2(&mut self) -> PyResult<Py_ConfChangeV2> {
         self.inner.map_as_mut(|inner| {
             let mut cc = ConfChangeV2::default();
             let single = new_conf_change_single(inner.node_id, inner.get_change_type());
             cc.mut_changes().push(single);
             cc.set_context(inner.take_context());
 
-            Py_ConfChangeV2_Owner { inner: cc }
+            Py_ConfChangeV2 { inner: cc }
         })
     }
 }

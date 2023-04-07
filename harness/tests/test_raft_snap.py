@@ -6,7 +6,7 @@ from harness.src.network import Network
 from rraft import (
     MessageType,
     ProgressState,
-    Snapshot_Owner,
+    Snapshot,
     default_logger,
     INVALID_INDEX,
 )
@@ -20,7 +20,7 @@ from harness.utils import (
 )
 
 
-def testing_snap() -> Snapshot_Owner:
+def testing_snap() -> Snapshot:
     warnings.filterwarnings("ignore")
     return new_snapshot(11, 11, [1, 2])
 

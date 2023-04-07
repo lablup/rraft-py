@@ -15,8 +15,8 @@ use super::{
 };
 
 #[derive(Clone)]
-#[pyclass(name = "ConfChangeV2_Owner")]
-pub struct Py_ConfChangeV2_Owner {
+#[pyclass(name = "ConfChangeV2")]
+pub struct Py_ConfChangeV2 {
     pub inner: ConfChangeV2,
 }
 
@@ -28,7 +28,7 @@ pub struct Py_ConfChangeV2_Ref {
 
 #[derive(FromPyObject)]
 pub enum Py_ConfChangeV2_Mut<'p> {
-    Owned(PyRefMut<'p, Py_ConfChangeV2_Owner>),
+    Owned(PyRefMut<'p, Py_ConfChangeV2>),
     RefMut(Py_ConfChangeV2_Ref),
 }
 
@@ -51,24 +51,24 @@ impl From<&mut Py_ConfChangeV2_Mut<'_>> for ConfChangeV2 {
 }
 
 #[pymethods]
-impl Py_ConfChangeV2_Owner {
+impl Py_ConfChangeV2 {
     #[new]
     pub fn new() -> Self {
-        Py_ConfChangeV2_Owner {
+        Py_ConfChangeV2 {
             inner: ConfChangeV2::new(),
         }
     }
 
     #[staticmethod]
     pub fn default() -> Self {
-        Py_ConfChangeV2_Owner {
+        Py_ConfChangeV2 {
             inner: ConfChangeV2::default(),
         }
     }
 
     #[staticmethod]
-    pub fn decode(v: &[u8]) -> PyResult<Py_ConfChangeV2_Owner> {
-        Ok(Py_ConfChangeV2_Owner {
+    pub fn decode(v: &[u8]) -> PyResult<Py_ConfChangeV2> {
+        Ok(Py_ConfChangeV2 {
             inner: to_pyresult(ProstMessage::decode(v))?,
         })
     }
@@ -99,7 +99,7 @@ impl Py_ConfChangeV2_Owner {
     }
 }
 
-impl Default for Py_ConfChangeV2_Owner {
+impl Default for Py_ConfChangeV2 {
     fn default() -> Self {
         Self::new()
     }
@@ -128,8 +128,8 @@ impl Py_ConfChangeV2_Ref {
         })
     }
 
-    pub fn clone(&self) -> PyResult<Py_ConfChangeV2_Owner> {
-        Ok(Py_ConfChangeV2_Owner {
+    pub fn clone(&self) -> PyResult<Py_ConfChangeV2> {
+        Ok(Py_ConfChangeV2 {
             inner: self.inner.map_as_ref(|x| x.clone())?,
         })
     }
@@ -218,12 +218,12 @@ impl Py_ConfChangeV2_Ref {
     }
 
     // TODO: Apply COW to below method
-    pub fn as_v2(&mut self) -> PyResult<Py_ConfChangeV2_Owner> {
+    pub fn as_v2(&mut self) -> PyResult<Py_ConfChangeV2> {
         self.clone().unwrap().make_ref().into_v2()
     }
 
-    pub fn into_v2(&mut self) -> PyResult<Py_ConfChangeV2_Owner> {
-        self.inner.map_as_mut(|inner| Py_ConfChangeV2_Owner {
+    pub fn into_v2(&mut self) -> PyResult<Py_ConfChangeV2> {
+        self.inner.map_as_mut(|inner| Py_ConfChangeV2 {
             inner: inner.clone(),
         })
     }

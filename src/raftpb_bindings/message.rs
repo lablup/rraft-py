@@ -18,8 +18,8 @@ use super::{
 };
 
 #[derive(Clone)]
-#[pyclass(name = "Message_Owner")]
-pub struct Py_Message_Owner {
+#[pyclass(name = "Message")]
+pub struct Py_Message {
     pub inner: Message,
 }
 
@@ -31,7 +31,7 @@ pub struct Py_Message_Ref {
 
 #[derive(FromPyObject)]
 pub enum Py_Message_Mut<'p> {
-    Owned(PyRefMut<'p, Py_Message_Owner>),
+    Owned(PyRefMut<'p, Py_Message>),
     RefMut(Py_Message_Ref),
 }
 
@@ -54,24 +54,24 @@ impl From<&mut Py_Message_Mut<'_>> for Message {
 }
 
 #[pymethods]
-impl Py_Message_Owner {
+impl Py_Message {
     #[new]
     pub fn new() -> Self {
-        Py_Message_Owner {
+        Py_Message {
             inner: Message::new(),
         }
     }
 
     #[staticmethod]
     pub fn default() -> Self {
-        Py_Message_Owner {
+        Py_Message {
             inner: Message::default(),
         }
     }
 
     #[staticmethod]
-    pub fn decode(v: &[u8]) -> PyResult<Py_Message_Owner> {
-        Ok(Py_Message_Owner {
+    pub fn decode(v: &[u8]) -> PyResult<Py_Message> {
+        Ok(Py_Message {
             inner: to_pyresult(ProstMessage::decode(v))?,
         })
     }
@@ -125,8 +125,8 @@ impl Py_Message_Ref {
         })
     }
 
-    pub fn clone(&self) -> PyResult<Py_Message_Owner> {
-        Ok(Py_Message_Owner {
+    pub fn clone(&self) -> PyResult<Py_Message> {
+        Ok(Py_Message {
             inner: self.inner.map_as_ref(|x| x.clone())?,
         })
     }

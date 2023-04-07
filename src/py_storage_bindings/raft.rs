@@ -15,14 +15,14 @@ use raftpb_bindings::{
     conf_state::Py_ConfState_Ref,
     entry::Py_Entry_Mut,
     hard_state::Py_HardState_Mut,
-    message::{Py_Message_Mut, Py_Message_Owner, Py_Message_Ref},
+    message::{Py_Message, Py_Message_Mut, Py_Message_Ref},
     snapshot::{Py_Snapshot_Mut, Py_Snapshot_Ref},
 };
 
 use bindings::{
     config::Py_Config_Mut,
     progress_tracker::Py_ProgressTracker_Ref,
-    read_state::{Py_ReadState_Mut, Py_ReadState_Owner},
+    read_state::{Py_ReadState, Py_ReadState_Mut},
     readonly_option::Py_ReadOnlyOption,
     soft_state::Py_SoftState_Ref,
     state_role::Py_StateRole,
@@ -30,30 +30,26 @@ use bindings::{
 use external_bindings::slog::Py_Logger_Mut;
 
 use crate::{
-    py_storage::{Py_Storage_Owner, Py_Storage_Ref},
+    py_storage::{Py_Storage, Py_Storage_Ref},
     raft_log::Py_RaftLog__PyStorage_Ref,
 };
 
-#[pyclass(name = "Raft_Owner")]
-pub struct Py_Raft__PyStorage_Owner {
-    pub inner: Raft<Py_Storage_Owner>,
+#[pyclass(name = "Raft")]
+pub struct Py_Raft__PyStorage {
+    pub inner: Raft<Py_Storage>,
 }
 
 #[pyclass(name = "Raft_Ref")]
 pub struct Py_Raft__PyStorage_Ref {
-    pub inner: RustRef<Raft<Py_Storage_Owner>>,
+    pub inner: RustRef<Raft<Py_Storage>>,
 }
 
 #[pymethods]
-impl Py_Raft__PyStorage_Owner {
+impl Py_Raft__PyStorage {
     #[new]
-    pub fn new(
-        cfg: Py_Config_Mut,
-        store: &Py_Storage_Owner,
-        logger: Py_Logger_Mut,
-    ) -> PyResult<Self> {
+    pub fn new(cfg: Py_Config_Mut, store: &Py_Storage, logger: Py_Logger_Mut) -> PyResult<Self> {
         Raft::new(&cfg.into(), store.clone(), &logger.into())
-            .map(|r| Py_Raft__PyStorage_Owner { inner: r })
+            .map(|r| Py_Raft__PyStorage { inner: r })
             .map_err(|e| runtime_error(&e.to_string()))
     }
 
@@ -406,7 +402,7 @@ impl Py_Raft__PyStorage_Ref {
             inner
                 .read_states
                 .iter()
-                .map(|rs| Py_ReadState_Owner { inner: rs.clone() })
+                .map(|rs| Py_ReadState { inner: rs.clone() })
                 .collect::<Vec<_>>()
                 .into_py(py)
         })
@@ -491,7 +487,7 @@ impl Py_Raft__PyStorage_Ref {
             let msgs = inner.msgs.drain(..).collect::<Vec<_>>();
 
             msgs.into_iter()
-                .map(|msg| Py_Message_Owner { inner: msg })
+                .map(|msg| Py_Message { inner: msg })
                 .collect::<Vec<_>>()
                 .into_py(py)
         })

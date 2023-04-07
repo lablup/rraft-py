@@ -9,8 +9,8 @@ use utils::{errors::to_pyresult, reference::RustRef};
 use super::conf_state::{Py_ConfState_Mut, Py_ConfState_Ref};
 
 #[derive(Clone)]
-#[pyclass(name = "SnapshotMetadata_Owner")]
-pub struct Py_SnapshotMetadata_Owner {
+#[pyclass(name = "SnapshotMetadata")]
+pub struct Py_SnapshotMetadata {
     pub inner: SnapshotMetadata,
 }
 
@@ -22,7 +22,7 @@ pub struct Py_SnapshotMetadata_Ref {
 
 #[derive(FromPyObject)]
 pub enum Py_SnapshotMetadata_Mut<'p> {
-    Owned(PyRefMut<'p, Py_SnapshotMetadata_Owner>),
+    Owned(PyRefMut<'p, Py_SnapshotMetadata>),
     RefMut(Py_SnapshotMetadata_Ref),
 }
 
@@ -45,24 +45,24 @@ impl From<&mut Py_SnapshotMetadata_Mut<'_>> for SnapshotMetadata {
 }
 
 #[pymethods]
-impl Py_SnapshotMetadata_Owner {
+impl Py_SnapshotMetadata {
     #[new]
     pub fn new() -> Self {
-        Py_SnapshotMetadata_Owner {
+        Py_SnapshotMetadata {
             inner: SnapshotMetadata::new(),
         }
     }
 
     #[staticmethod]
-    pub fn default() -> Py_SnapshotMetadata_Owner {
-        Py_SnapshotMetadata_Owner {
+    pub fn default() -> Py_SnapshotMetadata {
+        Py_SnapshotMetadata {
             inner: SnapshotMetadata::default(),
         }
     }
 
     #[staticmethod]
-    pub fn decode(v: &[u8]) -> PyResult<Py_SnapshotMetadata_Owner> {
-        Ok(Py_SnapshotMetadata_Owner {
+    pub fn decode(v: &[u8]) -> PyResult<Py_SnapshotMetadata> {
+        Ok(Py_SnapshotMetadata {
             inner: to_pyresult(ProstMessage::decode(v))?,
         })
     }
@@ -121,8 +121,8 @@ impl Py_SnapshotMetadata_Ref {
         })
     }
 
-    pub fn clone(&self) -> PyResult<Py_SnapshotMetadata_Owner> {
-        Ok(Py_SnapshotMetadata_Owner {
+    pub fn clone(&self) -> PyResult<Py_SnapshotMetadata> {
+        Ok(Py_SnapshotMetadata {
             inner: self.inner.map_as_ref(|inner| inner.clone())?,
         })
     }

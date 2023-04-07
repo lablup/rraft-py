@@ -1,14 +1,14 @@
 use pyo3::prelude::*;
 use raft::raw_node::LightReady;
 use raftpb_bindings::{
-    entry::{Py_Entry_Owner, Py_Entry_Ref},
-    message::{Py_Message_Owner, Py_Message_Ref},
+    entry::{Py_Entry, Py_Entry_Ref},
+    message::{Py_Message, Py_Message_Ref},
 };
 use utils::reference::RustRef;
 use utils::unsafe_cast::make_mut;
 
-#[pyclass(name = "LightReady_Owner")]
-pub struct Py_LightReady_Owner {
+#[pyclass(name = "LightReady")]
+pub struct Py_LightReady {
     pub inner: LightReady,
 }
 
@@ -18,10 +18,10 @@ pub struct Py_LightReady_Ref {
 }
 
 #[pymethods]
-impl Py_LightReady_Owner {
+impl Py_LightReady {
     #[staticmethod]
     pub fn default() -> Self {
-        Py_LightReady_Owner {
+        Py_LightReady {
             inner: LightReady::default(),
         }
     }
@@ -70,7 +70,7 @@ impl Py_LightReady_Ref {
             inner
                 .take_committed_entries()
                 .into_iter()
-                .map(|entry| Py_Entry_Owner { inner: entry })
+                .map(|entry| Py_Entry { inner: entry })
                 .collect::<Vec<_>>()
                 .into_py(py)
         })
@@ -94,7 +94,7 @@ impl Py_LightReady_Ref {
             inner
                 .take_messages()
                 .into_iter()
-                .map(|msg| Py_Message_Owner { inner: msg })
+                .map(|msg| Py_Message { inner: msg })
                 .collect::<Vec<_>>()
                 .into_py(py)
         })

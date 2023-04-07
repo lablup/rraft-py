@@ -3,11 +3,11 @@ from typing import Dict, List
 from harness.src.interface import Interface
 from harness.src.network import Network
 from rraft import (
-    ConfState_Owner,
-    Entry_Owner,
-    MemStorage_Owner,
+    ConfState,
+    Entry,
+    MemStorage,
     MemStorage_Ref,
-    Message_Owner,
+    Message,
     Message_Ref,
     MessageType,
     StateRole,
@@ -56,7 +56,7 @@ def commit_noop_entry(r: Interface, s: MemStorage_Ref):
         r.raft.commit_apply(committed)
 
 
-def accept_and_reply(m: Message_Ref) -> Message_Owner:
+def accept_and_reply(m: Message_Ref) -> Message:
     assert m.get_msg_type() == MessageType.MsgAppend
     reply = new_message(m.get_to(), m.get_from(), MessageType.MsgAppendResponse, 0)
     reply.set_term(m.get_term())
@@ -130,7 +130,7 @@ def test_leader_bcast_beat():
     msgs = r.read_messages()
     msgs.sort(key=lambda m: str(m))
 
-    def new_message_ext(f: int, to: int) -> Message_Owner:
+    def new_message_ext(f: int, to: int) -> Message:
         m = new_message(f, to, MessageType.MsgHeartbeat, 0)
         m.set_term(1)
         m.set_commit(0)
@@ -179,7 +179,7 @@ def test_nonleader_start_election(state: StateRole):
     msgs = r.read_messages()
     msgs.sort(key=lambda m: str(m))
 
-    def new_message_ext(f: int, to: int) -> Message_Owner:
+    def new_message_ext(f: int, to: int) -> Message:
         m = new_message(f, to, MessageType.MsgRequestVote, 0)
         m.set_term(2)
         return m
@@ -289,12 +289,12 @@ def test_follower_vote():
 def test_candidate_fallback():
     l = default_logger()
 
-    def new_message_ext(f: int, to: int, term: int) -> Message_Owner:
+    def new_message_ext(f: int, to: int, term: int) -> Message:
         m = new_message(f, to, MessageType.MsgAppend, 0)
         m.set_term(term)
         return m
 
-    tests: List[Message_Owner] = [
+    tests: List[Message] = [
         new_message_ext(2, 1, 2),
         new_message_ext(2, 1, 3),
     ]
@@ -418,7 +418,7 @@ def test_leader_start_replication():
         new_entry(1, li + 1, SOME_DATA)
     ]
 
-    def new_message_ext(f: int, to: int, ents: List[Entry_Owner]) -> Message_Owner:
+    def new_message_ext(f: int, to: int, ents: List[Entry]) -> Message:
         m = new_message(f, to, MessageType.MsgAppend, 0)
         m.set_term(1)
         m.set_index(li)
@@ -526,7 +526,7 @@ def test_leader_acknowledge_commit():
 # Reference: section 5.3
 def test_leader_commit_preceding_entries():
     l = default_logger()
-    tests: List[List[Entry_Owner]] = [
+    tests: List[List[Entry]] = [
         [],
         [empty_entry(2, 1)],
         [empty_entry(1, 1), empty_entry(2, 2)],
@@ -534,8 +534,8 @@ def test_leader_commit_preceding_entries():
     ]
 
     for i, tt in enumerate(tests):
-        cs_owner = ConfState_Owner([1, 2, 3], [])
-        store = MemStorage_Owner.new_with_conf_state(cs_owner)
+        cs = ConfState([1, 2, 3], [])
+        store = MemStorage.new_with_conf_state(cs)
         store.wl(lambda core: core.append(tt))
         cfg = new_test_config(1, 10, 1)
         r = new_test_raft_with_config(cfg, store, l)
@@ -566,7 +566,7 @@ def test_follower_commit_entry():
     l = default_logger()
 
     class Test:
-        def __init__(self, ents: List[Entry_Owner], commit: int):
+        def __init__(self, ents: List[Entry], commit: int):
             self.ents = ents
             self.commit = commit
 
@@ -708,8 +708,8 @@ def test_follower_check_msg_append():
             v.w_log_term,
         )
 
-        cs = ConfState_Owner([1, 2, 3], [])
-        store: MemStorage_Owner = MemStorage_Owner.new_with_conf_state(cs)
+        cs = ConfState([1, 2, 3], [])
+        store: MemStorage = MemStorage.new_with_conf_state(cs)
         store.wl(lambda core: core.append(ents))
         cfg = new_test_config(1, 10, 1)
         r = new_test_raft_with_config(cfg, store, l)
@@ -752,9 +752,9 @@ def test_follower_append_entries():
             self,
             index: int,
             term: int,
-            ents: List[Entry_Owner],
-            wents: List[Entry_Owner],
-            wunstable: List[Entry_Owner],
+            ents: List[Entry],
+            wents: List[Entry],
+            wunstable: List[Entry],
         ) -> None:
             self.index = index
             self.term = term
@@ -789,8 +789,8 @@ def test_follower_append_entries():
             v.wents,
             v.wunstable,
         )
-        cs = ConfState_Owner([1, 2, 3], [])
-        store = MemStorage_Owner.new_with_conf_state(cs)
+        cs = ConfState([1, 2, 3], [])
+        store = MemStorage.new_with_conf_state(cs)
         store.wl(lambda core: core.append([empty_entry(1, 1), empty_entry(2, 2)]))
         cfg = new_test_config(1, 10, 1)
         r = new_test_raft_with_config(cfg, store, l)
@@ -899,8 +899,8 @@ def test_leader_sync_follower_log():
     ]
 
     for i, tt in enumerate(tests):
-        lead_cs = ConfState_Owner([1, 2, 3], [])
-        lead_store = MemStorage_Owner.new_with_conf_state(lead_cs)
+        lead_cs = ConfState([1, 2, 3], [])
+        lead_store = MemStorage.new_with_conf_state(lead_cs)
         lead_store.wl(lambda core: core.append(ents))
         lead_cfg = new_test_config(1, 10, 1)
         lead = new_test_raft_with_config(lead_cfg, lead_store, l)
@@ -908,8 +908,8 @@ def test_leader_sync_follower_log():
         lead_hs = hard_state(term, last_index, 0)
         lead.raft.load_state(lead_hs)
 
-        follower_cs = ConfState_Owner([1, 2, 3], [])
-        follower_store = MemStorage_Owner.new_with_conf_state(follower_cs)
+        follower_cs = ConfState([1, 2, 3], [])
+        follower_store = MemStorage.new_with_conf_state(follower_cs)
         follower_store.wl(lambda core: core.append(tt))
 
         follower_cfg = new_test_config(2, 10, 1)
@@ -933,7 +933,7 @@ def test_leader_sync_follower_log():
         n.send([m])
 
         m = new_message(1, 1, MessageType.MsgPropose, 0)
-        e = Entry_Owner.default()
+        e = Entry.default()
         m.set_entries([e])
         n.send([m])
 
@@ -952,7 +952,7 @@ def test_vote_request():
     l = default_logger()
 
     class Test:
-        def __init__(self, ents: List[Entry_Owner], wterm: int) -> None:
+        def __init__(self, ents: List[Entry], wterm: int) -> None:
             self.ents = ents
             self.wterm = wterm
 
@@ -1013,7 +1013,7 @@ def test_voter():
 
     class Test:
         def __init__(
-            self, ents: List[Entry_Owner], log_term: int, index: int, wreject: bool
+            self, ents: List[Entry], log_term: int, index: int, wreject: bool
         ) -> None:
             self.ents = ents
             self.log_term = log_term
@@ -1037,8 +1037,8 @@ def test_voter():
 
     for i, v in enumerate(tests):
         ents, log_term, index, wreject = (v.ents, v.log_term, v.index, v.wreject)
-        cs = ConfState_Owner([1, 2], [])
-        s = MemStorage_Owner.new_with_conf_state(cs)
+        cs = ConfState([1, 2], [])
+        s = MemStorage.new_with_conf_state(cs)
         s.wl(lambda core: core.append(ents))
         cfg = new_test_config(1, 10, 1)
         r = new_test_raft_with_config(cfg, s, l)
@@ -1083,8 +1083,8 @@ def test_leader_only_commits_log_from_current_term():
 
     for i, v in enumerate(tests):
         index, wcommit = (v.index, v.wcommit)
-        cs = ConfState_Owner([1, 2], [])
-        store = MemStorage_Owner.new_with_conf_state(cs)
+        cs = ConfState([1, 2], [])
+        store = MemStorage.new_with_conf_state(cs)
         store.wl(lambda core: core.append(ents))
         cfg = new_test_config(1, 10, 1)
         r = new_test_raft_with_config(cfg, store, l)

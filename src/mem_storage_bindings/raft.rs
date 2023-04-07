@@ -17,14 +17,14 @@ use raftpb_bindings::{
     conf_state::Py_ConfState_Ref,
     entry::Py_Entry_Mut,
     hard_state::Py_HardState_Mut,
-    message::{Py_Message_Mut, Py_Message_Owner, Py_Message_Ref},
+    message::{Py_Message, Py_Message_Mut, Py_Message_Ref},
     snapshot::{Py_Snapshot_Mut, Py_Snapshot_Ref},
 };
 
 use bindings::{
     config::Py_Config_Mut,
     progress_tracker::Py_ProgressTracker_Ref,
-    read_state::{Py_ReadState_Mut, Py_ReadState_Owner},
+    read_state::{Py_ReadState, Py_ReadState_Mut},
     readonly_option::Py_ReadOnlyOption,
     soft_state::Py_SoftState_Ref,
     state_role::Py_StateRole,
@@ -35,8 +35,8 @@ use crate::raft_log::Py_RaftLog__MemStorage_Ref;
 
 use super::mem_storage::{Py_MemStorage_Mut, Py_MemStorage_Ref};
 
-#[pyclass(name = "Raft__MemStorage_Owner")]
-pub struct Py_Raft__MemStorage_Owner {
+#[pyclass(name = "Raft__MemStorage")]
+pub struct Py_Raft__MemStorage {
     pub inner: Raft<MemStorage>,
 }
 
@@ -46,7 +46,7 @@ pub struct Py_Raft__MemStorage_Ref {
 }
 
 #[pymethods]
-impl Py_Raft__MemStorage_Owner {
+impl Py_Raft__MemStorage {
     #[new]
     pub fn new(
         cfg: Py_Config_Mut,
@@ -54,7 +54,7 @@ impl Py_Raft__MemStorage_Owner {
         logger: Py_Logger_Mut,
     ) -> PyResult<Self> {
         Raft::new(&cfg.into(), store.into(), &logger.into())
-            .map(|r| Py_Raft__MemStorage_Owner { inner: r })
+            .map(|r| Py_Raft__MemStorage { inner: r })
             .map_err(|e| runtime_error(&e.to_string()))
     }
 
@@ -407,7 +407,7 @@ impl Py_Raft__MemStorage_Ref {
             inner
                 .read_states
                 .iter()
-                .map(|rs| Py_ReadState_Owner { inner: rs.clone() })
+                .map(|rs| Py_ReadState { inner: rs.clone() })
                 .collect::<Vec<_>>()
                 .into_py(py)
         })
@@ -492,7 +492,7 @@ impl Py_Raft__MemStorage_Ref {
             let msgs = inner.msgs.drain(..).collect::<Vec<_>>();
 
             msgs.into_iter()
-                .map(|msg| Py_Message_Owner { inner: msg })
+                .map(|msg| Py_Message { inner: msg })
                 .collect::<Vec<_>>()
                 .into_py(py)
         })

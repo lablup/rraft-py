@@ -8,13 +8,13 @@ use raft::{
     NO_LIMIT,
 };
 use raftpb_bindings::conf_change::new_conf_change_single as _new_conf_change_single;
-use raftpb_bindings::conf_change_single::Py_ConfChangeSingle_Owner;
+use raftpb_bindings::conf_change_single::Py_ConfChangeSingle;
 use raftpb_bindings::conf_change_type::Py_ConfChangeType;
 use raftpb_bindings::message_type::{
     is_local_msg as _is_local_msg, is_response_msg as _is_response_msg,
 };
 
-use external_bindings::slog::Py_Logger_Owner;
+use external_bindings::slog::Py_Logger;
 use raftpb_bindings::message_type::Py_MessageType;
 
 // Global scope functions
@@ -24,8 +24,8 @@ pub fn majority(total: usize) -> usize {
 }
 
 #[pyfunction]
-pub fn default_logger() -> Py_Logger_Owner {
-    Py_Logger_Owner {
+pub fn default_logger() -> Py_Logger {
+    Py_Logger {
         inner: _default_logger(),
     }
 }
@@ -36,8 +36,8 @@ pub fn vote_resp_msg_type(typ: &Py_MessageType) -> Py_MessageType {
 }
 
 #[pyfunction]
-pub fn new_conf_change_single(node_id: u64, typ: &Py_ConfChangeType) -> Py_ConfChangeSingle_Owner {
-    Py_ConfChangeSingle_Owner {
+pub fn new_conf_change_single(node_id: u64, typ: &Py_ConfChangeType) -> Py_ConfChangeSingle {
+    Py_ConfChangeSingle {
         inner: _new_conf_change_single(node_id, typ.0),
     }
 }

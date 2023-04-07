@@ -10,8 +10,8 @@ use raftpb_bindings::{
     snapshot::Py_Snapshot_Mut,
 };
 
-#[pyclass(name = "MemStorageCore_Owner")]
-pub struct Py_MemStorageCore_Owner {
+#[pyclass(name = "MemStorageCore")]
+pub struct Py_MemStorageCore {
     pub inner: MemStorageCore,
 }
 
@@ -21,10 +21,10 @@ pub struct Py_MemStorageCore_Ref {
 }
 
 #[pymethods]
-impl Py_MemStorageCore_Owner {
+impl Py_MemStorageCore {
     #[staticmethod]
     pub fn default() -> Self {
-        Py_MemStorageCore_Owner {
+        Py_MemStorageCore {
             inner: MemStorageCore::default(),
         }
     }

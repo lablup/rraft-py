@@ -8,8 +8,8 @@ use raft::JointConfig;
 use utils::reference::RustRef;
 
 #[derive(Clone)]
-#[pyclass(name = "JointConfig_Owner")]
-pub struct Py_JointConfig_Owner {
+#[pyclass(name = "JointConfig")]
+pub struct Py_JointConfig {
     pub inner: JointConfig,
 }
 
@@ -21,7 +21,7 @@ pub struct Py_JointConfig_Ref {
 
 #[derive(FromPyObject)]
 pub enum Py_JointConfig_Mut<'p> {
-    Owned(PyRefMut<'p, Py_JointConfig_Owner>),
+    Owned(PyRefMut<'p, Py_JointConfig>),
     RefMut(Py_JointConfig_Ref),
 }
 
@@ -44,10 +44,10 @@ impl From<&mut Py_JointConfig_Mut<'_>> for JointConfig {
 }
 
 #[pymethods]
-impl Py_JointConfig_Owner {
+impl Py_JointConfig {
     #[new]
     pub fn new(voters: &PySet) -> Self {
-        Py_JointConfig_Owner {
+        Py_JointConfig {
             inner: JointConfig::new(
                 voters
                     .extract::<HashSet<u64, BuildHasherDefault<FxHasher>>>()
@@ -113,8 +113,8 @@ impl Py_JointConfig_Ref {
         self.inner.map_as_ref(|inner| inner.contains(id))
     }
 
-    pub fn clone(&self) -> PyResult<Py_JointConfig_Owner> {
-        Ok(Py_JointConfig_Owner {
+    pub fn clone(&self) -> PyResult<Py_JointConfig> {
+        Ok(Py_JointConfig {
             inner: self.inner.map_as_ref(|inner| inner.clone())?,
         })
     }

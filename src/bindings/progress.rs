@@ -10,8 +10,8 @@ use super::{
 };
 
 #[derive(Clone)]
-#[pyclass(name = "Progress_Owner")]
-pub struct Py_Progress_Owner {
+#[pyclass(name = "Progress")]
+pub struct Py_Progress {
     pub inner: Progress,
 }
 
@@ -23,7 +23,7 @@ pub struct Py_Progress_Ref {
 
 #[derive(FromPyObject)]
 pub enum Py_Progress_Mut<'p> {
-    Owned(PyRefMut<'p, Py_Progress_Owner>),
+    Owned(PyRefMut<'p, Py_Progress>),
     RefMut(Py_Progress_Ref),
 }
 
@@ -46,10 +46,10 @@ impl From<&mut Py_Progress_Mut<'_>> for Progress {
 }
 
 #[pymethods]
-impl Py_Progress_Owner {
+impl Py_Progress {
     #[new]
     pub fn new(next_idx: u64, ins_size: usize) -> Self {
-        Py_Progress_Owner {
+        Py_Progress {
             inner: Progress::new(next_idx, ins_size),
         }
     }
@@ -103,8 +103,8 @@ impl Py_Progress_Ref {
         })
     }
 
-    pub fn clone(&self) -> PyResult<Py_Progress_Owner> {
-        Ok(Py_Progress_Owner {
+    pub fn clone(&self) -> PyResult<Py_Progress> {
+        Ok(Py_Progress {
             inner: self.inner.map_as_ref(|x| x.clone())?,
         })
     }

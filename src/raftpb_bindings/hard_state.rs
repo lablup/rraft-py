@@ -7,8 +7,8 @@ use raft::eraftpb::HardState;
 use utils::{errors::to_pyresult, reference::RustRef};
 
 #[derive(Clone)]
-#[pyclass(name = "HardState_Owner")]
-pub struct Py_HardState_Owner {
+#[pyclass(name = "HardState")]
+pub struct Py_HardState {
     pub inner: HardState,
 }
 
@@ -20,7 +20,7 @@ pub struct Py_HardState_Ref {
 
 #[derive(FromPyObject)]
 pub enum Py_HardState_Mut<'p> {
-    Owned(PyRefMut<'p, Py_HardState_Owner>),
+    Owned(PyRefMut<'p, Py_HardState>),
     RefMut(Py_HardState_Ref),
 }
 
@@ -43,24 +43,24 @@ impl From<&mut Py_HardState_Mut<'_>> for HardState {
 }
 
 #[pymethods]
-impl Py_HardState_Owner {
+impl Py_HardState {
     #[new]
     pub fn new() -> Self {
-        Py_HardState_Owner {
+        Py_HardState {
             inner: HardState::new(),
         }
     }
 
     #[staticmethod]
     pub fn default() -> Self {
-        Py_HardState_Owner {
+        Py_HardState {
             inner: HardState::default(),
         }
     }
 
     #[staticmethod]
-    pub fn decode(v: &[u8]) -> PyResult<Py_HardState_Owner> {
-        Ok(Py_HardState_Owner {
+    pub fn decode(v: &[u8]) -> PyResult<Py_HardState> {
+        Ok(Py_HardState {
             inner: to_pyresult(ProstMessage::decode(v))?,
         })
     }
@@ -119,8 +119,8 @@ impl Py_HardState_Ref {
         })
     }
 
-    pub fn clone(&self) -> PyResult<Py_HardState_Owner> {
-        Ok(Py_HardState_Owner {
+    pub fn clone(&self) -> PyResult<Py_HardState> {
+        Ok(Py_HardState {
             inner: self.inner.map_as_ref(|x| x.clone())?,
         })
     }

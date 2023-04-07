@@ -3,13 +3,13 @@ from collections import deque
 from time import sleep
 from typing import Any, Optional, Tuple, Deque
 from rraft import (
-    ConfChange_Owner,
+    ConfChange,
     ConfChange_Ref,
     ConfChangeType,
-    ConfState_Owner,
+    ConfState,
     Config,
-    Logger_Owner,
-    MemStorage_Owner,
+    Logger,
+    MemStorage,
     OverflowStrategy,
     RawNode__MemStorage_Ref,
 )
@@ -30,7 +30,7 @@ class Proposal:
     def __init__(
         self,
         normal: Tuple[int, str],
-        conf_change: Optional[ConfChange_Owner],
+        conf_change: Optional[ConfChange],
         transfer_leader: Optional[int],
         # If it's proposed, it will be set to the index of the entry.
         proposed: int,
@@ -55,12 +55,12 @@ class Proposal:
 
 def add_all_followers(proposals: Deque[Proposal]):
     for i in range(2, 65):
-        conf_change_owner = ConfChange_Owner()
-        conf_change_owner.set_node_id(i)
-        conf_change_owner.set_change_type(ConfChangeType.AddNode)
+        conf_change = ConfChange()
+        conf_change.set_node_id(i)
+        conf_change.set_change_type(ConfChangeType.AddNode)
 
         while True:
-            proposal, rx = Proposal.conf_change(conf_change_owner)
+            proposal, rx = Proposal.conf_change(conf_change)
             proposals.append(proposal)
 
             sleep(0.1)
@@ -74,10 +74,10 @@ if __name__ == "__main__":
     # Create a storage for Raft, and here we just use a simple memory storage.
     # You need to build your own persistent storage in your production.
     # Please check the Storage trait in src/storage.rs to see how to implement one.
-    cs_owner = ConfState_Owner(voters=[1], learners=[])
-    storage_owner = MemStorage_Owner.new_with_conf_state(cs_owner)
+    cs = ConfState(voters=[1], learners=[])
+    storage = MemStorage.new_with_conf_state(cs)
 
-    logger_owner = Logger_Owner(
+    logger = Logger(
         chan_size=4096, overflow_strategy=OverflowStrategy.Block
     )
 
