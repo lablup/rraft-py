@@ -146,9 +146,72 @@ def test_msg_app_flow_control_recv_heartbeat():
         r.read_messages()
 
 
-# TODO: Add below test after upgrading raft-rs v0.7.
 def test_msg_app_flow_control_with_freeing_resources():
-    pass
+    l = default_logger()
+    s = new_storage()
+    r = new_test_raft(1, [1, 2, 3], 5, 1, s, l)
+
+    r.raft.become_candidate()
+    r.raft.become_leader()
+
+    for pr in r.raft.prs().collect():
+        assert not pr.progress().get_ins().buffer_is_allocated()
+
+    for i in range(1, 3 + 1):
+        # Force the progress to be in replicate state.
+        r.raft.prs().get(i).become_replicate()
+
+    r.raft.step(new_message(1, 1, MessageType.MsgPropose, 1))
+
+    for pr in r.raft.prs().collect():
+        if pr.id() != 1:
+            assert pr.progress().get_ins().buffer_is_allocated()
+            assert pr.progress().get_ins().count() == 1
+
+    # 1: cap=0/start=0/count=0/buffer=[]
+    # 2: cap=256/start=0/count=1/buffer=[2]
+    # 3: cap=256/start=0/count=1/buffer=[2]
+
+    resp = new_message(2, 1, MessageType.MsgAppendResponse, 0)
+    resp.set_index(r.raft_log.last_index())
+    r.step(resp)
+
+    assert r.raft.prs().get(2).get_ins().count() == 0
+
+    # 1: cap=0/start=0/count=0/buffer=[]
+    # 2: cap=256/start=1/count=0/buffer=[2]
+    # 3: cap=256/start=0/count=1/buffer=[2]
+
+    r.step(new_message(1, 1, MessageType.MsgPropose, 1))
+
+    assert r.raft.prs().get(2).get_ins().count(), 1
+    assert r.raft.prs().get(3).get_ins().count(), 2
+
+    # 1: cap=0/start=0/count=0/buffer=[]
+    # 2: cap=256/start=1/count=1/buffer=[2,3]
+    # 3: cap=256/start=0/count=2/buffer=[2,3]
+
+    resp = new_message(2, 1, MessageType.MsgAppendResponse, 0)
+    resp.set_index(r.raft_log.last_index())
+    r.step(resp)
+
+    assert r.raft.prs().get(2).get_ins().count() == 0
+    assert r.raft.prs().get(3).get_ins().count() == 2
+    assert r.raft.inflight_buffers_size() == 4096
+
+    # 1: cap=0/start=0/count=0/buffer=[]
+    # 2: cap=256/start=2/count=0/buffer=[2,3]
+    # 3: cap=256/start=0/count=2/buffer=[2,3]
+
+    r.raft.maybe_free_inflight_buffers()
+
+    assert not r.raft.prs().get(2).get_ins().buffer_is_allocated()
+    assert r.raft.prs().get(2).get_ins().count() == 0
+    assert r.raft.inflight_buffers_size() == 2048
+
+    # 1: cap=0/start=0/count=0/buffer=[]
+    # 2: cap=0/start=0/count=0/buffer=[]
+    # 3: cap=256/start=0/count=2/buffer=[2,3]
 
 
 # TODO: Add below test after upgrading raft-rs v0.7.
