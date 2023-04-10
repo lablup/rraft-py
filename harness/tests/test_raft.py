@@ -5408,3 +5408,27 @@ def test_fast_log_rejection():
         assert len(msgs) == 1, f"{i}"
         assert msgs[0].get_log_term() == next_append_term, f"{i}"
         assert msgs[0].get_index() == next_append_index, f"{i}"
+
+
+def test_switching_check_quorum():
+    l = default_logger()
+    s = new_storage()
+    sm = new_test_raft(1, [1, 2, 3], 5, 1, s, l)
+
+    sm.raft.set_check_quorum(True)
+    sm.raft.become_candidate()
+    sm.raft.become_leader()
+    for _ in range(0, sm.raft.election_timeout() + 1):
+        sm.raft.tick()
+
+    assert sm.raft.get_state() != StateRole.Leader
+
+    sm.persist()
+    sm.raft.set_check_quorum(False)
+    sm.raft.become_candidate()
+    sm.raft.become_leader()
+
+    for _ in range(0, sm.raft.election_timeout() + 1):
+        sm.raft.tick()
+
+    assert sm.raft.get_state() == StateRole.Leader
