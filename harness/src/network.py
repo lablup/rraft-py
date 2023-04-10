@@ -65,7 +65,7 @@ class Network:
     # A `None` node will be replaced with a new Raft node, and its configuration will
     # be `peers`.
     @staticmethod
-    def new(peers: List[Optional[Interface]], l: Logger) -> Any:
+    def new(peers: List[Optional[Interface]], l: Logger) -> "Network":
         cfg = Network.default_config()
         return Network.new_with_config(peers, cfg, l)
 
@@ -75,7 +75,7 @@ class Network:
         peers: List[Optional[Interface]],
         config: Config | Config_Ref,
         l: Logger,
-    ) -> Any:
+    ) -> "Network":
         nstorage = {}
         npeers = {}
         peer_addrs = list(range(1, len(peers) + 1))
