@@ -587,4 +587,18 @@ impl Py_Raft__PyStorage_Ref {
             _ => panic!("Invalid campaign type"),
         })
     }
+
+    pub fn inflight_buffers_size(&self) -> PyResult<usize> {
+        self.inner.map_as_ref(|inner| inner.inflight_buffers_size())
+    }
+
+    pub fn maybe_free_inflight_buffers(&mut self) -> PyResult<()> {
+        self.inner
+            .map_as_mut(|inner| inner.maybe_free_inflight_buffers())
+    }
+
+    pub fn adjust_max_inflight_msgs(&mut self, target: u64, cap: usize) -> PyResult<()> {
+        self.inner
+            .map_as_mut(|inner| inner.adjust_max_inflight_msgs(target, cap))
+    }
 }
