@@ -214,6 +214,31 @@ def test_msg_app_flow_control_with_freeing_resources():
     # 3: cap=256/start=0/count=2/buffer=[2,3]
 
 
-# TODO: Add below test after upgrading raft-rs v0.7.
 def test_disable_progress():
-    pass
+    l = default_logger()
+    s = new_storage()
+    r = new_test_raft(1, [1, 2], 5, 1, s, l)
+    r.raft.become_candidate()
+    r.raft.become_leader()
+
+    r.raft.prs().get(2).become_replicate()
+
+    # Disable the progress 2. Internal `free`s shouldn't fail.
+    r.raft.adjust_max_inflight_msgs(2, 0)
+    r.step(new_message(2, 1, MessageType.MsgHeartbeatResponse, 0))
+
+    assert r.raft.prs().get(2).get_ins().full()
+    assert not r.raft.prs().get(2).get_ins().count()
+
+    # Progress 2 is disabled.
+    msgs = r.read_messages()
+    assert not msgs
+
+    # After the progress gets enabled and a heartbeat response is received,
+    # its leader can continue to append entries to it.
+    r.raft.adjust_max_inflight_msgs(2, 10)
+    r.step(new_message(2, 1, MessageType.MsgHeartbeatResponse, 0))
+
+    msgs = r.read_messages()
+    assert len(msgs) == 1
+    assert msgs[0].get_msg_type() == MessageType.MsgAppend
