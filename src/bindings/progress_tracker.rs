@@ -6,9 +6,9 @@ use pyo3::types::PyDict;
 use pyo3::{prelude::*, types::PySet};
 
 use fxhash::FxHasher;
-use raft::ProgressTracker;
+use raft::{Progress, ProgressTracker};
 use utils::reference::RustRef;
-use utils::unsafe_cast::make_mut;
+use utils::unsafe_cast::{make_mut, make_static};
 
 use super::joint_config::Py_JointConfig_Ref;
 use super::progress::Py_Progress_Ref;
@@ -76,6 +76,22 @@ impl Py_ProgressTracker {
     }
 }
 
+#[pyclass]
+pub struct Py_ProgressMapItem(pub &'static u64, pub &'static Progress);
+
+#[pymethods]
+impl Py_ProgressMapItem {
+    pub fn id(&self) -> u64 {
+        *self.0
+    }
+
+    pub fn progress(&self) -> Py_Progress_Ref {
+        Py_Progress_Ref {
+            inner: RustRef::new(unsafe { make_mut(self.1) }),
+        }
+    }
+}
+
 #[pymethods]
 impl Py_ProgressTracker_Ref {
     pub fn clone(&self) -> PyResult<Py_ProgressTracker> {
@@ -89,6 +105,21 @@ impl Py_ProgressTracker_Ref {
             inner.get(id).map(|progress| Py_Progress_Ref {
                 inner: RustRef::new(unsafe { make_mut(progress) }),
             })
+        })
+    }
+
+    // TODO: Replace below function with `iter` when https://github.com/PyO3/pyo3/issues/1085 resolved.
+    pub fn collect(&mut self, py: Python) -> PyResult<PyObject> {
+        self.inner.map_as_mut(|inner| {
+            inner
+                .iter_mut()
+                .map(|item| {
+                    Py_ProgressMapItem(unsafe { make_static(item.0) }, unsafe {
+                        make_static(item.1)
+                    })
+                })
+                .collect::<Vec<_>>()
+                .into_py(py)
         })
     }
 
@@ -154,10 +185,6 @@ impl Py_ProgressTracker_Ref {
         })
     }
 
-    // pub fn tally_votes(&self) -> (usize, usize, VoteResult) {
-    //     self.inner.tally_votes()
-    // }
-
     pub fn conf_voters(&mut self) -> PyResult<Py_JointConfig_Ref> {
         self.inner.map_as_mut(|inner| Py_JointConfig_Ref {
             inner: RustRef::new(unsafe { make_mut(inner.conf().voters()) }),
@@ -168,6 +195,10 @@ impl Py_ProgressTracker_Ref {
         self.inner
             .map_as_mut(|inner| inner.conf().learners().clone().into_py(py))
     }
+
+    // pub fn tally_votes(&self) -> (usize, usize, VoteResult) {
+    //     self.inner.tally_votes()
+    // }
 
     // pub fn apply_conf(&mut self, conf: Configuration, changes: MapChange, next_idx: u64) -> bool {
     //     self.inner.apply_conf(conf, changes, next_idx)
