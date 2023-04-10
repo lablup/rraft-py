@@ -2040,6 +2040,19 @@ class __Raft:
         """ """
     def set_read_only_option(self, option: ReadOnlyOption) -> None:
         """ """
+    def inflight_buffers_size(self) -> int:
+        """Get the inflight buffer size."""
+    def maybe_free_inflight_buffers(self) -> None:
+        """
+        A Raft leader allocates a vector with capacity `max_inflight_msgs` for every peer.
+        It takes a lot of memory if there are too many Raft groups. `maybe_free_inflight_buffers`
+        is used to free memory if necessary.
+        """
+    def adjust_max_inflight_msgs(self, target: int, cap: int) -> None:
+        """
+        To adjust `max_inflight_msgs` for the specified peer.
+        Set to `0` will disable the progress.
+        """
 
 class Raft__MemStorage(__Raft):
     """
@@ -2078,6 +2091,10 @@ class Raft_Ref(__Raft):
     """
     Reference type of :class:`Raft`.
     """
+
+class ProgressMapItem:
+    def id(self) -> int: ...
+    def progress(self) -> Progress: ...
 
 class __ProgressTracker(__Cloneable):
     def clone(self) -> ProgressTracker: ...
@@ -2129,6 +2146,8 @@ class __ProgressTracker(__Cloneable):
     def conf_voters(self) -> JointConfig_Ref:
         """ """
     def conf_learners(self) -> Set[int]:
+        """ """
+    def collect(self) -> List[ProgressMapItem]:
         """ """
 
 class ProgressTracker(__ProgressTracker):
@@ -2332,6 +2351,14 @@ class __Inflights(__Cloneable):
         """Frees the inflights smaller or equal to the given `to` flight."""
     def free_first_one(self) -> None:
         """Frees the first buffer entry."""
+    def maybe_free_buffer(self) -> None:
+        """Free unused memory"""
+    def buffer_capacity(self) -> int:
+        """Capacity of the internal buffer."""
+    def buffer_is_allocated(self) -> bool:
+        """Whether buffer is allocated or not. It's for tests."""
+    def count(self) -> int:
+        """Number of inflight messages. It's for tests."""
 
 class Inflights(__Inflights):
     """
