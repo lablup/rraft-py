@@ -127,4 +127,20 @@ impl Py_Inflights_Ref {
     pub fn free_first_one(&mut self) -> PyResult<()> {
         self.inner.map_as_mut(|inner| inner.free_first_one())
     }
+
+    pub fn maybe_free_buffer(&mut self) -> PyResult<()> {
+        self.inner.map_as_mut(|inner| inner.maybe_free_buffer())
+    }
+
+    pub fn buffer_capacity(&self) -> PyResult<usize> {
+        self.inner.map_as_ref(|inner| inner.buffer_capacity())
+    }
+
+    pub fn buffer_is_allocated(&self) -> PyResult<bool> {
+        self.inner.map_as_ref(|inner| inner.buffer_is_allocated())
+    }
+
+    pub fn count(&self) -> PyResult<usize> {
+        self.inner.map_as_ref(|inner| inner.count())
+    }
 }
