@@ -43,4 +43,4 @@ $ pip install rraft-py
 
 ## Reference
 
-- [huggingface/tokenizer](https://github.com/huggingface/tokenizers/tree/main/bindings/python) - This lib's Reference type abstraction is inspired from this binding.
+- [huggingface/tokenizer](https://github.com/huggingface/tokenizers/tree/main/bindings/python) - This lib's Reference type implementation is greatly inspired from this binding.
