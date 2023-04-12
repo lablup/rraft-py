@@ -1,9 +1,5 @@
 """
 Type hints for Native Rust Extension
-
-Ideally this file could eventually be generated automatically.
-but for now this should be handwritten.
-See https://github.com/PyO3/pyo3/issues/2454
 """
 from abc import ABCMeta, abstractmethod
 from typing import Any, Callable, Final, List, Optional, Set, Tuple
