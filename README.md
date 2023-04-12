@@ -21,13 +21,15 @@ This binding was created to resolve this problem and to make it possible to inte
 
 This binding bypasses the memory management differences between Python and Rust through the following API modeling, which is quite different from typical Python use cases.
 
-Types have ownership of their respective types. For example, instances created with the `Config` constructor are modeled to have ownership of the `Config` object in Rust.
+General types have *ownership* of their respective types.
+
+For example, instances created with the `Config` constructor are modeled to have ownership of the `Config` object in Rust.
 
 Apart from this, there is a type named `Config_Ref`, which is modeled as a reference "Container Object" that only holds a reference to the `Config` type.
 
 The most of APIs of `rraft-py` are modeled internally to handle both types with ownership and container object types.
 
-However, a few APIs may require only types with ownership. This kind of type information is specified in the [rraft.pyi](https://github.com/lablup/rraft-py/blob/main/rraft.pyi) file. Passing a reference to an instance without ownership in Python to an API cause segmentation fault (named `destored_error`) which is hard to debugging. 
+However, a few APIs may require only types with ownership. This kind of type information is specified in the [rraft.pyi](https://github.com/lablup/rraft-py/blob/main/rraft.pyi). Passing a reference to an instance without ownership in Python to an API cause segmentation fault (named `destored_error`) which is hard to debugging. 
 
 Understanding Rust's ownership concept can help you resolve these kinds of problems.
 
@@ -43,4 +45,5 @@ $ pip install rraft-py
 
 ## Reference
 
+- [tikv/raft-rs](https://docs.rs/raft/latest/raft) - This binding provides almost completely similar APIs with raft-rs, so it would be helpful to refer to its documentation.
 - [huggingface/tokenizer](https://github.com/huggingface/tokenizers/tree/main/bindings/python) - This lib's Reference type implementation is greatly inspired from this binding.
