@@ -685,10 +685,6 @@ class RawNode__MemStorage(__RawNode):
         """ """
     def store(self) -> MemStorage_Ref:
         """Returns the store as a mutable reference."""
-    def status(self) -> Status__Memstorage:
-        """
-        Status returns the current status of the given group.
-        """
 
 class RawNode__MemStorage_Ref(__RawNode):
     """
@@ -699,10 +695,10 @@ class RawNode__MemStorage_Ref(__RawNode):
         """ """
     def store(self) -> MemStorage_Ref:
         """Returns the store as a mutable reference."""
-    def status(self) -> Status__Memstorage:
-        """
-        Status returns the current status of the given group.
-        """
+    # def status(self) -> Status__Memstorage:
+    #     """
+    #     Status returns the current status of the given group.
+    #     """
 
 class RawNode(__RawNode):
     """
@@ -722,7 +718,7 @@ class RawNode(__RawNode):
         """ """
     def store(self) -> Storage_Ref:
         """Returns the store as a mutable reference."""
-    # def status(self) -> Status__Memstorage:
+    # def status(self) -> Status:
     #     """
     #     Status returns the current status of the given group.
     #     """
@@ -2462,7 +2458,12 @@ class Config(__Config):
         """
         :param id: The identity of the local raft. It cannot be 0, and must be unique in the group.
 
-        :param election_tick: The identity of the local raft. It cannot be 0, and must be unique in the group.
+        :param election_tick: The number of node.tick invocations that must pass between
+        elections. That is, if a follower does not receive any message from the
+        leader of current term before ElectionTick has elapsed, it will become
+        candidate and start an election. election_tick must be greater than
+        HeartbeatTick. We suggest election_tick = 10 * HeartbeatTick to avoid
+        unnecessary leader switching
 
         :param heartbeat_tick: HeartbeatTick is the number of node.tick invocations that must pass between
         heartbeats. That is, a leader sends heartbeat messages to maintain its
