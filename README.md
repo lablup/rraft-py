@@ -15,7 +15,7 @@ This library is an unofficial Python binding for the `tikv/raft-rs` using *pyo3*
 
 There have been several attempts to implement a *Raft implementation* in the Python ecosystem before, but unfortunately, there is no library being used as a *de-facto* standard as of now.
 
-This binding was created to resolve this problem and to make it possible to integrate Python with *low-level Raft implementation*.
+This binding was created to resolve this problem and to make it possible to integrate your Python code with *low-level Raft implementation*.
 
 ### Disclaimer
 
