@@ -18,7 +18,7 @@ This binding was created to resolve this problem and to make it possible to inte
 
 ### Disclaimer
 
-This binding bypasses the memory management differences between Python and Rust through the following API modeling, which is quite different from typical Python use cases.
+This binding bypasses the memory management differences between *Python* and *Rust* through the following API modeling, which is quite different from other typical Python libraries' usage.
 
 General types have *ownership* of their respective types.
 
