@@ -30,7 +30,7 @@ The most of APIs of `rraft-py` has been implemented internally to handle both "G
 
 However, a few APIs may require only types with ownership. You can identify this kind of type information through [rraft.pyi](https://github.com/lablup/rraft-py/blob/main/rraft.pyi).
 
-Note that passing a reference pointing an invalid instance in Python to an API causes a segmentation fault (named `destored_error`) which is hard to debug. Understanding Rust's ownership concept can help you resolve these kinds of problems.
+Note that passing a reference pointing an invalid object in Python to `rraft-py`'s API causes a **Segmentation fault** which is hard to debug. Understanding Rust's ownership concept can help you resolve these kinds of problems.
 
 ## Getting started
 
