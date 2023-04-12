@@ -19,7 +19,7 @@ This binding was created to resolve this problem and to make it possible to inte
 
 ### Disclaimer
 
-Since raft-rs is written in the Rust language, below following abstraction is used to bypass the differences in *Memory management* between Python and Rust.
+This binding bypasses the memory management differences between Python and Rust through the following API modeling, which is quite different from typical Python use cases.
 
 Types have ownership of their respective types. For example, instances created with the `Config` constructor are modeled to have ownership of the `Config` object in Rust.
 
