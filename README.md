@@ -27,11 +27,11 @@ For example, instances created with the `Config` constructor are modeled to have
 
 Apart from this, there is a type named `Config_Ref`, which is modeled as a reference "Container Object" that only holds a reference to the `Config` type.
 
-The most of APIs of `rraft-py` are modeled internally to handle both types with ownership and container object types.
+The most of APIs of `rraft-py` are modeled internally to handle both "General type" and "Container Object types".
 
-However, a few APIs may require only types with ownership. This kind of type information is specified in the [rraft.pyi](https://github.com/lablup/rraft-py/blob/main/rraft.pyi). Passing a reference to an instance without ownership in Python to an API cause segmentation fault (named `destored_error`) which is hard to debugging. 
+However, a few APIs may require only types with ownership. This kind of type information is specified in the [rraft.pyi](https://github.com/lablup/rraft-py/blob/main/rraft.pyi). 
 
-Understanding Rust's ownership concept can help you resolve these kinds of problems.
+Note that passing a reference pointing an invalid instance in Python to an API causes a segmentation fault (named `destored_error`) which is hard to debugging. Understanding Rust's ownership concept can help you resolve these kinds of problems.
 
 ## Getting started
 
