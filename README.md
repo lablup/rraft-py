@@ -18,7 +18,7 @@ This binding was created to resolve this problem and to make it possible to inte
 
 ### Disclaimer
 
-The binding between works differently from other *Python* libraries to handle differences in memory management.
+This binding works differently from other *Python* libraries to handle differences in memory management.
 
 In this binding, General types have ownership of their respective types. For instance, instances created with the `Config` constructor have ownership of the `Config` object in *Rust*.
 
