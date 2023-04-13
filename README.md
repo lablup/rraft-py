@@ -18,19 +18,15 @@ This binding was created to resolve this problem and to make it possible to inte
 
 ### Disclaimer
 
-This binding bypasses the memory management differences between *Python* and *Rust* through the following API modeling, which is quite different from other typical Python libraries' usage.
+The binding between works differently from other *Python* libraries to handle differences in memory management.
 
-General types have *ownership* of their respective types.
+In this binding, General types have ownership of their respective types. For instance, instances created with the `Config` constructor have ownership of the `Config` object in *Rust*.
 
-For example, instances created with the `Config` constructor are modeled to have ownership of the `Config` object in Rust.
+In addition, there is a separate type named `Config_Ref`, which acts as a "Container Object" that holds a reference to the `Config` type.
 
-Apart from this, there is a separate type named `Config_Ref`, which is modeled as a "Container Object" that holds a reference to the `Config` type.
+Most of the APIs in `rraft-py` handle both "General types" and "Container Object types," but some APIs require only types with ownership. You can find information about this in [rraft.pyi](https://github.com/lablup/rraft-py/blob/main/rraft.pyi).
 
-The most of APIs of `rraft-py` has been implemented internally to handle both "General types" and "Container Object types".
-
-However, a few APIs may require only types with ownership. You can identify this kind of type information through [rraft.pyi](https://github.com/lablup/rraft-py/blob/main/rraft.pyi).
-
-Note that passing a reference pointing an invalid object in Python to `rraft-py`'s API causes a **Segmentation fault** which is hard to debug. Understanding Rust's ownership concept can help you resolve these kinds of problems.
+It is important to note that passing a reference pointing an invalid object in Python to `rraft-py`'s API can cause a **Segmentation fault** that is difficult to debug. Understanding Rust's ownership concept can help you avoid such problems.
 
 ## Getting started
 
