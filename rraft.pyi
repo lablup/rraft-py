@@ -270,9 +270,7 @@ class StorageCore_Ref(__StorageCore):
 
 class __Storage(__Cloneable):
     def clone(self) -> Any: ...
-    def initialize_with_conf_state(
-        self, conf_state: ConfState | ConfState_Ref
-    ) -> None:
+    def initialize_with_conf_state(self, conf_state: ConfState | ConfState_Ref) -> None:
         """
         Initialize a `MemStorage` with a given `Config`.
 
@@ -364,7 +362,14 @@ class MemStorage_Ref(__Storage):
         """
 
 class Storage(__Storage):
-    """ """
+    """
+    Storage saves all the information about the current Raft implementation, including Raft Log,
+    commit index, the leader to vote for, etc.
+
+    If any Storage method returns an error, the raft instance will
+    become inoperable and refuse to participate in elections; the
+    application is responsible for cleanup and recovery in this case.
+    """
 
     def __init__(self) -> None: ...
     def make_ref(self) -> Storage_Ref: ...
@@ -606,17 +611,13 @@ class __RawNode:
         caller's responsibility to propose an empty conf change again to force
         leaving joint state.
         """
-    def apply_conf_change(
-        self, cc: ConfChange | ConfChange_Ref
-    ) -> ConfState:
+    def apply_conf_change(self, cc: ConfChange | ConfChange_Ref) -> ConfState:
         """
         Applies a config change to the local node. The app must call this when it
         applies a configuration change, except when it decides to reject the
         configuration change, in which case no call must take place.
         """
-    def apply_conf_change_v2(
-        self, cc: ConfChangeV2 | ConfChangeV2_Ref
-    ) -> ConfState:
+    def apply_conf_change_v2(self, cc: ConfChangeV2 | ConfChangeV2_Ref) -> ConfState:
         """
         Applies a config change to the local node. The app must call this when it
         applies a configuration change, except when it decides to reject the
@@ -810,19 +811,19 @@ class __Decoder:
 class __SnapshotMetadata(__Cloneable, __Encoder, __Decoder):
     def clone(self) -> SnapshotMetadata: ...
     def get_index(self) -> int:
-        """ """
+        """The applied index."""
     def set_index(self, index: int) -> None:
         """ """
     def clear_index(self) -> None:
         """ """
     def get_term(self) -> int:
-        """ """
+        """The term of the applied index."""
     def set_term(self, term: int) -> None:
         """ """
     def clear_term(self) -> None:
         """ """
     def get_conf_state(self) -> ConfState_Ref:
-        """ """
+        """The current `ConfState`."""
     def set_conf_state(self, conf_state: ConfState | ConfState_Ref) -> None:
         """ """
     def clear_conf_state(self) -> None:
@@ -855,9 +856,7 @@ class __Snapshot(__Cloneable, __Encoder, __Decoder):
         """ """
     def get_metadata(self) -> SnapshotMetadata_Ref:
         """ """
-    def set_metadata(
-        self, meta_data: SnapshotMetadata | SnapshotMetadata_Ref
-    ) -> None:
+    def set_metadata(self, meta_data: SnapshotMetadata | SnapshotMetadata_Ref) -> None:
         """ """
     def clear_metadata(self) -> None:
         """ """
@@ -914,13 +913,25 @@ class __Message(__Cloneable, __Encoder, __Decoder):
     def clear_term(self) -> None:
         """ """
     def get_log_term(self) -> int:
-        """ """
+        """
+        logTerm is generally used for appending Raft logs to followers. For example,
+        (type=MsgAppend,index=100,log_term=5) means leader appends entries starting at
+        index=101, and the term of entry at index 100 is 5.
+        (type=MsgAppendResponse,reject=true,index=100,log_term=5) means follower rejects some
+        entries from its leader as it already has an entry with term 5 at index 100.
+        """
     def set_log_term(self, log_index: int) -> None:
         """ """
     def clear_log_term(self) -> None:
         """ """
     def get_priority(self) -> int:
-        """ """
+        """
+        If this new field is not set, then use the above old field; otherwise
+        use the new field. When broadcasting request vote, both fields are
+        set if the priority is larger than 0. This change is not a fully
+        compatible change, but it makes minimal impact that only new priority
+        is not recognized by the old nodes during rolling update.
+        """
     def set_priority(self, priority: int) -> None:
         """ """
     def clear_priority(self) -> None:
@@ -1089,7 +1100,18 @@ class __Entry(__Cloneable, __Encoder, __Decoder):
         """ """
 
 class Entry(__Entry):
-    """ """
+    """
+    The entry is a type of change that needs to be applied. It contains two data fields.
+    While the fields are built into the model; their usage is determined by the entry_type.
+
+    For normal entries, the data field should contain the data change that should be applied.
+    The context field can be used for any contextual data that might be relevant to the
+    application of the data.
+
+    For configuration changes, the data will contain the ConfChange message and the
+    context will provide anything needed to assist the configuration change. The context
+    if for the user to set and use in this case.
+    """
 
     def __init__(self) -> None: ...
     def make_ref(self) -> Entry_Ref: ...
@@ -1176,9 +1198,21 @@ class __ConfChangeV2(__Cloneable, __Encoder, __Decoder):
     def clear_transition(self) -> None:
         """ """
     def enter_joint(self) -> Optional[bool]:
-        """ """
+        """
+        Checks if uses Joint Consensus.
+
+        It will return Some if and only if this config change will use Joint Consensus,
+        which is the case if it contains more than one change or if the use of Joint
+        Consensus was requested explicitly. The bool indicates whether the Joint State
+        will be left automatically.
+        """
     def leave_joint(self) -> bool:
-        """ """
+        """
+        Checks if the configuration change leaves a joint configuration.
+
+        This is the case if the ConfChangeV2 is zero, with the possible exception of
+        the Context field.
+        """
     def clear_joint(self) -> None:
         """ """
     def write_to_bytes(self) -> bytes:
@@ -1199,7 +1233,40 @@ class __ConfChangeV2(__Cloneable, __Encoder, __Decoder):
         """
 
 class ConfChangeV2(__ConfChangeV2):
-    """ """
+    """
+    ConfChangeV2 messages initiate configuration changes. They support both the
+    simple "one at a time" membership change protocol and full Joint Consensus
+    allowing for arbitrary changes in membership.
+
+    The supplied context is treated as an opaque payload and can be used to
+    attach an action on the state machine to the application of the config change
+    proposal. Note that contrary to Joint Consensus as outlined in the Raft
+    paper[1], configuration changes become active when they are *applied* to the
+    state machine (not when they are appended to the log).
+
+    The simple protocol can be used whenever only a single change is made.
+
+    Non-simple changes require the use of Joint Consensus, for which two
+    configuration changes are run. The first configuration change specifies the
+    desired changes and transitions the Raft group into the joint configuration,
+    in which quorum requires a majority of both the pre-changes and post-changes
+    configuration. Joint Consensus avoids entering fragile intermediate
+    configurations that could compromise survivability. For example, without the
+    use of Joint Consensus and running across three availability zones with a
+    replication factor of three, it is not possible to replace a voter without
+    entering an intermediate configuration that does not survive the outage of
+    one availability zone.
+
+    The provided ConfChangeTransition specifies how (and whether) Joint Consensus
+    is used, and assigns the task of leaving the joint configuration either to
+    Raft or the application. Leaving the joint configuration is accomplished by
+    proposing a ConfChangeV2 with only and optionally the Context field
+    populated.
+
+    For details on Raft membership changes, see:
+
+    [1]: https://github.com/ongardie/dissertation/blob/master/online-trim.pdf
+    """
 
     def __init__(self) -> None: ...
     @staticmethod
@@ -1229,7 +1296,10 @@ class __ConfChangeSingle(__Cloneable, __Encoder, __Decoder):
         """ """
 
 class ConfChangeSingle(__ConfChangeSingle):
-    """ """
+    """
+    ConfChangeSingle is an individual configuration change operation. Multiple
+    such operations can be carried out atomically via a ConfChangeV2.
+    """
 
     def __init__(self) -> None: ...
     def make_ref(self) -> ConfChangeSingle_Ref: ...
@@ -1636,9 +1706,7 @@ class RaftLog__MemStorage(__RaftLog):
     Raft log implementation
     """
 
-    def __init__(
-        self, store: MemStorage_Ref, logger: Logger | Logger_Ref
-    ) -> None: ...
+    def __init__(self, store: MemStorage_Ref, logger: Logger | Logger_Ref) -> None: ...
     def make_ref(self) -> RaftLog__MemStorage_Ref: ...
     def get_store(self) -> MemStorage_Ref:
         """
@@ -1658,9 +1726,7 @@ class RaftLog__MemStorage_Ref(__RaftLog):
 class RaftLog(__RaftLog):
     """ """
 
-    def __init__(
-        self, store: Storage_Ref, logger: Logger | Logger_Ref
-    ) -> None: ...
+    def __init__(self, store: Storage_Ref, logger: Logger | Logger_Ref) -> None: ...
     def make_ref(self) -> RaftLog_Ref: ...
     def get_store(self) -> Storage_Ref:
         """
@@ -1763,9 +1829,7 @@ class __Raft:
         is satisfied. Otherwise return false and uncommitted size remains unchanged.
         For raft with no limit(or non-leader raft), it always return true.
         """
-    def reduce_uncommitted_size(
-        self, ents: List[Entry] | List[Entry_Ref]
-    ) -> None:
+    def reduce_uncommitted_size(self, ents: List[Entry] | List[Entry_Ref]) -> None:
         """
         Reduce size of 'ents' from uncommitted size.
         """
