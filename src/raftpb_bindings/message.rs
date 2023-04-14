@@ -134,7 +134,7 @@ impl Py_Message_Ref {
 
     pub fn encode(&self, py: Python) -> PyResult<PyObject> {
         self.inner
-            .map_as_ref(|inner| inner.encode_to_vec().into_py(py))
+            .map_as_ref(|inner| PyBytes::new(py, inner.encode_to_vec().as_slice()).into_py(py))
     }
 
     pub fn get_commit(&self) -> PyResult<u64> {

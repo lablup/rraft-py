@@ -1,6 +1,6 @@
 use prost::Message as ProstMessage;
 use protobuf::Message as PbMessage;
-use pyo3::{intern, prelude::*, pyclass::CompareOp};
+use pyo3::{intern, prelude::*, pyclass::CompareOp, types::PyBytes};
 
 use raft::eraftpb::HardState;
 
@@ -127,7 +127,7 @@ impl Py_HardState_Ref {
 
     pub fn encode(&self, py: Python) -> PyResult<PyObject> {
         self.inner
-            .map_as_ref(|inner| inner.encode_to_vec().into_py(py))
+            .map_as_ref(|inner| PyBytes::new(py, inner.encode_to_vec().as_slice()).into_py(py))
     }
 
     pub fn get_commit(&self) -> PyResult<u64> {
