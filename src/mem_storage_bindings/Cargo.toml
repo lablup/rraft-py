@@ -5,7 +5,7 @@ authors = ["jopemachine"]
 edition = "2018"
 
 [dependencies]
-pyo3 = { version = "0.18.2", features = ["extension-module", "multiple-pymethods"] }
+pyo3 = { version = "0.18.3", features = ["extension-module", "multiple-pymethods"] }
 raft = { version = "0.7.0", features = ["prost-codec", "default-logger"], default-features = false }
 utils = { path = "../utils" }
 raftpb-bindings = { path = "../raftpb_bindings" }

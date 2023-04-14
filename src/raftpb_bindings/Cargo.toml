@@ -7,7 +7,7 @@ edition = "2018"
 [dependencies]
 prost = "0.11"
 protobuf = "2"
-pyo3 = { version = "0.18.2", features = ["extension-module", "multiple-pymethods"] }
+pyo3 = { version = "0.18.3", features = ["extension-module", "multiple-pymethods"] }
 pyo3-asyncio = { version = "0.18.0", features = ["tokio-runtime"] }
 tokio = "1.4"
 bincode = "1.3.3"
