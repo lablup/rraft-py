@@ -1,4 +1,4 @@
-use bindings::get_entries_context::Py_GetEntriesContext_Ref;
+use bindings::get_entries_context::{Py_GetEntriesContext, Py_GetEntriesContext_Ref};
 use pyo3::{intern, prelude::*};
 
 use raft::storage::Storage;
@@ -116,15 +116,16 @@ impl Storage for Py_Storage {
         low: u64,
         high: u64,
         max_size: impl Into<Option<u64>>,
-        _context: GetEntriesContext,
+        context: GetEntriesContext,
     ) -> raft::Result<Vec<raft::prelude::Entry>> {
         let max_size: Option<u64> = max_size.into();
+        let mut context = Py_GetEntriesContext { inner: context };
 
         Python::with_gil(|py| {
             let py_result: &PyAny = self
                 .storage
                 .as_ref(py)
-                .call_method("entries", (low, high, max_size), None)
+                .call_method("entries", (low, high, context.make_ref(), max_size), None)
                 .unwrap();
 
             let mut entries: Vec<Py_Entry_Mut> = py_result.extract().unwrap();
@@ -209,8 +210,9 @@ impl Storage for Py_Storage_Ref {
         low: u64,
         high: u64,
         max_size: impl Into<Option<u64>>,
-        _context: GetEntriesContext,
+        context: GetEntriesContext,
     ) -> raft::Result<Vec<raft::prelude::Entry>> {
+        let mut context = Py_GetEntriesContext { inner: context };
         let max_size: Option<u64> = max_size.into();
 
         Python::with_gil(|py| {
@@ -219,7 +221,7 @@ impl Storage for Py_Storage_Ref {
                     let py_result: &PyAny = inner
                         .storage
                         .as_ref(py)
-                        .call_method("entries", (low, high, max_size), None)
+                        .call_method("entries", (low, high, context.make_ref(), max_size), None)
                         .unwrap();
 
                     let mut entries: Vec<Py_Entry_Mut> = py_result.extract().unwrap();
