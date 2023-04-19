@@ -1048,11 +1048,16 @@ class __GetEntriesContext:
     """
 
     def can_async(self) -> bool:
-        """ """
+        """
+        Check if the caller's context support fetching entries asynchrouously.
+        """
 
 class GetEntriesContext(__GetEntriesContext):
     @staticmethod
-    def empty() -> GetEntriesContext: ...
+    def empty() -> GetEntriesContext:
+        """
+        Used for callers out of raft. Caller can customize if it supports async.
+        """
     def make_ref(self) -> GetEntriesContext_Ref: ...
 
 class GetEntriesContext_Ref(__GetEntriesContext):
