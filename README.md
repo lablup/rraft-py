@@ -20,7 +20,7 @@ This binding was created to resolve this problem and to make it possible to inte
 
 This library works differently from other *Python* libraries to handle differences in memory management.
 
-In this library, General types have ownership of their respective types. For instance, instances created with the `Config` constructor have ownership of the `Config` object in *Rust*.
+In this library, General types have [*ownership*](https://doc.rust-lang.org/book/ch04-01-what-is-ownership.html) of their respective types. For example, instances created with the `Config` constructor have *ownership* of the `Config` object in *Rust*.
 
 In addition, there is a separate type named `Config_Ref`, which acts as a "Container Object" that holds a reference to the `Config` type.
 
@@ -37,6 +37,10 @@ It is important to note that passing a reference pointing an invalid object in P
 ```
 $ pip install rraft-py
 ```
+
+#### Example
+
+- [Example using coroutine with single in-memory node](https://github.com/lablup/rraft-py/blob/main/example/single_mem_node/use_coroutine.py)
 
 ## Reference
 
