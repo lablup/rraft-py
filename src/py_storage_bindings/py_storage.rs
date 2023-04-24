@@ -95,6 +95,36 @@ impl Py_Storage_Ref {
             }),
         )
     }
+
+    pub fn wl(&mut self, cb: PyObject) -> PyResult<PyObject> {
+        self.inner.map_as_mut(|inner| {
+            Python::with_gil(|py| {
+                let py_result = inner
+                    .storage
+                    .as_ref(py)
+                    .call_method("wl", (cb,), None)
+                    .unwrap();
+
+                let res: PyObject = py_result.extract().unwrap();
+                res
+            })
+        })
+    }
+
+    pub fn rl(&self, cb: PyObject) -> PyResult<PyObject> {
+        self.inner.map_as_ref(|inner| {
+            Python::with_gil(|py| {
+                let py_result = inner
+                    .storage
+                    .as_ref(py)
+                    .call_method("rl", (cb,), None)
+                    .unwrap();
+
+                let res: PyObject = py_result.extract().unwrap();
+                res
+            })
+        })
+    }
 }
 
 impl Storage for Py_Storage {
