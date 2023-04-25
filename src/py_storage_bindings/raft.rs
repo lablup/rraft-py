@@ -15,7 +15,7 @@ use raftpb_bindings::{
     conf_change_v2::Py_ConfChangeV2_Mut,
     conf_state::Py_ConfState_Ref,
     entry::Py_Entry_Mut,
-    hard_state::Py_HardState_Mut,
+    hard_state::{Py_HardState, Py_HardState_Mut},
     message::{Py_Message, Py_Message_Mut, Py_Message_Ref},
     snapshot::{Py_Snapshot_Mut, Py_Snapshot_Ref},
 };
@@ -25,7 +25,7 @@ use bindings::{
     progress_tracker::Py_ProgressTracker_Ref,
     read_state::{Py_ReadState, Py_ReadState_Mut},
     readonly_option::Py_ReadOnlyOption,
-    soft_state::Py_SoftState_Ref,
+    soft_state::Py_SoftState,
     state_role::Py_StateRole,
 };
 use external_bindings::slog::Py_Logger_Mut;
@@ -255,9 +255,15 @@ impl Py_Raft__PyStorage_Ref {
         self.inner.map_as_mut(|inner| inner.load_state(&hs.into()))
     }
 
-    pub fn soft_state(&self) -> PyResult<Py_SoftState_Ref> {
-        self.inner.map_as_ref(|inner| Py_SoftState_Ref {
-            inner: RustRef::new(unsafe { make_mut(&inner.soft_state()) }),
+    pub fn soft_state(&self) -> PyResult<Py_SoftState> {
+        self.inner.map_as_ref(|inner| Py_SoftState {
+            inner: inner.soft_state(),
+        })
+    }
+
+    pub fn hard_state(&self) -> PyResult<Py_HardState> {
+        self.inner.map_as_ref(|inner| Py_HardState {
+            inner: inner.hard_state(),
         })
     }
 

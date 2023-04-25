@@ -1929,9 +1929,13 @@ class __Raft:
         """
         For a given hardstate, load the state into self.
         """
-    def soft_state(self) -> SoftState_Ref:
+    def soft_state(self) -> SoftState:
         """
         Returns a value representing the softstate at the time of calling.
+        """
+    def hard_state(self) -> HardState:
+        """
+        Returns a value representing the hardstate at the time of calling.
         """
     def ping(self) -> None:
         """
