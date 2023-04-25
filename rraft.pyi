@@ -573,7 +573,7 @@ class __RawNode:
         """
     def snap(self) -> Optional[Snapshot_Ref]:
         """
-        Snapshot specifies the snapshot to be saved to stable storage.
+        Grabs the snapshot from the raft if available.
         """
     def step(self, msg: Message | Message_Ref) -> None:
         """
@@ -1997,7 +1997,7 @@ class __Raft:
         Recovers the state machine from a snapshot. It restores the log and the
         configuration of state machine.
         """
-    def snap(self) -> Snapshot_Ref:
+    def snap(self) -> Optional[Snapshot_Ref]:
         """
         Grabs a reference to the snapshot
         """
