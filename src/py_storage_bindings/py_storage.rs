@@ -1,8 +1,10 @@
 use bindings::get_entries_context::{Py_GetEntriesContext, Py_GetEntriesContext_Ref};
+use pyo3::types::PyList;
 use pyo3::{intern, prelude::*};
 
 use raft::storage::Storage;
 use raft::GetEntriesContext;
+use raftpb_bindings::hard_state::Py_HardState_Ref;
 use utils::errors::to_pyresult;
 
 use raftpb_bindings::entry::Py_Entry_Ref;
@@ -40,6 +42,153 @@ impl Py_Storage {
     fn __getattr__(this: PyObject, py: Python<'_>, attr: &str) -> PyResult<PyObject> {
         let reference = this.call_method0(py, intern!(py, "make_ref"))?;
         reference.getattr(py, attr)
+    }
+}
+
+#[pymethods]
+impl Py_Storage_Ref {
+    pub fn wl(&mut self, cb: PyObject) -> PyResult<PyObject> {
+        self.inner.map_as_mut(|inner| {
+            Python::with_gil(|py| {
+                let py_result = inner
+                    .storage
+                    .as_ref(py)
+                    .call_method("wl", (cb,), None)
+                    .unwrap();
+
+                let res: PyObject = py_result.extract().unwrap();
+                res
+            })
+        })
+    }
+
+    pub fn rl(&self, cb: PyObject) -> PyResult<PyObject> {
+        self.inner.map_as_ref(|inner| {
+            Python::with_gil(|py| {
+                let py_result = inner
+                    .storage
+                    .as_ref(py)
+                    .call_method("rl", (cb,), None)
+                    .unwrap();
+
+                let res: PyObject = py_result.extract().unwrap();
+                res
+            })
+        })
+    }
+}
+
+#[pymethods]
+impl Py_Storage_Ref {
+    pub fn append(&mut self, ents: &PyList) -> PyResult<()> {
+        self.inner.map_as_mut(|inner| {
+            Python::with_gil(|py| {
+                inner
+                    .storage
+                    .as_ref(py)
+                    .call_method("append", (ents,), None)
+                    .unwrap();
+            })
+        })
+    }
+
+    pub fn apply_snapshot(&mut self, snapshot: &PyAny) -> PyResult<()> {
+        self.inner.map_as_mut(|inner| {
+            Python::with_gil(|py| {
+                inner
+                    .storage
+                    .as_ref(py)
+                    .call_method("apply_snapshot", (snapshot,), None)
+                    .unwrap();
+            })
+        })
+    }
+
+    pub fn compact(&mut self, compact_index: u64) -> PyResult<()> {
+        self.inner.map_as_mut(|inner| {
+            Python::with_gil(|py| {
+                inner
+                    .storage
+                    .as_ref(py)
+                    .call_method("compact", (compact_index,), None)
+                    .unwrap();
+            })
+        })
+    }
+
+    pub fn commit_to(&mut self, index: u64) -> PyResult<()> {
+        self.inner.map_as_mut(|inner| {
+            Python::with_gil(|py| {
+                inner
+                    .storage
+                    .as_ref(py)
+                    .call_method("commit_to", (index,), None)
+                    .unwrap();
+            })
+        })
+    }
+
+    pub fn commit_to_and_set_conf_states(&mut self, idx: u64, cs: Option<&PyAny>) -> PyResult<()> {
+        self.inner.map_as_mut(|inner| {
+            Python::with_gil(|py| {
+                inner
+                    .storage
+                    .as_ref(py)
+                    .call_method("commit_to_and_set_conf_states", (idx, cs), None)
+                    .unwrap();
+            })
+        })
+    }
+
+    pub fn hard_state(&mut self) -> PyResult<Py_HardState_Ref> {
+        self.inner.map_as_mut(|inner| {
+            Python::with_gil(|py| {
+                let py_result = inner
+                    .storage
+                    .as_ref(py)
+                    .call_method("hard_state", (), None)
+                    .unwrap();
+
+                let hs: Py_HardState_Ref = py_result.extract().unwrap();
+                hs
+            })
+        })
+    }
+
+    pub fn set_hardstate(&mut self, hs: &PyAny) -> PyResult<()> {
+        self.inner.map_as_mut(|inner| {
+            Python::with_gil(|py| {
+                inner
+                    .storage
+                    .as_ref(py)
+                    .call_method("set_hard_state", (hs,), None)
+                    .unwrap();
+            })
+        })
+    }
+
+    pub fn set_conf_state(&mut self, cs: &PyAny) -> PyResult<()> {
+        self.inner.map_as_mut(|inner| {
+            Python::with_gil(|py| {
+                inner
+                    .storage
+                    .as_ref(py)
+                    .call_method("set_conf_state", (cs,), None)
+                    .unwrap();
+            })
+        })
+    }
+
+    pub fn trigger_snap_unavailable(&mut self) -> PyResult<()> {
+        self.inner.map_as_mut(|inner| {
+            Python::with_gil(|py| {
+                inner
+                    .storage
+                    .as_ref(py)
+                    .call_method("trigger_snap_unavailable", (), None)
+                    .unwrap();
+            })
+        })
     }
 }
 
@@ -94,36 +243,6 @@ impl Py_Storage_Ref {
                 inner: RustRef::new(&mut snapshot),
             }),
         )
-    }
-
-    pub fn wl(&mut self, cb: PyObject) -> PyResult<PyObject> {
-        self.inner.map_as_mut(|inner| {
-            Python::with_gil(|py| {
-                let py_result = inner
-                    .storage
-                    .as_ref(py)
-                    .call_method("wl", (cb,), None)
-                    .unwrap();
-
-                let res: PyObject = py_result.extract().unwrap();
-                res
-            })
-        })
-    }
-
-    pub fn rl(&self, cb: PyObject) -> PyResult<PyObject> {
-        self.inner.map_as_ref(|inner| {
-            Python::with_gil(|py| {
-                let py_result = inner
-                    .storage
-                    .as_ref(py)
-                    .call_method("rl", (cb,), None)
-                    .unwrap();
-
-                let res: PyObject = py_result.extract().unwrap();
-                res
-            })
-        })
     }
 }
 

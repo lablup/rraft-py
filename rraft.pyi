@@ -2069,8 +2069,6 @@ class __Raft:
         """ """
     def set_state(self, state_role: StateRole) -> None:
         """ """
-    def get_raft_log(self) -> RaftLog__MemStorage_Ref:
-        """ """
     def get_election_elapsed(self) -> int:
         """ """
     def set_election_elapsed(self, election_elapsed: int) -> None:
@@ -2132,11 +2130,15 @@ class Raft__MemStorage(__Raft):
         logger: Logger | Logger_Ref,
     ) -> None: ...
     def make_ref(self) -> Raft__MemStorage_Ref: ...
+    def get_raft_log(self) -> RaftLog__MemStorage_Ref:
+        """ """
 
 class Raft__MemStorage_Ref(__Raft):
     """
     Reference type of :class:`Raft__MemStorage`.
     """
+    def get_raft_log(self) -> RaftLog__MemStorage_Ref:
+        """ """
 
 class Raft(__Raft):
     """
@@ -2151,11 +2153,15 @@ class Raft(__Raft):
         logger: Logger | Logger_Ref,
     ) -> None: ...
     def make_ref(self) -> Raft_Ref: ...
+    def get_raft_log(self) -> RaftLog_Ref:
+        """ """
 
 class Raft_Ref(__Raft):
     """
     Reference type of :class:`Raft`.
     """
+    def get_raft_log(self) -> RaftLog_Ref:
+        """ """
 
 class ProgressMapItem:
     def id(self) -> int: ...
