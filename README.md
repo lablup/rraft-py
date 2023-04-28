@@ -16,6 +16,12 @@ There have been several attempts to implement a *Raft implementation* in the Pyt
 
 This binding was created to resolve this problem and to make it possible to integrate your Python code with *low-level Raft implementation*.
 
+### When to use and when not to use
+
+This library is a binding for raft-rs and only contains an implementation of the consensus module. Therefore, you need to write the logic for both the transport and storage layers yourself. If you just want to quickly implement a raft implementation in your Python application, using this library may not be suitable. I'd recommend considering using libraries such as [PySyncObj](https://github.com/bakwc/PySyncObj) personally.
+
+However, if you want to integrate *well-tested* Raft implementation that is reliable for production-level use in Python, or if you want to change the transport layer to a different layer according to your use-case, or if you want to change *fine-grained* settings values, this binding might be your good starting point.
+
 ### Disclaimer
 
 This library works differently from other *Python* libraries to handle differences in memory management.
@@ -27,12 +33,6 @@ In addition, there is a separate type named `Config_Ref`, which acts as a "Conta
 Most of the APIs in `rraft-py` handle both "General types" and "Container Object types," but some APIs require only types with ownership. You can find information about this in [rraft.pyi](https://github.com/lablup/rraft-py/blob/main/rraft.pyi).
 
 It is important to note that passing a reference pointing an invalid object in Python to `rraft-py`'s API can cause a **Segmentation fault** that is difficult to debug. Understanding Rust's ownership concept can help you avoid such problems.
-
-### When to use and when not to use
-
-This library is a binding for raft-rs and only contains an implementation of the consensus module. Therefore, you need to write the logic for both the transport and storage layers yourself. If you just want to quickly implement a raft implementation in your Python application, using this library may not be suitable. I'd recommend considering using libraries such as [PySyncObj](https://github.com/bakwc/PySyncObj) personally.
-
-However, if you want to integrate *well-tested* Raft implementation that is reliable for production-level use in Python, or if you want to change the transport layer to a different layer according to your use-case, or if you want to change *fine-grained* settings values, this binding might be your good starting point.
 
 ## Getting started
 
