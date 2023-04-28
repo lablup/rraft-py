@@ -18,7 +18,7 @@ This binding was created to resolve this problem and to make it possible to inte
 
 ### When to use and when not to use
 
-This library is a binding for `tikv/raft-rs` and only contains an implementation of the consensus module. Therefore, you need to write the logic for both the transport and storage layers yourself. If you just want to quickly implement a raft implementation in your Python application, using this library may not be suitable. I'd recommend considering using [PySyncObj](https://github.com/bakwc/PySyncObj) personally.
+This library is a binding for `tikv/raft-rs` and only contains an implementation of the consensus module. Therefore, you need to write the logic for both the transport and storage layers yourself. If you just want to quickly integrate Raft with your Python application, using this library might not be suitable. I'd personally recommend considering using [PySyncObj](https://github.com/bakwc/PySyncObj).
 
 However, if you want to integrate *well-tested* Raft implementation that is reliable for production-level use in Python, if you want to change the transport layer to a different layer, or if you want to change *fine-grained* settings values according to your specific use case, this binding could provide you a valid starting point.
 
