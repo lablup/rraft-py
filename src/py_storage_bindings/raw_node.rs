@@ -65,33 +65,24 @@ impl Py_RawNode__PyStorage_Ref {
             .map_as_mut(|inner| inner.advance_apply_to(applied))
     }
 
-    /// WARNING: This function replace rd with default Ready.
     pub fn advance(&mut self, rd: &mut Py_Ready_Ref) -> PyResult<Py_LightReady> {
-        let rd = rd
-            .inner
-            .map_as_mut(|rd| unsafe { std::ptr::replace(rd, Ready::default()) })?;
+        let rd = rd.inner.map_as_mut(|rd| std::mem::take(rd))?;
 
         self.inner.map_as_mut(|inner| Py_LightReady {
             inner: inner.advance(rd),
         })
     }
 
-    /// WARNING: This function replace rd with default Ready.
     pub fn advance_append(&mut self, rd: &mut Py_Ready_Ref) -> PyResult<Py_LightReady> {
-        let rd = rd
-            .inner
-            .map_as_mut(|rd| unsafe { std::ptr::replace(rd, Ready::default()) })?;
+        let rd = rd.inner.map_as_mut(|rd| std::mem::take(rd))?;
 
         self.inner.map_as_mut(|inner| Py_LightReady {
             inner: inner.advance_append(rd),
         })
     }
 
-    /// WARNING: This function replace rd with default Ready.
     pub fn advance_append_async(&mut self, rd: &mut Py_Ready_Ref) -> PyResult<()> {
-        let rd = rd
-            .inner
-            .map_as_mut(|rd| unsafe { std::ptr::replace(rd, Ready::default()) })?;
+        let rd = rd.inner.map_as_mut(|rd| std::mem::take(rd))?;
 
         self.inner
             .map_as_mut(|inner| inner.advance_append_async(rd))

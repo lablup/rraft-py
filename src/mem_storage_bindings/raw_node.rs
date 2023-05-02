@@ -2,7 +2,6 @@ use pyo3::{intern, prelude::*};
 
 use raft::prelude::{ConfChange, ConfChangeV2};
 use raft::storage::MemStorage;
-use raft::Ready;
 
 use raft::raw_node::RawNode;
 use utils::errors::to_pyresult;
@@ -66,9 +65,7 @@ impl Py_RawNode__MemStorage_Ref {
     }
 
     pub fn advance(&mut self, rd: &mut Py_Ready_Ref) -> PyResult<Py_LightReady> {
-        let rd = rd
-            .inner
-            .map_as_mut(|rd| unsafe { std::ptr::replace(rd, Ready::default()) })?;
+        let rd = rd.inner.map_as_mut(|rd| std::mem::take(rd))?;
 
         self.inner.map_as_mut(|inner| Py_LightReady {
             inner: inner.advance(rd),
@@ -76,9 +73,7 @@ impl Py_RawNode__MemStorage_Ref {
     }
 
     pub fn advance_append(&mut self, rd: &mut Py_Ready_Ref) -> PyResult<Py_LightReady> {
-        let rd = rd
-            .inner
-            .map_as_mut(|rd| unsafe { std::ptr::replace(rd, Ready::default()) })?;
+        let rd = rd.inner.map_as_mut(|rd| std::mem::take(rd))?;
 
         self.inner.map_as_mut(|inner| Py_LightReady {
             inner: inner.advance_append(rd),
@@ -86,9 +81,7 @@ impl Py_RawNode__MemStorage_Ref {
     }
 
     pub fn advance_append_async(&mut self, rd: &mut Py_Ready_Ref) -> PyResult<()> {
-        let rd = rd
-            .inner
-            .map_as_mut(|rd| unsafe { std::ptr::replace(rd, Ready::default()) })?;
+        let rd = rd.inner.map_as_mut(|rd| std::mem::take(rd))?;
 
         self.inner
             .map_as_mut(|inner| inner.advance_append_async(rd))
