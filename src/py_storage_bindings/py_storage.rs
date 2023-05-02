@@ -4,7 +4,7 @@ use pyo3::{intern, prelude::*};
 
 use raft::storage::Storage;
 use raft::GetEntriesContext;
-use raftpb_bindings::hard_state::Py_HardState_Ref;
+use raftpb_bindings::hard_state::Py_HardState;
 use utils::errors::to_pyresult;
 
 use raftpb_bindings::entry::Py_Entry_Ref;
@@ -140,7 +140,7 @@ impl Py_Storage_Ref {
         })
     }
 
-    pub fn hard_state(&mut self) -> PyResult<Py_HardState_Ref> {
+    pub fn hard_state(&mut self) -> PyResult<Py_HardState> {
         self.inner.map_as_mut(|inner| {
             Python::with_gil(|py| {
                 let py_result = inner
@@ -149,7 +149,7 @@ impl Py_Storage_Ref {
                     .call_method("hard_state", (), None)
                     .unwrap();
 
-                let hs: Py_HardState_Ref = py_result.extract().unwrap();
+                let hs: Py_HardState = py_result.extract().unwrap();
                 hs
             })
         })

@@ -19,9 +19,8 @@ use raftpb_bindings::conf_state::Py_ConfState;
 use raftpb_bindings::message::Py_Message_Mut;
 use raftpb_bindings::snapshot::Py_Snapshot_Ref;
 
-use bindings::snapshot_status::Py_SnapshotStatus;
-// use bindings::status::Py_Status__MemStorage;
 use super::mem_storage::{Py_MemStorage_Mut, Py_MemStorage_Ref};
+use bindings::snapshot_status::Py_SnapshotStatus;
 use utils::reference::RustRef;
 
 #[pyclass(name = "RawNode__MemStorage")]
