@@ -40,9 +40,6 @@ class Proposal:
         self.proposed = proposed
         self.propose_success = propose_success
 
-    def __repr__(self) -> str:
-        return f"Proposal({self._normal}, {self._conf_change}, {self._transfer_leader}, {self.proposed}, {self.propose_success})"
-
     @staticmethod
     def conf_change(cc: ConfChange) -> "Proposal":
         return Proposal(
