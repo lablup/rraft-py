@@ -58,7 +58,7 @@ $ pip install rraft-py
 
 - [Example using coroutine with single in-memory node](https://github.com/lablup/rraft-py/blob/main/example/single_mem_node/use_coroutine.py)
 
-- [Example using coroutine with multi in-memory nodes](https://github.com/lablup/rraft-py/blob/main/example/single_mem_node/use_coroutine.py)
+- [Example using coroutine with multi in-memory nodes](https://github.com/lablup/rraft-py/blob/main/example/multi_mem_node/main.py)
 
 ## Reference
 
