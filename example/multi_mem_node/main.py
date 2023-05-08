@@ -5,7 +5,7 @@ from asyncio import Queue
 from collections import deque
 import re
 import time
-from typing import Dict, Final, List, Optional, Tuple, Deque, cast
+from typing import Dict, Final, List, Optional, Tuple, Deque
 from rraft import (
     ConfChange,
     ConfChangeType,
@@ -28,7 +28,7 @@ class Proposal:
         self,
         # If it's proposed, it will be set to the index of the entry.
         proposed: int,
-        propose_success: Queue,
+        propose_success: Queue[Message],
         *,
         normal: Optional[Tuple[int, str]] = None,
         conf_change: Optional[ConfChange] = None,
@@ -36,12 +36,12 @@ class Proposal:
     ):
         self._normal = normal
         self._conf_change = conf_change
-        self.transfer_leader = transfer_leader
+        self._transfer_leader = transfer_leader
         self.proposed = proposed
         self.propose_success = propose_success
 
     def __repr__(self) -> str:
-        return f"Proposal({self._normal}, {self._conf_change}, {self.transfer_leader}, {self.proposed}, {self.propose_success})"
+        return f"Proposal({self._normal}, {self._conf_change}, {self._transfer_leader}, {self.proposed}, {self.propose_success})"
 
     @staticmethod
     def conf_change(cc: ConfChange) -> "Proposal":
@@ -103,12 +103,12 @@ NUM_NODES: Final[int] = 5
 
 # Create `NUM_NODES` mailboxes to send/receive messages. Every node holds a `Queue` to receive
 # messages from others, and uses the respective `Sender` to send messages to others.
-channels = [Queue() for _ in range(NUM_NODES)]
+channels = [Queue[Message]() for _ in range(NUM_NODES)]
 
-stop_channel = Queue()
+stop_channel = Queue[bool]()
 
 # A map[peer_id -> sender]. In the example we create "NUM_NODES" nodes, with ids in [1, NUM_NODES].
-mailboxes: Dict[int, Queue] = {
+mailboxes: Dict[int, Queue[Message]] = {
     i: chan for i, chan in zip(range(1, NUM_NODES + 1), channels)
 }
 
@@ -146,7 +146,7 @@ async def propose(raft_group: RawNode__MemStorage, proposal: Proposal) -> None:
     elif proposal._conf_change:
         raft_group.propose_conf_change([], proposal._conf_change.clone())
 
-    elif proposal.transfer_leader:
+    elif proposal._transfer_leader:
         # TODO: implement transfer leader.
         raise NotImplementedError
 
@@ -164,7 +164,7 @@ class Node:
         self,
         # None if the raft is not initialized.
         raft_group: Optional[RawNode__MemStorage],
-        my_mailbox: Queue,
+        my_mailbox: Queue[Message],
         # Key-value pairs after applied. `MemStorage` only contains raft logs,
         # so we need an additional storage engine.
         kv_pairs: Dict[int, str],
@@ -174,7 +174,7 @@ class Node:
         self.kv_pairs = kv_pairs
 
     @staticmethod
-    def create_raft_leader(id: int, my_mailbox: Queue) -> "Node":
+    def create_raft_leader(id: int, my_mailbox: Queue[Message]) -> "Node":
         """
         Create a raft leader only with itself in its configuration.
         """
@@ -193,7 +193,7 @@ class Node:
         return Node(raft_group, my_mailbox, {})
 
     @staticmethod
-    def create_raft_follower(my_mailbox: Queue) -> "Node":
+    def create_raft_follower(my_mailbox: Queue[Message]) -> "Node":
         """
         Create a raft follower.
         """
@@ -262,8 +262,6 @@ async def on_ready(
         rn: RawNode__MemStorage, committed_entries: List[Entry]
     ):
         for entry in committed_entries:
-            print('entry!!!!: ', entry)
-
             if not entry.get_data():
                 # From new elected leaders.
                 continue
@@ -289,11 +287,11 @@ async def on_ready(
                     key, value = int(caps.group(1)), str(caps.group(2))
                     kv_pairs[key] = value
 
-                if rn.get_raft().get_state() == StateRole.Leader:
-                    # The leader should response to the clients, tell them if their proposals
-                    # succeeded or not.
-                    proposal = proposals.popleft()
-                    await proposal.propose_success.put(True)
+            if rn.get_raft().get_state() == StateRole.Leader:
+                # The leader should response to the clients, tell them if their proposals
+                # succeeded or not.
+                proposal = proposals.popleft()
+                await proposal.propose_success.put(True)
 
     # Apply all committed entries.
     await handle_committed_entries(raft_group, ready.take_committed_entries())
@@ -342,7 +340,7 @@ async def handle(idx: int, chan: Queue) -> None:
             # Step raft messages.
             try:
                 resp = node.my_mailbox.get_nowait()
-                node.step(cast(Message, resp))
+                node.step(resp)
             except asyncio.QueueEmpty:
                 break
 
