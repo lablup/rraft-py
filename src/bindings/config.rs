@@ -124,7 +124,6 @@ impl Py_Config {
         config.pre_vote = pre_vote.unwrap_or(config.pre_vote);
         config.priority = priority.unwrap_or(config.priority);
         config.skip_bcast_commit = skip_bcast_commit.unwrap_or(config.skip_bcast_commit);
-
         config.read_only_option = read_only_option.map_or(config.read_only_option, |opt| opt.0);
 
         Py_Config { inner: config }

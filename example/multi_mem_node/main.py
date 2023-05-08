@@ -44,25 +44,20 @@ class Proposal:
         return f"Proposal({self._normal}, {self._conf_change}, {self.transfer_leader}, {self.proposed}, {self.propose_success})"
 
     @staticmethod
-    def conf_change(cc: ConfChange) -> Tuple["Proposal", Queue]:
-        channel = Queue(maxsize=1)
-        proposal = Proposal(
+    def conf_change(cc: ConfChange) -> "Proposal":
+        return Proposal(
             conf_change=cc.clone(),
             proposed=0,
-            propose_success=channel,
+            propose_success=Queue(maxsize=1),
         )
-        return proposal, channel
 
     @staticmethod
-    def normal(key: int, value: str) -> Tuple["Proposal", Queue]:
-        channel = Queue(maxsize=1)
-        proposal = Proposal(
+    def normal(key: int, value: str) -> "Proposal":
+        return Proposal(
             normal=(key, value),
             proposed=0,
-            propose_success=channel,
+            propose_success=Queue(maxsize=1),
         )
-
-        return proposal, channel
 
 
 def example_config() -> Config:
@@ -132,10 +127,10 @@ async def add_all_followers() -> None:
         conf_change.set_change_type(ConfChangeType.AddNode)
 
         while True:
-            proposal, chan = Proposal.conf_change(conf_change)
+            proposal = Proposal.conf_change(conf_change)
             proposals.append(proposal)
 
-            if await chan.get():
+            if await proposal.propose_success.get():
                 break
 
             await asyncio.sleep(0.1)
@@ -208,8 +203,10 @@ class Node:
         """
         Initialize raft for followers.
         """
+
         if not is_initial_msg(msg):
             return
+
         cfg = example_config()
         cfg.set_id(msg.get_to())
         storage = MemStorage()
@@ -265,14 +262,14 @@ async def on_ready(
         rn: RawNode__MemStorage, committed_entries: List[Entry]
     ):
         for entry in committed_entries:
+            print('entry!!!!: ', entry)
+
             if not entry.get_data():
                 # From new elected leaders.
                 continue
 
             if entry.get_entry_type() == EntryType.EntryConfChange:
                 cc = ConfChange.default()
-                # cc.merge_from_bytes(entry.get_data());
-                # Watch out! Below code might be wrong
                 new_conf = ConfChange.decode(entry.get_data())
 
                 cc.set_id(new_conf.get_id())
@@ -393,11 +390,11 @@ async def main() -> None:
 
     count = 0
     for i in range(100):
-        proposal, chan = Proposal.normal(i, "hello, world")
+        proposal = Proposal.normal(i, "hello, world")
         proposals.append(proposal)
         # After we got a response from `chan`, we can assume the put succeeded and following
         # `get` operations can find the key-value pair.
-        await chan.get()
+        await proposal.propose_success.get()
         count += 1
 
     logger.info("Propose 100 proposals success!")

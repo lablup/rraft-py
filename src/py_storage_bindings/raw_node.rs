@@ -1,7 +1,6 @@
 use pyo3::{intern, prelude::*};
 
 use raft::prelude::{ConfChange, ConfChangeV2};
-use raft::Ready;
 
 use raft::raw_node::RawNode;
 use utils::errors::to_pyresult;
