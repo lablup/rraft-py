@@ -24,6 +24,8 @@ However, if you want to integrate *well-tested* Raft implementation that is reli
 
 ### Disclaimer
 
+#### Memory management
+
 This library works differently from other *Python* libraries to handle differences in memory management.
 
 In this library, General types have [*ownership*](https://doc.rust-lang.org/book/ch04-01-what-is-ownership.html) of their respective types. For example, instances created with the `Config` constructor have *ownership* of the `Config` object in *Rust*.
@@ -33,6 +35,10 @@ In addition, there is a separate type named `Config_Ref`, which acts as a "Conta
 Most of the APIs in `rraft-py` handle both "General types" and "Container Object types," but some APIs require only types with ownership. You can find information about this in [rraft.pyi](https://github.com/lablup/rraft-py/blob/main/rraft.pyi).
 
 It is important to note that passing a reference pointing an invalid object in Python to `rraft-py`'s API can cause a **Segmentation fault** that is difficult to debug. Understanding Rust's ownership concept can help you avoid such problems.
+
+#### Comments
+
+All the comments of the codes have been copy-pasted from the upstream repository (`raft-rs`) and there might be some missing comments.
 
 ### Benchmarks
 
