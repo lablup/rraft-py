@@ -68,7 +68,7 @@ def example_config() -> Config:
 
 
 def setup_logger() -> Logger:
-    # Set up rraft-py's slog log-level to Debug.
+    # Set up slog's log-level to Debug.
     os.environ["RUST_LOG"] = "debug"
     logging.basicConfig(level=logging.DEBUG)
     return default_logger()
@@ -401,7 +401,7 @@ async def main() -> None:
     for _ in range(NUM_NODES):
         stop_channel.put_nowait(True)
 
-    # Wait for the thread to finish
+    # Wait for the coroutines to finish
     await asyncio.gather(*handles)
 
 
