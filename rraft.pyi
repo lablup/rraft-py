@@ -36,30 +36,75 @@ class OverflowStrategy:
     DropAndReport: Final[Any]
 
 class SnapshotStatus:
-    """ """
+    """The status of the snapshot."""
 
+    """
+    Represents that the snapshot is finished being created.
+    """
     Finish: Final[Any]
+
+    """
+    Indicates that the snapshot failed to build or is not ready.
+    """
     Failure: Final[Any]
 
 class ProgressState:
-    """ """
+    """The state of the progress."""
 
+    """
+    Whether it's probing.
+    """
     Probe: Final[Any]
+
+    """
+    Whether it's replicating.
+    """
     Replicate: Final[Any]
+
+    """
+    Whether it's a snapshot.
+    """
     Snapshot: Final[Any]
 
 class StateRole:
-    """ """
+    """The role of the node."""
 
+    """
+    The node could become a leader.
+    """
     Candidate: Final[Any]
+
+    """
+    The node is a follower of the leader.
+    """
     Follower: Final[Any]
+
+    """
+    The node is a leader.
+    """
     Leader: Final[Any]
+
+    """
+    The node could become a candidate, if `prevote` is enabled.
+    """
     PreCandidate: Final[Any]
 
 class ReadOnlyOption:
-    """ """
+    """Determines the relative safety of and consistency of read only requests."""
 
+    """
+    Safe guarantees the linearizability of the read only request by
+    communicating with the quorum. It is the default and suggested option.
+    """
     Safe: Final[Any]
+
+    """
+    LeaseBased ensures linearizability of the read only request by
+    relying on the leader lease. It can be affected by clock drift.
+    If the clock drift is unbounded, leader might keep the lease longer than it
+    should (clock can move backward/pause without any bound). ReadIndex is not safe
+    in that case.
+    """
     LeaseBased: Final[Any]
 
 class MessageType:
@@ -88,9 +133,29 @@ class MessageType:
 class ConfChangeTransition:
     """ """
 
+    """
+    Automatically use the simple protocol if possible, otherwise fall back
+    to ConfChangeType::Implicit. Most applications will want to use this.
+    """
     Auto: Final[Any]
-    Explicit: Final[Any]
+
+    """
+    Use joint consensus unconditionally, and transition out of them
+    automatically (by proposing a zero configuration change).
+
+    This option is suitable for applications that want to minimize the time
+    spent in the joint configuration and do not store the joint configuration
+    in the state machine (outside of InitialState).
+    """
     Implicit: Final[Any]
+
+    """
+    Use joint consensus and remain in the joint configuration until the
+    application proposes a no-op configuration change. This is suitable for
+    applications that want to explicitly control the transitions, for example
+    to use a custom payload (via the Context field).
+    """
+    Explicit: Final[Any]
 
 class ConfChangeType:
     """ """
@@ -158,11 +223,14 @@ class __RaftState(__Cloneable):
         Indicates the `RaftState` is initialized or not.
         """
     def get_conf_state(self) -> ConfState_Ref:
-        """ """
+        """
+        Records the current node IDs like `[1, 2, 3]` in the cluster. Every Raft node must have a
+        unique ID in the cluster;
+        """
     def set_conf_state(self, cs: ConfState_Ref) -> None:
         """ """
     def get_hard_state(self) -> HardState_Ref:
-        """ """
+        """Contains the last meta information including commit index, the vote leader, and the vote term."""
     def set_hard_state(self, hs: HardState_Ref) -> None:
         """ """
 
@@ -1426,23 +1494,23 @@ class __Unstable:
         Panics if truncate logs to the entry before snapshot
         """
     def get_entries_size(self) -> int:
-        """ """
+        """The size of entries"""
     def set_entries_size(self, entries_size: int) -> None:
         """ """
     def get_offset(self) -> int:
-        """ """
+        """The offset from the vector index."""
     def set_offset(self, offset: int) -> None:
         """ """
     def get_entries(self) -> List[Entry_Ref]:
-        """ """
+        """All entries that have not yet been written to storage."""
     def set_entries(self, ents: List[Entry] | List[Entry_Ref]) -> None:
         """ """
     def get_logger(self) -> Logger_Ref:
-        """ """
+        """The tag to use when logging."""
     def set_logger(self, logger: Logger | Logger_Ref) -> None:
         """ """
     def get_snapshot(self) -> Optional[Snapshot_Ref]:
-        """ """
+        """The incoming unstable snapshot, if any."""
     def set_snapshot(self, snapshot: Snapshot | Snapshot_Ref) -> None:
         """ """
 
@@ -1464,11 +1532,11 @@ class Unstable_Ref(__Unstable):
 
 class __SoftState:
     def get_leader_id(self) -> int:
-        """ """
+        """The potential leader of the cluster."""
     def set_leader_id(self, leader_id: int) -> None:
         """ """
     def get_raft_state(self) -> StateRole:
-        """ """
+        """The soft role this node may take."""
     def set_raft_state(self, role: StateRole) -> None:
         """ """
 
@@ -1490,11 +1558,11 @@ class SoftState_Ref(__SoftState):
 class __ReadState(__Cloneable):
     def clone(self) -> ReadState: ...
     def get_index(self) -> int:
-        """ """
+        """The index of the read state."""
     def set_index(self, idx: int) -> None:
         """ """
     def get_request_ctx(self) -> bytes:
-        """ """
+        """A datagram consisting of context about the request."""
     def set_request_ctx(self, request_ctx: bytes | List[int]) -> None:
         """ """
 
@@ -1979,7 +2047,7 @@ class __Raft:
     def handle_heartbeat(self, msg: Message | Message_Ref) -> None:
         """ """
     def handle_append_entries(self, msg: Message | Message_Ref) -> None:
-        """ """
+        """For a given message, append the entries to the log."""
     def request_snapshot(self) -> None:
         """
         Request a snapshot from a leader.
@@ -2020,31 +2088,47 @@ class __Raft:
         If prevote is enabled, this is handled as well.
         """
     def get_lead_transferee(self) -> Optional[int]:
-        """ """
+        """
+        ID of the leader transfer target when its value is not None.
+
+        If this is Some(id), we follow the procedure defined in raft thesis 3.10.
+        """
     def set_lead_transferee(self, lead_transferee: int) -> None:
         """ """
     def get_term(self) -> int:
-        """ """
+        """The current election term."""
     def set_term(self, term: int) -> None:
         """ """
     def get_vote(self) -> int:
-        """ """
+        """Which peer this raft is voting for."""
     def set_vote(self, vote: int) -> None:
         """ """
     def get_priority(self) -> int:
-        """ """
+        """The election priority of this node."""
     def set_priority(self, priority: int) -> None:
         """ """
     def get_leader_id(self) -> int:
-        """ """
+        """The leader id"""
     def set_leader_id(self, leader_id: int) -> None:
         """ """
     def get_max_msg_size(self) -> int:
-        """ """
+        """The maximum length (in bytes) of all the entries."""
     def set_max_msg_size(self, max_msg_size: int) -> None:
         """ """
     def get_pending_conf_index(self) -> int:
-        """ """
+        """
+        Only one conf change may be pending (in the log, but not yet
+        applied) at a time. This is enforced via `pending_conf_index`, which
+        is set to a value >= the log index of the latest pending
+        configuration change (if any). Config changes are only allowed to
+        be proposed if the leader's applied index is greater than this
+        value.
+
+        This value is conservatively set in cases where there may be a configuration change pending,
+        but scanning the log is possibly expensive. This implies that the index stated here may not
+        necessarily be a config change entry, and it may not be a `BeginMembershipChange` entry, even if
+        we set this to one.
+        """
     def set_pending_conf_index(self, pending_conf_index: int) -> None:
         """ """
     def get_pending_request_snapshot(self) -> int:
@@ -2052,33 +2136,43 @@ class __Raft:
     def set_pending_request_snapshot(self, pending_request_snapshot: int) -> None:
         """ """
     def get_id(self) -> int:
-        """ """
+        """The ID of this node."""
     def set_id(self, id: int) -> None:
         """ """
     def get_msgs(self) -> List[Message_Ref]:
-        """ """
+        """The list of messages."""
     def take_msgs(self) -> List[Message]:
         """ """
     def set_msgs(self, msgs: List[Message | Message_Ref]) -> None:
         """ """
     def get_max_inflight(self) -> int:
-        """ """
+        """The maximum number of messages that can be inflight."""
     def set_max_inflight(self, max_inflight: int) -> None:
         """ """
     def get_state(self) -> StateRole:
-        """ """
+        """The current role of this node."""
     def set_state(self, state_role: StateRole) -> None:
         """ """
     def get_election_elapsed(self) -> int:
-        """ """
+        """
+        Ticks since it reached last electionTimeout when it is leader or candidate.
+        Number of ticks since it reached last electionTimeout or received a
+        valid message from current leader when it is a follower.
+        """
     def set_election_elapsed(self, election_elapsed: int) -> None:
         """ """
     def get_check_quorum(self) -> bool:
-        """ """
+        """Whether to check the quorum"""
     def set_check_quorum(self, check_quorum: bool) -> None:
         """ """
     def get_pre_vote(self) -> bool:
-        """"""
+        """
+        Enable the prevote algorithm.
+
+        This enables a pre-election vote round on Candidates prior to disrupting the cluster.
+
+        Enable this if greater cluster stability is preferred over faster elections.
+        """
     def set_pre_vote(self, pre_vote: bool) -> None:
         """"""
     def apply_conf_change(self, conf_change: ConfChangeV2_Ref) -> ConfChange_Ref:
@@ -2088,13 +2182,13 @@ class __Raft:
     def get_readonly_read_index_queue(self) -> List[List[int]]:
         """ """
     def get_readstates(self) -> List[ReadState]:
-        """ """
+        """The current read states."""
     def set_max_committed_size_per_ready(
         self, max_committed_size_per_ready: int
     ) -> None:
         """ """
     def get_read_states(self) -> List[ReadState]:
-        """ """
+        """The current read states."""
     def set_read_states(
         self, read_states: List[ReadState] | List[ReadState_Ref]
     ) -> None:
@@ -2137,6 +2231,7 @@ class Raft__MemStorage_Ref(__Raft):
     """
     Reference type of :class:`Raft__MemStorage`.
     """
+
     def get_raft_log(self) -> RaftLog__MemStorage_Ref:
         """ """
 
@@ -2160,6 +2255,7 @@ class Raft_Ref(__Raft):
     """
     Reference type of :class:`Raft`.
     """
+
     def get_raft_log(self) -> RaftLog_Ref:
         """ """
 
