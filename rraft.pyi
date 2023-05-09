@@ -829,11 +829,14 @@ class RawNode_Ref(__RawNode):
 
 class __Peer:
     def get_id(self) -> int:
-        """ """
+        """Represents a Peer node in the cluster."""
     def set_id(self, id: int) -> None:
         """ """
     def get_context(self) -> bytes:
-        """ """
+        """
+        If there is context associated with the peer (like connection information), it can be
+        serialized and stored here.
+        """
     def set_context(self, context: bytes | List[int]) -> None:
         """ """
 
@@ -1787,15 +1790,31 @@ class __RaftLog:
         Returns the snapshot that are not persisted.
         """
     def get_applied(self) -> int:
-        """ """
+        """
+        The highest log position that the application has been instructed
+        to apply to its state machine.
+
+        Invariant: applied <= min(committed, persisted)
+        """
     def set_applied(self, applied: int) -> None:
         """ """
     def get_committed(self) -> int:
-        """ """
+        """
+        The highest log position that is known to be in stable storage
+        on a quorum of nodes.
+
+        Invariant: applied <= committed
+        """
     def set_committed(self, committed: int) -> None:
         """ """
     def get_persisted(self) -> int:
-        """ """
+        """
+        The highest log position that is known to be persisted in stable
+        storage. It's used for limiting the upper bound of committed and
+        persisted entries.
+
+        Invariant: persisted < unstable.offset && applied <= persisted
+        """
     def set_persisted(self, persisted: int) -> None:
         """ """
 
@@ -2402,43 +2421,78 @@ class __Progress(__Cloneable):
         Optimistically advance the index
         """
     def get_ins(self) -> Inflights_Ref:
-        """"""
+        """
+        Inflights is a sliding window for the inflight messages.
+        When inflights is full, no more message should be sent.
+        When a leader sends out a message, the index of the last
+        entry should be added to inflights. The index MUST be added
+        into inflights in order.
+        When a leader receives a reply, the previous inflights should
+        be freed by calling inflights.freeTo.
+        """
     def set_ins(self, inflights: Inflights | Inflights_Ref) -> None:
         """"""
     def get_commit_group_id(self) -> int:
-        """"""
+        """Only logs replicated to different group will be committed if any group is configured."""
     def set_commit_group_id(self, commit_group_id: int) -> None:
         """"""
     def get_committed_index(self) -> int:
-        """"""
+        """Committed index in raft_log"""
     def set_committed_index(self, committed_index: int) -> None:
         """"""
     def get_matched(self) -> int:
-        """"""
+        """How much state is matched."""
     def set_matched(self, matched: int) -> None:
         """"""
     def get_next_idx(self) -> int:
-        """"""
+        """The next index to apply"""
     def set_next_idx(self, next_idx: int) -> None:
         """"""
     def get_pending_snapshot(self) -> int:
-        """"""
+        """
+        This field is used in ProgressStateSnapshot.
+        If there is a pending snapshot, the pendingSnapshot will be set to the
+        index of the snapshot. If pendingSnapshot is set, the replication process of
+        this Progress will be paused. raft will not resend snapshot until the pending one
+        is reported to be failed.
+        """
     def set_pending_snapshot(self, pending_snapshot: int) -> None:
         """"""
     def get_pending_request_snapshot(self) -> int:
-        """"""
+        """
+        This field is used in request snapshot.
+        If there is a pending request snapshot, this will be set to the request
+        index of the snapshot.
+        """
     def set_pending_request_snapshot(self, pending_request_snapshot: int) -> None:
         """"""
     def get_recent_active(self) -> bool:
-        """"""
+        """
+        This is true if the progress is recently active. Receiving any messages
+        from the corresponding follower indicates the progress is active.
+        RecentActive can be reset to false after an election timeout.
+        """
     def set_recent_active(self, recent_active: bool) -> None:
         """"""
     def get_paused(self) -> bool:
-        """"""
+        """
+        Paused is used in ProgressStateProbe.
+        When Paused is true, raft should pause sending replication message to this peer.
+        """
     def set_paused(self, paused: bool) -> None:
         """"""
     def get_state(self) -> ProgressState:
-        """"""
+        """
+        When in ProgressStateProbe, leader sends at most one replication message
+        per heartbeat interval. It also probes actual progress of the follower.
+
+        When in ProgressStateReplicate, leader optimistically increases next
+        to the latest entry sent after sending replication message. This is
+        an optimized state for fast replicating log entries to the follower.
+
+        When in ProgressStateSnapshot, leader should have sent out snapshot
+        before and stop sending any replication message.
+        """
     def set_state(self, state: ProgressState) -> None:
         """"""
 
