@@ -1,5 +1,1 @@
-In this directory, all test codes are rewrites of raft-rs test codes in Python versions.
-
-Please refer to the link below:
-
-https://github.com/tikv/raft-rs/tree/master/harness
+In this directory, all test codes are rewrites of raft-rs [harness test codes](https://github.com/tikv/raft-rs/tree/master/harness) in Python version.
