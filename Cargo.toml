@@ -13,7 +13,7 @@ description = """
 Unofficial Python Binding of the tikv/raft-rs
 """
 categories = ["algorithms", "database-implementations"]
-edition = "2018"
+edition = "2021"
 
 [dependencies]
 prost = "0.11"

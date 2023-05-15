@@ -2,7 +2,7 @@
 name = "utils"
 version = "0.1.0"
 authors = ["jopemachine"]
-edition = "2018"
+edition = "2021"
 
 [dependencies]
 pyo3 = { version = "0.18.3", features = ["extension-module", "multiple-pymethods"] }
