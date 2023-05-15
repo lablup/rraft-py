@@ -210,8 +210,8 @@ def test_raw_node_read_index_to_old_leader():
     nt.send([new_message(3, 3, MessageType.MsgHup, 0)])
 
     # let r1 steps the two messages previously we got from r2, r3
-    _ = nt.peers.get(1).step(read_index_msg1)
-    _ = nt.peers.get(1).step(read_index_msg2)
+    nt.peers.get(1).step(read_index_msg1)
+    nt.peers.get(1).step(read_index_msg2)
 
     # verify r1(follower) forwards these messages again to r3(new leader)
     assert len(nt.peers[1].raft.get_msgs()) == 2

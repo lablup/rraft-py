@@ -5001,8 +5001,7 @@ def test_read_when_quorum_becomes_less():
     assert len(heartbeat_responses) == 1
 
     network.peers[1].raft.apply_conf_change(remove_node(2))
-    # TODO: Uncomment below assertion after `read_states` implemented.
-    # assert network.peers[1].raft.read_states()
+    assert network.peers[1].raft.get_read_states()
 
 
 def test_uncommitted_entries_size_limit():
