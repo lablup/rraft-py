@@ -2,19 +2,18 @@ from datetime import datetime, timezone
 from queue import Queue, Empty as QueueEmptyException
 from threading import Thread
 from time import sleep
-from typing import Dict, List, Callable, cast
+from typing import Dict, List, Callable
 from rraft import (
-    Entry_Ref,
-    HardState_Ref,
-    Logger_Ref,
-    MemStorage,
-    ConfState,
-    EntryType,
     Config,
+    ConfState,
+    Entry_Ref,
+    EntryType,
+    Logger_Ref,
     Logger,
+    MemStorage,
     Message_Ref,
-    RawNode__MemStorage,
     OverflowStrategy,
+    RawNode__MemStorage,
 )
 
 channel: Queue = Queue()
@@ -57,81 +56,77 @@ def send_propose(logger: Logger | Logger_Ref) -> None:
     Thread(name="single_mem_node", target=_send_propose).start()
 
 
-def on_ready(
-    raft_group_ref: RawNode__MemStorage, cbs: Dict[str, Callable]
-) -> None:
-    if not raft_group_ref.has_ready():
+def on_ready(raft_group: RawNode__MemStorage, cbs: Dict[str, Callable]) -> None:
+    if not raft_group.has_ready():
         return
 
-    store_ref = raft_group_ref.get_raft().get_raft_log().get_store()
+    store = raft_group.get_raft().get_raft_log().get_store()
 
     # Get the `Ready` with `RawNode::ready` interface.
-    ready = raft_group_ref.ready()
-    ready_ref = ready.make_ref()
+    ready = raft_group.ready()
 
     def handle_messages(msg_refs: List[Message_Ref]):
         for _msg_ref in msg_refs:
             # Send messages to other peers.
             continue
 
-    if msgs := ready_ref.messages():
+    if msgs := ready.messages():
         # Send out the messages come from the node.
         handle_messages(msgs)
 
-    if ready_ref.snapshot():
+    if ready.snapshot():
         # This is a snapshot, we need to apply the snapshot at first.
-        cloned_ready = raft_group_ref.ready()
-        store_ref.wl(lambda core: core.apply_snapshot(cloned_ready.snapshot()))
+        cloned_ready = raft_group.ready()
+        store.wl(lambda core: core.apply_snapshot(cloned_ready.snapshot()))
 
     _last_apply_index = 0
 
-    def handle_committed_entries(committed_entry_refs: List[Entry_Ref]):
-        for entry_ref in committed_entry_refs:
+    def handle_committed_entries(committed_entries: List[Entry_Ref]):
+        for entry in committed_entries:
             # Mostly, you need to save the last apply index to resume applying
             # after restart. Here we just ignore this because we use a Memory storage.
             nonlocal _last_apply_index
-            _last_apply_index = entry_ref.get_index()
+            _last_apply_index = entry.get_index()
 
-            entry_data = entry_ref.get_data()
+            entry_data = entry.get_data()
 
-            if not entry_ref.get_data():
+            if not entry.get_data():
                 # Emtpy entry, when the peer becomes Leader it will send an empty entry.
                 continue
 
-            if entry_ref.get_entry_type() == EntryType.EntryNormal:
+            if entry.get_entry_type() == EntryType.EntryNormal:
                 cbs[entry_data[0]]()
                 del cbs[entry_data[0]]
 
             # TODO: handle EntryConfChange
 
-    handle_committed_entries(ready_ref.committed_entries())
+    handle_committed_entries(ready.committed_entries())
 
-    if entry_refs := ready_ref.entries():
+    if entries := ready.entries():
         # Append entries to the Raft log.
-        store_ref.wl(lambda core: core.append(entry_refs))
+        store.wl(lambda core: core.append(entries))
 
-    if hs_ref := ready_ref.hs():
+    if hs := ready.hs():
         # Raft HardState changed, and we need to persist it.
-        store_ref.wl(lambda core: core.set_hardstate(cast(HardState_Ref, hs_ref)))
+        store.wl(lambda core: core.set_hardstate(hs))
 
-    if msg_refs := ready_ref.persisted_messages():
+    if msgs := ready.persisted_messages():
         # Send out the persisted messages come from the node.
-        handle_messages(msg_refs)
+        handle_messages(msgs)
 
     # Advance the Raft.
-    light_rd = raft_group_ref.advance(ready_ref)
-    light_rd_ref = light_rd
+    light_rd = raft_group.advance(ready.make_ref())
 
     # Update commit index.
-    if commit := light_rd_ref.commit_index():
-        store_ref.wl(lambda core: core.hard_state().set_commit(cast(int, commit)))
+    if commit := light_rd.commit_index():
+        store.wl(lambda core: core.hard_state().set_commit(commit))
 
     # Send out the messages.
-    handle_messages(light_rd_ref.messages())
+    handle_messages(light_rd.messages())
     # Apply all committed entries.
-    handle_committed_entries(light_rd_ref.committed_entries())
+    handle_committed_entries(light_rd.committed_entries())
     # Advance the apply index.
-    raft_group_ref.advance_apply()
+    raft_group.advance_apply()
 
 
 # A simple example about how to use the Raft library in Python.
@@ -139,9 +134,7 @@ if __name__ == "__main__":
     # Create a storage for Raft, and here we just use a simple memory storage.
     # You need to build your own persistent storage in your production.
     # Please check the Storage trait in src/storage.rs to see how to implement one.
-    storage = MemStorage.new_with_conf_state(
-        ConfState(voters=[1], learners=[])
-    )
+    storage = MemStorage.new_with_conf_state(ConfState(voters=[1], learners=[]))
 
     # Create the configuration for the Raft node.
     cfg = Config(
@@ -167,7 +160,6 @@ if __name__ == "__main__":
 
     # Create the Raft node.
     raw_node = RawNode__MemStorage(cfg, storage, logger)
-    raw_node_ref = raw_node
 
     # Use another thread to propose a Raft request.
     send_propose(logger)
@@ -186,11 +178,11 @@ if __name__ == "__main__":
             if msg_type == "PROPOSE":
                 id, cb = top["id"], top["cb"]
                 cbs[id] = cb
-                raw_node_ref.propose(context=[], data=[id])
+                raw_node.propose(context=[], data=[id])
             elif msg_type == "RAFT":
                 # Here we don't use Raft Message, so there is no "msg" sender in this example.
                 msg = top["msg"]
-                raw_node_ref.step(msg)
+                raw_node.step(msg)
             elif msg_type == "DISCONNECTED":
                 break
             else:
@@ -206,8 +198,8 @@ if __name__ == "__main__":
             if d >= timeout:
                 timeout = 100
                 # We drive Raft every 100ms.
-                raw_node_ref.tick()
+                raw_node.tick()
             else:
                 timeout -= d
 
-            on_ready(raw_node_ref, cbs)
+            on_ready(raw_node, cbs)
