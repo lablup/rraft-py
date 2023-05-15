@@ -7,20 +7,24 @@ from rraft import (
     RaftLog__MemStorage_Ref,
 )
 
-# A simulated Raft facade for testing.
-#
-# If the contained value is a `Some` operations happen. If they are a `None` operations are
-# a no-op.
-#
-# Compare to upstream, we use struct instead of trait here.
-# Because to be able to cast Interface later, we have to make
-# Raft derive Any, which will require a lot of dependencies to derive Any.
-# That's not worthy for just testing purpose.
-
 
 class Interface:
-    # Create a new interface to a new raft.
+    """
+    # A simulated Raft facade for testing.
+    #
+    # If the contained value is a `Some` operations happen. If they are a `None` operations are
+    # a no-op.
+    #
+    # Compare to upstream, we use struct instead of trait here.
+    # Because to be able to cast Interface later, we have to make
+    # Raft derive Any, which will require a lot of dependencies to derive Any.
+    # That's not worthy for just testing purpose.
+    """
+
     def __init__(self, r: Raft__MemStorage) -> None:
+        """
+        Create a new interface to a new raft.
+        """
         self.raft = r
 
     def __repr__(self) -> str:
@@ -32,19 +36,25 @@ class Interface:
     def raft_log(self) -> RaftLog__MemStorage_Ref:
         return self.raft.get_raft_log()
 
-    # Step the raft, if it exists.
     def step(self, message: Message | Message_Ref) -> None:
+        """
+        Step the raft, if it exists.
+        """
         if self.raft:
             self.raft.step(message)
 
-    # Read messages out of the raft.
     def read_messages(self) -> List[Message]:
+        """
+        Read messages out of the raft.
+        """
         if self.raft:
             return self.raft.take_msgs()
         return []
 
-    # Persist the unstable snapshot and entries.
     def persist(self) -> None:
+        """
+        Persist the unstable snapshot and entries.
+        """
         if self.raft:
             if snapshot := self.raft_log.unstable_snapshot():
                 snap = snapshot.clone()
