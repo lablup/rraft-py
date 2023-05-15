@@ -12,7 +12,6 @@ from rraft import (
     MemStorage,
     Message_Ref,
     OverflowStrategy,
-    RawNode__MemStorage_Ref,
     RawNode__MemStorage,
 )
 
@@ -48,7 +47,7 @@ async def send_propose(logger: Logger | Logger_Ref) -> None:
 
 
 async def on_ready(
-    raft_group: RawNode__MemStorage_Ref, cbs: Dict[str, Callable]
+    raft_group: RawNode__MemStorage, cbs: Dict[str, Callable]
 ) -> None:
     if not raft_group.has_ready():
         return
@@ -58,8 +57,8 @@ async def on_ready(
     # Get the `Ready` with `RawNode::ready` interface.
     ready = raft_group.ready()
 
-    async def handle_messages(msg_refs: List[Message_Ref]):
-        for _msg_ref in msg_refs:
+    async def handle_messages(msgs: List[Message_Ref]):
+        for _msg in msgs:
             # Send messages to other peers.
             continue
 
@@ -75,19 +74,19 @@ async def on_ready(
     _last_apply_index = 0
 
     async def handle_committed_entries(committed_entries: List[Entry_Ref]):
-        for entry_ref in committed_entries:
+        for entry in committed_entries:
             # Mostly, you need to save the last apply index to resume applying
             # after restart. Here we just ignore this because we use a Memory storage.
             nonlocal _last_apply_index
-            _last_apply_index = entry_ref.get_index()
+            _last_apply_index = entry.get_index()
 
-            entry_data = entry_ref.get_data()
+            entry_data = entry.get_data()
 
-            if not entry_ref.get_data():
+            if not entry.get_data():
                 # Emtpy entry, when the peer becomes Leader it will send an empty entry.
                 continue
 
-            if entry_ref.get_entry_type() == EntryType.EntryNormal:
+            if entry.get_entry_type() == EntryType.EntryNormal:
                 await cbs[entry_data[0]]()
                 del cbs[entry_data[0]]
 
@@ -95,17 +94,17 @@ async def on_ready(
 
     await handle_committed_entries(ready.committed_entries())
 
-    if entry_refs := ready.entries():
+    if entries := ready.entries():
         # Append entries to the Raft log.
-        store.wl(lambda core: core.append(entry_refs))
+        store.wl(lambda core: core.append(entries))
 
-    if hs_ref := ready.hs():
+    if hs := ready.hs():
         # Raft HardState changed, and we need to persist it.
-        store.wl(lambda core: core.set_hardstate(hs_ref))
+        store.wl(lambda core: core.set_hardstate(hs))
 
-    if msg_refs := ready.persisted_messages():
+    if msgs := ready.persisted_messages():
         # Send out the persisted messages come from the node.
-        await handle_messages(msg_refs)
+        await handle_messages(msgs)
 
     # Advance the Raft.
     light_rd = raft_group.advance(ready.make_ref())
@@ -152,7 +151,6 @@ async def main():
 
     # Create the Raft node.
     raw_node = RawNode__MemStorage(cfg, storage, logger)
-    raw_node_ref = raw_node
 
     # Use another task to propose a Raft request.
     asyncio.create_task(send_propose(logger))
@@ -171,11 +169,11 @@ async def main():
             if msg_type == "PROPOSE":
                 id, cb = top["id"], top["cb"]
                 cbs[id] = cb
-                raw_node_ref.propose(context=[], data=[id])
+                raw_node.propose(context=[], data=[id])
             elif msg_type == "RAFT":
                 # Here we don't use Raft Message, so there is no "msg" sender in this example.
                 msg = top["msg"]
-                raw_node_ref.step(msg)
+                raw_node.step(msg)
             elif msg_type == "DISCONNECTED":
                 break
 
@@ -189,11 +187,11 @@ async def main():
             if d >= timeout:
                 timeout = 100
                 # We drive Raft every 100ms.
-                raw_node_ref.tick()
+                raw_node.tick()
             else:
                 timeout -= d
 
-            await on_ready(raw_node_ref, cbs)
+            await on_ready(raw_node, cbs)
 
 
 if __name__ == "__main__":
