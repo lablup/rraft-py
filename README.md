@@ -1,6 +1,8 @@
 # rraft-py
 
-⚠️ This repository is not yet production-ready. I'd recommend not use this lib yet unless you're not interested in contributing to this bindings. The API will change.
+🚧 This repository is WIP and not yet *production-ready*. I'd recommend not use this lib unless you're not interested in contributing to this bindings. The API will change.
+
+---
 
 This crate provides Python bindings for the *[tikv/raft-rs](https://github.com/tikv/raft-rs)* crate, allowing for integration of the [*Raft consensus algorithm*](https://en.wikipedia.org/wiki/Raft_(algorithm)) in Python applications.
 
@@ -61,6 +63,19 @@ $ pip install rraft-py
 - [Example using coroutine with single in-memory node](https://github.com/lablup/rraft-py/blob/main/example/single_mem_node/use_coroutine.py)
 
 - [Example using coroutine with multi in-memory nodes](https://github.com/lablup/rraft-py/blob/main/example/multi_mem_node/main.py)
+
+## Contribution
+
+Are you interested in this project? The project is in need of various improvements such as code reviews, adding benchmarks, and adding missing methods. All kinds of contributions will be highly appreciated.
+
+### To do
+
+Currently there are following issues.
+
+- [ ] Fill in missing methods and missing comments during binding.
+- [ ] Fill in missing benchmark code.
+- [ ] Add more understandable example code.
+- [ ] Look for [Github issues](https://github.com/lablup/rraft-py/issues?q=is%3Aopen).
 
 ## Reference
 
