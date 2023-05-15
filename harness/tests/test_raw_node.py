@@ -18,6 +18,7 @@ from rraft import (
     HardState_Ref,
     Logger_Ref,
     MemStorage,
+    Message,
     MessageType,
     RawNode__MemStorage,
     RawNode__MemStorage_Ref,
@@ -47,6 +48,7 @@ from harness.utils import (
     new_test_raft,
     SOME_DATA,
     hard_state,
+    remove_node,
     soft_state,
 )
 
@@ -885,7 +887,7 @@ def test_bounded_uncommitted_entries_growth_with_partition():
     data = b"hello world!"
     raw_node.propose([], data)
 
-    # shoule be dropped
+    # should be dropped
     with pytest.raises(Exception) as e:
         raw_node.propose([], data)
 
@@ -894,38 +896,180 @@ def test_bounded_uncommitted_entries_growth_with_partition():
     # should be accepted when previous data has been committed
     rd = raw_node.ready()
     s.wl(lambda core: core.append(rd.entries()))
-    _ = raw_node.advance(rd.make_ref())
+    raw_node.advance(rd.make_ref())
 
     data = list(b"hello world!")
     raw_node.propose([], data)
 
 
-# TODO: Add below test after upgrading raft-rs v0.7.
-def prepare_async_entries():
-    pass
+def prepare_async_entries(raw_node: RawNode__MemStorage, s: MemStorage):
+    raw_node.get_raft().become_candidate()
+    raw_node.get_raft().become_leader()
+
+    rd = raw_node.ready()
+    s.wl(lambda core: core.append(rd.entries()))
+    raw_node.advance(rd.make_ref())
+
+    data = [1] * 1000
+    for _ in range(0, 10):
+        raw_node.propose([], data)
+
+    rd = raw_node.ready()
+    entries = rd.entries()
+    assert len(entries) == 10
+    s.wl(lambda core: core.append(entries))
+    msgs = rd.messages()
+    # First append has two entries: the empty entry to confirm the
+    # election, and the first proposal (only one proposal gets sent
+    # because we're in probe state).
+    assert len(msgs) == 1
+    assert msgs[0].get_msg_type() == MessageType.MsgAppend
+    assert len(msgs[0].get_entries()) == 2
+    raw_node.advance_append(rd.make_ref())
+
+    s.wl(lambda core: core.trigger_log_unavailable(True))
+
+    # Become replicate state
+    append_response = new_message(2, 1, MessageType.MsgAppendResponse, 0)
+    append_response.set_term(2)
+    append_response.set_index(2)
+    raw_node.step(append_response)
 
 
-# TODO: Add below test after upgrading raft-rs v0.7.
 # Test entries are handled properly when they are fetched asynchronously
 def test_raw_node_with_async_entries():
-    pass
+    l = default_logger()
+    cfg = new_test_config(1, 10, 1)
+    cfg.set_max_size_per_msg(2048)
+    s = new_storage()
+    raw_node = new_raw_node_with_config([1, 2], cfg, s, l)
+
+    prepare_async_entries(raw_node, s)
+
+    # No entries are sent because the entries are temporarily unavailable
+    rd = raw_node.ready()
+    entries = rd.entries()
+    s.wl(lambda core: core.append(entries))
+    msgs = rd.messages()
+    assert not msgs
+    raw_node.advance_append(rd.make_ref())
+
+    # Entries are sent when the entries are ready which is informed by `on_entries_fetched`.
+    s.wl(lambda core: core.trigger_log_unavailable(False))
+    context = s.wl(lambda core: core.take_get_entries_context())
+    raw_node.on_entries_fetched(context.make_ref())
+    rd = raw_node.ready()
+    entries = rd.entries()
+    s.wl(lambda core: core.append(entries))
+    msgs = rd.messages()
+    assert len(msgs) == 5
+    assert msgs[0].get_msg_type() == MessageType.MsgAppend
+    assert len(msgs[0].get_entries()) == 2
+    raw_node.advance_append(rd.make_ref())
 
 
-# TODO: Add below test after upgrading raft-rs v0.7.
 # Test if async fetch entries works well when there is a remove node conf-change.
 def test_raw_node_with_async_entries_to_removed_node():
-    pass
+    l = default_logger()
+    cfg = new_test_config(1, 10, 1)
+    cfg.set_max_size_per_msg(2048)
+    s = new_storage()
+    raw_node = new_raw_node_with_config([1, 2], cfg, s.clone(), l)
+
+    prepare_async_entries(raw_node, s)
+
+    raw_node.apply_conf_change_v2(remove_node(2))
+
+    # Entries are not sent due to the node is removed.
+    s.wl(lambda core: core.trigger_log_unavailable(False))
+    context = s.wl(lambda core: core.take_get_entries_context())
+    raw_node.on_entries_fetched(context.make_ref())
+    rd = raw_node.ready()
+    assert not rd.entries()
+    assert not rd.messages()
+    raw_node.advance_append(rd.make_ref())
 
 
-# TODO: Add below test after upgrading raft-rs v0.7.
 # Test if async fetch entries works well when there is a leader step-down.
 def test_raw_node_with_async_entries_on_follower():
-    pass
+    l = default_logger()
+    cfg = new_test_config(1, 10, 1)
+    cfg.set_max_size_per_msg(2048)
+    s = new_storage()
+    raw_node = new_raw_node_with_config([1, 2], cfg, s.clone(), l)
+
+    prepare_async_entries(raw_node, s)
+
+    # Set recent inactive to step down leader
+    raw_node.get_raft().prs().get(2).set_recent_active(False)
+    msg = Message()
+    msg.set_to(1)
+    msg.set_msg_type(MessageType.MsgCheckQuorum)
+    raw_node.get_raft().step(msg)
+    assert raw_node.get_raft().get_state() != StateRole.Leader
+
+    # Entries are not sent due to the leader is changed.
+    s.wl(lambda core: core.trigger_log_unavailable(False))
+    context = s.wl(lambda core: core.take_get_entries_context())
+    raw_node.on_entries_fetched(context.make_ref())
+    rd = raw_node.ready()
+    assert not rd.entries()
+    assert not rd.messages()
+    raw_node.advance_append(rd.make_ref())
 
 
-# TODO: Add below test after upgrading raft-rs v0.7.
 def test_raw_node_async_entries_with_leader_change():
-    pass
+    l = default_logger()
+    cfg = new_test_config(1, 10, 1)
+    cfg.set_max_size_per_msg(2048)
+    s = new_storage()
+    raw_node = new_raw_node_with_config([1, 2], cfg, s.clone(), l)
+
+    raw_node.get_raft().become_candidate()
+    raw_node.get_raft().become_leader()
+
+    rd = raw_node.ready()
+    s.wl(lambda core: core.append(rd.entries()))
+    raw_node.advance(rd.make_ref())
+
+    data = [1] * 1000
+    for _ in range(0, 10):
+        raw_node.propose([], data)
+
+    rd = raw_node.ready()
+    entries = rd.entries()
+    assert len(entries) == 10
+    s.wl(lambda core: core.append(entries))
+    msgs = rd.messages()
+    # election, and the first proposal (only one proposal gets sent
+    # First append has two entries: the empty entry to confirm the
+    # because we're in probe state).
+    assert len(msgs) == 1
+    assert msgs[0].get_msg_type() == MessageType.MsgAppend
+    assert len(msgs[0].get_entries()) == 2
+    raw_node.advance_append(rd.make_ref())
+
+    s.wl(lambda core: core.trigger_log_unavailable(True))
+
+    # Become replicate state
+    append_response = new_message(2, 1, MessageType.MsgAppendResponse, 0)
+    append_response.set_term(2)
+    append_response.set_index(2)
+    raw_node.step(append_response)
+
+    raw_node.get_raft().become_follower(raw_node.get_raft().get_term() + 1, 2)
+    raw_node.get_raft().become_candidate()
+    raw_node.get_raft().become_leader()
+
+    # Entries are not sent due to the leadership or the term is changed.
+    s.wl(lambda core: core.trigger_log_unavailable(False))
+    context = s.wl(lambda core: core.take_get_entries_context())
+    raw_node.on_entries_fetched(context.make_ref())
+    rd = raw_node.ready()
+    # no-op entry
+    assert len(rd.entries()) == 1
+    assert not rd.messages()
+    raw_node.advance_append(rd.make_ref())
 
 
 def test_raw_node_with_async_apply():
