@@ -19,13 +19,11 @@ from rraft import (
     Raft__MemStorage,
     RaftLog__MemStorage_Ref,
     Snapshot,
-    SnapshotMetadata,
     SoftState,
     StateRole,
     NO_LIMIT,
 )
 
-from harness.src.network import Network
 from harness.src.interface import Interface
 
 
