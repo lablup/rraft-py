@@ -1,6 +1,8 @@
+use bindings::get_entries_context::Py_GetEntriesContext_Ref;
 use pyo3::{intern, prelude::*};
 
 use raft::prelude::{ConfChange, ConfChangeV2};
+use raft::GetEntriesContext;
 
 use raft::raw_node::RawNode;
 use utils::errors::to_pyresult;
@@ -237,5 +239,14 @@ impl Py_RawNode__PyStorage_Ref {
         self.inner.map_as_mut(|inner| Py_Storage_Ref {
             inner: RustRef::new(inner.mut_store()),
         })
+    }
+
+    pub fn on_entries_fetched(&mut self, context: &mut Py_GetEntriesContext_Ref) -> PyResult<()> {
+        let context = context.inner.map_as_mut(|context| unsafe {
+            std::ptr::replace(context, GetEntriesContext::empty(false))
+        })?;
+
+        self.inner
+            .map_as_mut(|inner| inner.on_entries_fetched(context))
     }
 }

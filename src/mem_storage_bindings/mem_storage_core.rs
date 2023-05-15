@@ -1,3 +1,4 @@
+use bindings::get_entries_context::Py_GetEntriesContext;
 use pyo3::{intern, prelude::*, types::PyList};
 
 use raft::storage::MemStorageCore;
@@ -109,5 +110,18 @@ impl Py_MemStorageCore_Ref {
     pub fn trigger_snap_unavailable(&mut self) -> PyResult<()> {
         self.inner
             .map_as_mut(|inner| inner.trigger_snap_unavailable())
+    }
+
+    pub fn trigger_log_unavailable(&mut self, v: bool) -> PyResult<()> {
+        self.inner
+            .map_as_mut(|inner| inner.trigger_log_unavailable(v))
+    }
+
+    pub fn take_get_entries_context(&mut self) -> PyResult<Option<Py_GetEntriesContext>> {
+        self.inner.map_as_mut(|inner| {
+            inner
+                .take_get_entries_context()
+                .and_then(|ctx| Some(Py_GetEntriesContext { inner: ctx }))
+        })
     }
 }

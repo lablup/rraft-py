@@ -333,6 +333,14 @@ class __StorageCore:
         """
         Trigger a SnapshotTemporarilyUnavailable error.
         """
+    def trigger_log_unavailable(self, v: bool) -> None:
+        """
+        Set a LogTemporarilyUnavailable error.
+        """
+    def take_get_entries_context(self) -> Optional[GetEntriesContext]:
+        """
+        Take get entries context.
+        """
 
 class MemStorageCore(__StorageCore):
     """
@@ -426,12 +434,12 @@ class MemStorage(__Storage):
 
         You should use the same input to initialize all nodes.
         """
-    def wl(self, f: Callable[[MemStorageCore_Ref], None]) -> None:
+    def wl(self, f: Callable[[MemStorageCore_Ref], Any]) -> Any:
         """
         Opens up a write lock on the storage and returns guard handle. Use this
         with functions that take a mutable reference to self.
         """
-    def rl(self, f: Callable[[MemStorageCore_Ref], None]) -> None:
+    def rl(self, f: Callable[[MemStorageCore_Ref], Any]) -> Any:
         """
         Opens up a read lock on the storage and returns a guard handle. Use this
         with functions that don't require mutation.
@@ -443,12 +451,12 @@ class MemStorage_Ref(__Storage):
     """
 
     def clone(self) -> MemStorage: ...
-    def wl(self, f: Callable[[MemStorageCore_Ref], None]) -> None:
+    def wl(self, f: Callable[[MemStorageCore_Ref], Any]) -> Any:
         """
         Opens up a write lock on the storage and returns guard handle. Use this
         with functions that take a mutable reference to self.
         """
-    def rl(self, f: Callable[[MemStorageCore_Ref], None]) -> None:
+    def rl(self, f: Callable[[MemStorageCore_Ref], Any]) -> Any:
         """
         Opens up a read lock on the storage and returns a guard handle. Use this
         with functions that don't require mutation.
@@ -474,12 +482,12 @@ class Storage(__Storage):
         conf_state: ConfState | ConfState_Ref,
     ) -> Storage:
         """ """
-    def wl(self, f: Callable[[StorageCore_Ref], None]) -> None:
+    def wl(self, f: Callable[[StorageCore_Ref], Any]) -> Any:
         """
         Opens up a write lock on the storage and returns guard handle. Use this
         with functions that take a mutable reference to self.
         """
-    def rl(self, f: Callable[[StorageCore_Ref], None]) -> None:
+    def rl(self, f: Callable[[StorageCore_Ref], Any]) -> Any:
         """
         Opens up a read lock on the storage and returns a guard handle. Use this
         with functions that don't require mutation.
@@ -491,12 +499,12 @@ class Storage_Ref(__Storage):
     """
 
     def clone(self) -> Storage: ...
-    def wl(self, f: Callable[[StorageCore_Ref], None]) -> None:
+    def wl(self, f: Callable[[StorageCore_Ref], Any]) -> Any:
         """
         Opens up a write lock on the storage and returns guard handle. Use this
         with functions that take a mutable reference to self.
         """
-    def rl(self, f: Callable[[StorageCore_Ref], None]) -> None:
+    def rl(self, f: Callable[[StorageCore_Ref], Any]) -> Any:
         """
         Opens up a read lock on the storage and returns a guard handle. Use this
         with functions that don't require mutation.
@@ -755,6 +763,16 @@ class __RawNode:
         Request a snapshot from a leader.
         The snapshot's index must be greater or equal to the request_index (last_index) or
         the leader's term must be greater than the request term (last_index's term).
+        """
+    def on_entries_fetched(self) -> None:
+        """
+        A callback when entries are fetched asynchronously.
+        The context should provide the context passed from Storage.entires().
+        See more in the comment of Storage.entires().
+
+        # Panics
+
+        Panics if passed with the context of context.can_async() == false
         """
 
 class RawNode__MemStorage(__RawNode):
