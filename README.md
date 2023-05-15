@@ -72,9 +72,9 @@ Are you interested in this project? The project is in need of various improvemen
 
 Currently there are following issues.
 
-- [ ] Fill in missing methods and missing comments during binding.
-- [ ] Fill in missing benchmark code.
-- [ ] Add more understandable example code.
+- [ ] Fill in missing methods and bindings.
+- [ ] Fill in missing [benchmark code](https://github.com/lablup/rraft-py/blob/main/benches/suites/raw_node.py).
+- [ ] Add more understandable example codes.
 - [ ] Look for [Github issues](https://github.com/lablup/rraft-py/issues?q=is%3Aopen).
 
 ## Reference
