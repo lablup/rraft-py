@@ -1,6 +1,6 @@
 # rraft-py
 
-🚧 This repository is WIP and not yet *production-ready* although it currently passes [all harness tests](https://github.com/lablup/rraft-py/tree/main/harness) and have working example codes. I'd recommend not use this lib in your application unless you're interested in contributing to this bindings. The API will change.
+🚧 This repository is WIP and not yet *production-ready* although it currently passes [almost all harness tests](https://github.com/lablup/rraft-py/tree/main/harness) and have [working example codes](https://github.com/lablup/rraft-py/tree/main/example). I'd recommend not use this lib in your application unless you're interested in contributing to this bindings. The API will change.
 
 ---
 
