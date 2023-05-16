@@ -37,5 +37,6 @@ jobs:
         rustup override set nightly
     - name: Build and Test
       run: |
+        make lint
         make install
         make test
