@@ -166,8 +166,4 @@ impl Py_Snapshot_Ref {
     pub fn has_metadata(&self) -> PyResult<bool> {
         self.inner.map_as_ref(|inner| inner.has_metadata())
     }
-
-    pub fn is_empty(&self) -> PyResult<bool> {
-        self.inner.map_as_ref(|inner| inner.is_empty())
-    }
 }

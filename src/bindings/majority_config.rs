@@ -131,10 +131,6 @@ impl Py_MajorityConfig_Ref {
         self.inner.map_as_ref(|inner| inner.capacity())
     }
 
-    pub fn is_empty(&self) -> PyResult<bool> {
-        self.inner.map_as_ref(|inner| inner.is_empty())
-    }
-
     pub fn extend(&mut self, other_set: &PySet) -> PyResult<()> {
         let other_set = other_set.extract::<HashSet<u64, BuildHasherDefault<FxHasher>>>()?;
         self.inner
