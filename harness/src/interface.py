@@ -3,8 +3,8 @@ from typing import List
 from rraft import (
     Message,
     Message_Ref,
-    Raft__MemStorage,
-    RaftLog__MemStorage_Ref,
+    InMemoryRaftStorage,
+    InMemoryRaftLog_Ref,
 )
 
 
@@ -21,7 +21,7 @@ class Interface:
     # That's not worthy for just testing purpose.
     """
 
-    def __init__(self, r: Raft__MemStorage) -> None:
+    def __init__(self, r: InMemoryRaftStorage) -> None:
         """
         Create a new interface to a new raft.
         """
@@ -33,7 +33,7 @@ class Interface:
         return f"Interface {{ id: {self.raft.get_id()} }}"
 
     @property
-    def raft_log(self) -> RaftLog__MemStorage_Ref:
+    def raft_log(self) -> InMemoryRaftLog_Ref:
         return self.raft.get_raft_log()
 
     def step(self, message: Message | Message_Ref) -> None:

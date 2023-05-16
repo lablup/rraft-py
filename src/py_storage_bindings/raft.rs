@@ -32,30 +32,30 @@ use external_bindings::slog::Py_Logger_Mut;
 
 use crate::{
     py_storage::{Py_Storage, Py_Storage_Ref},
-    raft_log::Py_RaftLog__PyStorage_Ref,
+    raft_log::Py_RaftLog_Ref,
 };
 
 #[pyclass(name = "Raft")]
-pub struct Py_Raft__PyStorage {
+pub struct Py_Raft {
     pub inner: Raft<Py_Storage>,
 }
 
 #[pyclass(name = "Raft_Ref")]
-pub struct Py_Raft__PyStorage_Ref {
+pub struct Py_Raft_Ref {
     pub inner: RustRef<Raft<Py_Storage>>,
 }
 
 #[pymethods]
-impl Py_Raft__PyStorage {
+impl Py_Raft {
     #[new]
     pub fn new(cfg: Py_Config_Mut, store: &Py_Storage, logger: Py_Logger_Mut) -> PyResult<Self> {
         Raft::new(&cfg.into(), store.clone(), &logger.into())
-            .map(|r| Py_Raft__PyStorage { inner: r })
+            .map(|r| Py_Raft { inner: r })
             .map_err(|e| runtime_error(&e.to_string()))
     }
 
-    pub fn make_ref(&mut self) -> Py_Raft__PyStorage_Ref {
-        Py_Raft__PyStorage_Ref {
+    pub fn make_ref(&mut self) -> Py_Raft_Ref {
+        Py_Raft_Ref {
             inner: RustRef::new(&mut self.inner),
         }
     }
@@ -67,7 +67,7 @@ impl Py_Raft__PyStorage {
 }
 
 #[pymethods]
-impl Py_Raft__PyStorage_Ref {
+impl Py_Raft_Ref {
     pub fn __repr__(&mut self) -> PyResult<String> {
         self.inner.map_as_mut(|inner| {
             format!(
@@ -500,8 +500,8 @@ impl Py_Raft__PyStorage_Ref {
         })
     }
 
-    pub fn get_raft_log(&mut self) -> PyResult<Py_RaftLog__PyStorage_Ref> {
-        self.inner.map_as_mut(|inner| Py_RaftLog__PyStorage_Ref {
+    pub fn get_raft_log(&mut self) -> PyResult<Py_RaftLog_Ref> {
+        self.inner.map_as_mut(|inner| Py_RaftLog_Ref {
             inner: RustRef::new(&mut inner.raft_log),
         })
     }

@@ -20,8 +20,8 @@ from rraft import (
     MemStorage,
     Message,
     MessageType,
-    RawNode__MemStorage,
-    RawNode__MemStorage_Ref,
+    InMemoryRawNode,
+    InMemoryRawNode_Ref,
     ReadState,
     Ready_Ref,
     Snapshot,
@@ -88,7 +88,7 @@ def new_raw_node(
     heartbeat_tick: int,
     storage: MemStorage,
     logger: Logger_Ref,
-) -> RawNode__MemStorage:
+) -> InMemoryRawNode:
     config = new_test_config(id, election_tick, heartbeat_tick)
     return new_raw_node_with_config(peers, config, storage, logger)
 
@@ -98,7 +98,7 @@ def new_raw_node_with_config(
     config: Config_Ref,
     storage: MemStorage,
     logger: Logger_Ref,
-) -> RawNode__MemStorage:
+) -> InMemoryRawNode:
     assert not (
         storage.initial_state().initialized() and not peers
     ), f"new_raw_node with empty peers on initialized store"
@@ -106,7 +106,7 @@ def new_raw_node_with_config(
     if peers and not storage.initial_state().initialized():
         storage.wl(lambda core: core.apply_snapshot(new_snapshot(1, 1, peers)))
 
-    return RawNode__MemStorage(config, storage, logger)
+    return InMemoryRawNode(config, storage, logger)
 
 
 def get_msg_types() -> List[MessageType]:
@@ -338,7 +338,7 @@ def test_raw_node_propose_and_conf_change():
             s.wl(lambda core: core.append(rd.entries()))
 
             def handle_committed_entries(
-                rn: RawNode__MemStorage_Ref, committed_entries: List[Entry]
+                rn: InMemoryRawNode_Ref, committed_entries: List[Entry]
             ):
                 for e in committed_entries:
                     nonlocal cs
@@ -461,7 +461,7 @@ def test_raw_node_joint_auto_leave():
         s.wl(lambda core: core.append(rd.entries()))
 
         def handle_committed_entries(
-            rn: RawNode__MemStorage_Ref, committed_entries: List[Entry]
+            rn: InMemoryRawNode_Ref, committed_entries: List[Entry]
         ):
             for e in committed_entries:
                 nonlocal cs
@@ -559,7 +559,7 @@ def test_raw_node_propose_add_duplicate_node():
         s.wl(lambda core: core.append(rd.entries()))
 
         def handle_committed_entries(
-            rn: RawNode__MemStorage_Ref, committed_entries: List[Entry]
+            rn: InMemoryRawNode_Ref, committed_entries: List[Entry]
         ):
             for e in committed_entries:
                 if e.get_entry_type() == EntryType.EntryConfChange:
@@ -762,7 +762,7 @@ def test_raw_node_restart_from_snapshot():
     store.wl(lambda core: core.apply_snapshot(snap))
     store.wl(lambda core: core.append(entries))
     store.wl(lambda core: core.set_hardstate(hard_state(1, 3, 0)))
-    raw_node = RawNode__MemStorage(new_test_config(1, 10, 1), store, l)
+    raw_node = InMemoryRawNode(new_test_config(1, 10, 1), store, l)
 
     rd = raw_node.ready()
     must_cmp_ready(rd.make_ref(), None, None, [], entries, None, True, True, False)
@@ -902,7 +902,7 @@ def test_bounded_uncommitted_entries_growth_with_partition():
     raw_node.propose([], data)
 
 
-def prepare_async_entries(raw_node: RawNode__MemStorage, s: MemStorage):
+def prepare_async_entries(raw_node: InMemoryRawNode, s: MemStorage):
     raw_node.get_raft().become_candidate()
     raw_node.get_raft().become_leader()
 
@@ -1835,7 +1835,7 @@ def test_committed_entries_pagination_after_restart():
     s.inner.wl(lambda core: core.append([new_entry(1, 11, "boom")]))
 
     config = new_test_config(1, 10, 1)
-    raw_node = RawNode__MemStorage(config, s.inner, l)
+    raw_node = InMemoryRawNode(config, s.inner, l)
 
     # `IgnoreSizeHintMemStorage` will ignore `max_committed_size_per_ready` but
     # `RaftLog::slice won't.`

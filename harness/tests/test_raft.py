@@ -46,9 +46,9 @@ from rraft import (
     Message,
     MessageType,
     ProgressState,
-    Raft__MemStorage,
-    Raft__MemStorage_Ref,
-    RaftLog__MemStorage_Ref,
+    InMemoryRaftStorage,
+    InMemoryRaft_Ref,
+    InMemoryRaftLog_Ref,
     ReadOnlyOption,
     Snapshot,
     StateRole,
@@ -59,7 +59,7 @@ from rraft import (
 )
 
 
-def read_messages(raft: Raft__MemStorage) -> List[Message]:
+def read_messages(raft: InMemoryRaftStorage) -> List[Message]:
     return raft.take_msgs()
 
 
@@ -85,7 +85,7 @@ def ents_with_config(
 
 def assert_raft_log(
     prefix: str,
-    raft_log: RaftLog__MemStorage_Ref,
+    raft_log: InMemoryRaftLog_Ref,
     committed: int,
     applied: int,
     last: int,
@@ -130,7 +130,7 @@ def voted_with_config(
 
 
 # Persist committed index and fetch next entries.
-def next_ents(r: Raft__MemStorage_Ref, s: MemStorage_Ref) -> List[Entry]:
+def next_ents(r: InMemoryRaft_Ref, s: MemStorage_Ref) -> List[Entry]:
     unstable_refs = r.get_raft_log().unstable_entries()
     unstable = list(map(lambda e: e.clone(), unstable_refs))
 
@@ -3468,7 +3468,7 @@ def test_leader_transfer_second_transfer_to_same_node():
     check_leader_transfer_state(nt.peers[1].raft, StateRole.Leader, 1)
 
 
-def check_leader_transfer_state(r: Raft__MemStorage_Ref, state: StateRole, lead: int):
+def check_leader_transfer_state(r: InMemoryRaft_Ref, state: StateRole, lead: int):
     assert (
         r.get_state() == state and r.get_leader_id() == lead
     ), f"after transferring, node has state {r.state} lead {state}, want state {r.get_leader_id()} lead {lead}"
@@ -4150,7 +4150,7 @@ def test_new_raft_with_bad_config_errors():
     s = MemStorage.new_with_conf_state(ConfState([1, 2], []))
 
     with pytest.raises(Exception) as e:
-        Raft__MemStorage(invalid_config, s, l)
+        InMemoryRaftStorage(invalid_config, s, l)
 
     assert str(e.value) == "invalid node id"
 

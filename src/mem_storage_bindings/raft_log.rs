@@ -15,27 +15,27 @@ use utils::reference::RustRef;
 use bindings::unstable::Py_Unstable_Ref;
 use raftpb_bindings::entry::{Py_Entry, Py_Entry_Mut, Py_Entry_Ref};
 
-#[pyclass(name = "RaftLog__MemStorage")]
-pub struct Py_RaftLog__MemStorage {
+#[pyclass(name = "InMemoryRaftLog")]
+pub struct Py_InMemoryRaftLog {
     pub inner: RaftLog<MemStorage>,
 }
 
-#[pyclass(name = "RaftLog__MemStorage_Ref")]
-pub struct Py_RaftLog__MemStorage_Ref {
+#[pyclass(name = "InMemoryRaftLog_Ref")]
+pub struct Py_InMemoryRaftLog_Ref {
     pub inner: RustRef<RaftLog<MemStorage>>,
 }
 
 #[pymethods]
-impl Py_RaftLog__MemStorage {
+impl Py_InMemoryRaftLog {
     #[new]
     pub fn new(store: Py_MemStorage_Mut, logger: Py_Logger_Mut) -> Self {
-        Py_RaftLog__MemStorage {
+        Py_InMemoryRaftLog {
             inner: RaftLog::new(store.into(), logger.into()),
         }
     }
 
-    pub fn make_ref(&mut self) -> Py_RaftLog__MemStorage_Ref {
-        Py_RaftLog__MemStorage_Ref {
+    pub fn make_ref(&mut self) -> Py_InMemoryRaftLog_Ref {
+        Py_InMemoryRaftLog_Ref {
             inner: RustRef::new(&mut self.inner),
         }
     }
@@ -51,7 +51,7 @@ impl Py_RaftLog__MemStorage {
 }
 
 #[pymethods]
-impl Py_RaftLog__MemStorage_Ref {
+impl Py_InMemoryRaftLog_Ref {
     pub fn __repr__(&self) -> PyResult<String> {
         self.inner
             .map_as_ref(|inner| format!("{:?}", inner.to_string(),))

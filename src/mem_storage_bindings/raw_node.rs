@@ -9,7 +9,7 @@ use raft::raw_node::RawNode;
 use utils::errors::to_pyresult;
 use utils::unsafe_cast::make_mut;
 
-use super::raft::Py_Raft__MemStorage_Ref;
+use super::raft::Py_InMemoryRaftStorage_Ref;
 use bindings::config::Py_Config_Mut;
 use bindings::light_ready::Py_LightReady;
 use bindings::ready::{Py_Ready, Py_Ready_Ref};
@@ -24,27 +24,27 @@ use super::mem_storage::{Py_MemStorage_Mut, Py_MemStorage_Ref};
 use bindings::snapshot_status::Py_SnapshotStatus;
 use utils::reference::RustRef;
 
-#[pyclass(name = "RawNode__MemStorage")]
-pub struct Py_RawNode__MemStorage {
+#[pyclass(name = "InMemoryRawNode")]
+pub struct Py_InMemoryRawNode {
     pub inner: RawNode<MemStorage>,
 }
 
-#[pyclass(name = "RawNode__MemStorage_Ref")]
-pub struct Py_RawNode__MemStorage_Ref {
+#[pyclass(name = "InMemoryRawNode_Ref")]
+pub struct Py_InMemoryRawNode_Ref {
     pub inner: RustRef<RawNode<MemStorage>>,
 }
 
 #[pymethods]
-impl Py_RawNode__MemStorage {
+impl Py_InMemoryRawNode {
     #[new]
     pub fn new(cfg: Py_Config_Mut, storage: Py_MemStorage_Mut, logger: Py_Logger_Mut) -> Self {
-        Py_RawNode__MemStorage {
+        Py_InMemoryRawNode {
             inner: RawNode::new(&cfg.into(), storage.into(), &logger.into()).unwrap(),
         }
     }
 
-    pub fn make_ref(&mut self) -> Py_RawNode__MemStorage_Ref {
-        Py_RawNode__MemStorage_Ref {
+    pub fn make_ref(&mut self) -> Py_InMemoryRawNode_Ref {
+        Py_InMemoryRawNode_Ref {
             inner: RustRef::new(&mut self.inner),
         }
     }
@@ -56,7 +56,7 @@ impl Py_RawNode__MemStorage {
 }
 
 #[pymethods]
-impl Py_RawNode__MemStorage_Ref {
+impl Py_InMemoryRawNode_Ref {
     pub fn advance_apply(&mut self) -> PyResult<()> {
         self.inner.map_as_mut(|inner| inner.advance_apply())
     }
@@ -229,8 +229,8 @@ impl Py_RawNode__MemStorage_Ref {
         self.inner.map_as_mut(|inner| inner.read_index(rctx))
     }
 
-    pub fn get_raft(&mut self) -> PyResult<Py_Raft__MemStorage_Ref> {
-        self.inner.map_as_mut(|inner| Py_Raft__MemStorage_Ref {
+    pub fn get_raft(&mut self) -> PyResult<Py_InMemoryRaftStorage_Ref> {
+        self.inner.map_as_mut(|inner| Py_InMemoryRaftStorage_Ref {
             inner: RustRef::new(&mut inner.raft),
         })
     }

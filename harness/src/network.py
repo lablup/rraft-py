@@ -10,7 +10,7 @@ from rraft import (
     Message_Ref,
     MessageType,
     NO_LIMIT,
-    Raft__MemStorage,
+    InMemoryRaftStorage,
 )
 import random
 
@@ -98,7 +98,7 @@ class Network:
                 nstorage[id] = store.clone()
                 cfg = config.clone()
                 cfg.set_id(id)
-                npeers[id] = Interface(Raft__MemStorage(cfg, store, l))
+                npeers[id] = Interface(InMemoryRaftStorage(cfg, store, l))
             else:
                 if p.raft:
                     if raft := p.raft:

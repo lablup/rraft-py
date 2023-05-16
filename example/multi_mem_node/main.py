@@ -16,7 +16,7 @@ from rraft import (
     MemStorage,
     Message,
     MessageType,
-    RawNode__MemStorage,
+    InMemoryRawNode,
     Snapshot,
     StateRole,
     default_logger,
@@ -133,7 +133,7 @@ async def add_all_followers() -> None:
             await asyncio.sleep(0.1)
 
 
-async def propose(raft_group: RawNode__MemStorage, proposal: Proposal) -> None:
+async def propose(raft_group: InMemoryRawNode, proposal: Proposal) -> None:
     last_index1 = raft_group.get_raft().get_raft_log().last_index() + 1
 
     if proposal._normal:
@@ -160,7 +160,7 @@ class Node:
     def __init__(
         self,
         # None if the raft is not initialized.
-        raft_group: Optional[RawNode__MemStorage],
+        raft_group: Optional[InMemoryRawNode],
         my_mailbox: Queue[Message],
         # Key-value pairs after applied. `MemStorage` only contains raft logs,
         # so we need an additional storage engine.
@@ -186,7 +186,7 @@ class Node:
         s.get_metadata().get_conf_state().set_voters([1])
         storage = MemStorage()
         storage.wl(lambda core: core.apply_snapshot(s))
-        raft_group = RawNode__MemStorage(cfg, storage, logger)
+        raft_group = InMemoryRawNode(cfg, storage, logger)
         return Node(raft_group, my_mailbox, {})
 
     @staticmethod
@@ -207,7 +207,7 @@ class Node:
         cfg = example_config()
         cfg.set_id(msg.get_to())
         storage = MemStorage()
-        self.raft_group = RawNode__MemStorage(cfg, storage, logger)
+        self.raft_group = InMemoryRawNode(cfg, storage, logger)
 
     def step(self, msg: Message) -> None:
         """
@@ -223,7 +223,7 @@ class Node:
 
 
 async def on_ready(
-    raft_group: RawNode__MemStorage,
+    raft_group: InMemoryRawNode,
     kv_pairs: Dict[int, str],
 ) -> None:
     if not raft_group.has_ready():
@@ -256,7 +256,7 @@ async def on_ready(
             return
 
     async def handle_committed_entries(
-        rn: RawNode__MemStorage, committed_entries: List[Entry]
+        rn: InMemoryRawNode, committed_entries: List[Entry]
     ):
         for entry in committed_entries:
             if not entry.get_data():

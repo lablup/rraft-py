@@ -22,29 +22,29 @@ use bindings::snapshot_status::Py_SnapshotStatus;
 use utils::reference::RustRef;
 
 use crate::py_storage::{Py_Storage, Py_Storage_Ref};
-use crate::raft::Py_Raft__PyStorage_Ref;
+use crate::raft::Py_Raft_Ref;
 
 #[pyclass(name = "RawNode")]
-pub struct Py_RawNode__PyStorage {
+pub struct Py_RawNode {
     pub inner: RawNode<Py_Storage>,
 }
 
 #[pyclass(name = "RawNode_Ref")]
-pub struct Py_RawNode__PyStorage_Ref {
+pub struct Py_RawNode_Ref {
     pub inner: RustRef<RawNode<Py_Storage>>,
 }
 
 #[pymethods]
-impl Py_RawNode__PyStorage {
+impl Py_RawNode {
     #[new]
     pub fn new(cfg: Py_Config_Mut, storage: &Py_Storage, logger: Py_Logger_Mut) -> Self {
-        Py_RawNode__PyStorage {
+        Py_RawNode {
             inner: RawNode::new(&cfg.into(), storage.clone(), &logger.into()).unwrap(),
         }
     }
 
-    pub fn make_ref(&mut self) -> Py_RawNode__PyStorage_Ref {
-        Py_RawNode__PyStorage_Ref {
+    pub fn make_ref(&mut self) -> Py_RawNode_Ref {
+        Py_RawNode_Ref {
             inner: RustRef::new(&mut self.inner),
         }
     }
@@ -56,7 +56,7 @@ impl Py_RawNode__PyStorage {
 }
 
 #[pymethods]
-impl Py_RawNode__PyStorage_Ref {
+impl Py_RawNode_Ref {
     pub fn advance_apply(&mut self) -> PyResult<()> {
         self.inner.map_as_mut(|inner| inner.advance_apply())
     }
@@ -229,8 +229,8 @@ impl Py_RawNode__PyStorage_Ref {
         self.inner.map_as_mut(|inner| inner.read_index(rctx))
     }
 
-    pub fn get_raft(&mut self) -> PyResult<Py_Raft__PyStorage_Ref> {
-        self.inner.map_as_mut(|inner| Py_Raft__PyStorage_Ref {
+    pub fn get_raft(&mut self) -> PyResult<Py_Raft_Ref> {
+        self.inner.map_as_mut(|inner| Py_Raft_Ref {
             inner: RustRef::new(&mut inner.raft),
         })
     }

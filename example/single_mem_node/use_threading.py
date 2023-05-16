@@ -13,7 +13,7 @@ from rraft import (
     MemStorage,
     Message_Ref,
     OverflowStrategy,
-    RawNode__MemStorage,
+    InMemoryRawNode,
 )
 
 channel: Queue = Queue()
@@ -56,7 +56,7 @@ def send_propose(logger: Logger | Logger_Ref) -> None:
     Thread(name="single_mem_node", target=_send_propose).start()
 
 
-def on_ready(raft_group: RawNode__MemStorage, cbs: Dict[str, Callable]) -> None:
+def on_ready(raft_group: InMemoryRawNode, cbs: Dict[str, Callable]) -> None:
     if not raft_group.has_ready():
         return
 
@@ -159,7 +159,7 @@ if __name__ == "__main__":
     logger = Logger(chan_size=4096, overflow_strategy=OverflowStrategy.Block)
 
     # Create the Raft node.
-    raw_node = RawNode__MemStorage(cfg, storage, logger)
+    raw_node = InMemoryRawNode(cfg, storage, logger)
 
     # Use another thread to propose a Raft request.
     send_propose(logger)

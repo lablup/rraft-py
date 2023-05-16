@@ -65,21 +65,21 @@ fn rraft(_py: Python, m: &PyModule) -> PyResult<()> {
     m.add_class::<mem_storage_bindings::mem_storage_core::Py_MemStorageCore_Ref>()?;
     m.add_class::<mem_storage_bindings::mem_storage::Py_MemStorage>()?;
     m.add_class::<mem_storage_bindings::mem_storage::Py_MemStorage_Ref>()?;
-    m.add_class::<mem_storage_bindings::raft_log::Py_RaftLog__MemStorage>()?;
-    m.add_class::<mem_storage_bindings::raft_log::Py_RaftLog__MemStorage_Ref>()?;
-    m.add_class::<mem_storage_bindings::raft::Py_Raft__MemStorage>()?;
-    m.add_class::<mem_storage_bindings::raft::Py_Raft__MemStorage_Ref>()?;
-    m.add_class::<mem_storage_bindings::raw_node::Py_RawNode__MemStorage>()?;
-    m.add_class::<mem_storage_bindings::raw_node::Py_RawNode__MemStorage_Ref>()?;
+    m.add_class::<mem_storage_bindings::raft_log::Py_InMemoryRaftLog>()?;
+    m.add_class::<mem_storage_bindings::raft_log::Py_InMemoryRaftLog_Ref>()?;
+    m.add_class::<mem_storage_bindings::raft::Py_InMemoryRaftStorage>()?;
+    m.add_class::<mem_storage_bindings::raft::Py_InMemoryRaftStorage_Ref>()?;
+    m.add_class::<mem_storage_bindings::raw_node::Py_InMemoryRawNode>()?;
+    m.add_class::<mem_storage_bindings::raw_node::Py_InMemoryRawNode_Ref>()?;
 
     m.add_class::<py_storage_bindings::py_storage::Py_Storage>()?;
     m.add_class::<py_storage_bindings::py_storage::Py_Storage_Ref>()?;
-    m.add_class::<py_storage_bindings::raft_log::Py_RaftLog__PyStorage>()?;
-    m.add_class::<py_storage_bindings::raft_log::Py_RaftLog__PyStorage_Ref>()?;
-    m.add_class::<py_storage_bindings::raft::Py_Raft__PyStorage>()?;
-    m.add_class::<py_storage_bindings::raft::Py_Raft__PyStorage_Ref>()?;
-    m.add_class::<py_storage_bindings::raw_node::Py_RawNode__PyStorage>()?;
-    m.add_class::<py_storage_bindings::raw_node::Py_RawNode__PyStorage_Ref>()?;
+    m.add_class::<py_storage_bindings::raft_log::Py_RaftLog>()?;
+    m.add_class::<py_storage_bindings::raft_log::Py_RaftLog_Ref>()?;
+    m.add_class::<py_storage_bindings::raft::Py_Raft>()?;
+    m.add_class::<py_storage_bindings::raft::Py_Raft_Ref>()?;
+    m.add_class::<py_storage_bindings::raw_node::Py_RawNode>()?;
+    m.add_class::<py_storage_bindings::raw_node::Py_RawNode_Ref>()?;
 
     m.add_class::<external_bindings::slog::Py_Logger>()?;
     m.add_class::<external_bindings::slog::Py_Logger_Ref>()?;

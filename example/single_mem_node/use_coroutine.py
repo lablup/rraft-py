@@ -12,7 +12,7 @@ from rraft import (
     MemStorage,
     Message_Ref,
     OverflowStrategy,
-    RawNode__MemStorage,
+    InMemoryRawNode,
 )
 
 channel: Queue = Queue()
@@ -47,7 +47,7 @@ async def send_propose(logger: Logger | Logger_Ref) -> None:
 
 
 async def on_ready(
-    raft_group: RawNode__MemStorage, cbs: Dict[str, Callable]
+    raft_group: InMemoryRawNode, cbs: Dict[str, Callable]
 ) -> None:
     if not raft_group.has_ready():
         return
@@ -150,7 +150,7 @@ async def main():
     logger = Logger(chan_size=4096, overflow_strategy=OverflowStrategy.Block)
 
     # Create the Raft node.
-    raw_node = RawNode__MemStorage(cfg, storage, logger)
+    raw_node = InMemoryRawNode(cfg, storage, logger)
 
     # Use another task to propose a Raft request.
     asyncio.create_task(send_propose(logger))

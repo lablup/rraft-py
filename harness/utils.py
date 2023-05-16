@@ -16,8 +16,8 @@ from rraft import (
     MemStorage_Ref,
     Message,
     MessageType,
-    Raft__MemStorage,
-    RaftLog__MemStorage_Ref,
+    InMemoryRaftStorage,
+    InMemoryRaftLog_Ref,
     Snapshot,
     SoftState,
     StateRole,
@@ -27,7 +27,7 @@ from rraft import (
 from harness.src.interface import Interface
 
 
-def ltoa(raft_log: RaftLog__MemStorage_Ref) -> str:
+def ltoa(raft_log: InMemoryRaftLog_Ref) -> str:
     s = f"commited {raft_log.get_committed()}\n"
     s += f"applied {raft_log.get_applied()}\n"
     for i, e in enumerate(raft_log.all_entries()):
@@ -125,7 +125,7 @@ def new_test_raft_with_config(
     storage: MemStorage | MemStorage_Ref,
     logger: Logger | Logger_Ref,
 ) -> Interface:
-    return Interface(Raft__MemStorage(config, storage, logger))
+    return Interface(InMemoryRaftStorage(config, storage, logger))
 
 
 def hard_state(term: int, commit: int, vote: int) -> HardState:

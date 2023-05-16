@@ -791,7 +791,7 @@ class __API_RawNode:
         Panics if passed with the context of context.can_async() == false
         """
 
-class RawNode__MemStorage(__API_RawNode):
+class InMemoryRawNode(__API_RawNode):
     """
     RawNode is a thread-unsafe Node.
     The methods of this struct correspond to the methods of Node and are described
@@ -804,18 +804,18 @@ class RawNode__MemStorage(__API_RawNode):
         store: MemStorage | MemStorage_Ref,
         logger: Logger | Logger_Ref,
     ) -> None: ...
-    def make_ref(self) -> RawNode__MemStorage_Ref: ...
-    def get_raft(self) -> Raft__MemStorage_Ref:
+    def make_ref(self) -> InMemoryRawNode_Ref: ...
+    def get_raft(self) -> InMemoryRaft_Ref:
         """ """
     def store(self) -> MemStorage_Ref:
         """Returns the store as a mutable reference."""
 
-class RawNode__MemStorage_Ref(__API_RawNode):
+class InMemoryRawNode_Ref(__API_RawNode):
     """
-    Reference type of :class:`RawNode__MemStorage`.
+    Reference type of :class:`InMemoryRawNode`.
     """
 
-    def get_raft(self) -> Raft__MemStorage_Ref:
+    def get_raft(self) -> InMemoryRaft_Ref:
         """ """
     def store(self) -> MemStorage_Ref:
         """Returns the store as a mutable reference."""
@@ -1942,21 +1942,21 @@ class __API_RaftLog:
         Invariant: persisted < unstable.offset && applied <= persisted
         """
 
-class RaftLog__MemStorage(__API_RaftLog):
+class InMemoryRaftLog(__API_RaftLog):
     """
     Raft log implementation
     """
 
     def __init__(self, store: MemStorage_Ref, logger: Logger | Logger_Ref) -> None: ...
-    def make_ref(self) -> RaftLog__MemStorage_Ref: ...
+    def make_ref(self) -> InMemoryRaftLog_Ref: ...
     def get_store(self) -> MemStorage_Ref:
         """
         Grab a read-only reference to the underlying storage.
         """
 
-class RaftLog__MemStorage_Ref(__API_RaftLog):
+class InMemoryRaftLog_Ref(__API_RaftLog):
     """
-    Reference type of :class:`RaftLog__MemStorage`.
+    Reference type of :class:`InMemoryRaftLog`.
     """
 
     def get_store(self) -> MemStorage_Ref:
@@ -2465,7 +2465,7 @@ class __API_Raft:
         `max_committed_size_per_ready`: Max size for committed entries in a `Ready`.
         """
 
-class Raft__MemStorage(__API_Raft):
+class InMemoryRaftStorage(__API_Raft):
     """
     A struct that represents the raft consensus itself. Stores details concerning the current
     and possible state the system can take.
@@ -2477,16 +2477,16 @@ class Raft__MemStorage(__API_Raft):
         store: MemStorage | MemStorage_Ref,
         logger: Logger | Logger_Ref,
     ) -> None: ...
-    def make_ref(self) -> Raft__MemStorage_Ref: ...
-    def get_raft_log(self) -> RaftLog__MemStorage_Ref:
+    def make_ref(self) -> InMemoryRaft_Ref: ...
+    def get_raft_log(self) -> InMemoryRaftLog_Ref:
         """ """
 
-class Raft__MemStorage_Ref(__API_Raft):
+class InMemoryRaft_Ref(__API_Raft):
     """
-    Reference type of :class:`Raft__MemStorage`.
+    Reference type of :class:`InMemoryRaftStorage`.
     """
 
-    def get_raft_log(self) -> RaftLog__MemStorage_Ref:
+    def get_raft_log(self) -> InMemoryRaftLog_Ref:
         """ """
 
 class Raft(__API_Raft):
@@ -3174,7 +3174,7 @@ class Config_Ref(__API_Config):
 #     Represents the current status of the raft
 #     """
 
-#     def __init__(self, raft: Raft__MemStorage) -> None: ...
+#     def __init__(self, raft: InMemoryRaftStorage) -> None: ...
 #     def make_ref(self) -> Status__Memstorage_Ref: ...
 
 # class Status__Memstorage_Ref(__Status):

@@ -32,22 +32,22 @@ use bindings::{
 };
 use external_bindings::slog::Py_Logger_Mut;
 
-use crate::raft_log::Py_RaftLog__MemStorage_Ref;
+use crate::raft_log::Py_InMemoryRaftLog_Ref;
 
 use super::mem_storage::{Py_MemStorage_Mut, Py_MemStorage_Ref};
 
-#[pyclass(name = "Raft__MemStorage")]
-pub struct Py_Raft__MemStorage {
+#[pyclass(name = "InMemoryRaftStorage")]
+pub struct Py_InMemoryRaftStorage {
     pub inner: Raft<MemStorage>,
 }
 
-#[pyclass(name = "Raft__MemStorage_Ref")]
-pub struct Py_Raft__MemStorage_Ref {
+#[pyclass(name = "InMemoryRaft_Ref")]
+pub struct Py_InMemoryRaftStorage_Ref {
     pub inner: RustRef<Raft<MemStorage>>,
 }
 
 #[pymethods]
-impl Py_Raft__MemStorage {
+impl Py_InMemoryRaftStorage {
     #[new]
     pub fn new(
         cfg: Py_Config_Mut,
@@ -55,12 +55,12 @@ impl Py_Raft__MemStorage {
         logger: Py_Logger_Mut,
     ) -> PyResult<Self> {
         Raft::new(&cfg.into(), store.into(), &logger.into())
-            .map(|r| Py_Raft__MemStorage { inner: r })
+            .map(|r| Py_InMemoryRaftStorage { inner: r })
             .map_err(|e| runtime_error(&e.to_string()))
     }
 
-    pub fn make_ref(&mut self) -> Py_Raft__MemStorage_Ref {
-        Py_Raft__MemStorage_Ref {
+    pub fn make_ref(&mut self) -> Py_InMemoryRaftStorage_Ref {
+        Py_InMemoryRaftStorage_Ref {
             inner: RustRef::new(&mut self.inner),
         }
     }
@@ -72,7 +72,7 @@ impl Py_Raft__MemStorage {
 }
 
 #[pymethods]
-impl Py_Raft__MemStorage_Ref {
+impl Py_InMemoryRaftStorage_Ref {
     pub fn __repr__(&mut self) -> PyResult<String> {
         self.inner.map_as_mut(|inner| {
             format!(
@@ -505,8 +505,8 @@ impl Py_Raft__MemStorage_Ref {
         })
     }
 
-    pub fn get_raft_log(&mut self) -> PyResult<Py_RaftLog__MemStorage_Ref> {
-        self.inner.map_as_mut(|inner| Py_RaftLog__MemStorage_Ref {
+    pub fn get_raft_log(&mut self) -> PyResult<Py_InMemoryRaftLog_Ref> {
+        self.inner.map_as_mut(|inner| Py_InMemoryRaftLog_Ref {
             inner: RustRef::new(&mut inner.raft_log),
         })
     }

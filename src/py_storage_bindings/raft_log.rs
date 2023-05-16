@@ -14,26 +14,26 @@ use bindings::{get_entries_context::Py_GetEntriesContext_Ref, unstable::Py_Unsta
 use raftpb_bindings::entry::{Py_Entry, Py_Entry_Mut, Py_Entry_Ref};
 
 #[pyclass(name = "RaftLog")]
-pub struct Py_RaftLog__PyStorage {
+pub struct Py_RaftLog {
     pub inner: RaftLog<Py_Storage>,
 }
 
 #[pyclass(name = "RaftLog_Ref")]
-pub struct Py_RaftLog__PyStorage_Ref {
+pub struct Py_RaftLog_Ref {
     pub inner: RustRef<RaftLog<Py_Storage>>,
 }
 
 #[pymethods]
-impl Py_RaftLog__PyStorage {
+impl Py_RaftLog {
     #[new]
     pub fn new(store: &Py_Storage, logger: Py_Logger_Mut) -> Self {
-        Py_RaftLog__PyStorage {
+        Py_RaftLog {
             inner: RaftLog::new(store.clone(), logger.into()),
         }
     }
 
-    pub fn make_ref(&mut self) -> Py_RaftLog__PyStorage_Ref {
-        Py_RaftLog__PyStorage_Ref {
+    pub fn make_ref(&mut self) -> Py_RaftLog_Ref {
+        Py_RaftLog_Ref {
             inner: RustRef::new(&mut self.inner),
         }
     }
@@ -49,7 +49,7 @@ impl Py_RaftLog__PyStorage {
 }
 
 #[pymethods]
-impl Py_RaftLog__PyStorage_Ref {
+impl Py_RaftLog_Ref {
     pub fn __repr__(&self) -> PyResult<String> {
         self.inner
             .map_as_ref(|inner| format!("{:?}", inner.to_string(),))

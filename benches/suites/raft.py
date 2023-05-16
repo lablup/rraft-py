@@ -4,7 +4,7 @@ from rraft import (
     Logger_Ref,
     MemStorage,
     Config,
-    Raft__MemStorage,
+    InMemoryRaftStorage,
     default_logger,
 )
 
@@ -22,7 +22,7 @@ def new_storage(voters: int, learners: int) -> MemStorage:
 def quick_raft(storage: MemStorage, logger: Logger_Ref):
     id = 1
     config = Config(id)
-    return Raft__MemStorage(config, storage, logger)
+    return InMemoryRaftStorage(config, storage, logger)
 
 
 @pytest.mark.benchmark(group="Raft", warmup=True)
