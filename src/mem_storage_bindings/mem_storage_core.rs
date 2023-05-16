@@ -121,7 +121,7 @@ impl Py_MemStorageCore_Ref {
         self.inner.map_as_mut(|inner| {
             inner
                 .take_get_entries_context()
-                .and_then(|ctx| Some(Py_GetEntriesContext { inner: ctx }))
+                .map(|ctx| Py_GetEntriesContext { inner: ctx })
         })
     }
 }
