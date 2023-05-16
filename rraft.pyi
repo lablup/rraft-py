@@ -249,15 +249,22 @@ class __RaftState(__Cloneable):
         """
     def get_conf_state(self) -> ConfState_Ref:
         """
-        Records the current node IDs like `[1, 2, 3]` in the cluster. Every Raft node must have a
+        `conf_state`: Records the current node IDs like `[1, 2, 3]` in the cluster. Every Raft node must have a
         unique ID in the cluster;
         """
     def set_conf_state(self, cs: ConfState_Ref) -> None:
-        """ """
+        """
+        `conf_state`: Records the current node IDs like `[1, 2, 3]` in the cluster. Every Raft node must have a
+        unique ID in the cluster;
+        """
     def get_hard_state(self) -> HardState_Ref:
-        """Contains the last meta information including commit index, the vote leader, and the vote term."""
+        """
+        `hard_state`: Contains the last meta information including commit index, the vote leader, and the vote term.
+        """
     def set_hard_state(self, hs: HardState_Ref) -> None:
-        """ """
+        """
+        `hard_state`: Contains the last meta information including commit index, the vote leader, and the vote term.
+        """
 
 class RaftState(__RaftState):
     """
@@ -847,16 +854,23 @@ class RawNode_Ref(__RawNode):
 
 class __Peer:
     def get_id(self) -> int:
-        """Represents a Peer node in the cluster."""
+        """
+        `id`: The ID of the peer.
+        """
     def set_id(self, id: int) -> None:
-        """ """
+        """
+        `id`: The ID of the peer.
+        """
     def get_context(self) -> bytes:
         """
-        If there is context associated with the peer (like connection information), it can be
+        `context`: If there is context associated with the peer (like connection information), it can be
         serialized and stored here.
         """
     def set_context(self, context: bytes | List[int]) -> None:
-        """ """
+        """
+        `context`: If there is context associated with the peer (like connection information), it can be
+        serialized and stored here.
+        """
 
 class Peer(__Peer):
     """
@@ -925,25 +939,45 @@ class __Decoder:
 class __SnapshotMetadata(__Cloneable, __Encoder, __Decoder):
     def clone(self) -> SnapshotMetadata: ...
     def get_index(self) -> int:
-        """The applied index."""
+        """
+        `index`: The applied index.
+        """
     def set_index(self, index: int) -> None:
-        """ """
+        """
+        `index`: The applied index.
+        """
     def clear_index(self) -> None:
-        """ """
+        """
+        `index`: The applied index.
+        """
     def get_term(self) -> int:
-        """The term of the applied index."""
+        """
+        `term`: The term of the applied index.
+        """
     def set_term(self, term: int) -> None:
-        """ """
+        """
+        `term`: The term of the applied index.
+        """
     def clear_term(self) -> None:
-        """ """
+        """
+        `term`: The term of the applied index.
+        """
     def get_conf_state(self) -> ConfState_Ref:
-        """The current `ConfState`."""
+        """
+        `conf_state`: The current `ConfState`.
+        """
     def set_conf_state(self, conf_state: ConfState | ConfState_Ref) -> None:
-        """ """
+        """
+        `conf_state`: The current `ConfState`.
+        """
     def clear_conf_state(self) -> None:
-        """ """
+        """
+        `conf_state`: The current `ConfState`.
+        """
     def has_conf_state(self) -> bool:
-        """ """
+        """
+        `conf_state`: The current `ConfState`.
+        """
 
 class SnapshotMetadata(__SnapshotMetadata):
     """ """
@@ -975,8 +1009,6 @@ class __Snapshot(__Cloneable, __Encoder, __Decoder):
     def clear_metadata(self) -> None:
         """ """
     def has_metadata(self) -> bool:
-        """ """
-    def is_empty(self) -> bool:
         """ """
 
 class Snapshot(__Snapshot):
@@ -1028,28 +1060,52 @@ class __Message(__Cloneable, __Encoder, __Decoder):
         """ """
     def get_log_term(self) -> int:
         """
-        logTerm is generally used for appending Raft logs to followers. For example,
+        `logTerm`: logTerm is generally used for appending Raft logs to followers. For example,
         (type=MsgAppend,index=100,log_term=5) means leader appends entries starting at
         index=101, and the term of entry at index 100 is 5.
         (type=MsgAppendResponse,reject=true,index=100,log_term=5) means follower rejects some
         entries from its leader as it already has an entry with term 5 at index 100.
         """
     def set_log_term(self, log_index: int) -> None:
-        """ """
+        """
+        `logTerm`: logTerm is generally used for appending Raft logs to followers. For example,
+        (type=MsgAppend,index=100,log_term=5) means leader appends entries starting at
+        index=101, and the term of entry at index 100 is 5.
+        (type=MsgAppendResponse,reject=true,index=100,log_term=5) means follower rejects some
+        entries from its leader as it already has an entry with term 5 at index 100.
+        """
     def clear_log_term(self) -> None:
-        """ """
+        """
+        `logTerm`: logTerm is generally used for appending Raft logs to followers. For example,
+        (type=MsgAppend,index=100,log_term=5) means leader appends entries starting at
+        index=101, and the term of entry at index 100 is 5.
+        (type=MsgAppendResponse,reject=true,index=100,log_term=5) means follower rejects some
+        entries from its leader as it already has an entry with term 5 at index 100.
+        """
     def get_priority(self) -> int:
         """
-        If this new field is not set, then use the above old field; otherwise
+        `priority`: If this new field is not set, then use the above old field; otherwise
         use the new field. When broadcasting request vote, both fields are
         set if the priority is larger than 0. This change is not a fully
         compatible change, but it makes minimal impact that only new priority
         is not recognized by the old nodes during rolling update.
         """
     def set_priority(self, priority: int) -> None:
-        """ """
+        """
+        `priority`: If this new field is not set, then use the above old field; otherwise
+        use the new field. When broadcasting request vote, both fields are
+        set if the priority is larger than 0. This change is not a fully
+        compatible change, but it makes minimal impact that only new priority
+        is not recognized by the old nodes during rolling update.
+        """
     def clear_priority(self) -> None:
-        """ """
+        """
+        `priority`: If this new field is not set, then use the above old field; otherwise
+        use the new field. When broadcasting request vote, both fields are
+        set if the priority is larger than 0. This change is not a fully
+        compatible change, but it makes minimal impact that only new priority
+        is not recognized by the old nodes during rolling update.
+        """
     def get_context(self) -> bytes:
         """ """
     def set_context(self, context: bytes | List[int]) -> None:
@@ -1157,16 +1213,16 @@ class HardState_Ref(__HardState):
     """
 
 class __GetEntriesContext:
-    """
-    Records the context of the caller who calls entries() of Storage trait.
-    """
-
     def can_async(self) -> bool:
         """
         Check if the caller's context support fetching entries asynchrouously.
         """
 
 class GetEntriesContext(__GetEntriesContext):
+    """
+    Records the context of the caller who calls entries() of Storage trait.
+    """
+
     @staticmethod
     def empty() -> GetEntriesContext:
         """
@@ -1540,25 +1596,45 @@ class __Unstable:
         Panics if truncate logs to the entry before snapshot
         """
     def get_entries_size(self) -> int:
-        """The size of entries"""
+        """
+        `entries_size`: The size of entries
+        """
     def set_entries_size(self, entries_size: int) -> None:
-        """ """
+        """
+        `entries_size`: The size of entries
+        """
     def get_offset(self) -> int:
-        """The offset from the vector index."""
+        """
+        `offset`: The offset from the vector index.
+        """
     def set_offset(self, offset: int) -> None:
-        """ """
+        """
+        `offset`: The offset from the vector index.
+        """
     def get_entries(self) -> List[Entry_Ref]:
-        """All entries that have not yet been written to storage."""
+        """
+        `entries`: All entries that have not yet been written to storage.
+        """
     def set_entries(self, ents: List[Entry] | List[Entry_Ref]) -> None:
-        """ """
+        """
+        `entries`: All entries that have not yet been written to storage.
+        """
     def get_logger(self) -> Logger_Ref:
-        """The tag to use when logging."""
+        """
+        `logger`: The tag to use when logging.
+        """
     def set_logger(self, logger: Logger | Logger_Ref) -> None:
-        """ """
+        """
+        `logger`: The tag to use when logging.
+        """
     def get_snapshot(self) -> Optional[Snapshot_Ref]:
-        """The incoming unstable snapshot, if any."""
+        """
+        `snapshot`: The incoming unstable snapshot, if any.
+        """
     def set_snapshot(self, snapshot: Snapshot | Snapshot_Ref) -> None:
-        """ """
+        """
+        `snapshot`: The incoming unstable snapshot, if any.
+        """
 
 class Unstable(__Unstable):
     """
@@ -1578,13 +1654,21 @@ class Unstable_Ref(__Unstable):
 
 class __SoftState:
     def get_leader_id(self) -> int:
-        """The potential leader of the cluster."""
+        """
+        `leader_id`: The potential leader of the cluster.
+        """
     def set_leader_id(self, leader_id: int) -> None:
-        """ """
+        """
+        `leader_id`: The potential leader of the cluster.
+        """
     def get_raft_state(self) -> StateRole:
-        """The soft role this node may take."""
+        """
+        `raft_state`: The soft role this node may take.
+        """
     def set_raft_state(self, role: StateRole) -> None:
-        """ """
+        """
+        `raft_state`: The soft role this node may take.
+        """
 
 class SoftState(__SoftState):
     """
@@ -1604,13 +1688,21 @@ class SoftState_Ref(__SoftState):
 class __ReadState(__Cloneable):
     def clone(self) -> ReadState: ...
     def get_index(self) -> int:
-        """The index of the read state."""
+        """
+        `index`: The index of the read state.
+        """
     def set_index(self, idx: int) -> None:
-        """ """
+        """
+        `index`: The index of the read state.
+        """
     def get_request_ctx(self) -> bytes:
-        """A datagram consisting of context about the request."""
+        """
+        `request_ctx`: A datagram consisting of context about the request.
+        """
     def set_request_ctx(self, request_ctx: bytes | List[int]) -> None:
-        """ """
+        """
+        `request_ctx`: A datagram consisting of context about the request.
+        """
 
 class ReadState(__ReadState):
     """
@@ -1809,32 +1901,48 @@ class __RaftLog:
         """
     def get_applied(self) -> int:
         """
-        The highest log position that the application has been instructed
+        `applied`: The highest log position that the application has been instructed
         to apply to its state machine.
 
         Invariant: applied <= min(committed, persisted)
         """
     def set_applied(self, applied: int) -> None:
-        """ """
+        """
+        `applied`: The highest log position that the application has been instructed
+        to apply to its state machine.
+
+        Invariant: applied <= min(committed, persisted)
+        """
     def get_committed(self) -> int:
         """
-        The highest log position that is known to be in stable storage
+        `committed`: The highest log position that is known to be in stable storage
         on a quorum of nodes.
 
         Invariant: applied <= committed
         """
     def set_committed(self, committed: int) -> None:
-        """ """
+        """
+        `committed`: The highest log position that is known to be in stable storage
+        on a quorum of nodes.
+
+        Invariant: applied <= committed
+        """
     def get_persisted(self) -> int:
         """
-        The highest log position that is known to be persisted in stable
+        `persisted`: The highest log position that is known to be persisted in stable
         storage. It's used for limiting the upper bound of committed and
         persisted entries.
 
         Invariant: persisted < unstable.offset && applied <= persisted
         """
     def set_persisted(self, persisted: int) -> None:
-        """ """
+        """
+        `persisted`: The highest log position that is known to be persisted in stable
+        storage. It's used for limiting the upper bound of committed and
+        persisted entries.
+
+        Invariant: persisted < unstable.offset && applied <= persisted
+        """
 
 class RaftLog__MemStorage(__RaftLog):
     """
@@ -2151,35 +2259,59 @@ class __Raft:
         """
     def get_lead_transferee(self) -> Optional[int]:
         """
-        ID of the leader transfer target when its value is not None.
+        `lead_transferee`: ID of the leader transfer target when its value is not None.
 
         If this is Some(id), we follow the procedure defined in raft thesis 3.10.
         """
     def set_lead_transferee(self, lead_transferee: int) -> None:
-        """ """
+        """
+        `lead_transferee`: ID of the leader transfer target when its value is not None.
+
+        If this is Some(id), we follow the procedure defined in raft thesis 3.10.
+        """
     def get_term(self) -> int:
-        """The current election term."""
+        """
+        `term`: The current election term.
+        """
     def set_term(self, term: int) -> None:
-        """ """
+        """
+        `term`: The current election term.
+        """
     def get_vote(self) -> int:
-        """Which peer this raft is voting for."""
+        """
+        `vote`: Which peer this raft is voting for.
+        """
     def set_vote(self, vote: int) -> None:
-        """ """
+        """
+        `vote`: Which peer this raft is voting for.
+        """
     def get_priority(self) -> int:
-        """The election priority of this node."""
+        """
+        `priority`: The election priority of this node.
+        """
     def set_priority(self, priority: int) -> None:
-        """ """
+        """
+        `priority`: The election priority of this node.
+        """
     def get_leader_id(self) -> int:
-        """The leader id"""
+        """
+        `leader_id`: The leader id
+        """
     def set_leader_id(self, leader_id: int) -> None:
-        """ """
+        """
+        `leader_id`: The leader id
+        """
     def get_max_msg_size(self) -> int:
-        """The maximum length (in bytes) of all the entries."""
+        """
+        `max_msg_size`: The maximum length (in bytes) of all the entries.
+        """
     def set_max_msg_size(self, max_msg_size: int) -> None:
-        """ """
+        """
+        `max_msg_size`: The maximum length (in bytes) of all the entries.
+        """
     def get_pending_conf_index(self) -> int:
         """
-        Only one conf change may be pending (in the log, but not yet
+        `pending_conf_index`: Only one conf change may be pending (in the log, but not yet
         applied) at a time. This is enforced via `pending_conf_index`, which
         is set to a value >= the log index of the latest pending
         configuration change (if any). Config changes are only allowed to
@@ -2192,69 +2324,117 @@ class __Raft:
         we set this to one.
         """
     def set_pending_conf_index(self, pending_conf_index: int) -> None:
-        """ """
+        """
+        `pending_conf_index`: Only one conf change may be pending (in the log, but not yet
+        applied) at a time. This is enforced via `pending_conf_index`, which
+        is set to a value >= the log index of the latest pending
+        configuration change (if any). Config changes are only allowed to
+        be proposed if the leader's applied index is greater than this
+        value.
+
+        This value is conservatively set in cases where there may be a configuration change pending,
+        but scanning the log is possibly expensive. This implies that the index stated here may not
+        necessarily be a config change entry, and it may not be a `BeginMembershipChange` entry, even if
+        we set this to one.
+        """
     def get_pending_request_snapshot(self) -> int:
         """ """
     def set_pending_request_snapshot(self, pending_request_snapshot: int) -> None:
         """ """
     def get_id(self) -> int:
-        """The ID of this node."""
+        """
+        `id`: The ID of this node.
+        """
     def set_id(self, id: int) -> None:
-        """ """
+        """
+        `id`: The ID of this node.
+        """
     def get_msgs(self) -> List[Message_Ref]:
-        """The list of messages."""
-    def take_msgs(self) -> List[Message]:
-        """ """
+        """
+        `msgs`: The list of messages.
+        """
     def set_msgs(self, msgs: List[Message | Message_Ref]) -> None:
-        """ """
+        """
+        `msgs`: The list of messages.
+        """
+    def take_msgs(self) -> List[Message]:
+        """
+        `msgs`: The list of messages.
+        """
     def get_max_inflight(self) -> int:
-        """The maximum number of messages that can be inflight."""
+        """
+        `max_inflight`: The maximum number of messages that can be inflight.
+        """
     def set_max_inflight(self, max_inflight: int) -> None:
-        """ """
+        """
+        `max_inflight`: The maximum number of messages that can be inflight.
+        """
     def get_state(self) -> StateRole:
-        """The current role of this node."""
+        """
+        `state`: The current role of this node.
+        """
     def set_state(self, state_role: StateRole) -> None:
-        """ """
+        """
+        `state`: The current role of this node.
+        """
     def get_election_elapsed(self) -> int:
         """
-        Ticks since it reached last electionTimeout when it is leader or candidate.
+        `election_elapsed`: Ticks since it reached last electionTimeout when it is leader or candidate.
         Number of ticks since it reached last electionTimeout or received a
         valid message from current leader when it is a follower.
         """
     def set_election_elapsed(self, election_elapsed: int) -> None:
-        """ """
+        """
+        `election_elapsed`: Ticks since it reached last electionTimeout when it is leader or candidate.
+        Number of ticks since it reached last electionTimeout or received a
+        valid message from current leader when it is a follower.
+        """
     def get_check_quorum(self) -> bool:
-        """Whether to check the quorum"""
+        """
+        `check_quorum`: Whether to check the quorum
+        """
     def set_check_quorum(self, check_quorum: bool) -> None:
-        """ """
+        """
+        `check_quorum`: Whether to check the quorum
+        """
     def get_pre_vote(self) -> bool:
         """
-        Enable the prevote algorithm.
+        `pre_vote`: Enable the prevote algorithm.
 
         This enables a pre-election vote round on Candidates prior to disrupting the cluster.
 
         Enable this if greater cluster stability is preferred over faster elections.
         """
     def set_pre_vote(self, pre_vote: bool) -> None:
-        """"""
+        """
+        `pre_vote`: Enable the prevote algorithm.
+
+        This enables a pre-election vote round on Candidates prior to disrupting the cluster.
+
+        Enable this if greater cluster stability is preferred over faster elections.
+        """
     def apply_conf_change(self, conf_change: ConfChangeV2_Ref) -> ConfChange_Ref:
         """ """
     def set_batch_append(self, batch_append: bool) -> None:
-        """Set whether batch append msg at runtime."""
+        """`batch_append`: Set whether batch append msg at runtime."""
     def get_readonly_read_index_queue(self) -> List[List[int]]:
         """ """
     def get_readstates(self) -> List[ReadState]:
-        """The current read states."""
+        """`readstates`: The current read states."""
     def set_max_committed_size_per_ready(
         self, max_committed_size_per_ready: int
     ) -> None:
         """ """
     def get_read_states(self) -> List[ReadState]:
-        """The current read states."""
+        """
+        `read_states`: The current read states.
+        """
     def set_read_states(
         self, read_states: List[ReadState] | List[ReadState_Ref]
     ) -> None:
-        """ """
+        """
+        `read_states`: The current read states.
+        """
     def get_read_only_option(self) -> ReadOnlyOption:
         """ """
     def set_read_only_option(self, option: ReadOnlyOption) -> None:
@@ -2432,7 +2612,7 @@ class __Progress(__Cloneable):
         """
     def update_committed(self, committed_index: int) -> None:
         """
-        update committed_index.
+        Update committed_index.
         """
     def optimistic_update(self, n: int) -> None:
         """
@@ -2440,7 +2620,7 @@ class __Progress(__Cloneable):
         """
     def get_ins(self) -> Inflights_Ref:
         """
-        Inflights is a sliding window for the inflight messages.
+        `ins`: Inflights is a sliding window for the inflight messages.
         When inflights is full, no more message should be sent.
         When a leader sends out a message, the index of the last
         entry should be added to inflights. The index MUST be added
@@ -2449,59 +2629,100 @@ class __Progress(__Cloneable):
         be freed by calling inflights.freeTo.
         """
     def set_ins(self, inflights: Inflights | Inflights_Ref) -> None:
-        """"""
+        """
+        `ins`: Inflights is a sliding window for the inflight messages.
+        When inflights is full, no more message should be sent.
+        When a leader sends out a message, the index of the last
+        entry should be added to inflights. The index MUST be added
+        into inflights in order.
+        When a leader receives a reply, the previous inflights should
+        be freed by calling inflights.freeTo.
+        """
     def get_commit_group_id(self) -> int:
-        """Only logs replicated to different group will be committed if any group is configured."""
+        """
+        `commit_group_id`: Only logs replicated to different group will be committed if any group is configured.
+        """
     def set_commit_group_id(self, commit_group_id: int) -> None:
-        """"""
+        """
+        `commit_group_id`: Only logs replicated to different group will be committed if any group is configured.
+        """
     def get_committed_index(self) -> int:
-        """Committed index in raft_log"""
+        """
+        `committed_index`: Committed index in raft_log
+        """
     def set_committed_index(self, committed_index: int) -> None:
-        """"""
+        """
+        `committed_index`: Committed index in raft_log
+        """
     def get_matched(self) -> int:
-        """How much state is matched."""
+        """
+        `matched`: How much state is matched.
+        """
     def set_matched(self, matched: int) -> None:
-        """"""
+        """
+        `matched`: How much state is matched.
+        """
     def get_next_idx(self) -> int:
-        """The next index to apply"""
+        """
+        `next_idx`: The next index to apply
+        """
     def set_next_idx(self, next_idx: int) -> None:
-        """"""
+        """
+        `next_idx`: The next index to apply
+        """
     def get_pending_snapshot(self) -> int:
         """
-        This field is used in ProgressStateSnapshot.
+        `pending_snapshot`: This field is used in ProgressStateSnapshot.
         If there is a pending snapshot, the pendingSnapshot will be set to the
         index of the snapshot. If pendingSnapshot is set, the replication process of
         this Progress will be paused. raft will not resend snapshot until the pending one
         is reported to be failed.
         """
     def set_pending_snapshot(self, pending_snapshot: int) -> None:
-        """"""
+        """
+        `pending_snapshot`: This field is used in ProgressStateSnapshot.
+        If there is a pending snapshot, the pendingSnapshot will be set to the
+        index of the snapshot. If pendingSnapshot is set, the replication process of
+        this Progress will be paused. raft will not resend snapshot until the pending one
+        is reported to be failed.
+        """
     def get_pending_request_snapshot(self) -> int:
         """
-        This field is used in request snapshot.
+        `pending_request_snapshot`: This field is used in request snapshot.
         If there is a pending request snapshot, this will be set to the request
         index of the snapshot.
         """
     def set_pending_request_snapshot(self, pending_request_snapshot: int) -> None:
-        """"""
+        """
+        `pending_request_snapshot`: This field is used in request snapshot.
+        If there is a pending request snapshot, this will be set to the request
+        index of the snapshot.
+        """
     def get_recent_active(self) -> bool:
         """
-        This is true if the progress is recently active. Receiving any messages
+        `recent_active`: This is true if the progress is recently active. Receiving any messages
         from the corresponding follower indicates the progress is active.
         RecentActive can be reset to false after an election timeout.
         """
     def set_recent_active(self, recent_active: bool) -> None:
-        """"""
+        """
+        `recent_active`: This is true if the progress is recently active. Receiving any messages
+        from the corresponding follower indicates the progress is active.
+        RecentActive can be reset to false after an election timeout.
+        """
     def get_paused(self) -> bool:
         """
-        Paused is used in ProgressStateProbe.
+        `paused`: Paused is used in ProgressStateProbe.
         When Paused is true, raft should pause sending replication message to this peer.
         """
     def set_paused(self, paused: bool) -> None:
-        """"""
+        """
+        `paused`: Paused is used in ProgressStateProbe.
+        When Paused is true, raft should pause sending replication message to this peer.
+        """
     def get_state(self) -> ProgressState:
         """
-        When in ProgressStateProbe, leader sends at most one replication message
+        `state`: When in ProgressStateProbe, leader sends at most one replication message
         per heartbeat interval. It also probes actual progress of the follower.
 
         When in ProgressStateReplicate, leader optimistically increases next
@@ -2512,7 +2733,17 @@ class __Progress(__Cloneable):
         before and stop sending any replication message.
         """
     def set_state(self, state: ProgressState) -> None:
-        """"""
+        """
+        `state`: When in ProgressStateProbe, leader sends at most one replication message
+        per heartbeat interval. It also probes actual progress of the follower.
+
+        When in ProgressStateReplicate, leader optimistically increases next
+        to the latest entry sent after sending replication message. This is
+        an optimized state for fast replicating log entries to the follower.
+
+        When in ProgressStateSnapshot, leader should have sent out snapshot
+        before and stop sending any replication message.
+        """
 
 class Progress(__Progress):
     """
@@ -2558,8 +2789,6 @@ class JointConfig_Ref(__JointConfig):
 class __MajorityConfig(__Cloneable):
     def clone(self) -> MajorityConfig: ...
     def capacity(self) -> int:
-        """"""
-    def is_empty(self) -> bool:
         """"""
     def extend(self, other_set: Set[int]) -> None:
         """"""
@@ -2640,67 +2869,171 @@ class Inflights_Ref(__Inflights):
 class __Config(__Cloneable):
     def clone(self) -> Config: ...
     def min_election_tick(self) -> int:
-        """The minimum number of ticks before an election."""
+        """
+        `min_election_tick`: The minimum number of ticks before an election.
+        """
     def set_min_election_tick(self, min_election_tick: int) -> None:
-        """ """
+        """
+        `min_election_tick`: The minimum number of ticks before an election.
+        """
     def max_election_tick(self) -> int:
-        """The maximum number of ticks before an election."""
+        """
+        `max_election_tick`: The maximum number of ticks before an election.
+        """
     def set_max_election_tick(self, max_election_tick: int) -> None:
-        """ """
+        """
+        `max_election_tick`: The maximum number of ticks before an election.
+        """
+    def get_read_only_option(self) -> ReadOnlyOption:
+        """
+        `read_only_option`: Choose the linearizability mode or the lease mode to read data. If you don’t care about the read consistency and want a higher read performance, you can use the lease mode.
+        Setting this to `LeaseBased` requires `check_quorum = true`.
+        """
+    def set_read_only_option(self, read_only_option: ReadOnlyOption) -> None:
+        """
+        `read_only_option`: Choose the linearizability mode or the lease mode to read data. If you don’t care about the read consistency and want a higher read performance, you can use the lease mode.
+        Setting this to `LeaseBased` requires `check_quorum = true`.
+        """
+    def get_id(self) -> int:
+        """
+        `id`: The identity of the local raft. It cannot be 0, and must be unique in the group.
+        """
+    def set_id(self, id: int) -> None:
+        """
+        `id`: The identity of the local raft. It cannot be 0, and must be unique in the group.
+        """
+    def get_election_tick(self) -> int:
+        """
+        `election_tick`: The number of node.tick invocations that must pass between
+        elections. That is, if a follower does not receive any message from the
+        leader of current term before ElectionTick has elapsed, it will become
+        candidate and start an election. election_tick must be greater than
+        HeartbeatTick. We suggest election_tick = 10 * HeartbeatTick to avoid
+        unnecessary leader switching
+        """
+    def set_election_tick(self, election_tick: int) -> None:
+        """
+        `election_tick`: The number of node.tick invocations that must pass between
+        elections. That is, if a follower does not receive any message from the
+        leader of current term before ElectionTick has elapsed, it will become
+        candidate and start an election. election_tick must be greater than
+        HeartbeatTick. We suggest election_tick = 10 * HeartbeatTick to avoid
+        unnecessary leader switching
+        """
+    def get_heartbeat_tick(self) -> int:
+        """
+        `heartbeat_tick`: HeartbeatTick is the number of node.tick invocations that must pass between
+        heartbeats. That is, a leader sends heartbeat messages to maintain its
+        leadership every heartbeat ticks.
+        """
+    def set_heartbeat_tick(self, heartbeat_tick: int) -> None:
+        """
+        `heartbeat_tick`: HeartbeatTick is the number of node.tick invocations that must pass between
+        heartbeats. That is, a leader sends heartbeat messages to maintain its
+        leadership every heartbeat ticks.
+        """
+    def get_max_size_per_msg(self) -> int:
+        """
+        `max_size_per_msg`: Limit the max size of each append message. Smaller value lowers
+        the raft recovery cost(initial probing and message lost during normal operation).
+        On the other side, it might affect the throughput during normal replication.
+        Note: math.MaxUusize64 for unlimited, 0 for at most one entry per message.
+        """
+    def set_max_size_per_msg(self, max_size_per_msg: int) -> None:
+        """
+        `max_size_per_msg`: Limit the max size of each append message. Smaller value lowers
+        the raft recovery cost(initial probing and message lost during normal operation).
+        On the other side, it might affect the throughput during normal replication.
+        Note: math.MaxUusize64 for unlimited, 0 for at most one entry per message.
+        """
+    def get_max_inflight_msgs(self) -> int:
+        """
+        `max_inflight_msgs`: Limit the max number of in-flight append messages during optimistic
+        replication phase. The application transportation layer usually has its own sending
+        buffer over TCP/UDP. Set to avoid overflowing that sending buffer.
+        """
+    def set_max_inflight_msgs(self, max_inflight_msgs: int) -> None:
+        """
+        `max_inflight_msgs`: Limit the max number of in-flight append messages during optimistic
+        replication phase. The application transportation layer usually has its own sending
+        buffer over TCP/UDP. Set to avoid overflowing that sending buffer.
+        """
+    def get_applied(self) -> int:
+        """
+        `applied`: Applied is the last applied index. It should only be set when restarting
+        raft. raft will not return entries to the application smaller or equal to Applied.
+        If Applied is unset when restarting, raft might return previous applied entries.
+        This is a very application dependent configuration.
+        """
+    def set_applied(self, applied: int) -> None:
+        """
+        `applied`: Applied is the last applied index. It should only be set when restarting
+        raft. raft will not return entries to the application smaller or equal to Applied.
+        If Applied is unset when restarting, raft might return previous applied entries.
+        This is a very application dependent configuration.
+        """
+    def get_check_quorum(self) -> bool:
+        """
+        `check_quorum`: Specify if the leader should check quorum activity. Leader steps down when
+        quorum is not active for an electionTimeout.
+        """
+    def set_check_quorum(self, check_quorum: bool) -> None:
+        """
+        `check_quorum`: Specify if the leader should check quorum activity. Leader steps down when
+        quorum is not active for an electionTimeout.
+        """
+    def get_pre_vote(self) -> bool:
+        """
+        `pre_vote`: Enables the Pre-Vote algorithm described in raft thesis section
+        9.6. This prevents disruption when a node that has been partitioned away
+        rejoins the cluster.
+        """
+    def set_pre_vote(self, pre_vote: bool) -> None:
+        """
+        `pre_vote`: Enables the Pre-Vote algorithm described in raft thesis section
+        9.6. This prevents disruption when a node that has been partitioned away
+        rejoins the cluster.
+        """
+    def get_batch_append(self) -> bool:
+        """
+        `batch_append`: Batches every append msg if any append msg already exists
+        """
+    def set_batch_append(self, batch_append: bool) -> None:
+        """
+        `batch_append`: Batches every append msg if any append msg already exists
+        """
+    def get_skip_bcast_commit(self) -> bool:
+        """
+        `skip_bcast_commit`: Don't broadcast an empty raft entry to notify follower to commit an entry.
+        This may make follower wait a longer time to apply an entry. This configuration
+        May affect proposal forwarding and follower read.
+        """
+    def set_skip_bcast_commit(self, skip_bcast_commit: bool) -> None:
+        """
+        `skip_bcast_commit`: Don't broadcast an empty raft entry to notify follower to commit an entry.
+        This may make follower wait a longer time to apply an entry. This configuration
+        May affect proposal forwarding and follower read.
+        """
+    def get_priority(self) -> int:
+        """
+        `priority`: The election priority of this node.
+        """
+    def set_priority(self, priority: int) -> None:
+        """
+        `priority`: The election priority of this node.
+        """
+    def get_max_uncommitted_size(self) -> int:
+        """
+        `max_uncommitted_size`: Specify maximum of uncommitted entry size.
+        When this limit is reached, all proposals to append new log will be dropped
+        """
+    def set_max_uncommitted_size(self, max_uncommitted_size: int) -> None:
+        """
+        `max_uncommitted_size`: Specify maximum of uncommitted entry size.
+        When this limit is reached, all proposals to append new log will be dropped
+        """
     def validate(self) -> None:
         """Runs validations against the config."""
-    def get_read_only_option(self) -> ReadOnlyOption:
-        """"""
-    def set_read_only_option(self, read_only_option: ReadOnlyOption) -> None:
-        """"""
-    def get_id(self) -> int:
-        """"""
-    def set_id(self, id: int) -> None:
-        """"""
-    def get_election_tick(self) -> int:
-        """"""
-    def set_election_tick(self, election_tick: int) -> None:
-        """"""
-    def get_heartbeat_tick(self) -> int:
-        """"""
-    def set_heartbeat_tick(self, heartbeat_tick: int) -> None:
-        """"""
-    def get_max_size_per_msg(self) -> int:
-        """"""
-    def set_max_size_per_msg(self, max_size_per_msg: int) -> None:
-        """"""
-    def get_max_inflight_msgs(self) -> int:
-        """"""
-    def set_max_inflight_msgs(self, max_inflight_msgs: int) -> None:
-        """"""
-    def get_applied(self) -> int:
-        """"""
-    def set_applied(self, applied: int) -> None:
-        """"""
-    def get_check_quorum(self) -> bool:
-        """"""
-    def set_check_quorum(self, check_quorum: bool) -> None:
-        """"""
-    def get_pre_vote(self) -> bool:
-        """"""
-    def set_pre_vote(self, pre_vote: bool) -> None:
-        """"""
-    def get_batch_append(self) -> bool:
-        """"""
-    def set_batch_append(self, batch_append: bool) -> None:
-        """"""
-    def get_skip_bcast_commit(self) -> bool:
-        """"""
-    def set_skip_bcast_commit(self, skip_bcast_commit: bool) -> None:
-        """"""
-    def get_priority(self) -> int:
-        """"""
-    def set_priority(self, priority: int) -> None:
-        """"""
-    def get_max_uncommitted_size(self) -> int:
-        """"""
-    def set_max_uncommitted_size(self, max_uncommitted_size: int) -> None:
-        """"""
 
 class Config(__Config):
     def __init__(
