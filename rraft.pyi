@@ -53,6 +53,10 @@ def vote_resp_msg_type(t: MessageType) -> MessageType:
     Maps vote and pre_vote message types to their correspond responses.
     """
 
+class __Cloneable(metaclass=ABCMeta):
+    @abstractmethod
+    def clone(self) -> Any: ...
+
 class OverflowStrategy:
     """ """
 
@@ -195,10 +199,6 @@ class EntryType:
     EntryConfChange: Final[Any]
     EntryConfChangeV2: Final[Any]
     EntryNormal: Final[Any]
-
-class __Cloneable(metaclass=ABCMeta):
-    @abstractmethod
-    def clone(self) -> Any: ...
 
 class __Logger:
     def info(self, s: str) -> None:
@@ -1215,7 +1215,7 @@ class HardState_Ref(__HardState):
 class __GetEntriesContext:
     def can_async(self) -> bool:
         """
-        Check if the caller's context support fetching entries asynchrouously.
+        Check if the caller's context support fetching entries asynchronously.
         """
 
 class GetEntriesContext(__GetEntriesContext):
@@ -2415,16 +2415,6 @@ class __Raft:
         """
     def apply_conf_change(self, conf_change: ConfChangeV2_Ref) -> ConfChange_Ref:
         """ """
-    def set_batch_append(self, batch_append: bool) -> None:
-        """`batch_append`: Set whether batch append msg at runtime."""
-    def get_readonly_read_index_queue(self) -> List[List[int]]:
-        """ """
-    def get_readstates(self) -> List[ReadState]:
-        """`readstates`: The current read states."""
-    def set_max_committed_size_per_ready(
-        self, max_committed_size_per_ready: int
-    ) -> None:
-        """ """
     def get_read_states(self) -> List[ReadState]:
         """
         `read_states`: The current read states.
@@ -2452,6 +2442,14 @@ class __Raft:
         To adjust `max_inflight_msgs` for the specified peer.
         Set to `0` will disable the progress.
         """
+    def get_readonly_read_index_queue(self) -> List[List[int]]:
+        """ """
+    def set_batch_append(self, batch_append: bool) -> None:
+        """`batch_append`: Set whether batch append msg at runtime."""
+    def set_max_committed_size_per_ready(
+        self, max_committed_size_per_ready: int
+    ) -> None:
+        """ """
 
 class Raft__MemStorage(__Raft):
     """
