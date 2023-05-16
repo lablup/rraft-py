@@ -1388,8 +1388,6 @@ class __ConfChangeV2(__Cloneable, __Encoder, __Decoder):
         This is the case if the ConfChangeV2 is zero, with the possible exception of
         the Context field.
         """
-    def clear_joint(self) -> None:
-        """ """
     def write_to_bytes(self) -> bytes:
         """ """
     def as_v1(self) -> Optional[ConfChange_Ref]:
@@ -2779,7 +2777,7 @@ class __JointConfig(__Cloneable):
     def contains(self, id: int) -> bool:
         """Check if an id is a voter."""
     def ids() -> Set[int]:
-        """ """
+        """Returns an iterator over two hash set without cloning."""
     def is_singleton(self) -> bool:
         """
         Returns true if (and only if) there is only one voting member
@@ -2848,8 +2846,6 @@ class __Inflights(__Cloneable):
     def clone(self) -> Inflights: ...
     def add(self, inflight: int) -> None:
         """Adds an inflight into inflights"""
-    def set_cap(self, incoming_cap: int) -> None:
-        """ """
     def full(self) -> bool:
         """Returns true if the inflights is full."""
     def reset(self) -> None:
@@ -2866,6 +2862,8 @@ class __Inflights(__Cloneable):
         """Whether buffer is allocated or not. It's for tests."""
     def count(self) -> int:
         """Number of inflight messages. It's for tests."""
+    def set_cap(self, incoming_cap: int) -> None:
+        """ """
 
 class Inflights(__Inflights):
     """
@@ -3050,6 +3048,10 @@ class __Config(__Cloneable):
         """Runs validations against the config."""
 
 class Config(__Config):
+    """
+    Config contains the parameters to start a raft.
+    """
+
     def __init__(
         self,
         *,
@@ -3134,7 +3136,7 @@ class Config(__Config):
 
 class Config_Ref(__Config):
     """
-    Config contains the parameters to start a raft.
+    Reference type of :class:`Inflights_Ref`.
     """
 
 # TODO: Add below implementation if needed, otherwise remove below codes.
