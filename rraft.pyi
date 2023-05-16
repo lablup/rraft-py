@@ -2215,7 +2215,7 @@ class __Raft:
         Returns whether the current raft is in lease.
         """
     def handle_heartbeat(self, msg: Message | Message_Ref) -> None:
-        """ """
+        """For a message, commit and send out heartbeat."""
     def handle_append_entries(self, msg: Message | Message_Ref) -> None:
         """For a given message, append the entries to the log."""
     def request_snapshot(self) -> None:
@@ -2338,9 +2338,15 @@ class __Raft:
         we set this to one.
         """
     def get_pending_request_snapshot(self) -> int:
-        """ """
+        """
+        `pending_request_snapshot`: The peer is requesting snapshot, it is the index that the follower
+        needs it to be included in a snapshot.
+        """
     def set_pending_request_snapshot(self, pending_request_snapshot: int) -> None:
-        """ """
+        """
+        `pending_request_snapshot`: The peer is requesting snapshot, it is the index that the follower
+        needs it to be included in a snapshot.
+        """
     def get_id(self) -> int:
         """
         `id`: The ID of this node.
@@ -2426,9 +2432,15 @@ class __Raft:
         `read_states`: The current read states.
         """
     def get_read_only_option(self) -> ReadOnlyOption:
-        """ """
+        """
+        `read_only_option`: Choose the linearizability mode or the lease mode to read data. If you don’t care about the read consistency and want a higher read performance, you can use the lease mode.
+        Setting this to `LeaseBased` requires `check_quorum = true`.
+        """
     def set_read_only_option(self, option: ReadOnlyOption) -> None:
-        """ """
+        """
+        `read_only_option`: Choose the linearizability mode or the lease mode to read data. If you don’t care about the read consistency and want a higher read performance, you can use the lease mode.
+        Setting this to `LeaseBased` requires `check_quorum = true`.
+        """
     def inflight_buffers_size(self) -> int:
         """Get the inflight buffer size."""
     def maybe_free_inflight_buffers(self) -> None:
@@ -2445,11 +2457,15 @@ class __Raft:
     def get_readonly_read_index_queue(self) -> List[List[int]]:
         """ """
     def set_batch_append(self, batch_append: bool) -> None:
-        """`batch_append`: Set whether batch append msg at runtime."""
+        """
+        `batch_append`: Set whether batch append msg at runtime.
+        """
     def set_max_committed_size_per_ready(
         self, max_committed_size_per_ready: int
     ) -> None:
-        """ """
+        """
+        `max_committed_size_per_ready`: Max size for committed entries in a `Ready`.
+        """
 
 class Raft__MemStorage(__Raft):
     """
