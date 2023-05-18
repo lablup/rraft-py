@@ -353,8 +353,4 @@ impl Py_Message_Ref {
     pub fn compute_size(&self) -> PyResult<u32> {
         self.inner.map_as_ref(|inner| inner.compute_size())
     }
-
-    pub fn get_cached_size(&self) -> PyResult<u32> {
-        self.inner.map_as_ref(|inner| inner.get_cached_size())
-    }
 }

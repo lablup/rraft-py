@@ -183,6 +183,9 @@ impl Py_ConfChange_Ref {
 
 #[pymethods]
 impl Py_ConfChange_Ref {
+    // This function could be implemented in Python by using `Decode`
+    // and set properties one by one manually, but it is implemented here
+    // to maintain concise code and assist in achieving better performance.
     pub fn merge_from_bytes(&mut self, bytes: &PyAny) -> PyResult<()> {
         let bytes = bytes.extract::<Vec<u8>>()?;
 

@@ -1157,9 +1157,9 @@ class __API_Message(__Cloneable, __Encoder, __Decoder):
     def has_snapshot(self) -> bool:
         """ """
     def compute_size(self) -> int:
-        """ """
-    def get_cached_size(self) -> int:
-        """ """
+        """
+        Compute and cache size of this message and all nested messages
+        """
 
 class Message(__API_Message):
     """ """
@@ -1381,6 +1381,10 @@ class __API_ConfChangeV2(__Cloneable, __Encoder, __Decoder):
         Consensus was requested explicitly. The bool indicates whether the Joint State
         will be left automatically.
         """
+    def merge_from_bytes(self, b: bytes) -> None:
+        """
+        Update this message object with fields read from given stream.
+        """
     def leave_joint(self) -> bool:
         """
         Checks if the configuration change leaves a joint configuration.
@@ -1510,6 +1514,10 @@ class __API_ConfChange(__Cloneable, __Encoder, __Decoder):
         """ """
     def clear_context(self) -> None:
         """ """
+    def merge_from_bytes(self, b: bytes) -> None:
+        """
+        Update this message object with fields read from given stream.
+        """
     def as_v1(self) -> Optional[ConfChange_Ref]:
         """
         Converts conf change to `ConfChange`.
