@@ -1388,8 +1388,6 @@ class __API_ConfChangeV2(__Cloneable, __Encoder, __Decoder):
         This is the case if the ConfChangeV2 is zero, with the possible exception of
         the Context field.
         """
-    def write_to_bytes(self) -> bytes:
-        """ """
     def as_v1(self) -> Optional[ConfChange_Ref]:
         """
         Converts conf change to `ConfChange`.
@@ -1526,8 +1524,6 @@ class __API_ConfChange(__Cloneable, __Encoder, __Decoder):
         """
         Converts conf change to `ConfChangeV2`.
         """
-    def write_to_bytes(self) -> bytes:
-        """ """
 
 class ConfChange(__API_ConfChange):
     """ """

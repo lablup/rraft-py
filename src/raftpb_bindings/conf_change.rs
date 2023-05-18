@@ -183,15 +183,6 @@ impl Py_ConfChange_Ref {
 
 #[pymethods]
 impl Py_ConfChange_Ref {
-    pub fn write_to_bytes(&mut self, py: Python) -> PyResult<PyObject> {
-        self.inner
-            .map_as_mut(|inner| {
-                protobuf::Message::write_to_bytes(inner)
-                    .map(|x| PyBytes::new(py, x.as_slice()).into_py(py))
-            })
-            .and_then(to_pyresult)
-    }
-
     pub fn merge_from_bytes(&mut self, bytes: &PyAny) -> PyResult<()> {
         let bytes = bytes.extract::<Vec<u8>>()?;
 

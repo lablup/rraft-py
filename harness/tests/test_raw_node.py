@@ -370,11 +370,11 @@ def test_raw_node_propose_and_conf_change():
                 raw_node.propose([], b"somedata")
 
                 if v1 := cc.as_v1():
-                    ccdata = v1.write_to_bytes()
+                    ccdata = v1.encode()
                     raw_node.propose_conf_change([], v1.clone())
                 else:
                     v2 = cc.as_v2()
-                    ccdata = v2.write_to_bytes()
+                    ccdata = v2.encode()
                     raw_node.propose_conf_change_v2([], v2)
 
                 proposed = True
@@ -453,7 +453,7 @@ def test_raw_node_joint_auto_leave():
     raw_node = new_raw_node(1, [1], 10, 1, s.clone(), l)
     raw_node.campaign()
     proposed = False
-    ccdata = test_cc.write_to_bytes()
+    ccdata = test_cc.encode()
     # Propose the ConfChange, wait until it applies, save the resulting ConfState.
     cs = None
     while not cs:
@@ -574,7 +574,7 @@ def test_raw_node_propose_add_duplicate_node():
         raw_node.advance_apply()
 
     cc1 = conf_change(ConfChangeType.AddNode, 1)
-    ccdata1 = cc1.write_to_bytes()
+    ccdata1 = cc1.encode()
     propose_conf_change_and_apply(cc1.clone())
 
     # try to add the same node again
@@ -582,7 +582,7 @@ def test_raw_node_propose_add_duplicate_node():
 
     # the new node join should be ok
     cc2 = conf_change(ConfChangeType.AddNode, 2)
-    ccdata2 = cc2.write_to_bytes()
+    ccdata2 = cc2.encode()
     propose_conf_change_and_apply(cc2)
 
     last_index = s.last_index()
@@ -825,7 +825,7 @@ def test_skip_bcast_commit():
     cc = ConfChange.default()
     cc.set_change_type(ConfChangeType.RemoveNode)
     cc.set_node_id(3)
-    data = cc.write_to_bytes()
+    data = cc.encode()
     cc_entry = Entry.default()
     cc_entry.set_entry_type(EntryType.EntryConfChange)
     cc_entry.set_data(data)

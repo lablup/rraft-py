@@ -4195,7 +4195,7 @@ def test_conf_change_check_before_campaign():
     cc = ConfChange.default()
     cc.set_change_type(ConfChangeType.RemoveNode)
     cc.set_node_id(3)
-    e.set_data(cc.write_to_bytes())
+    e.set_data(cc.encode())
     m.set_entries([*m.get_entries(), e])
     nt.send([m])
 
@@ -4266,10 +4266,10 @@ def test_advance_commit_index_by_vote_request(use_prevote: bool):
 
         if v1 := cc.as_v1():
             e.set_entry_type(EntryType.EntryConfChange)
-            e.set_data(v1.write_to_bytes())
+            e.set_data(v1.encode())
         else:
             e.set_entry_type(EntryType.EntryConfChangeV2)
-            e.set_data(cc.as_v2().write_to_bytes())
+            e.set_data(cc.as_v2().encode())
 
         # propose a confchange entry but don't let it commit
         nt.ignore(MessageType.MsgAppendResponse)
@@ -4397,10 +4397,10 @@ def test_advance_commit_index_by_vote_response(use_prevote: bool):
 
         if v1 := cc.as_v1():
             e.set_entry_type(EntryType.EntryConfChange)
-            e.set_data(v1.write_to_bytes())
+            e.set_data(v1.encode())
         else:
             e.set_entry_type(EntryType.EntryConfChangeV2)
-            e.set_data(cc.as_v2().write_to_bytes())
+            e.set_data(cc.as_v2().encode())
 
         # propose a confchange entry but don't let it commit
         nt.ignore(MessageType.MsgAppendResponse)
