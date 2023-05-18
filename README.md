@@ -52,11 +52,13 @@ TBU
 
 ## Getting started
 
-<!-- ### Installation
+### Installation
 
 #### With pip
 
-```
+TBU
+
+<!--
 $ pip install rraft-py
 ``` -->
 
