@@ -1804,7 +1804,7 @@ class __API_RaftLog:
         """
     def next_entries_since(
         self, since_idx: int, max_size: Optional[int]
-    ) -> List[Entry]:
+    ) -> Optional[List[Entry]]:
         """
         Returns committed and persisted entries since max(`since_idx` + 1, first_index).
         """
@@ -2469,13 +2469,11 @@ class __API_Raft:
         """ """
     def set_batch_append(self, batch_append: bool) -> None:
         """
-        `batch_append`: Set whether batch append msg at runtime.
+        Set whether batch append msg at runtime.
         """
-    def set_max_committed_size_per_ready(
-        self, max_committed_size_per_ready: int
-    ) -> None:
+    def set_max_committed_size_per_ready(self, size: int) -> None:
         """
-        `max_committed_size_per_ready`: Max size for committed entries in a `Ready`.
+        Set `max_committed_size_per_ready` to `size`.
         """
 
 class InMemoryRaftStorage(__API_Raft):
