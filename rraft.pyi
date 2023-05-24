@@ -1954,6 +1954,21 @@ class __API_RaftLog:
 
         Invariant: persisted < unstable.offset && applied <= persisted
         """
+    def slice(
+        self,
+        low: int,
+        high: int,
+        max_size: Optional[int],
+        context: GetEntriesContext_Ref,
+    ) -> List[Entry_Ref]:
+        """
+        Grabs a slice of entries from the raft. Unlike a rust slice pointer, these are
+        returned by value. The result is truncated to the max_size in bytes.
+        """
+    def restore(self, snapshot: Snapshot | Snapshot_Ref) -> None:
+        """
+        Restores the current log from a snapshot.
+        """
 
 class InMemoryRaftLog(__API_RaftLog):
     """

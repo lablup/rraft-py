@@ -4,7 +4,7 @@ use utils::errors::to_pyresult;
 use utils::unsafe_cast::make_mut;
 
 use external_bindings::slog::Py_Logger_Mut;
-use raftpb_bindings::snapshot::Py_Snapshot_Ref;
+use raftpb_bindings::snapshot::{Py_Snapshot_Mut, Py_Snapshot_Ref};
 
 use raft::{GetEntriesContext, RaftLog};
 use utils::reference::RustRef;
@@ -326,5 +326,38 @@ impl Py_RaftLog_Ref {
         self.inner.map_as_mut(|inner| Py_Storage_Ref {
             inner: RustRef::new(inner.mut_store()),
         })
+    }
+
+    pub fn slice(
+        &self,
+        low: u64,
+        high: u64,
+        context: &mut Py_GetEntriesContext_Ref,
+        max_size: Option<u64>,
+        py: Python,
+    ) -> PyResult<PyObject> {
+        let context = context.inner.map_as_mut(|context| unsafe {
+            std::ptr::replace(context, GetEntriesContext::empty(false))
+        })?;
+
+        // self.inner.map_as_ref(|inner| {
+        //     inner
+        //         .slice(low, high, max_size, context)
+        //         .iter()
+        //         .map(|entries| {
+        //             entries.iter().map(|entry| {
+        //                 Py_Entry_Ref {
+        //                     inner: RustRef::new(unsafe { make_mut(entry) }),
+        //                 }
+        //             }).collect::<Vec<_>>()
+        //         }).collect::<Result<Vec<Py_Entry_Ref>, _>>()
+        // }).and_then(to_pyresult)
+
+        todo!()
+    }
+
+    pub fn restore(&mut self, snapshot: Py_Snapshot_Mut) -> PyResult<()> {
+        self.inner
+            .map_as_mut(|inner| inner.restore(snapshot.into()))
     }
 }
