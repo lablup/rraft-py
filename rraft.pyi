@@ -1255,12 +1255,6 @@ class __API_Entry(__Cloneable, __Encoder, __Decoder):
         """ """
     def clear_entry_type(self) -> None:
         """ """
-    def get_sync_log(self) -> bool:
-        """ """
-    def set_sync_log(self, sync_log: bool) -> None:
-        """ """
-    def clear_sync_log(self) -> None:
-        """ """
     def get_term(self) -> int:
         """ """
     def set_term(self, term: int) -> None:
@@ -1273,6 +1267,21 @@ class __API_Entry(__Cloneable, __Encoder, __Decoder):
         """ """
     def clear_index(self) -> None:
         """ """
+    def get_sync_log(self) -> bool:
+        """
+        Deprecated! It is kept for backward compatibility.
+        TODO: remove it in the next major release.
+        """
+    def set_sync_log(self, sync_log: bool) -> None:
+        """
+        Deprecated! It is kept for backward compatibility.
+        TODO: remove it in the next major release.
+        """
+    def clear_sync_log(self) -> None:
+        """
+        Deprecated! It is kept for backward compatibility.
+        TODO: remove it in the next major release.
+        """
 
 class Entry(__API_Entry):
     """
