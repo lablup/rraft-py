@@ -2644,6 +2644,10 @@ class __API_Progress(__Cloneable):
         """
         Determine whether progress is paused.
         """
+    def is_snapshot_caught_up(self) -> bool:
+        """
+        Returns true if Match is equal or higher than the pendingSnapshot.
+        """
     def resume(self) -> None:
         """
         Resume progress

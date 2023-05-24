@@ -148,6 +148,10 @@ impl Py_Progress_Ref {
         self.inner.map_as_ref(|inner| inner.is_paused())
     }
 
+    pub fn is_snapshot_caught_up(&self) -> PyResult<bool> {
+        self.inner.map_as_ref(|inner| inner.is_snapshot_caught_up())
+    }
+
     pub fn resume(&mut self) -> PyResult<()> {
         self.inner.map_as_mut(|inner| inner.resume())
     }
