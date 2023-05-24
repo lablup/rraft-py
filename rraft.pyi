@@ -819,7 +819,7 @@ class InMemoryRawNode_Ref(__API_RawNode):
         """ """
     def store(self) -> MemStorage_Ref:
         """Returns the store as a mutable reference."""
-    # def status(self) -> Status__Memstorage:
+    # def status(self) -> InMemoryStatus:
     #     """
     #     Status returns the current status of the given group.
     #     """
@@ -856,7 +856,7 @@ class RawNode_Ref(__API_RawNode):
         """ """
     def store(self) -> Storage_Ref:
         """Returns the store as a mutable reference."""
-    # def status(self) -> Status__Memstorage:
+    # def status(self) -> InMemoryStatus:
     #     """
     #     Status returns the current status of the given group.
     #     """
@@ -3158,7 +3158,7 @@ class Config_Ref(__API_Config):
     """
 
 # TODO: Add below implementation if needed, otherwise remove below codes.
-# class __Status:
+# class __API__Status:
 #     def get_applied(self) -> int:
 #         """ """
 #     def set_applied(self, applied: int) -> None:
@@ -3182,7 +3182,7 @@ class Config_Ref(__API_Config):
 #     ) -> None:
 #         """ """
 
-# class Status__Memstorage(__Status):
+# class InMemoryStatus(__API__Status):
 #     """
 #     Represents the current status of the raft
 #     """
@@ -3190,7 +3190,7 @@ class Config_Ref(__API_Config):
 #     def __init__(self, raft: InMemoryRaftStorage) -> None: ...
 #     def make_ref(self) -> Status__Memstorage_Ref: ...
 
-# class Status__Memstorage_Ref(__Status):
+# class InMemoryStatus_Ref(__API__Status):
 #     """
 #     Reference type of :class:`Status__Memstorage`.
 #     """
