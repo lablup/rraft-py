@@ -140,6 +140,10 @@ impl Py_Progress_Ref {
         self.inner.map_as_mut(|inner| inner.snapshot_failure())
     }
 
+    pub fn pause(&mut self) -> PyResult<()> {
+        self.inner.map_as_mut(|inner| inner.pause())
+    }
+
     pub fn is_paused(&self) -> PyResult<bool> {
         self.inner.map_as_ref(|inner| inner.is_paused())
     }

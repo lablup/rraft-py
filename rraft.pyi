@@ -2636,6 +2636,10 @@ class __API_Progress(__Cloneable):
         """
         Sets the snapshot to failure.
         """
+    def pause(self) -> None:
+        """
+        Pause progress.
+        """
     def is_paused(self) -> bool:
         """
         Determine whether progress is paused.
