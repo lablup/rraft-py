@@ -1224,7 +1224,7 @@ class GetEntriesContext(__API_GetEntriesContext):
     """
 
     @staticmethod
-    def empty() -> GetEntriesContext:
+    def empty(can_async: bool) -> GetEntriesContext:
         """
         Used for callers out of raft. Caller can customize if it supports async.
         """
