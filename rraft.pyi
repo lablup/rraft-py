@@ -3083,6 +3083,16 @@ class __API_Config(__Cloneable):
         `max_uncommitted_size`: Specify maximum of uncommitted entry size.
         When this limit is reached, all proposals to append new log will be dropped
         """
+    def get_max_committed_size_per_ready(self) -> int:
+        """
+        `max_committed_size_per_ready`: Max size for committed entries in a `Ready`.
+        """
+    def set_max_committed_size_per_ready(
+        self, max_committed_size_per_ready: int
+    ) -> None:
+        """
+        `max_committed_size_per_ready`: Max size for committed entries in a `Ready`.
+        """
     def validate(self) -> None:
         """Runs validations against the config."""
 

@@ -299,4 +299,17 @@ impl Py_Config_Ref {
         self.inner
             .map_as_mut(|inner| inner.max_uncommitted_size = max_uncommitted_size)
     }
+
+    pub fn get_max_committed_size_per_ready(&self) -> PyResult<u64> {
+        self.inner
+            .map_as_ref(|inner| inner.max_committed_size_per_ready)
+    }
+
+    pub fn set_max_committed_size_per_ready(
+        &mut self,
+        max_committed_size_per_ready: u64,
+    ) -> PyResult<()> {
+        self.inner
+            .map_as_mut(|inner| inner.max_committed_size_per_ready = max_committed_size_per_ready)
+    }
 }
