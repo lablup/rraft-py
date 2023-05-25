@@ -3179,7 +3179,7 @@ class Config_Ref(__API_Config):
     """
 
 # TODO: Add below implementation if needed, otherwise remove below codes.
-# class __API__Status:
+# class __API_Status:
 #     def get_applied(self) -> int:
 #         """ """
 #     def set_applied(self, applied: int) -> None:
@@ -3203,7 +3203,7 @@ class Config_Ref(__API_Config):
 #     ) -> None:
 #         """ """
 
-# class InMemoryStatus(__API__Status):
+# class InMemoryStatus(__API_Status):
 #     """
 #     Represents the current status of the raft
 #     """
@@ -3211,7 +3211,7 @@ class Config_Ref(__API_Config):
 #     def __init__(self, raft: InMemoryRaftStorage) -> None: ...
 #     def make_ref(self) -> Status__Memstorage_Ref: ...
 
-# class InMemoryStatus_Ref(__API__Status):
+# class InMemoryStatus_Ref(__API_Status):
 #     """
 #     Reference type of :class:`Status__Memstorage`.
 #     """
