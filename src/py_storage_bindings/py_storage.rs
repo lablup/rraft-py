@@ -47,13 +47,13 @@ impl Py_Storage {
 
 #[pymethods]
 impl Py_Storage_Ref {
-    pub fn wl(&mut self, cb: PyObject) -> PyResult<PyObject> {
+    pub fn wl(&mut self) -> PyResult<PyObject> {
         self.inner.map_as_mut(|inner| {
             Python::with_gil(|py| {
                 let py_result = inner
                     .storage
                     .as_ref(py)
-                    .call_method("wl", (cb,), None)
+                    .call_method("wl", (), None)
                     .unwrap();
 
                 let res: PyObject = py_result.extract().unwrap();
@@ -62,13 +62,13 @@ impl Py_Storage_Ref {
         })
     }
 
-    pub fn rl(&self, cb: PyObject) -> PyResult<PyObject> {
+    pub fn rl(&self) -> PyResult<PyObject> {
         self.inner.map_as_ref(|inner| {
             Python::with_gil(|py| {
                 let py_result = inner
                     .storage
                     .as_ref(py)
-                    .call_method("rl", (cb,), None)
+                    .call_method("rl", (), None)
                     .unwrap();
 
                 let res: PyObject = py_result.extract().unwrap();
