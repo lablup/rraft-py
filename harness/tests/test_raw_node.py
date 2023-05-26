@@ -104,7 +104,7 @@ def new_raw_node_with_config(
     ), f"new_raw_node with empty peers on initialized store"
 
     if peers and not storage.initial_state().initialized():
-        storage.wl(lambda core: core.apply_snapshot(new_snapshot(1, 1, peers)))
+        storage.wl().apply_snapshot(new_snapshot(1, 1, peers))
 
     return InMemoryRawNode(config, storage, logger)
 
@@ -138,11 +138,11 @@ def test_raw_node_step():
     l = default_logger()
     for msg_t in get_msg_types():
         s = new_storage()
-        s.wl(lambda core: core.set_hardstate(hard_state(1, 1, 0)))
+        s.wl().set_hardstate(hard_state(1, 1, 0))
         # Append an empty entry to make sure the non-local messages (like
         # vote requests) are ignored and don't trigger assertions.
-        s.wl(lambda core: core.append([new_entry(1, 1, None)]))
-        s.wl(lambda core: core.apply_snapshot(new_snapshot(1, 1, [1])))
+        s.wl().append([new_entry(1, 1, None)])
+        s.wl().apply_snapshot(new_snapshot(1, 1, [1]))
 
         storage = new_storage()
         raw_node = new_raw_node(1, [1], 10, 1, storage, l)
@@ -335,7 +335,7 @@ def test_raw_node_propose_and_conf_change():
 
         while not cs:
             rd = raw_node.ready()
-            s.wl(lambda core: core.append(rd.entries()))
+            s.wl().append(rd.entries())
 
             def handle_committed_entries(
                 rn: InMemoryRawNode_Ref, committed_entries: List[Entry]
@@ -458,7 +458,7 @@ def test_raw_node_joint_auto_leave():
     cs = None
     while not cs:
         rd = raw_node.ready()
-        s.wl(lambda core: core.append(rd.entries()))
+        s.wl().append(rd.entries())
 
         def handle_committed_entries(
             rn: InMemoryRawNode_Ref, committed_entries: List[Entry]
@@ -515,11 +515,11 @@ def test_raw_node_joint_auto_leave():
     # Make it leader again. It should leave joint automatically after moving apply index.
     raw_node.campaign()
     rd = raw_node.ready()
-    s.wl(lambda core: core.append(rd.entries()))
+    s.wl().append(rd.entries())
     _ = raw_node.advance(rd.make_ref())
 
     rd = raw_node.ready()
-    s.wl(lambda core: core.append(rd.entries()))
+    s.wl().append(rd.entries())
 
     # Check that the right ConfChange comes out.
     assert len(rd.entries()) == 1
@@ -545,7 +545,7 @@ def test_raw_node_propose_add_duplicate_node():
 
     while True:
         rd = raw_node.ready()
-        s.wl(lambda core: core.append(rd.entries()))
+        s.wl().append(rd.entries())
 
         if ss := rd.ss():
             if ss.get_leader_id() == raw_node.get_raft().get_id():
@@ -556,7 +556,7 @@ def test_raw_node_propose_add_duplicate_node():
     def propose_conf_change_and_apply(cc: ConfChange):
         raw_node.propose_conf_change([], cc)
         rd = raw_node.ready()
-        s.wl(lambda core: core.append(rd.entries()))
+        s.wl().append(rd.entries())
 
         def handle_committed_entries(
             rn: InMemoryRawNode_Ref, committed_entries: List[Entry]
@@ -617,7 +617,7 @@ def test_raw_node_propose_add_learner_node():
     raw_node.propose_conf_change([], cc)
 
     rd = raw_node.ready()
-    s.wl(lambda core: core.append(rd.entries()))
+    s.wl().append(rd.entries())
 
     light_rd = raw_node.advance(rd.make_ref())
 
@@ -648,7 +648,7 @@ def test_raw_node_read_index():
     raw_node.campaign()
     while True:
         rd = raw_node.ready()
-        s.wl(lambda core: core.append(rd.entries()))
+        s.wl().append(rd.entries())
 
         if ss := rd.ss():
             if ss.get_leader_id() == raw_node.get_raft().get_id():
@@ -665,7 +665,7 @@ def test_raw_node_read_index():
     assert raw_node.has_ready()
     rd = raw_node.ready()
     assert rd.read_states() == wrs
-    s.wl(lambda core: core.append(rd.entries()))
+    s.wl().append(rd.entries())
     raw_node.advance(rd.make_ref())
 
     # ensure raft.read_states is reset after advance
@@ -700,7 +700,7 @@ def test_raw_node_start():
         True,
         True,
     )
-    store.wl(lambda core: core.append(rd.entries()))
+    store.wl().append(rd.entries())
 
     light_rd = raw_node.advance(rd.make_ref())
     assert light_rd.commit_index() == 2
@@ -720,7 +720,7 @@ def test_raw_node_start():
         True,
         True,
     )
-    store.wl(lambda core: core.append(rd.entries()))
+    store.wl().append(rd.entries())
     light_rd = raw_node.advance(rd.make_ref())
     assert light_rd.commit_index() == 3
     assert light_rd.committed_entries() == [new_entry(2, 3, SOME_DATA)]
@@ -733,8 +733,8 @@ def test_raw_node_restart():
     entries = [empty_entry(1, 1), new_entry(1, 2, "foo")]
 
     store = new_storage()
-    store.wl(lambda core: core.set_hardstate(hard_state(1, 1, 0)))
-    store.wl(lambda core: core.append(entries))
+    store.wl().set_hardstate(hard_state(1, 1, 0))
+    store.wl().append(entries)
     raw_node = new_raw_node(1, [], 10, 1, store, l)
 
     rd = raw_node.ready()
@@ -759,9 +759,9 @@ def test_raw_node_restart_from_snapshot():
     entries = [new_entry(1, 3, "foo")]
 
     store = new_storage()
-    store.wl(lambda core: core.apply_snapshot(snap))
-    store.wl(lambda core: core.append(entries))
-    store.wl(lambda core: core.set_hardstate(hard_state(1, 3, 0)))
+    store.wl().apply_snapshot(snap)
+    store.wl().append(entries)
+    store.wl().set_hardstate(hard_state(1, 3, 0))
     raw_node = InMemoryRawNode(new_test_config(1, 10, 1), store, l)
 
     rd = raw_node.ready()
@@ -874,8 +874,8 @@ def test_bounded_uncommitted_entries_growth_with_partition():
     raw_node.campaign()
     while True:
         rd = raw_node.ready()
-        s.wl(lambda core: core.set_hardstate(rd.hs().clone()))
-        s.wl(lambda core: core.append(rd.entries()))
+        s.wl().set_hardstate(rd.hs().clone())
+        s.wl().append(rd.entries())
 
         if rd.ss():
             raw_node.advance(rd.make_ref())
@@ -895,7 +895,7 @@ def test_bounded_uncommitted_entries_growth_with_partition():
 
     # should be accepted when previous data has been committed
     rd = raw_node.ready()
-    s.wl(lambda core: core.append(rd.entries()))
+    s.wl().append(rd.entries())
     raw_node.advance(rd.make_ref())
 
     data = list(b"hello world!")
@@ -907,7 +907,7 @@ def prepare_async_entries(raw_node: InMemoryRawNode, s: MemStorage):
     raw_node.get_raft().become_leader()
 
     rd = raw_node.ready()
-    s.wl(lambda core: core.append(rd.entries()))
+    s.wl().append(rd.entries())
     raw_node.advance(rd.make_ref())
 
     data = [1] * 1000
@@ -917,7 +917,7 @@ def prepare_async_entries(raw_node: InMemoryRawNode, s: MemStorage):
     rd = raw_node.ready()
     entries = rd.entries()
     assert len(entries) == 10
-    s.wl(lambda core: core.append(entries))
+    s.wl().append(entries)
     msgs = rd.messages()
     # First append has two entries: the empty entry to confirm the
     # election, and the first proposal (only one proposal gets sent
@@ -927,7 +927,7 @@ def prepare_async_entries(raw_node: InMemoryRawNode, s: MemStorage):
     assert len(msgs[0].get_entries()) == 2
     raw_node.advance_append(rd.make_ref())
 
-    s.wl(lambda core: core.trigger_log_unavailable(True))
+    s.wl().trigger_log_unavailable(True)
 
     # Become replicate state
     append_response = new_message(2, 1, MessageType.MsgAppendResponse, 0)
@@ -949,18 +949,18 @@ def test_raw_node_with_async_entries():
     # No entries are sent because the entries are temporarily unavailable
     rd = raw_node.ready()
     entries = rd.entries()
-    s.wl(lambda core: core.append(entries))
+    s.wl().append(entries)
     msgs = rd.messages()
     assert not msgs
     raw_node.advance_append(rd.make_ref())
 
     # Entries are sent when the entries are ready which is informed by `on_entries_fetched`.
-    s.wl(lambda core: core.trigger_log_unavailable(False))
-    context = s.wl(lambda core: core.take_get_entries_context())
+    s.wl().trigger_log_unavailable(False)
+    context = s.wl().take_get_entries_context()
     raw_node.on_entries_fetched(context.make_ref())
     rd = raw_node.ready()
     entries = rd.entries()
-    s.wl(lambda core: core.append(entries))
+    s.wl().append(entries)
     msgs = rd.messages()
     assert len(msgs) == 5
     assert msgs[0].get_msg_type() == MessageType.MsgAppend
@@ -981,8 +981,8 @@ def test_raw_node_with_async_entries_to_removed_node():
     raw_node.apply_conf_change_v2(remove_node(2))
 
     # Entries are not sent due to the node is removed.
-    s.wl(lambda core: core.trigger_log_unavailable(False))
-    context = s.wl(lambda core: core.take_get_entries_context())
+    s.wl().trigger_log_unavailable(False)
+    context = s.wl().take_get_entries_context()
     raw_node.on_entries_fetched(context.make_ref())
     rd = raw_node.ready()
     assert not rd.entries()
@@ -1009,8 +1009,8 @@ def test_raw_node_with_async_entries_on_follower():
     assert raw_node.get_raft().get_state() != StateRole.Leader
 
     # Entries are not sent due to the leader is changed.
-    s.wl(lambda core: core.trigger_log_unavailable(False))
-    context = s.wl(lambda core: core.take_get_entries_context())
+    s.wl().trigger_log_unavailable(False)
+    context = s.wl().take_get_entries_context()
     raw_node.on_entries_fetched(context.make_ref())
     rd = raw_node.ready()
     assert not rd.entries()
@@ -1029,7 +1029,7 @@ def test_raw_node_async_entries_with_leader_change():
     raw_node.get_raft().become_leader()
 
     rd = raw_node.ready()
-    s.wl(lambda core: core.append(rd.entries()))
+    s.wl().append(rd.entries())
     raw_node.advance(rd.make_ref())
 
     data = [1] * 1000
@@ -1039,7 +1039,7 @@ def test_raw_node_async_entries_with_leader_change():
     rd = raw_node.ready()
     entries = rd.entries()
     assert len(entries) == 10
-    s.wl(lambda core: core.append(entries))
+    s.wl().append(entries)
     msgs = rd.messages()
     # election, and the first proposal (only one proposal gets sent
     # First append has two entries: the empty entry to confirm the
@@ -1049,7 +1049,7 @@ def test_raw_node_async_entries_with_leader_change():
     assert len(msgs[0].get_entries()) == 2
     raw_node.advance_append(rd.make_ref())
 
-    s.wl(lambda core: core.trigger_log_unavailable(True))
+    s.wl().trigger_log_unavailable(True)
 
     # Become replicate state
     append_response = new_message(2, 1, MessageType.MsgAppendResponse, 0)
@@ -1062,8 +1062,8 @@ def test_raw_node_async_entries_with_leader_change():
     raw_node.get_raft().become_leader()
 
     # Entries are not sent due to the leadership or the term is changed.
-    s.wl(lambda core: core.trigger_log_unavailable(False))
-    context = s.wl(lambda core: core.take_get_entries_context())
+    s.wl().trigger_log_unavailable(False)
+    context = s.wl().take_get_entries_context()
     raw_node.on_entries_fetched(context.make_ref())
     rd = raw_node.ready()
     # no-op entry
@@ -1075,7 +1075,7 @@ def test_raw_node_async_entries_with_leader_change():
 def test_raw_node_with_async_apply():
     l = default_logger()
     s = new_storage()
-    s.wl(lambda core: core.apply_snapshot(new_snapshot(1, 1, [1])))
+    s.wl().apply_snapshot(new_snapshot(1, 1, [1]))
 
     raw_node = new_raw_node(1, [1], 10, 1, s.clone(), l)
     raw_node.campaign()
@@ -1087,7 +1087,7 @@ def test_raw_node_with_async_apply():
     else:
         assert False
 
-    s.wl(lambda core: core.append(rd.entries()))
+    s.wl().append(rd.entries())
     raw_node.advance(rd.make_ref())
 
     last_index = raw_node.get_raft().get_raft_log().last_index()
@@ -1106,7 +1106,7 @@ def test_raw_node_with_async_apply():
         assert entries[-1].get_index() == last_index + cnt
         must_cmp_ready(rd.make_ref(), None, None, entries, [], None, True, True, True)
 
-        s.wl(lambda core: core.append(entries))
+        s.wl().append(entries)
 
         light_rd = raw_node.advance_append(rd.make_ref())
         assert entries == light_rd.committed_entries()
@@ -1125,7 +1125,7 @@ def test_raw_node_with_async_apply():
 def test_raw_node_entries_after_snapshot():
     l = default_logger()
     s = new_storage()
-    s.wl(lambda core: core.apply_snapshot(new_snapshot(1, 1, [1, 2])))
+    s.wl().apply_snapshot(new_snapshot(1, 1, [1, 2]))
 
     raw_node = new_raw_node(1, [1, 2], 10, 1, s.clone(), l)
 
@@ -1155,8 +1155,8 @@ def test_raw_node_entries_after_snapshot():
         True,
     )
 
-    s.wl(lambda core: core.set_hardstate(rd.hs().clone()))
-    s.wl(lambda core: core.append(rd.entries()))
+    s.wl().set_hardstate(rd.hs().clone())
+    s.wl().append(rd.entries())
     light_rd = raw_node.advance(rd.make_ref())
     assert not light_rd.commit_index()
     assert light_rd.committed_entries() == entries[:4]
@@ -1195,9 +1195,9 @@ def test_raw_node_entries_after_snapshot():
     # Should have a MsgAppendResponse
     assert rd.persisted_messages()[0].get_msg_type() == MessageType.MsgAppendResponse
 
-    s.wl(lambda core: core.set_hardstate(rd.hs().clone()))
-    s.wl(lambda core: core.apply_snapshot(rd.snapshot().clone()))
-    s.wl(lambda core: core.append(rd.entries()))
+    s.wl().set_hardstate(rd.hs().clone())
+    s.wl().apply_snapshot(rd.snapshot().clone())
+    s.wl().append(rd.entries())
 
     light_rd = raw_node.advance(rd.make_ref())
     assert not light_rd.commit_index()
@@ -1210,7 +1210,7 @@ def test_raw_node_entries_after_snapshot():
 def test_raw_node_overwrite_entries():
     l = default_logger()
     s = new_storage()
-    s.wl(lambda core: core.apply_snapshot(new_snapshot(1, 1, [1, 2, 3])))
+    s.wl().apply_snapshot(new_snapshot(1, 1, [1, 2, 3]))
 
     raw_node = new_raw_node(1, [1, 2, 3], 10, 1, s.clone(), l)
 
@@ -1241,8 +1241,8 @@ def test_raw_node_overwrite_entries():
     )
     # Should have a MsgAppendResponse
     assert rd.persisted_messages()[0].get_msg_type() == MessageType.MsgAppendResponse
-    s.wl(lambda core: core.set_hardstate(rd.hs().clone()))
-    s.wl(lambda core: core.append(rd.entries()))
+    s.wl().set_hardstate(rd.hs().clone())
+    s.wl().append(rd.entries())
 
     light_rd = raw_node.advance(rd.make_ref())
     assert not light_rd.commit_index()
@@ -1276,8 +1276,8 @@ def test_raw_node_overwrite_entries():
     )
     # Should have a MsgAppendResponse
     assert rd.persisted_messages()[0].get_msg_type() == MessageType.MsgAppendResponse
-    s.wl(lambda core: core.set_hardstate(rd.hs().clone()))
-    s.wl(lambda core: core.append(rd.entries()))
+    s.wl().set_hardstate(rd.hs().clone())
+    s.wl().append(rd.entries())
 
     light_rd = raw_node.advance(rd.make_ref())
     assert not light_rd.commit_index()
@@ -1290,7 +1290,7 @@ def test_raw_node_overwrite_entries():
 def test_async_ready_leader():
     l = default_logger()
     s = new_storage()
-    s.wl(lambda core: core.apply_snapshot(new_snapshot(1, 1, [1, 2, 3])))
+    s.wl().apply_snapshot(new_snapshot(1, 1, [1, 2, 3]))
 
     raw_node = new_raw_node(1, [1, 2, 3], 10, 1, s.clone(), l)
     raw_node.get_raft().become_candidate()
@@ -1302,7 +1302,7 @@ def test_async_ready_leader():
     else:
         assert False
 
-    s.wl(lambda core: core.append(rd.entries()))
+    s.wl().append(rd.entries())
     raw_node.advance(rd.make_ref())
 
     assert raw_node.get_raft().get_term() == 2
@@ -1329,7 +1329,7 @@ def test_async_ready_leader():
         for msg in rd.take_messages():
             assert msg.get_msg_type() == MessageType.MsgAppend
 
-        s.wl(lambda core: core.append(entries))
+        s.wl().append(entries)
         raw_node.advance_append_async(rd.make_ref())
 
     # Unpersisted Ready number in range [2, 11]
@@ -1351,7 +1351,7 @@ def test_async_ready_leader():
     assert rd.committed_entries()[-1].get_index() == first_index + 30
     assert rd.messages()
 
-    s.wl(lambda core: core.set_hardstate(rd.hs().clone()))
+    s.wl().set_hardstate(rd.hs().clone())
     raw_node.advance_append_async(rd.make_ref())
 
     # Forward commit index due to persist ready
@@ -1362,7 +1362,7 @@ def test_async_ready_leader():
     assert rd.committed_entries()[-1].get_index() == first_index + 70
     assert rd.messages()
     assert not rd.persisted_messages()
-    s.wl(lambda core: core.set_hardstate(rd.hs().clone()))
+    s.wl().set_hardstate(rd.hs().clone())
 
     # Forward commit index due to persist last ready
     light_rd = raw_node.advance_append(rd.make_ref())
@@ -1387,7 +1387,7 @@ def test_async_ready_leader():
     for msg in rd.take_messages():
         assert msg.get_msg_type() == MessageType.MsgAppend
 
-    s.wl(lambda core: core.append(entries))
+    s.wl().append(entries)
     raw_node.advance_append_async(rd.make_ref())
 
     append_response = new_message(2, 1, MessageType.MsgAppendResponse, 0)
@@ -1432,7 +1432,7 @@ def test_async_ready_leader():
 def test_async_ready_follower():
     l = default_logger()
     s = new_storage()
-    s.wl(lambda core: core.apply_snapshot(new_snapshot(1, 1, [1, 2])))
+    s.wl().apply_snapshot(new_snapshot(1, 1, [1, 2]))
 
     raw_node = new_raw_node(1, [1, 2], 10, 1, s.clone(), l)
     first_index = 1
@@ -1466,8 +1466,8 @@ def test_async_ready_follower():
                 == MessageType.MsgAppendResponse
             )
 
-            s.wl(lambda core: core.set_hardstate(rd.hs()))
-            s.wl(lambda core: core.append(rd.entries()))
+            s.wl().set_hardstate(rd.hs())
+            s.wl().append(rd.entries())
             raw_node.advance_append_async(rd.make_ref())
 
         # Unpersisted Ready number in range [1, 10]
@@ -1508,9 +1508,9 @@ def test_async_ready_follower():
         True,
     )
 
-    s.wl(lambda core: core.set_hardstate(rd.hs().clone()))
-    s.wl(lambda core: core.apply_snapshot(snapshot))
-    s.wl(lambda core: core.append(rd.entries()))
+    s.wl().set_hardstate(rd.hs().clone())
+    s.wl().apply_snapshot(snapshot)
+    s.wl().append(rd.entries())
     raw_node.advance_append_async(rd.make_ref())
 
     entries = []
@@ -1537,8 +1537,8 @@ def test_async_ready_follower():
         False,
         True,
     )
-    s.wl(lambda core: core.set_hardstate(rd.hs().clone()))
-    s.wl(lambda core: core.append(rd.entries()))
+    s.wl().set_hardstate(rd.hs().clone())
+    s.wl().append(rd.entries())
     raw_node.advance_append_async(rd.make_ref())
 
     raw_node.on_persist_ready(rd_number + 1)
@@ -1566,7 +1566,7 @@ def test_async_ready_follower():
 def test_async_ready_become_leader():
     l = default_logger()
     s = new_storage()
-    s.wl(lambda core: core.apply_snapshot(new_snapshot(5, 5, [1, 2, 3])))
+    s.wl().apply_snapshot(new_snapshot(5, 5, [1, 2, 3]))
 
     raw_node = new_raw_node(1, [1, 2, 3], 10, 1, s.clone(), l)
     for _ in range(1, raw_node.get_raft().election_timeout() * 2):
@@ -1587,7 +1587,7 @@ def test_async_ready_become_leader():
         False,
         True,
     )
-    s.wl(lambda core: core.set_hardstate(rd.hs().clone()))
+    s.wl().set_hardstate(rd.hs().clone())
 
     for msg in rd.persisted_messages():
         assert msg.get_msg_type() == MessageType.MsgRequestVote
@@ -1651,8 +1651,8 @@ def test_async_ready_become_leader():
     for msg in rd.take_messages():
         assert msg.get_msg_type() == MessageType.MsgAppend
 
-    s.wl(lambda core: core.append(rd.entries()))
-    s.wl(lambda core: core.append(rd.entries()))
+    s.wl().append(rd.entries())
+    s.wl().append(rd.entries())
 
     light_rd = raw_node.advance_append(rd.make_ref())
     assert not light_rd.commit_index()
@@ -1663,7 +1663,7 @@ def test_async_ready_become_leader():
 def test_async_ready_multiple_snapshot():
     l = default_logger()
     s = new_storage()
-    s.wl(lambda core: core.apply_snapshot(new_snapshot(1, 1, [1, 2])))
+    s.wl().apply_snapshot(new_snapshot(1, 1, [1, 2]))
 
     raw_node = new_raw_node(1, [1, 2], 10, 1, s.clone(), l)
 
@@ -1699,9 +1699,9 @@ def test_async_ready_multiple_snapshot():
         False,
         True,
     )
-    s.wl(lambda core: core.set_hardstate(rd.hs().clone()))
-    s.wl(lambda core: core.apply_snapshot(rd.snapshot().clone()))
-    s.wl(lambda core: core.append(rd.entries()))
+    s.wl().set_hardstate(rd.hs().clone())
+    s.wl().apply_snapshot(rd.snapshot().clone())
+    s.wl().append(rd.entries())
 
     raw_node.advance_append_async(rd.make_ref())
 
@@ -1730,8 +1730,8 @@ def test_async_ready_multiple_snapshot():
         False,
         True,
     )
-    s.wl(lambda core: core.set_hardstate(rd.hs().clone()))
-    s.wl(lambda core: core.apply_snapshot(rd.snapshot().clone()))
+    s.wl().set_hardstate(rd.hs().clone())
+    s.wl().apply_snapshot(rd.snapshot().clone())
 
     light_rd = raw_node.advance_append(rd.make_ref())
     assert not light_rd.commit_index()
@@ -1765,7 +1765,7 @@ def test_committed_entries_pagination():
 
     # Persist entries.
     assert rd.entries()
-    raw_node.store().wl(lambda core: core.append(rd.entries()))
+    raw_node.store().wl().append(rd.entries())
 
     # Advance the ready, and we can get committed_entries as expected.
     # Test using 0 as `committed_entries_max_size` works as expected.
@@ -1821,7 +1821,7 @@ def test_committed_entries_pagination_after_restart():
 
     l = default_logger()
     s = IgnoreSizeHintMemStorage(MemStorage.default())
-    s.inner.wl(lambda core: core.apply_snapshot(new_snapshot(1, 1, [1, 2, 3])))
+    s.inner.wl().apply_snapshot(new_snapshot(1, 1, [1, 2, 3]))
 
     entries, size = ([], 0)
     for i in range(2, 10 + 1):
@@ -1829,10 +1829,10 @@ def test_committed_entries_pagination_after_restart():
         size += e.compute_size()
         entries.append(e)
 
-    s.inner.wl(lambda core: core.append(entries))
-    s.inner.wl(lambda core: core.hard_state().set_commit(10))
+    s.inner.wl().append(entries)
+    s.inner.wl().hard_state().set_commit(10)
 
-    s.inner.wl(lambda core: core.append([new_entry(1, 11, "boom")]))
+    s.inner.wl().append([new_entry(1, 11, "boom")])
 
     config = new_test_config(1, 10, 1)
     raw_node = InMemoryRawNode(config, s.inner, l)

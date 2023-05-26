@@ -450,12 +450,12 @@ class MemStorage(__API_Storage):
 
         You should use the same input to initialize all nodes.
         """
-    def wl(self, f: Callable[[MemStorageCore_Ref], Any]) -> Any:
+    def wl(self) -> MemStorageCore_Ref:
         """
         Opens up a write lock on the storage and returns guard handle. Use this
         with functions that take a mutable reference to self.
         """
-    def rl(self, f: Callable[[MemStorageCore_Ref], Any]) -> Any:
+    def rl(self) -> MemStorageCore_Ref:
         """
         Opens up a read lock on the storage and returns a guard handle. Use this
         with functions that don't require mutation.
@@ -467,12 +467,12 @@ class MemStorage_Ref(__API_Storage):
     """
 
     def clone(self) -> MemStorage: ...
-    def wl(self, f: Callable[[MemStorageCore_Ref], Any]) -> Any:
+    def wl(self) -> MemStorageCore_Ref:
         """
         Opens up a write lock on the storage and returns guard handle. Use this
         with functions that take a mutable reference to self.
         """
-    def rl(self, f: Callable[[MemStorageCore_Ref], Any]) -> Any:
+    def rl(self) -> MemStorageCore_Ref:
         """
         Opens up a read lock on the storage and returns a guard handle. Use this
         with functions that don't require mutation.
@@ -498,12 +498,12 @@ class Storage(__API_Storage):
         conf_state: ConfState | ConfState_Ref,
     ) -> Storage:
         """ """
-    def wl(self, f: Callable[[StorageCore_Ref], Any]) -> Any:
+    def wl(self) -> Any:
         """
         Opens up a write lock on the storage and returns guard handle. Use this
         with functions that take a mutable reference to self.
         """
-    def rl(self, f: Callable[[StorageCore_Ref], Any]) -> Any:
+    def rl(self) -> Any:
         """
         Opens up a read lock on the storage and returns a guard handle. Use this
         with functions that don't require mutation.
@@ -515,12 +515,12 @@ class Storage_Ref(__API_Storage):
     """
 
     def clone(self) -> Storage: ...
-    def wl(self, f: Callable[[StorageCore_Ref], Any]) -> Any:
+    def wl(self) -> Any:
         """
         Opens up a write lock on the storage and returns guard handle. Use this
         with functions that take a mutable reference to self.
         """
-    def rl(self, f: Callable[[StorageCore_Ref], Any]) -> Any:
+    def rl(self) -> Any:
         """
         Opens up a read lock on the storage and returns a guard handle. Use this
         with functions that don't require mutation.

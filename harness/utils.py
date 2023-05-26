@@ -115,7 +115,7 @@ def new_test_raft_with_logs(
         cs = ConfState(peers, [])
         storage.initialize_with_conf_state(cs)
 
-    storage.wl(lambda core: core.append(logs))
+    storage.wl().append(logs)
 
     return new_test_raft_with_config(config, storage, logger)
 

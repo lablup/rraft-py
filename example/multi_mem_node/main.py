@@ -185,7 +185,7 @@ class Node:
         s.get_metadata().set_term(1)
         s.get_metadata().get_conf_state().set_voters([1])
         storage = MemStorage()
-        storage.wl(lambda core: core.apply_snapshot(s))
+        storage.wl().apply_snapshot(s)
         raft_group = InMemoryRawNode(cfg, storage, logger)
         return Node(raft_group, my_mailbox, {})
 
@@ -250,7 +250,7 @@ async def on_ready(
     if ready.snapshot() != snapshot_default.make_ref():
         try:
             s = ready.snapshot().clone()
-            store.wl(lambda core: core.apply_snapshot(s))
+            store.wl().apply_snapshot(s)
         except Exception as e:
             logger.error(f"apply snapshot fail: {e}, let Raft retry it")
             return
@@ -273,7 +273,7 @@ async def on_ready(
                 cc.set_change_type(new_conf.get_change_type())
 
                 cs = rn.apply_conf_change(cc)
-                store.wl(lambda core: core.set_conf_state(cs))
+                store.wl().set_conf_state(cs)
             else:
                 # For normal proposals, extract the key-value pair and then
                 # insert them into the kv engine.
@@ -296,13 +296,13 @@ async def on_ready(
     # Persistent raft logs. It's necessary because in `RawNode::advance` we stabilize
     # raft logs to the latest position.
     try:
-        store.wl(lambda core: core.append(ready.entries()))
+        store.wl().append(ready.entries())
     except Exception as e:
         logger.error(f"persist raft log fail: {e}, need to retry or panic")
 
     if hs := ready.hs():
         # Raft HardState changed, and we need to persist it.
-        store.wl(lambda core: core.set_hardstate(hs))
+        store.wl().set_hardstate(hs)
 
     if persisted_msgs := ready.take_persisted_messages():
         handle_messages(persisted_msgs)
@@ -311,7 +311,7 @@ async def on_ready(
     light_rd = raft_group.advance(ready.make_ref())
     # Update commit index.
     if commit := light_rd.commit_index():
-        store.wl(lambda core: core.hard_state().set_commit(commit))
+        store.wl().hard_state().set_commit(commit)
 
     # Send out the messages.
     handle_messages(light_rd.take_messages())

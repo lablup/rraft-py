@@ -50,7 +50,7 @@ def commit_noop_entry(r: Interface, s: MemStorage_Ref):
         e = unstable[-1]
         last_idx, last_term = e.get_index(), e.get_term()
         r.raft_log.stable_entries(last_idx, last_term)
-        s.wl(lambda core: core.append(unstable))
+        s.wl().append(unstable)
         r.raft.on_persist_entries(last_idx, last_term)
         committed = r.raft_log.get_committed()
         r.raft.commit_apply(committed)
@@ -536,7 +536,7 @@ def test_leader_commit_preceding_entries():
     for i, tt in enumerate(tests):
         cs = ConfState([1, 2, 3], [])
         store = MemStorage.new_with_conf_state(cs)
-        store.wl(lambda core: core.append(tt))
+        store.wl().append(tt)
         cfg = new_test_config(1, 10, 1)
         r = new_test_raft_with_config(cfg, store, l)
 
@@ -710,7 +710,7 @@ def test_follower_check_msg_append():
 
         cs = ConfState([1, 2, 3], [])
         store: MemStorage = MemStorage.new_with_conf_state(cs)
-        store.wl(lambda core: core.append(ents))
+        store.wl().append(ents)
         cfg = new_test_config(1, 10, 1)
         r = new_test_raft_with_config(cfg, store, l)
 
@@ -791,7 +791,7 @@ def test_follower_append_entries():
         )
         cs = ConfState([1, 2, 3], [])
         store = MemStorage.new_with_conf_state(cs)
-        store.wl(lambda core: core.append([empty_entry(1, 1), empty_entry(2, 2)]))
+        store.wl().append([empty_entry(1, 1), empty_entry(2, 2)])
         cfg = new_test_config(1, 10, 1)
         r = new_test_raft_with_config(cfg, store, l)
         r.raft.become_follower(2, 2)
@@ -901,7 +901,7 @@ def test_leader_sync_follower_log():
     for i, tt in enumerate(tests):
         lead_cs = ConfState([1, 2, 3], [])
         lead_store = MemStorage.new_with_conf_state(lead_cs)
-        lead_store.wl(lambda core: core.append(ents))
+        lead_store.wl().append(ents)
         lead_cfg = new_test_config(1, 10, 1)
         lead = new_test_raft_with_config(lead_cfg, lead_store, l)
         last_index = lead.raft_log.last_index()
@@ -910,7 +910,7 @@ def test_leader_sync_follower_log():
 
         follower_cs = ConfState([1, 2, 3], [])
         follower_store = MemStorage.new_with_conf_state(follower_cs)
-        follower_store.wl(lambda core: core.append(tt))
+        follower_store.wl().append(tt)
 
         follower_cfg = new_test_config(2, 10, 1)
         follower = new_test_raft_with_config(follower_cfg, follower_store, l)
@@ -1039,7 +1039,7 @@ def test_voter():
         ents, log_term, index, wreject = (v.ents, v.log_term, v.index, v.wreject)
         cs = ConfState([1, 2], [])
         s = MemStorage.new_with_conf_state(cs)
-        s.wl(lambda core: core.append(ents))
+        s.wl().append(ents)
         cfg = new_test_config(1, 10, 1)
         r = new_test_raft_with_config(cfg, s, l)
 
@@ -1085,7 +1085,7 @@ def test_leader_only_commits_log_from_current_term():
         index, wcommit = (v.index, v.wcommit)
         cs = ConfState([1, 2], [])
         store = MemStorage.new_with_conf_state(cs)
-        store.wl(lambda core: core.append(ents))
+        store.wl().append(ents)
         cfg = new_test_config(1, 10, 1)
         r = new_test_raft_with_config(cfg, store, l)
 

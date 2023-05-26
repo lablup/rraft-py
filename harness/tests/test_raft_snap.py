@@ -136,7 +136,7 @@ def test_snapshot_with_min_term():
 
     def do_test(pre_vote: bool):
         s1 = new_storage()
-        s1.wl(lambda core: core.apply_snapshot(new_snapshot(1, 1, [1, 2])))
+        s1.wl().apply_snapshot(new_snapshot(1, 1, [1, 2]))
 
         n1 = new_test_raft_with_prevote(1, [1, 2], 10, 1, s1, pre_vote, l)
 

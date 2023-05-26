@@ -76,7 +76,7 @@ def ents_with_config(
         e = Entry.default()
         e.set_index(i + 1)
         e.set_term(term)
-        store.wl(lambda core: core.append([e]))
+        store.wl().append([e])
 
     raft = new_test_raft_with_prevote(id, peers, 5, 1, store, pre_vote, l)
     raft.raft.reset(terms[-1])
@@ -115,14 +115,8 @@ def voted_with_config(
     cs = ConfState(peers, [])
     store = MemStorage.new_with_conf_state(cs)
 
-    def hard_state_set_vote(core: MemStorageCore_Ref):
-        core.hard_state().set_vote(vote)
-
-    def hard_state_set_term(core: MemStorageCore_Ref):
-        core.hard_state().set_term(term)
-
-    store.wl(hard_state_set_vote)
-    store.wl(hard_state_set_term)
+    store.wl().hard_state().set_vote(vote)
+    store.wl().hard_state().set_term(term)
 
     raft = new_test_raft_with_prevote(id, peers, 5, 1, store, pre_vote, l)
     raft.raft.reset(term)
@@ -138,7 +132,7 @@ def next_ents(r: InMemoryRaft_Ref, s: MemStorage_Ref) -> List[Entry]:
         e = unstable[-1]
         last_idx, last_term = e.get_index(), e.get_term()
         r.get_raft_log().stable_entries(last_idx, last_term)
-        s.wl(lambda core: core.append(unstable))
+        s.wl().append(unstable)
         r.on_persist_entries(last_idx, last_term)
 
     ents = r.get_raft_log().next_entries(None)
@@ -1119,10 +1113,10 @@ def test_commit():
         matches, logs, sm_term, w = v.matches, v.logs, v.sm_term, v.w
         cs = ConfState([1], [])
         store = MemStorage.new_with_conf_state(cs)
-        store.wl(lambda core: core.append(logs))
+        store.wl().append(logs)
         hs = HardState.default()
         hs.set_term(sm_term)
-        store.wl(lambda core: core.set_hardstate(hs))
+        store.wl().set_hardstate(hs)
         cfg = new_test_config(1, 5, 1)
         sm = new_test_raft_with_config(cfg, store, l)
 
@@ -1300,15 +1294,13 @@ def test_handle_heartbeat():
         m, w_commit = v.m, v.w_commit
         cs = ConfState([1, 2], [])
         store = MemStorage.new_with_conf_state(cs)
-        store.wl(
-            lambda core: core.append(
+        store.wl().append(
                 [
                     empty_entry(1, 1),
                     empty_entry(2, 2),
                     empty_entry(3, 3),
                 ]
             )
-        )
 
         cfg = new_test_config(1, 5, 1)
         sm = new_test_raft_with_config(cfg, store, l)
@@ -1330,15 +1322,13 @@ def test_handle_heartbeat():
 def test_handle_heartbeat_resp():
     l = default_logger()
     store = new_storage()
-    store.wl(
-        lambda core: core.append(
+    store.wl().append(
             [
                 empty_entry(1, 1),
                 empty_entry(2, 2),
                 empty_entry(3, 3),
             ]
         )
-    )
 
     sm = new_test_raft(1, [1, 2], 5, 1, store, l)
     sm.raft.become_candidate()
@@ -1515,7 +1505,7 @@ def test_recv_msg_request_vote_for_type(msg_type: MessageType):
         cs = ConfState([1], [])
         store = MemStorage.new_with_conf_state(cs)
         ents = [empty_entry(2, 1), empty_entry(2, 2)]
-        store.wl(lambda core: core.append(ents))
+        store.wl().append(ents)
 
         sm = new_test_raft(1, [1], 10, 1, store, l)
         sm.raft.set_state(state)
@@ -2417,14 +2407,14 @@ def test_read_only_for_new_leader():
 
         storage = MemStorage.new_with_conf_state(ConfState([1, 2, 3], []))
         entries = [empty_entry(1, 1), empty_entry(1, 2)]
-        storage.wl(lambda core: core.append(entries))
+        storage.wl().append(entries)
         hs = HardState.default()
         hs.set_term(1)
         hs.set_commit(committed)
-        storage.wl(lambda core: core.set_hardstate(hs))
+        storage.wl().set_hardstate(hs)
 
         if compact_index != 0:
-            storage.wl(lambda core: core.compact(compact_index))
+            storage.wl().compact(compact_index)
 
         i = new_test_raft_with_config(cfg, storage, l)
         peers.append(i)
@@ -2560,7 +2550,7 @@ def test_leader_append_response():
         cs = ConfState([1, 2, 3], [])
         store = MemStorage.new_with_conf_state(cs)
         ents = [empty_entry(0, 1), empty_entry(1, 2)]
-        store.wl(lambda core: core.append(ents))
+        store.wl().append(ents)
         sm = new_test_raft(1, [1, 2, 3], 10, 1, store, l)
         # sm term is 2 after it becomes the leader.
 
@@ -2604,7 +2594,7 @@ def test_bcast_beat():
     offset = 1000
     s = new_snapshot(offset, 1, [1, 2, 3])
     store = new_storage()
-    store.wl(lambda core: core.apply_snapshot(s))
+    store.wl().apply_snapshot(s)
     sm = new_test_raft(1, [1, 2, 3], 10, 1, store, l)
     sm.raft.set_term(1)
 
@@ -2678,7 +2668,7 @@ def test_recv_msg_beat():
         cs = ConfState([1, 2, 3], [])
         store = MemStorage.new_with_conf_state(cs)
         ents = [empty_entry(0, 1), empty_entry(1, 2)]
-        store.wl(lambda core: core.append(ents))
+        store.wl().append(ents)
 
         sm = new_test_raft(1, [1, 2, 3], 10, 1, store, l)
         sm.raft.set_state(state)
@@ -2808,7 +2798,7 @@ def test_recv_msg_unreachable():
     l = default_logger()
     previous_ents = [empty_entry(1, 1), empty_entry(1, 2), empty_entry(1, 3)]
     s = new_storage()
-    s.wl(lambda core: core.append(previous_ents))
+    s.wl().append(previous_ents)
     r = new_test_raft(1, [1, 2], 10, 1, s, l)
     r.raft.become_candidate()
     r.raft.become_leader()
@@ -2937,12 +2927,8 @@ def test_slow_node_restore():
 
     next_ents(nt.peers.get(1).raft, nt.storage.get(1))
 
-    nt.storage.get(1).wl(
-        lambda core: core.commit_to(nt.peers.get(1).raft_log.get_applied())
-    )
-    nt.storage.get(1).wl(
-        lambda core: core.compact(nt.peers.get(1).raft_log.get_applied())
-    )
+    nt.storage.get(1).wl().commit_to(nt.peers.get(1).raft_log.get_applied())
+    nt.storage.get(1).wl().compact(nt.peers.get(1).raft_log.get_applied())
 
     nt.recover()
 
@@ -3280,8 +3266,8 @@ def test_leader_transfer_after_snapshot():
 
     nt.send([new_message(1, 1, MessageType.MsgPropose, 1)])
     next_ents(nt.peers[1].raft, nt.storage[1])
-    nt.storage[1].wl(lambda core: core.commit_to(nt.peers[1].raft_log.get_applied()))
-    nt.storage[1].wl(lambda core: core.compact(nt.peers[1].raft_log.get_applied()))
+    nt.storage[1].wl().commit_to(nt.peers[1].raft_log.get_applied())
+    nt.storage[1].wl().compact(nt.peers[1].raft_log.get_applied())
 
     nt.recover()
     assert nt.peers[1].raft.prs().get(3).get_matched() == 1
@@ -4487,7 +4473,7 @@ def prepare_request_snapshot() -> Tuple[Network, Snapshot]:
 
     def index_term_11(id: int, ids: List[int]) -> Interface:
         store = MemStorage()
-        store.wl(lambda core: core.apply_snapshot(new_snapshot(11, 11, ids)))
+        store.wl().apply_snapshot(new_snapshot(11, 11, ids))
         raft = new_test_raft(id, ids, 5, 1, store, l)
         raft.raft.reset(11)
         return raft
@@ -4513,8 +4499,8 @@ def prepare_request_snapshot() -> Tuple[Network, Snapshot]:
     assert nt.peers[2].raft_log.get_committed() == 14
 
     ents = nt.peers[1].raft_log.unstable_entries()
-    nt.storage[1].wl(lambda core: core.append(ents))
-    nt.storage[1].wl(lambda core: core.commit_to(14))
+    nt.storage[1].wl().append(ents)
+    nt.storage[1].wl().commit_to(14)
     nt.peers[1].raft_log.set_applied(14)
 
     # Commit a new raft log.
@@ -4585,12 +4571,12 @@ def test_request_snapshot_unavailable():
     assert req_snap.get_request_snapshot() == request_idx
 
     # Peer 2 is still in probe state due to SnapshotTemporarilyUnavailable.
-    nt.peers[1].raft.store().wl(lambda core: core.trigger_snap_unavailable())
+    nt.peers[1].raft.store().wl().trigger_snap_unavailable()
     nt.peers[1].step(req_snap.clone())
     assert nt.peers[1].raft.prs().get(2).get_state() == ProgressState.Probe
 
     # Next index is decreased.
-    nt.peers[1].raft.store().wl(lambda core: core.trigger_snap_unavailable())
+    nt.peers[1].raft.store().wl().trigger_snap_unavailable()
     nt.peers[1].step(req_snap.clone())
 
     assert nt.peers[1].raft.prs().get(2).get_state() == ProgressState.Probe
@@ -4722,10 +4708,10 @@ def test_group_commit():
         min_index = min(matches)
         max_index = max(matches)
         logs = [empty_entry(1, i) for i in range(min_index, max_index + 1)]
-        store.wl(lambda core: core.append(logs))
+        store.wl().append(logs)
         hs = HardState.default()
         hs.set_term(1)
-        store.wl(lambda core: core.set_hardstate(hs))
+        store.wl().set_hardstate(hs)
         cfg = new_test_config(1, 5, 1)
         sm = new_test_raft_with_config(cfg, store, l)
 
@@ -4814,11 +4800,11 @@ def test_group_commit_consistent():
             v.exp,
         )
         store = MemStorage.new_with_conf_state(ConfState([1], []))
-        store.wl(lambda core: core.append(logs))
+        store.wl().append(logs)
         hs = HardState.default()
         hs.set_term(2)
         hs.set_commit(committed)
-        store.wl(lambda core: core.set_hardstate(hs))
+        store.wl().set_hardstate(hs)
         cfg = new_test_config(1, 5, 1)
         cfg.set_applied(applied)
         sm = new_test_raft_with_config(cfg, store, l)
@@ -5370,10 +5356,10 @@ def test_fast_log_rejection():
         )
         l = default_logger()
         s1 = MemStorage.new_with_conf_state(ConfState([1, 2, 3], []))
-        s1.wl(lambda core: core.append(leader_log))
+        s1.wl().append(leader_log)
 
         s2 = MemStorage.new_with_conf_state(ConfState([1, 2, 3], []))
-        s2.wl(lambda core: core.append(follower_log))
+        s2.wl().append(follower_log)
 
         n1 = new_test_raft(1, [1, 2, 3], 10, 1, s1, l)
         n2 = new_test_raft(2, [1, 2, 3], 10, 1, s2, l)

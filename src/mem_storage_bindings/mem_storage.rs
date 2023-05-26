@@ -158,31 +158,15 @@ impl Py_MemStorage_Ref {
             .and_then(to_pyresult)
     }
 
-    pub fn wl(&mut self, cb: PyObject, py: Python) -> PyResult<PyObject> {
-        self.inner
-            .map_as_mut(|inner| {
-                let mut wl = inner.wl();
-
-                let arg = Py_MemStorageCore_Ref {
-                    inner: RustRef::new(wl.deref_mut()),
-                };
-
-                cb.call1(py, (arg,))
-            })
-            .and_then(to_pyresult)
+    pub fn wl(&mut self) -> PyResult<Py_MemStorageCore_Ref> {
+        self.inner.map_as_mut(|inner| Py_MemStorageCore_Ref {
+            inner: RustRef::new(inner.wl().deref_mut()),
+        })
     }
 
-    pub fn rl(&self, cb: PyObject, py: Python) -> PyResult<PyObject> {
-        self.inner
-            .map_as_ref(|inner| {
-                let rl = inner.rl();
-
-                let arg = Py_MemStorageCore_Ref {
-                    inner: RustRef::new(unsafe { make_mut(rl.deref()) }),
-                };
-
-                cb.call1(py, (arg,))
-            })
-            .and_then(to_pyresult)
+    pub fn rl(&self) -> PyResult<Py_MemStorageCore_Ref> {
+        self.inner.map_as_ref(|inner| Py_MemStorageCore_Ref {
+            inner: RustRef::new(unsafe { make_mut(inner.rl().deref()) }),
+        })
     }
 }

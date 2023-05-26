@@ -77,7 +77,7 @@ def on_ready(raft_group: InMemoryRawNode, cbs: Dict[str, Callable]) -> None:
     if ready.snapshot():
         # This is a snapshot, we need to apply the snapshot at first.
         cloned_ready = raft_group.ready()
-        store.wl(lambda core: core.apply_snapshot(cloned_ready.snapshot()))
+        store.wl().apply_snapshot(cloned_ready.snapshot())
 
     _last_apply_index = 0
 
@@ -104,11 +104,11 @@ def on_ready(raft_group: InMemoryRawNode, cbs: Dict[str, Callable]) -> None:
 
     if entries := ready.entries():
         # Append entries to the Raft log.
-        store.wl(lambda core: core.append(entries))
+        store.wl().append(entries)
 
     if hs := ready.hs():
         # Raft HardState changed, and we need to persist it.
-        store.wl(lambda core: core.set_hardstate(hs))
+        store.wl().set_hardstate(hs)
 
     if msgs := ready.persisted_messages():
         # Send out the persisted messages come from the node.
@@ -119,7 +119,7 @@ def on_ready(raft_group: InMemoryRawNode, cbs: Dict[str, Callable]) -> None:
 
     # Update commit index.
     if commit := light_rd.commit_index():
-        store.wl(lambda core: core.hard_state().set_commit(commit))
+        store.wl().hard_state().set_commit(commit)
 
     # Send out the messages.
     handle_messages(light_rd.messages())

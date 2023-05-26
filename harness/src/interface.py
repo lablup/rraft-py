@@ -60,7 +60,7 @@ class Interface:
                 snap = snapshot.clone()
                 index = snap.get_metadata().get_index()
                 self.raft_log.stable_snap(index)
-                self.raft_log.get_store().wl(lambda core: core.apply_snapshot(snap))
+                self.raft_log.get_store().wl().apply_snapshot(snap)
                 self.raft.on_persist_snap(index)
                 self.raft.commit_apply(index)
 
@@ -70,5 +70,5 @@ class Interface:
 
                 last_idx, last_term = e.get_index(), e.get_term()
                 self.raft_log.stable_entries(last_idx, last_term)
-                self.raft_log.get_store().wl(lambda core: core.append(cloned_unstable))
+                self.raft_log.get_store().wl().append(cloned_unstable)
                 self.raft.on_persist_entries(last_idx, last_term)
