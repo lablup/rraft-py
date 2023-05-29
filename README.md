@@ -70,7 +70,11 @@ $ pip install rraft-py
 
 ## Contribution
 
-Are you interested in this project? The project is in need of various improvements such as code reviews, adding benchmarks, and adding missing methods. All kinds of contributions will be highly appreciated.
+Are you interested in this project?
+
+The project is in need of various improvements such as code reviews, adding benchmarks, and adding missing methods.
+
+All kinds of contributions will be highly appreciated.
 
 ### To do
 
