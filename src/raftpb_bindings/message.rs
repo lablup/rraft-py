@@ -346,6 +346,16 @@ impl Py_Message_Ref {
     pub fn has_snapshot(&self) -> PyResult<bool> {
         self.inner.map_as_ref(|inner| inner.has_snapshot())
     }
+
+    #[warn(deprecated)]
+    pub fn get_deprecated_priority(&self) -> PyResult<u64> {
+        self.inner.map_as_ref(|inner| inner.get_deprecated_priority())
+    }
+
+    #[warn(deprecated)]
+    pub fn set_deprecated_priority(&mut self, v: u64) -> PyResult<()> {
+        self.inner.map_as_mut(|inner| inner.set_deprecated_priority(v))
+    }
 }
 
 #[pymethods]
