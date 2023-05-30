@@ -50,6 +50,10 @@ impl Py_EntryType {
         }
     }
 
+    pub fn __int__(&self) -> u64 {
+        self.0 as u64
+    }
+
     #[staticmethod]
     pub fn from_int(v: i32, py: Python) -> PyResult<PyObject> {
         EntryType::from_i32(v)

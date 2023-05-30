@@ -56,16 +56,6 @@ impl Py_ConfChangeType {
             .ok_or_else(|| runtime_error("Invalid value"))
     }
 
-    #[staticmethod]
-    pub fn from_str(v: &str, py: Python) -> PyObject {
-        match v {
-            "AddNode" => Py_ConfChangeType(ConfChangeType::AddNode).into_py(py),
-            "AddLearnerNode" => Py_ConfChangeType(ConfChangeType::AddLearnerNode).into_py(py),
-            "RemoveNode" => Py_ConfChangeType(ConfChangeType::RemoveNode).into_py(py),
-            _ => py.None(),
-        }
-    }
-
     #[classattr]
     pub fn AddNode() -> Self {
         Py_ConfChangeType(ConfChangeType::AddNode)
