@@ -1,6 +1,7 @@
 use pyo3::{prelude::*, pyclass::CompareOp};
 
 use raft::eraftpb::ConfChangeTransition;
+use utils::errors::runtime_error;
 
 #[derive(Clone)]
 #[pyclass(name = "ConfChangeTransition")]
@@ -8,11 +9,7 @@ pub struct Py_ConfChangeTransition(pub ConfChangeTransition);
 
 impl From<Py_ConfChangeTransition> for ConfChangeTransition {
     fn from(val: Py_ConfChangeTransition) -> Self {
-        match val.0 {
-            ConfChangeTransition::Auto => ConfChangeTransition::Auto,
-            ConfChangeTransition::Explicit => ConfChangeTransition::Explicit,
-            ConfChangeTransition::Implicit => ConfChangeTransition::Implicit,
-        }
+        val.0
     }
 }
 
@@ -20,11 +17,11 @@ impl From<ConfChangeTransition> for Py_ConfChangeTransition {
     fn from(x: ConfChangeTransition) -> Self {
         match x {
             ConfChangeTransition::Auto => Py_ConfChangeTransition(ConfChangeTransition::Auto),
-            ConfChangeTransition::Explicit => {
-                Py_ConfChangeTransition(ConfChangeTransition::Explicit)
-            }
             ConfChangeTransition::Implicit => {
                 Py_ConfChangeTransition(ConfChangeTransition::Implicit)
+            }
+            ConfChangeTransition::Explicit => {
+                Py_ConfChangeTransition(ConfChangeTransition::Explicit)
             }
         }
     }
@@ -52,9 +49,20 @@ impl Py_ConfChangeTransition {
     pub fn __repr__(&self) -> String {
         match self.0 {
             ConfChangeTransition::Auto => "Auto".to_string(),
-            ConfChangeTransition::Explicit => "Explicit".to_string(),
             ConfChangeTransition::Implicit => "Implicit".to_string(),
+            ConfChangeTransition::Explicit => "Explicit".to_string(),
         }
+    }
+
+    pub fn __int__(&self) -> u64 {
+        self.0 as u64
+    }
+
+    #[staticmethod]
+    pub fn from_int(v: i32, py: Python) -> PyResult<PyObject> {
+        ConfChangeTransition::from_i32(v)
+            .map(|x| Py_ConfChangeTransition(x).into_py(py))
+            .ok_or_else(|| runtime_error("Invalid value"))
     }
 
     #[classattr]
@@ -63,12 +71,12 @@ impl Py_ConfChangeTransition {
     }
 
     #[classattr]
-    pub fn Explicit() -> Self {
-        Py_ConfChangeTransition(ConfChangeTransition::Explicit)
+    pub fn Implicit() -> Self {
+        Py_ConfChangeTransition(ConfChangeTransition::Implicit)
     }
 
     #[classattr]
-    pub fn Implicit() -> Self {
-        Py_ConfChangeTransition(ConfChangeTransition::Implicit)
+    pub fn Explicit() -> Self {
+        Py_ConfChangeTransition(ConfChangeTransition::Explicit)
     }
 }

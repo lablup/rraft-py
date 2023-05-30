@@ -8,10 +8,7 @@ pub struct Py_ReadOnlyOption(pub ReadOnlyOption);
 
 impl From<Py_ReadOnlyOption> for ReadOnlyOption {
     fn from(val: Py_ReadOnlyOption) -> Self {
-        match val.0 {
-            ReadOnlyOption::Safe => ReadOnlyOption::Safe,
-            ReadOnlyOption::LeaseBased => ReadOnlyOption::LeaseBased,
-        }
+        val.0
     }
 }
 

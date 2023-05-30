@@ -1,6 +1,7 @@
 use pyo3::{prelude::*, pyclass::CompareOp};
 
 use raft::eraftpb::EntryType;
+use utils::errors::runtime_error;
 
 #[derive(Clone)]
 #[pyclass(name = "EntryType")]
@@ -8,11 +9,7 @@ pub struct Py_EntryType(pub EntryType);
 
 impl From<Py_EntryType> for EntryType {
     fn from(val: Py_EntryType) -> Self {
-        match val.0 {
-            EntryType::EntryConfChange => EntryType::EntryConfChange,
-            EntryType::EntryConfChangeV2 => EntryType::EntryConfChangeV2,
-            EntryType::EntryNormal => EntryType::EntryNormal,
-        }
+        val.0
     }
 }
 
@@ -51,6 +48,13 @@ impl Py_EntryType {
             EntryType::EntryConfChangeV2 => "EntryConfChangeV2".to_string(),
             EntryType::EntryNormal => "EntryNormal".to_string(),
         }
+    }
+
+    #[staticmethod]
+    pub fn from_int(v: i32, py: Python) -> PyResult<PyObject> {
+        EntryType::from_i32(v)
+            .map(|x| Py_EntryType(x).into_py(py))
+            .ok_or_else(|| runtime_error("Invalid value"))
     }
 
     #[classattr]

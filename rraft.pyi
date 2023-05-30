@@ -2,7 +2,7 @@
 Type hints for Native Rust Extension
 """
 from abc import ABCMeta, abstractmethod
-from typing import Any, Callable, Final, List, Optional, Set, Tuple
+from typing import Any, Final, List, Optional, Set, Tuple
 
 """
 A number to represent that there is no limit.
@@ -41,14 +41,14 @@ def majority(total: int) -> int:
     Get the majority number of given nodes count.
     """
 
-def default_logger() -> Logger:
+def default_logger() -> "Logger":
     """
     The default logger we fall back to when passed `None` in external_bindings facing constructors.
 
     Currently, this is a `log` adaptor behind a `Once` to ensure there is no clobbering.
     """
 
-def vote_resp_msg_type(t: MessageType) -> MessageType:
+def vote_resp_msg_type(t: "MessageType") -> "MessageType":
     """
     Maps vote and pre_vote message types to their correspond responses.
     """
@@ -167,6 +167,8 @@ class MessageType:
     MsgReadIndexResp: Final[Any]
     MsgRequestPreVote: Final[Any]
     MsgRequestPreVoteResponse: Final[Any]
+    @staticmethod
+    def from_int(v: int) -> "MessageType": ...
 
 class ConfChangeTransition:
     """ """
@@ -194,6 +196,8 @@ class ConfChangeTransition:
     to use a custom payload (via the Context field).
     """
     Explicit: Final[Any]
+    @staticmethod
+    def from_int(v: int) -> "ConfChangeTransition": ...
 
 class ConfChangeType:
     """ """
@@ -201,6 +205,8 @@ class ConfChangeType:
     AddNode: Final[Any]
     AddLearnerNode: Final[Any]
     RemoveNode: Final[Any]
+    @staticmethod
+    def from_int(v: int) -> "ConfChangeType": ...
 
 class EntryType:
     """ """
@@ -208,6 +214,8 @@ class EntryType:
     EntryConfChange: Final[Any]
     EntryConfChangeV2: Final[Any]
     EntryNormal: Final[Any]
+    @staticmethod
+    def from_int(v: int) -> "EntryType": ...
 
 class __API_Logger:
     def info(self, s: str) -> None:
@@ -244,33 +252,35 @@ class __API_Logger:
 class Logger(__API_Logger):
     """ """
 
-    def __init__(self, chan_size: int, overflow_strategy: OverflowStrategy) -> None: ...
-    def make_ref(self) -> Logger_Ref: ...
+    def __init__(
+        self, chan_size: int, overflow_strategy: "OverflowStrategy"
+    ) -> None: ...
+    def make_ref(self) -> "Logger_Ref": ...
 
 class Logger_Ref(__API_Logger):
     """ """
 
 class __API_RaftState(__Cloneable):
-    def clone(self) -> RaftState: ...
+    def clone(self) -> "RaftState": ...
     def initialized(self) -> bool:
         """
         Indicates the `RaftState` is initialized or not.
         """
-    def get_conf_state(self) -> ConfState_Ref:
+    def get_conf_state(self) -> "ConfState_Ref":
         """
         `conf_state`: Records the current node IDs like `[1, 2, 3]` in the cluster. Every Raft node must have a
         unique ID in the cluster;
         """
-    def set_conf_state(self, cs: ConfState_Ref) -> None:
+    def set_conf_state(self, cs: "ConfState_Ref") -> None:
         """
         `conf_state`: Records the current node IDs like `[1, 2, 3]` in the cluster. Every Raft node must have a
         unique ID in the cluster;
         """
-    def get_hard_state(self) -> HardState_Ref:
+    def get_hard_state(self) -> "HardState_Ref":
         """
         `hard_state`: Contains the last meta information including commit index, the vote leader, and the vote term.
         """
-    def set_hard_state(self, hs: HardState_Ref) -> None:
+    def set_hard_state(self, hs: "HardState_Ref") -> None:
         """
         `hard_state`: Contains the last meta information including commit index, the vote leader, and the vote term.
         """
@@ -282,9 +292,9 @@ class RaftState(__API_RaftState):
     """
 
     def __init__(self) -> None: ...
-    def make_ref(self) -> RaftState_Ref: ...
+    def make_ref(self) -> "RaftState_Ref": ...
     @staticmethod
-    def default() -> RaftState: ...
+    def default() -> "RaftState": ...
 
 class RaftState_Ref(__API_RaftState):
     """
@@ -292,7 +302,7 @@ class RaftState_Ref(__API_RaftState):
     """
 
 class __API_StorageCore:
-    def append(self, ents: List[Entry] | List[Entry_Ref]) -> None:
+    def append(self, ents: List["Entry"] | List["Entry_Ref"]) -> None:
         """
         Append the new entries to storage.
 
@@ -301,7 +311,7 @@ class __API_StorageCore:
         Panics if `ents` contains compacted entries, or there's a gap between `ents` and the last
         received entry in the storage.
         """
-    def apply_snapshot(self, snapshot: Snapshot | Snapshot_Ref) -> None:
+    def apply_snapshot(self, snapshot: "Snapshot" | "Snapshot_Ref") -> None:
         """
         Overwrites the contents of this Storage object with those of the given snapshot.
 
@@ -328,20 +338,20 @@ class __API_StorageCore:
         Panics if there is no such entry in raft logs.
         """
     def commit_to_and_set_conf_states(
-        self, idx: int, cs: Optional[ConfState] | Optional[ConfState_Ref]
+        self, idx: int, cs: Optional["ConfState"] | Optional["ConfState_Ref"]
     ) -> None:
         """
         Commit to `idx` and set configuration to the given states. Only used for tests.
         """
-    def set_conf_state(self, cs: ConfState | ConfState_Ref) -> None:
+    def set_conf_state(self, cs: "ConfState" | "ConfState_Ref") -> None:
         """
         Saves the current conf state.
         """
-    def hard_state(self) -> HardState_Ref:
+    def hard_state(self) -> "HardState_Ref":
         """
         Get the hard state.
         """
-    def set_hardstate(self, hs: HardState | HardState_Ref) -> None:
+    def set_hardstate(self, hs: "HardState" | "HardState_Ref") -> None:
         """
         Saves the current HardState.
         """
@@ -353,7 +363,7 @@ class __API_StorageCore:
         """
         Set a LogTemporarilyUnavailable error.
         """
-    def take_get_entries_context(self) -> Optional[GetEntriesContext]:
+    def take_get_entries_context(self) -> Optional["GetEntriesContext"]:
         """
         Take get entries context.
         """
@@ -364,9 +374,9 @@ class MemStorageCore(__API_StorageCore):
     value, use the `rl` and `wl` functions on the main MemStorage implementation.
     """
 
-    def make_ref(self) -> MemStorageCore_Ref: ...
+    def make_ref(self) -> "MemStorageCore_Ref": ...
     @staticmethod
-    def default() -> MemStorageCore: ...
+    def default() -> "MemStorageCore": ...
 
 class MemStorageCore_Ref(__API_StorageCore):
     """
@@ -376,9 +386,9 @@ class MemStorageCore_Ref(__API_StorageCore):
 class StorageCore(__API_StorageCore):
     """ """
 
-    def make_ref(self) -> StorageCore_Ref: ...
+    def make_ref(self) -> "StorageCore_Ref": ...
     @staticmethod
-    def default() -> StorageCore: ...
+    def default() -> "StorageCore": ...
 
 class StorageCore_Ref(__API_StorageCore):
     """
@@ -387,7 +397,9 @@ class StorageCore_Ref(__API_StorageCore):
 
 class __API_Storage(__Cloneable):
     def clone(self) -> Any: ...
-    def initialize_with_conf_state(self, conf_state: ConfState | ConfState_Ref) -> None:
+    def initialize_with_conf_state(
+        self, conf_state: "ConfState" | "ConfState_Ref"
+    ) -> None:
         """
         Initialize a `MemStorage` with a given `Config`.
 
@@ -401,9 +413,9 @@ class __API_Storage(__Cloneable):
         self,
         low: int,
         high: int,
-        context: GetEntriesContext_Ref,
+        context: "GetEntriesContext_Ref",
         max_size: Optional[int],
-    ) -> List[Entry]:
+    ) -> List["Entry"]:
         """
         Implements the Storage trait.
         """
@@ -419,7 +431,7 @@ class __API_Storage(__Cloneable):
         """
         Implements the Storage trait.
         """
-    def snapshot(self, request_index: int, to: int) -> Snapshot:
+    def snapshot(self, request_index: int, to: int) -> "Snapshot":
         """
         Implements the Storage trait.
         """
@@ -436,26 +448,26 @@ class MemStorage(__API_Storage):
     """
 
     def __init__(self) -> None: ...
-    def make_ref(self) -> MemStorage_Ref: ...
-    def clone(self) -> MemStorage: ...
+    def make_ref(self) -> "MemStorage_Ref": ...
+    def clone(self) -> "MemStorage": ...
     @staticmethod
-    def default() -> MemStorage: ...
+    def default() -> "MemStorage": ...
     @staticmethod
     def new_with_conf_state(
-        conf_state: ConfState | ConfState_Ref,
-    ) -> MemStorage:
+        conf_state: "ConfState" | "ConfState_Ref",
+    ) -> "MemStorage":
         """
         Create a new `MemStorage` with a given `Config`. The given `Config` will be used to
         initialize the storage.
 
         You should use the same input to initialize all nodes.
         """
-    def wl(self) -> MemStorageCore_Ref:
+    def wl(self) -> "MemStorageCore_Ref":
         """
         Opens up a write lock on the storage and returns guard handle. Use this
         with functions that take a mutable reference to self.
         """
-    def rl(self) -> MemStorageCore_Ref:
+    def rl(self) -> "MemStorageCore_Ref":
         """
         Opens up a read lock on the storage and returns a guard handle. Use this
         with functions that don't require mutation.
@@ -466,13 +478,13 @@ class MemStorage_Ref(__API_Storage):
     Reference type of :class:`MemStorage`.
     """
 
-    def clone(self) -> MemStorage: ...
-    def wl(self) -> MemStorageCore_Ref:
+    def clone(self) -> "MemStorage": ...
+    def wl(self) -> "MemStorageCore_Ref":
         """
         Opens up a write lock on the storage and returns guard handle. Use this
         with functions that take a mutable reference to self.
         """
-    def rl(self) -> MemStorageCore_Ref:
+    def rl(self) -> "MemStorageCore_Ref":
         """
         Opens up a read lock on the storage and returns a guard handle. Use this
         with functions that don't require mutation.
@@ -489,14 +501,14 @@ class Storage(__API_Storage):
     """
 
     def __init__(self) -> None: ...
-    def make_ref(self) -> Storage_Ref: ...
-    def clone(self) -> Storage: ...
+    def make_ref(self) -> "Storage_Ref": ...
+    def clone(self) -> "Storage": ...
     @staticmethod
-    def default() -> Storage: ...
+    def default() -> "Storage": ...
     @staticmethod
     def new_with_conf_state(
-        conf_state: ConfState | ConfState_Ref,
-    ) -> Storage:
+        conf_state: "ConfState" | "ConfState_Ref",
+    ) -> "Storage":
         """ """
     def wl(self) -> Any:
         """
@@ -514,7 +526,7 @@ class Storage_Ref(__API_Storage):
     Reference type of :class:`Storage`.
     """
 
-    def clone(self) -> Storage: ...
+    def clone(self) -> "Storage": ...
     def wl(self) -> Any:
         """
         Opens up a write lock on the storage and returns guard handle. Use this
@@ -527,12 +539,12 @@ class Storage_Ref(__API_Storage):
         """
 
 class __API_Ready:
-    def hs(self) -> Optional[HardState_Ref]:
+    def hs(self) -> Optional["HardState_Ref"]:
         """
         The current state of a Node to be saved to stable storage.
         HardState will be None state if there is no update.
         """
-    def ss(self) -> Optional[SoftState_Ref]:
+    def ss(self) -> Optional["SoftState_Ref"]:
         """
         The current volatile state of a Node.
         SoftState will be None if there is no update.
@@ -551,52 +563,52 @@ class __API_Ready:
         The number of current Ready.
         It is used for identifying the different Ready and ReadyRecord.
         """
-    def snapshot(self) -> Snapshot_Ref:
+    def snapshot(self) -> "Snapshot_Ref":
         """
         Snapshot specifies the snapshot to be saved to stable storage.
         """
-    def committed_entries(self) -> List[Entry_Ref]:
+    def committed_entries(self) -> List["Entry_Ref"]:
         """
         CommittedEntries specifies entries to be committed to a
         store/state-machine. These have previously been committed to stable
         store.
         """
-    def take_committed_entries(self) -> List[Entry]:
+    def take_committed_entries(self) -> List["Entry"]:
         """
         Take the CommitEntries.
         """
-    def entries(self) -> List[Entry_Ref]:
+    def entries(self) -> List["Entry_Ref"]:
         """
         Entries specifies entries to be saved to stable storage.
         """
-    def take_entries(self) -> List[Entry]:
+    def take_entries(self) -> List["Entry"]:
         """
         Take the Entries.
         """
-    def messages(self) -> List[Message_Ref]:
+    def messages(self) -> List["Message_Ref"]:
         """
         Messages specifies outbound messages to be sent.
         If it contains a MsgSnap message, the application MUST report back to raft
         when the snapshot has been received or has failed by calling ReportSnapshot.
         """
-    def take_messages(self) -> List[Message]:
+    def take_messages(self) -> List["Message"]:
         """
         Take the Messages.
         """
-    def persisted_messages(self) -> List[Message_Ref]:
+    def persisted_messages(self) -> List["Message_Ref"]:
         """
         Persisted Messages specifies outbound messages to be sent AFTER the HardState,
         Entries and Snapshot are persisted to stable storage.
         """
-    def take_persisted_messages(self) -> List[Message]:
+    def take_persisted_messages(self) -> List["Message"]:
         """
         Take the Persisted Messages.
         """
-    def read_states(self) -> List[ReadState_Ref]:
+    def read_states(self) -> List["ReadState_Ref"]:
         """
         ReadStates specifies the state for read only query.
         """
-    def take_read_states(self) -> List[ReadState]:
+    def take_read_states(self) -> List["ReadState"]:
         """
         ReadStates specifies the state for read only query.
         """
@@ -607,9 +619,9 @@ class Ready(__API_Ready):
     be saved to stable storage, committed or sent to other peers.
     """
 
-    def make_ref(self) -> Ready_Ref: ...
+    def make_ref(self) -> "Ready_Ref": ...
     @staticmethod
-    def default() -> Ready: ...
+    def default() -> "Ready": ...
 
 class Ready_Ref(__API_Ready):
     """
@@ -625,7 +637,7 @@ class __API_RawNode:
         """
         Advance apply to the passed index.
         """
-    def advance(self, rd: Ready_Ref) -> LightReady:
+    def advance(self, rd: "Ready_Ref") -> "LightReady":
         """
         Advances the ready after fully processing it.
 
@@ -637,7 +649,7 @@ class __API_RawNode:
         Then [`Self::advance_apply`] or [`Self::advance_apply_to`] should be used later to update applying
         progress.
         """
-    def advance_append(self, rd: Ready_Ref) -> LightReady:
+    def advance_append(self, rd: "Ready_Ref") -> "LightReady":
         """
         Advances the ready without applying committed entries. [`Self::advance_apply`] or
         [`Self::advance_apply_to`] should be used later to update applying progress.
@@ -647,7 +659,7 @@ class __API_RawNode:
         Since Ready must be persisted in order, calling this function implicitly means
         all ready collected before have been persisted.
         """
-    def advance_append_async(self, rd: Ready_Ref) -> None:
+    def advance_append_async(self, rd: "Ready_Ref") -> None:
         """
         Same as [`Self::advance_append`] except that it allows to only store the updates in cache.
         [`Self::on_persist_ready`] should be used later to update the persisting progress.
@@ -676,7 +688,7 @@ class __API_RawNode:
         """
         Sets priority of node.
         """
-    def report_snapshot(self, id: int, snapshot: SnapshotStatus) -> None:
+    def report_snapshot(self, id: int, snapshot: "SnapshotStatus") -> None:
         """
         ReportSnapshot reports the status of the sent snapshot.
         """
@@ -692,7 +704,7 @@ class __API_RawNode:
         """
         Grabs the snapshot from the raft if available.
         """
-    def step(self, msg: Message | Message_Ref) -> None:
+    def step(self, msg: "Message" | "Message_Ref") -> None:
         """
         Step advances the state machine using the given message.
         """
@@ -709,7 +721,7 @@ class __API_RawNode:
         Propose proposes data be appended to the raft log.
         """
     def propose_conf_change(
-        self, context: bytes | List[int], cc: ConfChange | ConfChange_Ref
+        self, context: bytes | List[int], cc: "ConfChange" | "ConfChange_Ref"
     ) -> None:
         """
         ProposeConfChange proposes a config change.
@@ -719,7 +731,7 @@ class __API_RawNode:
         leaving joint state.
         """
     def propose_conf_change_v2(
-        self, context: bytes | List[int], cc: ConfChangeV2 | ConfChangeV2_Ref
+        self, context: bytes | List[int], cc: "ConfChangeV2" | "ConfChangeV2_Ref"
     ) -> None:
         """
         ProposeConfChange proposes a config change.
@@ -728,13 +740,15 @@ class __API_RawNode:
         caller's responsibility to propose an empty conf change again to force
         leaving joint state.
         """
-    def apply_conf_change(self, cc: ConfChange | ConfChange_Ref) -> ConfState:
+    def apply_conf_change(self, cc: "ConfChange" | "ConfChange_Ref") -> ConfState:
         """
         Applies a config change to the local node. The app must call this when it
         applies a configuration change, except when it decides to reject the
         configuration change, in which case no call must take place.
         """
-    def apply_conf_change_v2(self, cc: ConfChangeV2 | ConfChangeV2_Ref) -> ConfState:
+    def apply_conf_change_v2(
+        self, cc: "ConfChangeV2" | "ConfChangeV2_Ref"
+    ) -> "ConfState":
         """
         Applies a config change to the local node. The app must call this when it
         applies a configuration change, except when it decides to reject the
@@ -800,14 +814,14 @@ class InMemoryRawNode(__API_RawNode):
 
     def __init__(
         self,
-        cfg: Config | Config_Ref,
-        store: MemStorage | MemStorage_Ref,
-        logger: Logger | Logger_Ref,
+        cfg: "Config" | "Config_Ref",
+        store: "MemStorage" | "MemStorage_Ref",
+        logger: "Logger" | "Logger_Ref",
     ) -> None: ...
-    def make_ref(self) -> InMemoryRawNode_Ref: ...
-    def get_raft(self) -> InMemoryRaft_Ref:
+    def make_ref(self) -> "InMemoryRawNode_Ref": ...
+    def get_raft(self) -> "InMemoryRaft_Ref":
         """ """
-    def store(self) -> MemStorage_Ref:
+    def store(self) -> "MemStorage_Ref":
         """Returns the store as a mutable reference."""
 
 class InMemoryRawNode_Ref(__API_RawNode):
@@ -815,9 +829,9 @@ class InMemoryRawNode_Ref(__API_RawNode):
     Reference type of :class:`InMemoryRawNode`.
     """
 
-    def get_raft(self) -> InMemoryRaft_Ref:
+    def get_raft(self) -> "InMemoryRaft_Ref":
         """ """
-    def store(self) -> MemStorage_Ref:
+    def store(self) -> "MemStorage_Ref":
         """Returns the store as a mutable reference."""
     # def status(self) -> InMemoryStatus:
     #     """
@@ -833,14 +847,14 @@ class RawNode(__API_RawNode):
 
     def __init__(
         self,
-        cfg: Config | Config_Ref,
-        store: Storage | Storage_Ref,
-        logger: Logger | Logger_Ref,
+        cfg: "Config" | "Config_Ref",
+        store: "Storage" | "Storage_Ref",
+        logger: "Logger" | "Logger_Ref",
     ) -> None: ...
-    def make_ref(self) -> RawNode_Ref: ...
-    def get_raft(self) -> Raft_Ref:
+    def make_ref(self) -> "RawNode_Ref": ...
+    def get_raft(self) -> "Raft_Ref":
         """ """
-    def store(self) -> Storage_Ref:
+    def store(self) -> "Storage_Ref":
         """Returns the store as a mutable reference."""
     # def status(self) -> Status:
     #     """
@@ -852,9 +866,9 @@ class RawNode_Ref(__API_RawNode):
     Reference type of :class:`RawNode`.
     """
 
-    def get_raft(self) -> Raft_Ref:
+    def get_raft(self) -> "Raft_Ref":
         """ """
-    def store(self) -> Storage_Ref:
+    def store(self) -> "Storage_Ref":
         """Returns the store as a mutable reference."""
     # def status(self) -> InMemoryStatus:
     #     """
@@ -887,7 +901,7 @@ class Peer(__API_Peer):
     """
 
     def __init__(self) -> None: ...
-    def make_ref(self) -> Peer_Ref: ...
+    def make_ref(self) -> "Peer_Ref": ...
 
 class Peer_Ref(__API_Peer):
     """
@@ -901,21 +915,21 @@ class __API_LightReady:
         It will be None state if there is no update.
         It is not required to save it to stable storage.
         """
-    def committed_entries(self) -> List[Entry_Ref]:
+    def committed_entries(self) -> List["Entry_Ref"]:
         """
         CommittedEntries specifies entries to be committed to a
         store/state-machine. These have previously been committed to stable
         store.
         """
-    def take_committed_entries(self) -> List[Entry]:
+    def take_committed_entries(self) -> List["Entry"]:
         """
         Take the CommitEntries.
         """
-    def messages(self) -> List[Message_Ref]:
+    def messages(self) -> List["Message_Ref"]:
         """
         Messages specifies outbound messages to be sent.
         """
-    def take_messages(self) -> List[Message]:
+    def take_messages(self) -> List["Message"]:
         """
         Take the Messages.
         """
@@ -927,9 +941,9 @@ class LightReady(__API_LightReady):
     """
 
     def __init__(self) -> None: ...
-    def make_ref(self) -> LightReady_Ref: ...
+    def make_ref(self) -> "LightReady_Ref": ...
     @staticmethod
-    def default() -> LightReady: ...
+    def default() -> "LightReady": ...
 
 class LightReady_Ref(__API_LightReady):
     """
@@ -937,7 +951,7 @@ class LightReady_Ref(__API_LightReady):
     """
 
 class __API_SnapshotMetadata(__Cloneable, __Encoder, __Decoder):
-    def clone(self) -> SnapshotMetadata: ...
+    def clone(self) -> "SnapshotMetadata": ...
     def get_index(self) -> int:
         """
         `index`: The applied index.
@@ -962,11 +976,11 @@ class __API_SnapshotMetadata(__Cloneable, __Encoder, __Decoder):
         """
         `term`: The term of the applied index.
         """
-    def get_conf_state(self) -> ConfState_Ref:
+    def get_conf_state(self) -> "ConfState_Ref":
         """
         `conf_state`: The current `ConfState`.
         """
-    def set_conf_state(self, conf_state: ConfState | ConfState_Ref) -> None:
+    def set_conf_state(self, conf_state: "ConfState" | "ConfState_Ref") -> None:
         """
         `conf_state`: The current `ConfState`.
         """
@@ -984,10 +998,10 @@ class SnapshotMetadata(__API_SnapshotMetadata):
 
     def __init__(self) -> None: ...
     @staticmethod
-    def default() -> SnapshotMetadata: ...
+    def default() -> "SnapshotMetadata": ...
     @staticmethod
-    def decode(v: List[int] | bytes) -> SnapshotMetadata: ...
-    def make_ref(self) -> SnapshotMetadata_Ref: ...
+    def decode(v: List[int] | bytes) -> "SnapshotMetadata": ...
+    def make_ref(self) -> "SnapshotMetadata_Ref": ...
 
 class SnapshotMetadata_Ref(__API_SnapshotMetadata):
     """
@@ -995,16 +1009,18 @@ class SnapshotMetadata_Ref(__API_SnapshotMetadata):
     """
 
 class __API_Snapshot(__Cloneable, __Encoder, __Decoder):
-    def clone(self) -> Snapshot: ...
+    def clone(self) -> "Snapshot": ...
     def get_data(self) -> bytes:
         """ """
     def set_data(self, data: bytes) -> None:
         """ """
     def clear_data(self) -> None:
         """ """
-    def get_metadata(self) -> SnapshotMetadata_Ref:
+    def get_metadata(self) -> "SnapshotMetadata_Ref":
         """ """
-    def set_metadata(self, meta_data: SnapshotMetadata | SnapshotMetadata_Ref) -> None:
+    def set_metadata(
+        self, meta_data: "SnapshotMetadata" | "SnapshotMetadata_Ref"
+    ) -> None:
         """ """
     def clear_metadata(self) -> None:
         """ """
@@ -1016,10 +1032,10 @@ class Snapshot(__API_Snapshot):
 
     def __init__(self) -> None: ...
     @staticmethod
-    def default() -> Snapshot: ...
+    def default() -> "Snapshot": ...
     @staticmethod
-    def decode(v: List[int] | bytes) -> Snapshot: ...
-    def make_ref(self) -> Snapshot_Ref: ...
+    def decode(v: List[int] | bytes) -> "Snapshot": ...
+    def make_ref(self) -> "Snapshot_Ref": ...
 
 class Snapshot_Ref(__API_Snapshot):
     """
@@ -1027,7 +1043,7 @@ class Snapshot_Ref(__API_Snapshot):
     """
 
 class __API_Message(__Cloneable, __Encoder, __Decoder):
-    def clone(self) -> Message: ...
+    def clone(self) -> "Message": ...
     def get_commit(self) -> int:
         """ """
     def set_commit(self, commit: int) -> None:
@@ -1118,15 +1134,15 @@ class __API_Message(__Cloneable, __Encoder, __Decoder):
         """ """
     def clear_reject_hint(self) -> None:
         """ """
-    def get_entries(self) -> List[Entry_Ref]:
+    def get_entries(self) -> List["Entry_Ref"]:
         """ """
-    def set_entries(self, ents: List[Entry] | List[Entry_Ref]) -> None:
+    def set_entries(self, ents: List["Entry"] | List["Entry_Ref"]) -> None:
         """ """
     def clear_entries(self) -> None:
         """ """
-    def get_msg_type(self) -> MessageType:
+    def get_msg_type(self) -> "MessageType":
         """ """
-    def set_msg_type(self, typ: MessageType) -> None:
+    def set_msg_type(self, typ: "MessageType") -> None:
         """ """
     def clear_msg_type(self) -> None:
         """ """
@@ -1136,9 +1152,9 @@ class __API_Message(__Cloneable, __Encoder, __Decoder):
         """ """
     def clear_reject(self) -> None:
         """ """
-    def get_snapshot(self) -> Snapshot_Ref:
+    def get_snapshot(self) -> "Snapshot_Ref":
         """ """
-    def set_snapshot(self, snapshot: Snapshot | Snapshot_Ref) -> None:
+    def set_snapshot(self, snapshot: "Snapshot" | "Snapshot_Ref") -> None:
         """ """
     def clear_snapshot(self) -> None:
         """ """
@@ -1165,11 +1181,11 @@ class Message(__API_Message):
     """ """
 
     def __init__(self) -> None: ...
-    def make_ref(self) -> Message_Ref: ...
+    def make_ref(self) -> "Message_Ref": ...
     @staticmethod
-    def default() -> Message: ...
+    def default() -> "Message": ...
     @staticmethod
-    def decode(v: List[int] | bytes) -> Message: ...
+    def decode(v: List[int] | bytes) -> "Message": ...
 
 class Message_Ref(Message):
     """
@@ -1177,7 +1193,7 @@ class Message_Ref(Message):
     """
 
 class __API_HardState(__Cloneable, __Encoder, __Decoder):
-    def clone(self) -> HardState: ...
+    def clone(self) -> "HardState": ...
     def get_term(self) -> int:
         """ """
     def set_term(self, term: int) -> None:
@@ -1201,11 +1217,11 @@ class HardState(__API_HardState):
     """ """
 
     def __init__(self) -> None: ...
-    def make_ref(self) -> HardState_Ref: ...
+    def make_ref(self) -> "HardState_Ref": ...
     @staticmethod
-    def default() -> HardState: ...
+    def default() -> "HardState": ...
     @staticmethod
-    def decode(v: List[int] | bytes) -> HardState: ...
+    def decode(v: List[int] | bytes) -> "HardState": ...
 
 class HardState_Ref(__API_HardState):
     """
@@ -1224,11 +1240,11 @@ class GetEntriesContext(__API_GetEntriesContext):
     """
 
     @staticmethod
-    def empty(can_async: bool) -> GetEntriesContext:
+    def empty(can_async: bool) -> "GetEntriesContext":
         """
         Used for callers out of raft. Caller can customize if it supports async.
         """
-    def make_ref(self) -> GetEntriesContext_Ref: ...
+    def make_ref(self) -> "GetEntriesContext_Ref": ...
 
 class GetEntriesContext_Ref(__API_GetEntriesContext):
     """
@@ -1236,7 +1252,7 @@ class GetEntriesContext_Ref(__API_GetEntriesContext):
     """
 
 class __API_Entry(__Cloneable, __Encoder, __Decoder):
-    def clone(self) -> Entry: ...
+    def clone(self) -> "Entry": ...
     def get_context(self) -> bytes:
         """ """
     def set_context(self, context: bytes | List[int]) -> None:
@@ -1249,9 +1265,9 @@ class __API_Entry(__Cloneable, __Encoder, __Decoder):
         """ """
     def clear_data(self) -> None:
         """ """
-    def get_entry_type(self) -> EntryType:
+    def get_entry_type(self) -> "EntryType":
         """ """
-    def set_entry_type(self, typ: EntryType) -> None:
+    def set_entry_type(self, typ: "EntryType") -> None:
         """ """
     def clear_entry_type(self) -> None:
         """ """
@@ -1298,11 +1314,11 @@ class Entry(__API_Entry):
     """
 
     def __init__(self) -> None: ...
-    def make_ref(self) -> Entry_Ref: ...
+    def make_ref(self) -> "Entry_Ref": ...
     @staticmethod
-    def default() -> Entry: ...
+    def default() -> "Entry": ...
     @staticmethod
-    def decode(v: List[int] | bytes) -> Entry: ...
+    def decode(v: List[int] | bytes) -> "Entry": ...
 
 class Entry_Ref(__API_Entry):
     """
@@ -1310,7 +1326,7 @@ class Entry_Ref(__API_Entry):
     """
 
 class __API_ConfState(__Cloneable, __Encoder, __Decoder):
-    def clone(self) -> ConfState: ...
+    def clone(self) -> "ConfState": ...
     def get_auto_leave(self) -> bool:
         """ """
     def set_auto_leave(self, auto_leave: bool) -> None:
@@ -1348,11 +1364,11 @@ class ConfState(__API_ConfState):
     def __init__(
         self, voters: Optional[List[int]], learners: Optional[List[int]]
     ) -> None: ...
-    def make_ref(self) -> ConfState_Ref: ...
+    def make_ref(self) -> "ConfState_Ref": ...
     @staticmethod
-    def default() -> ConfState: ...
+    def default() -> "ConfState": ...
     @staticmethod
-    def decode(v: List[int] | bytes) -> ConfState: ...
+    def decode(v: List[int] | bytes) -> "ConfState": ...
 
 class ConfState_Ref(__API_ConfState):
     """
@@ -1360,11 +1376,11 @@ class ConfState_Ref(__API_ConfState):
     """
 
 class __API_ConfChangeV2(__Cloneable, __Encoder, __Decoder):
-    def clone(self) -> ConfChangeV2: ...
+    def clone(self) -> "ConfChangeV2": ...
     def get_changes(self) -> bytes:
         """ """
     def set_changes(
-        self, changes: List[ConfChangeSingle] | List[ConfChangeSingle_Ref]
+        self, changes: List["ConfChangeSingle"] | List["ConfChangeSingle_Ref"]
     ) -> None:
         """ """
     def clear_changes(self) -> None:
@@ -1375,9 +1391,9 @@ class __API_ConfChangeV2(__Cloneable, __Encoder, __Decoder):
         """ """
     def clear_context(self) -> None:
         """ """
-    def get_transition(self) -> ConfChangeTransition:
+    def get_transition(self) -> "ConfChangeTransition":
         """ """
-    def set_transition(self, transition: ConfChangeTransition) -> None:
+    def set_transition(self, transition: "ConfChangeTransition") -> None:
         """ """
     def clear_transition(self) -> None:
         """ """
@@ -1401,17 +1417,17 @@ class __API_ConfChangeV2(__Cloneable, __Encoder, __Decoder):
         This is the case if the ConfChangeV2 is zero, with the possible exception of
         the Context field.
         """
-    def as_v1(self) -> Optional[ConfChange_Ref]:
+    def as_v1(self) -> Optional["ConfChange_Ref"]:
         """
         Converts conf change to `ConfChange`.
 
         `ConfChangeV2` can't be changed back to `ConfChange`.
         """
-    def as_v2(self) -> ConfChangeV2:
+    def as_v2(self) -> "ConfChangeV2":
         """
         Gets conf change as `ConfChangeV2`.
         """
-    def into_v2(self) -> ConfChangeV2:
+    def into_v2(self) -> "ConfChangeV2":
         """
         Converts conf change to `ConfChangeV2`.
         """
@@ -1454,10 +1470,10 @@ class ConfChangeV2(__API_ConfChangeV2):
 
     def __init__(self) -> None: ...
     @staticmethod
-    def default() -> ConfChangeV2: ...
-    def make_ref(self) -> ConfChangeV2_Ref: ...
+    def default() -> "ConfChangeV2": ...
+    def make_ref(self) -> "ConfChangeV2_Ref": ...
     @staticmethod
-    def decode(v: List[int] | bytes) -> ConfChangeV2: ...
+    def decode(v: List[int] | bytes) -> "ConfChangeV2": ...
 
 class ConfChangeV2_Ref(__API_ConfChangeV2):
     """
@@ -1465,16 +1481,16 @@ class ConfChangeV2_Ref(__API_ConfChangeV2):
     """
 
 class __API_ConfChangeSingle(__Cloneable, __Encoder, __Decoder):
-    def clone(self) -> ConfChangeSingle: ...
+    def clone(self) -> "ConfChangeSingle": ...
     def get_node_id(self) -> int:
         """ """
     def set_node_id(self, node_id: int):
         """ """
     def clear_node_id(self) -> None:
         """ """
-    def get_change_type(self) -> ConfChangeType:
+    def get_change_type(self) -> "ConfChangeType":
         """ """
-    def set_change_type(self, typ: ConfChangeType) -> None:
+    def set_change_type(self, typ: "ConfChangeType") -> None:
         """ """
     def clear_change_type(self) -> None:
         """ """
@@ -1486,11 +1502,11 @@ class ConfChangeSingle(__API_ConfChangeSingle):
     """
 
     def __init__(self) -> None: ...
-    def make_ref(self) -> ConfChangeSingle_Ref: ...
+    def make_ref(self) -> "ConfChangeSingle_Ref": ...
     @staticmethod
-    def default() -> ConfChangeSingle: ...
+    def default() -> "ConfChangeSingle": ...
     @staticmethod
-    def decode(v: List[int] | bytes) -> ConfChangeSingle: ...
+    def decode(v: List[int] | bytes) -> "ConfChangeSingle": ...
 
 class ConfChangeSingle_Ref(__API_ConfChangeSingle):
     """
@@ -1498,7 +1514,7 @@ class ConfChangeSingle_Ref(__API_ConfChangeSingle):
     """
 
 class __API_ConfChange(__Cloneable, __Encoder, __Decoder):
-    def clone(self) -> ConfChange: ...
+    def clone(self) -> "ConfChange": ...
     def get_id(self) -> int:
         """ """
     def set_id(self, id: int) -> None:
@@ -1511,9 +1527,9 @@ class __API_ConfChange(__Cloneable, __Encoder, __Decoder):
         """ """
     def clear_node_id(self) -> None:
         """ """
-    def get_change_type(self) -> ConfChangeType:
+    def get_change_type(self) -> "ConfChangeType":
         """ """
-    def set_change_type(self, typ: ConfChangeType) -> None:
+    def set_change_type(self, typ: "ConfChangeType") -> None:
         """ """
     def clear_change_type(self) -> None:
         """ """
@@ -1527,17 +1543,17 @@ class __API_ConfChange(__Cloneable, __Encoder, __Decoder):
         """
         Update this message object with fields read from given stream.
         """
-    def as_v1(self) -> Optional[ConfChange_Ref]:
+    def as_v1(self) -> Optional["ConfChange_Ref"]:
         """
         Converts conf change to `ConfChange`.
 
         `ConfChangeV2` can't be changed back to `ConfChange`.
         """
-    def as_v2(self) -> ConfChangeV2:
+    def as_v2(self) -> "ConfChangeV2":
         """
         Gets conf change as `ConfChangeV2`.
         """
-    def into_v2(self) -> ConfChangeV2:
+    def into_v2(self) -> "ConfChangeV2":
         """
         Converts conf change to `ConfChangeV2`.
         """
@@ -1546,11 +1562,11 @@ class ConfChange(__API_ConfChange):
     """ """
 
     def __init__(self) -> None: ...
-    def make_ref(self) -> ConfChange_Ref: ...
+    def make_ref(self) -> "ConfChange_Ref": ...
     @staticmethod
-    def default() -> ConfChange: ...
+    def default() -> "ConfChange": ...
     @staticmethod
-    def decode(v: List[int] | bytes) -> ConfChange: ...
+    def decode(v: List[int] | bytes) -> "ConfChange": ...
 
 class ConfChange_Ref(__API_ConfChange):
     """
@@ -1576,7 +1592,7 @@ class __API_Unstable:
         Asserts the `hi` and `lo` values against each other and against the
         entries themselves.
         """
-    def slice(self, lo: int, hi: int) -> List[Entry_Ref]:
+    def slice(self, lo: int, hi: int) -> List["Entry_Ref"]:
         """
         Returns a slice of entries between the high and low.
 
@@ -1594,11 +1610,11 @@ class __API_Unstable:
         Clears the unstable entries and moves the stable offset up to the
         last index, if there is any.
         """
-    def restore(self, snap: Snapshot_Ref) -> None:
+    def restore(self, snap: "Snapshot_Ref") -> None:
         """
         From a given snapshot, restores the snapshot to self, but doesn't unpack.
         """
-    def truncate_and_append(self, ents: List[Entry] | List[Entry_Ref]) -> None:
+    def truncate_and_append(self, ents: List["Entry"] | List["Entry_Ref"]) -> None:
         """
         Append entries to unstable, truncate local block first if overlapped.
 
@@ -1622,27 +1638,27 @@ class __API_Unstable:
         """
         `offset`: The offset from the vector index.
         """
-    def get_entries(self) -> List[Entry_Ref]:
+    def get_entries(self) -> List["Entry_Ref"]:
         """
         `entries`: All entries that have not yet been written to storage.
         """
-    def set_entries(self, ents: List[Entry] | List[Entry_Ref]) -> None:
+    def set_entries(self, ents: List["Entry"] | List["Entry_Ref"]) -> None:
         """
         `entries`: All entries that have not yet been written to storage.
         """
-    def get_logger(self) -> Logger_Ref:
+    def get_logger(self) -> "Logger_Ref":
         """
         `logger`: The tag to use when logging.
         """
-    def set_logger(self, logger: Logger | Logger_Ref) -> None:
+    def set_logger(self, logger: "Logger" | "Logger_Ref") -> None:
         """
         `logger`: The tag to use when logging.
         """
-    def get_snapshot(self) -> Optional[Snapshot_Ref]:
+    def get_snapshot(self) -> Optional["Snapshot_Ref"]:
         """
         `snapshot`: The incoming unstable snapshot, if any.
         """
-    def set_snapshot(self, snapshot: Snapshot | Snapshot_Ref) -> None:
+    def set_snapshot(self, snapshot: "Snapshot" | "Snapshot_Ref") -> None:
         """
         `snapshot`: The incoming unstable snapshot, if any.
         """
@@ -1655,8 +1671,8 @@ class Unstable(__API_Unstable):
     might need to truncate the log before persisting unstable.entries.
     """
 
-    def __init__(self, offset: int, logger: Logger | Logger_Ref) -> None: ...
-    def make_ref(self) -> Unstable_Ref: ...
+    def __init__(self, offset: int, logger: "Logger" | "Logger_Ref") -> None: ...
+    def make_ref(self) -> "Unstable_Ref": ...
 
 class Unstable_Ref(__API_Unstable):
     """
@@ -1672,11 +1688,11 @@ class __API_SoftState:
         """
         `leader_id`: The potential leader of the cluster.
         """
-    def get_raft_state(self) -> StateRole:
+    def get_raft_state(self) -> "StateRole":
         """
         `raft_state`: The soft role this node may take.
         """
-    def set_raft_state(self, role: StateRole) -> None:
+    def set_raft_state(self, role: "StateRole") -> None:
         """
         `raft_state`: The soft role this node may take.
         """
@@ -1687,9 +1703,9 @@ class SoftState(__API_SoftState):
     The state is volatile and does not need to be persisted to the WAL.
     """
 
-    def make_ref(self) -> SoftState_Ref: ...
+    def make_ref(self) -> "SoftState_Ref": ...
     @staticmethod
-    def default() -> SoftState: ...
+    def default() -> "SoftState": ...
 
 class SoftState_Ref(__API_SoftState):
     """
@@ -1697,7 +1713,7 @@ class SoftState_Ref(__API_SoftState):
     """
 
 class __API_ReadState(__Cloneable):
-    def clone(self) -> ReadState: ...
+    def clone(self) -> "ReadState": ...
     def get_index(self) -> int:
         """
         `index`: The index of the read state.
@@ -1725,7 +1741,7 @@ class ReadState(__API_ReadState):
     """
 
     def __init__(self) -> None: ...
-    def make_ref(self) -> ReadState_Ref: ...
+    def make_ref(self) -> "ReadState_Ref": ...
 
 class ReadState_Ref(__API_ReadState):
     """
@@ -1734,16 +1750,16 @@ class ReadState_Ref(__API_ReadState):
 
 class __API_RaftLog:
     def entries(
-        self, idx: int, context: GetEntriesContext_Ref, max_size: Optional[int]
-    ) -> List[Entry]:
+        self, idx: int, context: "GetEntriesContext_Ref", max_size: Optional[int]
+    ) -> List["Entry"]:
         """
         Returns entries starting from a particular index and not exceeding a bytesize.
         """
-    def all_entries(self) -> List[Entry]:
+    def all_entries(self) -> List["Entry"]:
         """
         Returns all the entries. Only used by tests.
         """
-    def append(self, ents: List[Entry] | List[Entry_Ref]) -> int:
+    def append(self, ents: List["Entry"] | List["Entry_Ref"]) -> int:
         """
         Appends a set of entries to the unstable list.
         """
@@ -1751,7 +1767,7 @@ class __API_RaftLog:
         """
         Returns the last applied index.
         """
-    def find_conflict(self, ents: List[Entry] | List[Entry_Ref]) -> int:
+    def find_conflict(self, ents: List["Entry"] | List["Entry_Ref"]) -> int:
         """
         Finds the index of the conflict.
 
@@ -1796,7 +1812,7 @@ class __API_RaftLog:
         """
     def store(self) -> MemStorage_Ref:
         """ """
-    def next_entries(self, max_size: Optional[int]) -> Optional[List[Entry]]:
+    def next_entries(self, max_size: Optional[int]) -> Optional[List["Entry"]]:
         """
         Returns all the available entries for execution.
         If applied is smaller than the index of snapshot, it returns all committed
@@ -1804,7 +1820,7 @@ class __API_RaftLog:
         """
     def next_entries_since(
         self, since_idx: int, max_size: Optional[int]
-    ) -> Optional[List[Entry]]:
+    ) -> Optional[List["Entry"]]:
         """
         Returns committed and persisted entries since max(`since_idx` + 1, first_index).
         """
@@ -1843,7 +1859,7 @@ class __API_RaftLog:
         idx: int,
         term: int,
         committed: int,
-        ents: List[Entry] | List[Entry_Ref],
+        ents: List["Entry"] | List["Entry_Ref"],
     ) -> Optional[Tuple[int, int]]:
         """
         Returns None if the entries cannot be appended. Otherwise,
@@ -1853,7 +1869,7 @@ class __API_RaftLog:
 
         Panics if it finds a conflicting index less than committed index.
         """
-    def snapshot(self, request_index: int, to: int) -> Snapshot_Ref:
+    def snapshot(self, request_index: int, to: int) -> "Snapshot_Ref":
         """
         Returns the current snapshot
         """
@@ -1898,15 +1914,15 @@ class __API_RaftLog:
 
         Panics if the store doesn't have a last index.
         """
-    def unstable(self) -> Unstable_Ref:
+    def unstable(self) -> "Unstable_Ref":
         """
         Returns a reference to the unstable log.
         """
-    def unstable_entries(self) -> List[Entry_Ref]:
+    def unstable_entries(self) -> List["Entry_Ref"]:
         """
         Returns slice of entries that are not persisted.
         """
-    def unstable_snapshot(self) -> Optional[Snapshot_Ref]:
+    def unstable_snapshot(self) -> Optional["Snapshot_Ref"]:
         """
         Returns the snapshot that are not persisted.
         """
@@ -1959,13 +1975,13 @@ class __API_RaftLog:
         low: int,
         high: int,
         max_size: Optional[int],
-        context: GetEntriesContext_Ref,
-    ) -> List[Entry_Ref]:
+        context: "GetEntriesContext_Ref",
+    ) -> List["Entry_Ref"]:
         """
         Grabs a slice of entries from the raft. Unlike a rust slice pointer, these are
         returned by value. The result is truncated to the max_size in bytes.
         """
-    def restore(self, snapshot: Snapshot | Snapshot_Ref) -> None:
+    def restore(self, snapshot: "Snapshot" | "Snapshot_Ref") -> None:
         """
         Restores the current log from a snapshot.
         """
@@ -1975,9 +1991,11 @@ class InMemoryRaftLog(__API_RaftLog):
     Raft log implementation
     """
 
-    def __init__(self, store: MemStorage_Ref, logger: Logger | Logger_Ref) -> None: ...
-    def make_ref(self) -> InMemoryRaftLog_Ref: ...
-    def get_store(self) -> MemStorage_Ref:
+    def __init__(
+        self, store: "MemStorage_Ref", logger: "Logger" | "Logger_Ref"
+    ) -> None: ...
+    def make_ref(self) -> "InMemoryRaftLog_Ref": ...
+    def get_store(self) -> "MemStorage_Ref":
         """
         Grab a read-only reference to the underlying storage.
         """
@@ -1987,7 +2005,7 @@ class InMemoryRaftLog_Ref(__API_RaftLog):
     Reference type of :class:`InMemoryRaftLog`.
     """
 
-    def get_store(self) -> MemStorage_Ref:
+    def get_store(self) -> "MemStorage_Ref":
         """
         Grab a read-only reference to the underlying storage.
         """
@@ -1995,9 +2013,11 @@ class InMemoryRaftLog_Ref(__API_RaftLog):
 class RaftLog(__API_RaftLog):
     """ """
 
-    def __init__(self, store: Storage_Ref, logger: Logger | Logger_Ref) -> None: ...
-    def make_ref(self) -> RaftLog_Ref: ...
-    def get_store(self) -> Storage_Ref:
+    def __init__(
+        self, store: "Storage_Ref", logger: "Logger" | "Logger_Ref"
+    ) -> None: ...
+    def make_ref(self) -> "RaftLog_Ref": ...
+    def get_store(self) -> "Storage_Ref":
         """
         Grab a read-only reference to the underlying storage.
         """
@@ -2007,13 +2027,13 @@ class RaftLog_Ref(__API_RaftLog):
     Reference type of :class:`RaftLog`.
     """
 
-    def get_store(self) -> Storage_Ref:
+    def get_store(self) -> "Storage_Ref":
         """
         Grab a read-only reference to the underlying storage.
         """
 
 class __API_Raft:
-    def append_entry(self, ents: List[Entry] | List[Entry_Ref]) -> bool:
+    def append_entry(self, ents: List["Entry"] | List["Entry_Ref"]) -> bool:
         """
         Appends a slice of entries to the log.
         The entries are updated to match the current index and term.
@@ -2091,14 +2111,14 @@ class __API_Raft:
         Return current uncommitted size recorded by uncommitted_state
         """
     def maybe_increase_uncommitted_size(
-        self, ents: List[Entry] | List[Entry_Ref]
+        self, ents: List["Entry"] | List["Entry_Ref"]
     ) -> bool:
         """
         Increase size of 'ents' to uncommitted size. Return true when size limit
         is satisfied. Otherwise return false and uncommitted size remains unchanged.
         For raft with no limit(or non-leader raft), it always return true.
         """
-    def reduce_uncommitted_size(self, ents: List[Entry] | List[Entry_Ref]) -> None:
+    def reduce_uncommitted_size(self, ents: List["Entry"] | List["Entry_Ref"]) -> None:
         """
         Reduce size of 'ents' from uncommitted size.
         """
@@ -2189,15 +2209,15 @@ class __API_Raft:
         """
         Returns the number of pending read-only messages.
         """
-    def load_state(self, hs: HardState | HardState_Ref) -> None:
+    def load_state(self, hs: "HardState" | "HardState_Ref") -> None:
         """
         For a given hardstate, load the state into self.
         """
-    def soft_state(self) -> SoftState:
+    def soft_state(self) -> "SoftState":
         """
         Returns a value representing the softstate at the time of calling.
         """
-    def hard_state(self) -> HardState:
+    def hard_state(self) -> "HardState":
         """
         Returns a value representing the hardstate at the time of calling.
         """
@@ -2215,7 +2235,7 @@ class __API_Raft:
 
         Returns true to indicate that there will probably be some readiness need to be handled.
         """
-    def step(self, msg: Message | Message_Ref) -> None:
+    def step(self, msg: "Message" | "Message_Ref") -> None:
         """
         Steps the raft along via a message. This should be called everytime your raft receives a
         message from a peer.
@@ -2231,7 +2251,7 @@ class __API_Raft:
         Indicates whether state machine can be promoted to leader,
         which is true when it's a voter and its own id is in progress list.
         """
-    def post_conf_change(self) -> ConfState_Ref:
+    def post_conf_change(self) -> "ConfState_Ref":
         """
         Updates the in-memory state and, when necessary, carries out additional actions
         such as reacting to the removal of nodes or changed quorum requirements.
@@ -2240,15 +2260,15 @@ class __API_Raft:
         """
         Returns whether the current raft is in lease.
         """
-    def handle_heartbeat(self, msg: Message | Message_Ref) -> None:
+    def handle_heartbeat(self, msg: "Message" | "Message_Ref") -> None:
         """For a message, commit and send out heartbeat."""
-    def handle_append_entries(self, msg: Message | Message_Ref) -> None:
+    def handle_append_entries(self, msg: "Message" | "Message_Ref") -> None:
         """For a given message, append the entries to the log."""
     def request_snapshot(self) -> None:
         """
         Request a snapshot from a leader.
         """
-    def prs(self) -> ProgressTracker_Ref:
+    def prs(self) -> "ProgressTracker_Ref":
         """
         Returns a read-only reference to the progress set.
         """
@@ -2256,16 +2276,16 @@ class __API_Raft:
         """
         Resets the current node to a given term.
         """
-    def restore(self, snapshot: Snapshot | Snapshot_Ref) -> bool:
+    def restore(self, snapshot: "Snapshot" | "Snapshot_Ref") -> bool:
         """
         Recovers the state machine from a snapshot. It restores the log and the
         configuration of state machine.
         """
-    def snap(self) -> Optional[Snapshot_Ref]:
+    def snap(self) -> Optional["Snapshot_Ref"]:
         """
         Grabs a reference to the snapshot
         """
-    def store(self) -> MemStorage_Ref:
+    def store(self) -> "MemStorage_Ref":
         """
         Grabs an immutable reference to the store.
         """
@@ -2381,15 +2401,15 @@ class __API_Raft:
         """
         `id`: The ID of this node.
         """
-    def get_msgs(self) -> List[Message_Ref]:
+    def get_msgs(self) -> List["Message_Ref"]:
         """
         `msgs`: The list of messages.
         """
-    def set_msgs(self, msgs: List[Message | Message_Ref]) -> None:
+    def set_msgs(self, msgs: List["Message" | "Message_Ref"]) -> None:
         """
         `msgs`: The list of messages.
         """
-    def take_msgs(self) -> List[Message]:
+    def take_msgs(self) -> List["Message"]:
         """
         `msgs`: The list of messages.
         """
@@ -2401,11 +2421,11 @@ class __API_Raft:
         """
         `max_inflight`: The maximum number of messages that can be inflight.
         """
-    def get_state(self) -> StateRole:
+    def get_state(self) -> "StateRole":
         """
         `state`: The current role of this node.
         """
-    def set_state(self, state_role: StateRole) -> None:
+    def set_state(self, state_role: "StateRole") -> None:
         """
         `state`: The current role of this node.
         """
@@ -2445,14 +2465,14 @@ class __API_Raft:
 
         Enable this if greater cluster stability is preferred over faster elections.
         """
-    def apply_conf_change(self, conf_change: ConfChangeV2_Ref) -> ConfChange_Ref:
+    def apply_conf_change(self, conf_change: "ConfChangeV2_Ref") -> "ConfChange_Ref":
         """ """
-    def get_read_states(self) -> List[ReadState]:
+    def get_read_states(self) -> List["ReadState"]:
         """
         `read_states`: The current read states.
         """
     def set_read_states(
-        self, read_states: List[ReadState] | List[ReadState_Ref]
+        self, read_states: List["ReadState"] | List["ReadState_Ref"]
     ) -> None:
         """
         `read_states`: The current read states.
@@ -2462,7 +2482,7 @@ class __API_Raft:
         `read_only_option`: Choose the linearizability mode or the lease mode to read data. If you don’t care about the read consistency and want a higher read performance, you can use the lease mode.
         Setting this to `LeaseBased` requires `check_quorum = true`.
         """
-    def set_read_only_option(self, option: ReadOnlyOption) -> None:
+    def set_read_only_option(self, option: "ReadOnlyOption") -> None:
         """
         `read_only_option`: Choose the linearizability mode or the lease mode to read data. If you don’t care about the read consistency and want a higher read performance, you can use the lease mode.
         Setting this to `LeaseBased` requires `check_quorum = true`.
@@ -2499,12 +2519,12 @@ class InMemoryRaftStorage(__API_Raft):
 
     def __init__(
         self,
-        cfg: Config | Config_Ref,
+        cfg: "Config" | "Config_Ref",
         store: MemStorage | MemStorage_Ref,
-        logger: Logger | Logger_Ref,
+        logger: "Logger" | "Logger_Ref",
     ) -> None: ...
-    def make_ref(self) -> InMemoryRaft_Ref: ...
-    def get_raft_log(self) -> InMemoryRaftLog_Ref:
+    def make_ref(self) -> "InMemoryRaft_Ref": ...
+    def get_raft_log(self) -> "InMemoryRaftLog_Ref":
         """ """
 
 class InMemoryRaft_Ref(__API_Raft):
@@ -2512,7 +2532,7 @@ class InMemoryRaft_Ref(__API_Raft):
     Reference type of :class:`InMemoryRaftStorage`.
     """
 
-    def get_raft_log(self) -> InMemoryRaftLog_Ref:
+    def get_raft_log(self) -> "InMemoryRaftLog_Ref":
         """ """
 
 class Raft(__API_Raft):
@@ -2523,12 +2543,12 @@ class Raft(__API_Raft):
 
     def __init__(
         self,
-        cfg: Config | Config_Ref,
-        store: Storage | Storage_Ref,
-        logger: Logger | Logger_Ref,
+        cfg: "Config" | "Config_Ref",
+        store: "Storage" | "Storage_Ref",
+        logger: "Logger" | "Logger_Ref",
     ) -> None: ...
-    def make_ref(self) -> Raft_Ref: ...
-    def get_raft_log(self) -> RaftLog_Ref:
+    def make_ref(self) -> "Raft_Ref": ...
+    def get_raft_log(self) -> "RaftLog_Ref":
         """ """
 
 class Raft_Ref(__API_Raft):
@@ -2536,16 +2556,16 @@ class Raft_Ref(__API_Raft):
     Reference type of :class:`Raft`.
     """
 
-    def get_raft_log(self) -> RaftLog_Ref:
+    def get_raft_log(self) -> "RaftLog_Ref":
         """ """
 
 class ProgressMapItem:
     def id(self) -> int: ...
-    def progress(self) -> Progress: ...
+    def progress(self) -> "Progress": ...
 
 class __API_ProgressTracker(__Cloneable):
-    def clone(self) -> ProgressTracker: ...
-    def get(self, id: int) -> Optional[Progress_Ref]:
+    def clone(self) -> "ProgressTracker": ...
+    def get(self, id: int) -> Optional["Progress_Ref"]:
         """"""
     def group_commit(self) -> bool:
         """
@@ -2590,11 +2610,11 @@ class __API_ProgressTracker(__Cloneable):
         """
         Prepares for a new round of vote counting via recordVote.
         """
-    def conf_voters(self) -> JointConfig_Ref:
+    def conf_voters(self) -> "JointConfig_Ref":
         """ """
     def conf_learners(self) -> Set[int]:
         """ """
-    def collect(self) -> List[ProgressMapItem]:
+    def collect(self) -> List["ProgressMapItem"]:
         """ """
 
 class ProgressTracker(__API_ProgressTracker):
@@ -2604,7 +2624,7 @@ class ProgressTracker(__API_ProgressTracker):
     """
 
     def __init__(self, max_inflight: int) -> None: ...
-    def make_ref(self) -> ProgressTracker_Ref: ...
+    def make_ref(self) -> "ProgressTracker_Ref": ...
 
 class ProgressTracker_Ref(__API_ProgressTracker):
     """
@@ -2612,7 +2632,7 @@ class ProgressTracker_Ref(__API_ProgressTracker):
     """
 
 class __API_Progress(__Cloneable):
-    def clone(self) -> Progress: ...
+    def clone(self) -> "Progress": ...
     def become_probe(self) -> None:
         """Changes the progress to a probe."""
     def become_replicate(self) -> None:
@@ -2664,7 +2684,7 @@ class __API_Progress(__Cloneable):
         """
         Optimistically advance the index
         """
-    def get_ins(self) -> Inflights_Ref:
+    def get_ins(self) -> "Inflights_Ref":
         """
         `ins`: Inflights is a sliding window for the inflight messages.
         When inflights is full, no more message should be sent.
@@ -2674,7 +2694,7 @@ class __API_Progress(__Cloneable):
         When a leader receives a reply, the previous inflights should
         be freed by calling inflights.freeTo.
         """
-    def set_ins(self, inflights: Inflights | Inflights_Ref) -> None:
+    def set_ins(self, inflights: "Inflights" | "Inflights_Ref") -> None:
         """
         `ins`: Inflights is a sliding window for the inflight messages.
         When inflights is full, no more message should be sent.
@@ -2766,7 +2786,7 @@ class __API_Progress(__Cloneable):
         `paused`: Paused is used in ProgressStateProbe.
         When Paused is true, raft should pause sending replication message to this peer.
         """
-    def get_state(self) -> ProgressState:
+    def get_state(self) -> "ProgressState":
         """
         `state`: When in ProgressStateProbe, leader sends at most one replication message
         per heartbeat interval. It also probes actual progress of the follower.
@@ -2778,7 +2798,7 @@ class __API_Progress(__Cloneable):
         When in ProgressStateSnapshot, leader should have sent out snapshot
         before and stop sending any replication message.
         """
-    def set_state(self, state: ProgressState) -> None:
+    def set_state(self, state: "ProgressState") -> None:
         """
         `state`: When in ProgressStateProbe, leader sends at most one replication message
         per heartbeat interval. It also probes actual progress of the follower.
@@ -2797,7 +2817,7 @@ class Progress(__API_Progress):
     """
 
     def __init__(self, next_idx: int, ins_size: int) -> None: ...
-    def make_ref(self) -> Progress_Ref: ...
+    def make_ref(self) -> "Progress_Ref": ...
 
 class Progress_Ref(__API_Progress):
     """
@@ -2805,7 +2825,7 @@ class Progress_Ref(__API_Progress):
     """
 
 class __API_JointConfig(__Cloneable):
-    def clone(self) -> JointConfig: ...
+    def clone(self) -> "JointConfig": ...
     def clear(self) -> None:
         """Clears all IDs."""
     def contains(self, id: int) -> bool:
@@ -2825,7 +2845,7 @@ class JointConfig(__API_JointConfig):
     """
 
     def __init__(self, voters: Set[int]) -> None: ...
-    def make_ref(self) -> JointConfig_Ref: ...
+    def make_ref(self) -> "JointConfig_Ref": ...
 
 class JointConfig_Ref(__API_JointConfig):
     """
@@ -2833,7 +2853,7 @@ class JointConfig_Ref(__API_JointConfig):
     """
 
 class __API_MajorityConfig(__Cloneable):
-    def clone(self) -> MajorityConfig: ...
+    def clone(self) -> "MajorityConfig": ...
     def raw_slice(self) -> List[int]:
         """
         Returns the MajorityConfig as a slice.
@@ -2871,7 +2891,7 @@ class MajorityConfig(__API_MajorityConfig):
     """
 
     def __init__(self, voters: Set[int]) -> None: ...
-    def make_ref(self) -> MajorityConfig_Ref: ...
+    def make_ref(self) -> "MajorityConfig_Ref": ...
 
 class MajorityConfig_Ref(__API_MajorityConfig):
     """
@@ -2879,7 +2899,7 @@ class MajorityConfig_Ref(__API_MajorityConfig):
     """
 
 class __API_Inflights(__Cloneable):
-    def clone(self) -> Inflights: ...
+    def clone(self) -> "Inflights": ...
     def add(self, inflight: int) -> None:
         """Adds an inflight into inflights"""
     def full(self) -> bool:
@@ -2910,7 +2930,7 @@ class Inflights(__API_Inflights):
     """
 
     def __init__(self, cap: int) -> None: ...
-    def make_ref(self) -> Inflights_Ref: ...
+    def make_ref(self) -> "Inflights_Ref": ...
 
 class Inflights_Ref(__API_Inflights):
     """
@@ -2918,7 +2938,7 @@ class Inflights_Ref(__API_Inflights):
     """
 
 class __API_Config(__Cloneable):
-    def clone(self) -> Config: ...
+    def clone(self) -> "Config": ...
     def min_election_tick(self) -> int:
         """
         `min_election_tick`: The minimum number of ticks before an election.
@@ -2935,12 +2955,12 @@ class __API_Config(__Cloneable):
         """
         `max_election_tick`: The maximum number of ticks before an election.
         """
-    def get_read_only_option(self) -> ReadOnlyOption:
+    def get_read_only_option(self) -> "ReadOnlyOption":
         """
         `read_only_option`: Choose the linearizability mode or the lease mode to read data. If you don’t care about the read consistency and want a higher read performance, you can use the lease mode.
         Setting this to `LeaseBased` requires `check_quorum = true`.
         """
-    def set_read_only_option(self, read_only_option: ReadOnlyOption) -> None:
+    def set_read_only_option(self, read_only_option: "ReadOnlyOption") -> None:
         """
         `read_only_option`: Choose the linearizability mode or the lease mode to read data. If you don’t care about the read consistency and want a higher read performance, you can use the lease mode.
         Setting this to `LeaseBased` requires `check_quorum = true`.
@@ -3114,7 +3134,7 @@ class Config(__API_Config):
         pre_vote: Optional[bool] = None,
         min_election_tick: Optional[int] = None,
         max_election_tick: Optional[int] = None,
-        read_only_option: Optional[ReadOnlyOption] = None,
+        read_only_option: Optional["ReadOnlyOption"] = None,
         skip_bcast_commit: Optional[bool] = None,
         batch_append: Optional[bool] = None,
         priority: Optional[int] = None,
@@ -3179,9 +3199,9 @@ class Config(__API_Config):
 
         :param max_committed_size_per_ready: Max size for committed entries in a `Ready`.
         """
-    def make_ref(self) -> Config_Ref: ...
+    def make_ref(self) -> "Config_Ref": ...
     @staticmethod
-    def default() -> Config: ...
+    def default() -> "Config": ...
 
 class Config_Ref(__API_Config):
     """

@@ -7,12 +7,7 @@ pub struct Py_StateRole(pub StateRole);
 
 impl From<Py_StateRole> for StateRole {
     fn from(val: Py_StateRole) -> Self {
-        match val.0 {
-            StateRole::Candidate => StateRole::Candidate,
-            StateRole::Follower => StateRole::Follower,
-            StateRole::Leader => StateRole::Leader,
-            StateRole::PreCandidate => StateRole::PreCandidate,
-        }
+        val.0
     }
 }
 

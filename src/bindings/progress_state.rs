@@ -8,11 +8,7 @@ pub struct Py_ProgressState(pub ProgressState);
 
 impl From<Py_ProgressState> for ProgressState {
     fn from(val: Py_ProgressState) -> Self {
-        match val.0 {
-            ProgressState::Probe => ProgressState::Probe,
-            ProgressState::Replicate => ProgressState::Replicate,
-            ProgressState::Snapshot => ProgressState::Snapshot,
-        }
+        val.0
     }
 }
 

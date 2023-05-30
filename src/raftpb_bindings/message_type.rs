@@ -1,6 +1,7 @@
 use pyo3::{prelude::*, pyclass::CompareOp};
 
 use raft::eraftpb::MessageType;
+use utils::errors::runtime_error;
 
 #[derive(Clone)]
 #[pyclass(name = "MessageType")]
@@ -8,27 +9,7 @@ pub struct Py_MessageType(pub MessageType);
 
 impl From<Py_MessageType> for MessageType {
     fn from(val: Py_MessageType) -> Self {
-        match val.0 {
-            MessageType::MsgHup => MessageType::MsgHup,
-            MessageType::MsgBeat => MessageType::MsgBeat,
-            MessageType::MsgPropose => MessageType::MsgPropose,
-            MessageType::MsgAppend => MessageType::MsgAppend,
-            MessageType::MsgAppendResponse => MessageType::MsgAppendResponse,
-            MessageType::MsgRequestVote => MessageType::MsgRequestVote,
-            MessageType::MsgRequestVoteResponse => MessageType::MsgRequestVoteResponse,
-            MessageType::MsgSnapshot => MessageType::MsgSnapshot,
-            MessageType::MsgHeartbeat => MessageType::MsgHeartbeat,
-            MessageType::MsgHeartbeatResponse => MessageType::MsgHeartbeatResponse,
-            MessageType::MsgUnreachable => MessageType::MsgUnreachable,
-            MessageType::MsgSnapStatus => MessageType::MsgSnapStatus,
-            MessageType::MsgCheckQuorum => MessageType::MsgCheckQuorum,
-            MessageType::MsgTransferLeader => MessageType::MsgTransferLeader,
-            MessageType::MsgTimeoutNow => MessageType::MsgTimeoutNow,
-            MessageType::MsgReadIndex => MessageType::MsgReadIndex,
-            MessageType::MsgReadIndexResp => MessageType::MsgReadIndexResp,
-            MessageType::MsgRequestPreVote => MessageType::MsgRequestPreVote,
-            MessageType::MsgRequestPreVoteResponse => MessageType::MsgRequestPreVoteResponse,
-        }
+        val.0
     }
 }
 
@@ -98,6 +79,13 @@ impl Py_MessageType {
             MessageType::MsgRequestPreVote => "MsgRequestPreVote".to_string(),
             MessageType::MsgRequestPreVoteResponse => "MsgRequestPreVoteResponse".to_string(),
         }
+    }
+
+    #[staticmethod]
+    pub fn from_int(v: i32, py: Python) -> PyResult<PyObject> {
+        MessageType::from_i32(v)
+            .map(|x| Py_MessageType(x).into_py(py))
+            .ok_or_else(|| runtime_error("Invalid value"))
     }
 
     #[classattr]

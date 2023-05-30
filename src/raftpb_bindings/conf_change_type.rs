@@ -1,6 +1,7 @@
 use pyo3::{prelude::*, pyclass::CompareOp};
 
 use raft::eraftpb::ConfChangeType;
+use utils::errors::runtime_error;
 
 #[derive(Clone)]
 #[pyclass(name = "ConfChangeType")]
@@ -8,11 +9,7 @@ pub struct Py_ConfChangeType(pub ConfChangeType);
 
 impl From<Py_ConfChangeType> for ConfChangeType {
     fn from(val: Py_ConfChangeType) -> Self {
-        match val.0 {
-            ConfChangeType::AddNode => ConfChangeType::AddNode,
-            ConfChangeType::AddLearnerNode => ConfChangeType::AddLearnerNode,
-            ConfChangeType::RemoveNode => ConfChangeType::RemoveNode,
-        }
+        val.0
     }
 }
 
@@ -45,6 +42,27 @@ impl Py_ConfChangeType {
             ConfChangeType::AddNode => "AddNode".to_string(),
             ConfChangeType::AddLearnerNode => "AddLearnerNode".to_string(),
             ConfChangeType::RemoveNode => "RemoveNode".to_string(),
+        }
+    }
+
+    pub fn __int__(&self) -> u64 {
+        self.0 as u64
+    }
+
+    #[staticmethod]
+    pub fn from_int(v: i32, py: Python) -> PyResult<PyObject> {
+        ConfChangeType::from_i32(v)
+            .map(|x| Py_ConfChangeType(x).into_py(py))
+            .ok_or_else(|| runtime_error("Invalid value"))
+    }
+
+    #[staticmethod]
+    pub fn from_str(v: &str, py: Python) -> PyObject {
+        match v {
+            "AddNode" => Py_ConfChangeType(ConfChangeType::AddNode).into_py(py),
+            "AddLearnerNode" => Py_ConfChangeType(ConfChangeType::AddLearnerNode).into_py(py),
+            "RemoveNode" => Py_ConfChangeType(ConfChangeType::RemoveNode).into_py(py),
+            _ => py.None(),
         }
     }
 
