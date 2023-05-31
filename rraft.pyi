@@ -700,7 +700,7 @@ class __API_RawNode:
         """
         TransferLeader tries to transfer leadership to the given transferee.
         """
-    def snap(self) -> Optional[Snapshot_Ref]:
+    def snap(self) -> Optional["Snapshot_Ref"]:
         """
         Grabs the snapshot from the raft if available.
         """
@@ -788,7 +788,7 @@ class __API_RawNode:
 
         [`Self::has_ready`] should be called first to check if it's necessary to handle the ready.
         """
-    def request_snapshot(self) -> Ready:
+    def request_snapshot(self) -> "Ready":
         """
         Request a snapshot from a leader.
         The snapshot's index must be greater or equal to the request_index (last_index) or
@@ -1810,7 +1810,7 @@ class __API_RaftLog:
         """
         Returns the committed index and its term.
         """
-    def store(self) -> MemStorage_Ref:
+    def store(self) -> "MemStorage_Ref":
         """ """
     def next_entries(self, max_size: Optional[int]) -> Optional[List["Entry"]]:
         """
@@ -2477,7 +2477,7 @@ class __API_Raft:
         """
         `read_states`: The current read states.
         """
-    def get_read_only_option(self) -> ReadOnlyOption:
+    def get_read_only_option(self) -> "ReadOnlyOption":
         """
         `read_only_option`: Choose the linearizability mode or the lease mode to read data. If you don’t care about the read consistency and want a higher read performance, you can use the lease mode.
         Setting this to `LeaseBased` requires `check_quorum = true`.
@@ -2520,7 +2520,7 @@ class InMemoryRaftStorage(__API_Raft):
     def __init__(
         self,
         cfg: "Config" | "Config_Ref",
-        store: MemStorage | MemStorage_Ref,
+        store: "MemStorage" | "MemStorage_Ref",
         logger: "Logger" | "Logger_Ref",
     ) -> None: ...
     def make_ref(self) -> "InMemoryRaft_Ref": ...
