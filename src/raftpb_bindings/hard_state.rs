@@ -75,12 +75,7 @@ impl Py_HardState {
         format!("{:?}", self.inner)
     }
 
-    pub fn __richcmp__(
-        &mut self,
-        py: Python<'_>,
-        rhs: Py_HardState_Mut,
-        op: CompareOp,
-    ) -> PyObject {
+    pub fn __richcmp__(&self, py: Python, rhs: Py_HardState_Mut, op: CompareOp) -> PyObject {
         let rhs: HardState = rhs.into();
 
         match op {
@@ -90,7 +85,7 @@ impl Py_HardState {
         }
     }
 
-    fn __getattr__(this: PyObject, py: Python<'_>, attr: &str) -> PyResult<PyObject> {
+    fn __getattr__(this: PyObject, py: Python, attr: &str) -> PyResult<PyObject> {
         let reference = this.call_method0(py, intern!(py, "make_ref"))?;
         reference.getattr(py, attr)
     }
@@ -104,7 +99,7 @@ impl Py_HardState_Ref {
 
     pub fn __richcmp__(
         &self,
-        py: Python<'_>,
+        py: Python,
         rhs: Py_HardState_Mut,
         op: CompareOp,
     ) -> PyResult<PyObject> {

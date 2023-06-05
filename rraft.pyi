@@ -3245,3 +3245,102 @@ class Config_Ref(__API_Config):
 #     """
 #     Reference type of :class:`Status__Memstorage`.
 #     """
+
+class RaftError(Exception):
+    """ """
+
+class ExistsError(RaftError):
+    """
+    The node {id} already exists in the {set} set.
+    """
+
+    id: int
+    set: str
+
+class NotExists(RaftError):
+    """
+    The node {id} is not in the {set} set.
+    """
+
+    id: int
+    set: str
+
+class CodecError(RaftError):
+    """
+    A protobuf message codec failed in some manner.
+    """
+
+class ConfigInvalidError(RaftError):
+    """
+    The configuration is invalid.
+    """
+
+class ProposalDroppedError(RaftError):
+    """
+    The proposal of changes was dropped.
+    """
+
+class RequestSnapshotDroppedError(RaftError):
+    """
+    The request snapshot is dropped.
+    """
+
+class ConfChangeError(RaftError):
+    """
+    ConfChange proposal is invalid.
+    """
+
+class IoError(RaftError):
+    """
+    An IO error occurred.
+    """
+
+class StoreError(RaftError):
+    """
+    A storage error occurred.
+    """
+
+class StepLocalMsg(RaftError):
+    """
+    Raft cannot step the local message.
+    """
+
+class StepPeerNotFound(RaftError):
+    """
+    The raft peer is not found and thus cannot step.
+    """
+
+class RaftStorageError(Exception):
+    """
+    An error with the storage.
+    """
+
+class CompactedError(RaftStorageError):
+    """
+    The storage was compacted and not accessible
+    """
+
+class UnavailableError(RaftStorageError):
+    """
+    The log is not available.
+    """
+
+class LogTemporarilyUnavailableError(RaftStorageError):
+    """
+    The log is being fetched.
+    """
+
+class SnapshotOutOfDateError(RaftStorageError):
+    """
+    The snapshot is out of date.
+    """
+
+class SnapshotTemporarilyUnavailable(RaftStorageError):
+    """
+    The snapshot is being created.
+    """
+
+class OtherError(RaftStorageError):
+    """
+    Some other error occurred.
+    """

@@ -32,7 +32,7 @@ impl Py_ProgressState {
         }
     }
 
-    pub fn __richcmp__(&self, py: Python<'_>, rhs: Py_ProgressState, op: CompareOp) -> PyObject {
+    pub fn __richcmp__(&self, py: Python, rhs: Py_ProgressState, op: CompareOp) -> PyObject {
         match op {
             CompareOp::Eq => (self.0 == rhs.0).into_py(py),
             CompareOp::Ne => (self.0 != rhs.0).into_py(py),

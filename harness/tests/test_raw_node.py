@@ -22,6 +22,7 @@ from rraft import (
     MessageType,
     InMemoryRawNode,
     InMemoryRawNode_Ref,
+    ProposalDroppedError,
     ReadState,
     Ready_Ref,
     Snapshot,
@@ -888,10 +889,8 @@ def test_bounded_uncommitted_entries_growth_with_partition():
     raw_node.propose([], data)
 
     # should be dropped
-    with pytest.raises(Exception) as e:
+    with pytest.raises(ProposalDroppedError):
         raw_node.propose([], data)
-
-    assert str(e.value) == "raft: proposal dropped"
 
     # should be accepted when previous data has been committed
     rd = raw_node.ready()

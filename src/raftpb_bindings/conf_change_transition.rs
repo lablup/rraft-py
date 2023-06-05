@@ -31,7 +31,7 @@ impl From<ConfChangeTransition> for Py_ConfChangeTransition {
 impl Py_ConfChangeTransition {
     pub fn __richcmp__(
         &self,
-        py: Python<'_>,
+        py: Python,
         rhs: &Py_ConfChangeTransition,
         op: CompareOp,
     ) -> PyObject {

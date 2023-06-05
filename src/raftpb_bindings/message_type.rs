@@ -45,7 +45,7 @@ impl From<MessageType> for Py_MessageType {
 
 #[pymethods]
 impl Py_MessageType {
-    pub fn __richcmp__(&self, py: Python<'_>, rhs: &Py_MessageType, op: CompareOp) -> PyObject {
+    pub fn __richcmp__(&self, py: Python, rhs: &Py_MessageType, op: CompareOp) -> PyObject {
         match op {
             CompareOp::Eq => (self.0 == rhs.0).into_py(py),
             CompareOp::Ne => (self.0 != rhs.0).into_py(py),

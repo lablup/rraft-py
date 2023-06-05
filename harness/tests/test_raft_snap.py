@@ -9,6 +9,7 @@ from rraft import (
     Snapshot,
     default_logger,
     INVALID_INDEX,
+    RequestSnapshotDroppedError,
 )
 
 from harness.utils import (
@@ -163,19 +164,15 @@ def test_request_snapshot():
     sm.persist()
 
     # Raft can not step request snapshot if last raft log's term mismatch current term.
-    with pytest.raises(Exception) as e:
+    with pytest.raises(RequestSnapshotDroppedError):
         sm.raft.request_snapshot()
-
-    assert str(e.value) == "raft: request snapshot dropped"
 
     sm.raft.become_candidate()
     sm.raft.become_leader()
 
     # Raft can not step request snapshot if itself is a leader.
-    with pytest.raises(Exception) as e:
+    with pytest.raises(RequestSnapshotDroppedError):
         sm.raft.request_snapshot()
-
-    assert str(e.value) == "raft: request snapshot dropped"
 
     m = new_message(2, 1, MessageType.MsgAppendResponse, 0)
     m.set_index(11)

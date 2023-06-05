@@ -77,7 +77,7 @@ impl Py_Entry {
         format!("{:?}", self.inner)
     }
 
-    pub fn __richcmp__(&self, py: Python<'_>, rhs: Py_Entry_Mut, op: CompareOp) -> PyObject {
+    pub fn __richcmp__(&self, py: Python, rhs: Py_Entry_Mut, op: CompareOp) -> PyObject {
         let rhs: Entry = rhs.into();
 
         match op {
@@ -87,7 +87,7 @@ impl Py_Entry {
         }
     }
 
-    fn __getattr__(this: PyObject, py: Python<'_>, attr: &str) -> PyResult<PyObject> {
+    fn __getattr__(this: PyObject, py: Python, attr: &str) -> PyResult<PyObject> {
         let reference = this.call_method0(py, intern!(py, "make_ref"))?;
         reference.getattr(py, attr)
     }
@@ -99,12 +99,7 @@ impl Py_Entry_Ref {
         self.inner.map_as_ref(|inner| format!("{:?}", inner))
     }
 
-    pub fn __richcmp__(
-        &self,
-        py: Python<'_>,
-        rhs: Py_Entry_Mut,
-        op: CompareOp,
-    ) -> PyResult<PyObject> {
+    pub fn __richcmp__(&self, py: Python, rhs: Py_Entry_Mut, op: CompareOp) -> PyResult<PyObject> {
         self.inner.map_as_ref(|inner| {
             let rhs: Entry = rhs.into();
 

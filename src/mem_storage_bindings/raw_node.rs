@@ -1,3 +1,4 @@
+use bindings::error::Py_RaftError;
 use bindings::get_entries_context::Py_GetEntriesContext_Ref;
 use pyo3::{intern, prelude::*};
 
@@ -49,7 +50,7 @@ impl Py_InMemoryRawNode {
         }
     }
 
-    fn __getattr__(this: PyObject, py: Python<'_>, attr: &str) -> PyResult<PyObject> {
+    fn __getattr__(this: PyObject, py: Python, attr: &str) -> PyResult<PyObject> {
         let reference = this.call_method0(py, intern!(py, "make_ref"))?;
         reference.getattr(py, attr)
     }
@@ -118,7 +119,10 @@ impl Py_InMemoryRawNode_Ref {
     pub fn request_snapshot(&mut self) -> PyResult<()> {
         self.inner
             .map_as_mut(|inner| inner.request_snapshot())
-            .and_then(to_pyresult)
+            .and_then(|res| match res {
+                Ok(_) => Ok(()),
+                Err(e) => Err(Py_RaftError(e).into()),
+            })
     }
 
     pub fn transfer_leader(&mut self, transferee: u64) -> PyResult<()> {
@@ -141,7 +145,10 @@ impl Py_InMemoryRawNode_Ref {
     pub fn step(&mut self, msg: Py_Message_Mut) -> PyResult<()> {
         self.inner
             .map_as_mut(|inner| inner.step(msg.into()))
-            .and_then(to_pyresult)
+            .and_then(|res| match res {
+                Ok(()) => Ok(()),
+                Err(e) => Err(Py_RaftError(e).into()),
+            })
     }
 
     pub fn skip_bcast_commit(&mut self, skip: bool) -> PyResult<()> {
@@ -160,7 +167,10 @@ impl Py_InMemoryRawNode_Ref {
 
         self.inner
             .map_as_mut(|inner| inner.propose(context, data))
-            .and_then(to_pyresult)
+            .and_then(|res| match res {
+                Ok(()) => Ok(()),
+                Err(e) => Err(Py_RaftError(e).into()),
+            })
     }
 
     pub fn propose_conf_change(&mut self, context: &PyAny, cc: Py_ConfChange_Mut) -> PyResult<()> {
@@ -204,7 +214,10 @@ impl Py_InMemoryRawNode_Ref {
                     .apply_conf_change(&cc)
                     .map(|cs| Py_ConfState { inner: cs })
             })
-            .and_then(to_pyresult)
+            .and_then(|res| match res {
+                Ok(cs) => Ok(cs),
+                Err(e) => Err(Py_RaftError(e).into()),
+            })
     }
 
     pub fn apply_conf_change_v2(&mut self, cc: Py_ConfChangeV2_Mut) -> PyResult<Py_ConfState> {
@@ -216,7 +229,10 @@ impl Py_InMemoryRawNode_Ref {
                     .apply_conf_change(&cc)
                     .map(|cs| Py_ConfState { inner: cs })
             })
-            .and_then(to_pyresult)
+            .and_then(|res| match res {
+                Ok(cs) => Ok(cs),
+                Err(e) => Err(Py_RaftError(e).into()),
+            })
     }
 
     pub fn on_persist_ready(&mut self, number: u64) -> PyResult<()> {

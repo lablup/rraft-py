@@ -24,7 +24,7 @@ impl From<StateRole> for Py_StateRole {
 
 #[pymethods]
 impl Py_StateRole {
-    pub fn __richcmp__(&self, py: Python<'_>, rhs: &Py_StateRole, op: CompareOp) -> PyObject {
+    pub fn __richcmp__(&self, py: Python, rhs: &Py_StateRole, op: CompareOp) -> PyObject {
         match op {
             CompareOp::Eq => (self.0 == rhs.0).into_py(py),
             CompareOp::Ne => (self.0 != rhs.0).into_py(py),

@@ -3,11 +3,7 @@ use pyo3::{
     prelude::*,
     types::{PyList, PyString},
 };
-use utils::{
-    errors::{runtime_error, to_pyresult},
-    reference::RustRef,
-    unsafe_cast::make_mut,
-};
+use utils::{reference::RustRef, unsafe_cast::make_mut};
 
 use raft::{Raft, CAMPAIGN_ELECTION, CAMPAIGN_PRE_ELECTION, CAMPAIGN_TRANSFER};
 
@@ -22,6 +18,7 @@ use raftpb_bindings::{
 
 use bindings::{
     config::Py_Config_Mut,
+    error::Py_RaftError,
     progress_tracker::Py_ProgressTracker_Ref,
     read_state::{Py_ReadState, Py_ReadState_Mut},
     readonly_option::Py_ReadOnlyOption,
@@ -51,7 +48,7 @@ impl Py_Raft {
     pub fn new(cfg: Py_Config_Mut, store: &Py_Storage, logger: Py_Logger_Mut) -> PyResult<Self> {
         Raft::new(&cfg.into(), store.clone(), &logger.into())
             .map(|r| Py_Raft { inner: r })
-            .map_err(|e| runtime_error(&e.to_string()))
+            .map_err(|e| Py_RaftError(e).into())
     }
 
     pub fn make_ref(&mut self) -> Py_Raft_Ref {
@@ -60,7 +57,7 @@ impl Py_Raft {
         }
     }
 
-    fn __getattr__(this: PyObject, py: Python<'_>, attr: &str) -> PyResult<PyObject> {
+    fn __getattr__(this: PyObject, py: Python, attr: &str) -> PyResult<PyObject> {
         let reference = this.call_method0(py, intern!(py, "make_ref"))?;
         reference.getattr(py, attr)
     }
@@ -280,7 +277,10 @@ impl Py_Raft_Ref {
                         inner: RustRef::new(unsafe { make_mut(&cs) }),
                     })
             })
-            .and_then(to_pyresult)
+            .and_then(|res| match res {
+                Ok(cs) => Ok(cs),
+                Err(e) => Err(Py_RaftError(e).into()),
+            })
     }
 
     pub fn tick(&mut self) -> PyResult<bool> {
@@ -298,7 +298,10 @@ impl Py_Raft_Ref {
     pub fn step(&mut self, msg: Py_Message_Mut) -> PyResult<()> {
         self.inner
             .map_as_mut(|inner| inner.step(msg.into()))
-            .and_then(to_pyresult)
+            .and_then(|res| match res {
+                Ok(()) => Ok(()),
+                Err(e) => Err(Py_RaftError(e).into()),
+            })
     }
 
     pub fn has_pending_conf(&self) -> PyResult<bool> {
@@ -328,7 +331,10 @@ impl Py_Raft_Ref {
     pub fn request_snapshot(&mut self) -> PyResult<()> {
         self.inner
             .map_as_mut(|inner| inner.request_snapshot())
-            .and_then(to_pyresult)
+            .and_then(|res| match res {
+                Ok(_) => Ok(()),
+                Err(e) => Err(Py_RaftError(e).into()),
+            })
     }
 
     pub fn prs(&mut self) -> PyResult<Py_ProgressTracker_Ref> {
@@ -404,7 +410,7 @@ impl Py_Raft_Ref {
         self.inner.map_as_mut(|inner| inner.leader_id = v)
     }
 
-    pub fn get_read_states(&self, py: Python<'_>) -> PyResult<PyObject> {
+    pub fn get_read_states(&self, py: Python) -> PyResult<PyObject> {
         self.inner.map_as_ref(|inner| {
             inner
                 .read_states

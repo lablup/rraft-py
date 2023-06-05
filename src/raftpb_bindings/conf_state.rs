@@ -91,7 +91,7 @@ impl Py_ConfState {
         format!("{:?}", self.inner)
     }
 
-    pub fn __richcmp__(&self, py: Python<'_>, rhs: Py_ConfState_Mut, op: CompareOp) -> PyObject {
+    pub fn __richcmp__(&self, py: Python, rhs: Py_ConfState_Mut, op: CompareOp) -> PyObject {
         let rhs: ConfState = rhs.into();
 
         match op {
@@ -101,7 +101,7 @@ impl Py_ConfState {
         }
     }
 
-    fn __getattr__(this: PyObject, py: Python<'_>, attr: &str) -> PyResult<PyObject> {
+    fn __getattr__(this: PyObject, py: Python, attr: &str) -> PyResult<PyObject> {
         let reference = this.call_method0(py, intern!(py, "make_ref"))?;
         reference.getattr(py, attr)
     }
@@ -115,7 +115,7 @@ impl Py_ConfState_Ref {
 
     pub fn __richcmp__(
         &self,
-        py: Python<'_>,
+        py: Python,
         rhs: Py_ConfState_Mut,
         op: CompareOp,
     ) -> PyResult<PyObject> {

@@ -25,12 +25,7 @@ impl From<EntryType> for Py_EntryType {
 
 #[pymethods]
 impl Py_EntryType {
-    pub fn __richcmp__(
-        &self,
-        py: Python<'_>,
-        rhs: &Py_EntryType,
-        op: CompareOp,
-    ) -> PyResult<PyObject> {
+    pub fn __richcmp__(&self, py: Python, rhs: &Py_EntryType, op: CompareOp) -> PyResult<PyObject> {
         Ok(match op {
             CompareOp::Eq => (self.0 == rhs.0).into_py(py),
             CompareOp::Ne => (self.0 != rhs.0).into_py(py),

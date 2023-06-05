@@ -23,7 +23,7 @@ impl From<SnapshotStatus> for Py_SnapshotStatus {
 
 #[pymethods]
 impl Py_SnapshotStatus {
-    pub fn __richcmp__(&self, py: Python<'_>, rhs: &Py_SnapshotStatus, op: CompareOp) -> PyObject {
+    pub fn __richcmp__(&self, py: Python, rhs: &Py_SnapshotStatus, op: CompareOp) -> PyObject {
         match op {
             CompareOp::Eq => (self.0 == rhs.0).into_py(py),
             CompareOp::Ne => (self.0 != rhs.0).into_py(py),

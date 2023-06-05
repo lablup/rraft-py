@@ -5,6 +5,8 @@ use utils::errors::to_pyresult;
 
 use utils::reference::RustRef;
 
+use crate::error::Py_RaftError;
+
 use super::readonly_option::Py_ReadOnlyOption;
 
 #[derive(Clone)]
@@ -146,7 +148,7 @@ impl Py_Config {
         format_config(self.inner.clone())
     }
 
-    fn __getattr__(this: PyObject, py: Python<'_>, attr: &str) -> PyResult<PyObject> {
+    fn __getattr__(this: PyObject, py: Python, attr: &str) -> PyResult<PyObject> {
         let reference = this.call_method0(py, intern!(py, "make_ref"))?;
         reference.getattr(py, attr)
     }
@@ -183,7 +185,10 @@ impl Py_Config_Ref {
     pub fn validate(&self) -> PyResult<()> {
         self.inner
             .map_as_ref(|inner| inner.validate())
-            .and_then(to_pyresult)
+            .and_then(|res| match res {
+                Ok(()) => Ok(()),
+                Err(e) => Err(Py_RaftError(e).into()),
+            })
     }
 
     pub fn get_read_only_option(&self) -> PyResult<Py_ReadOnlyOption> {

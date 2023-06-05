@@ -37,7 +37,7 @@ impl Py_SoftState {
 
     pub fn __richcmp__(
         &self,
-        py: Python<'_>,
+        py: Python,
         rhs: &Py_SoftState_Ref,
         op: CompareOp,
     ) -> PyResult<PyObject> {
@@ -48,7 +48,7 @@ impl Py_SoftState {
         }
     }
 
-    fn __getattr__(this: PyObject, py: Python<'_>, attr: &str) -> PyResult<PyObject> {
+    fn __getattr__(this: PyObject, py: Python, attr: &str) -> PyResult<PyObject> {
         let reference = this.call_method0(py, intern!(py, "make_ref"))?;
         reference.getattr(py, attr)
     }
@@ -62,7 +62,7 @@ impl Py_SoftState_Ref {
 
     pub fn __richcmp__(
         &self,
-        py: Python<'_>,
+        py: Python,
         rhs: &Py_SoftState_Ref,
         op: CompareOp,
     ) -> PyResult<PyObject> {

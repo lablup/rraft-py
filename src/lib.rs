@@ -1,8 +1,17 @@
-use bindings::global::add_constants;
+use bindings::{
+    error::{
+        CodecError, CompactedError, ConfChangeError, ConfigInvalidError, ExistsError, IoError,
+        LogTemporarilyUnavailableError, NotExistsError, OtherError, ProposalDroppedError,
+        RaftError, RaftStorageError, RequestSnapshotDroppedError, SnapshotOutOfDateError,
+        SnapshotTemporarilyUnavailableError, StepLocalMsgError, StepPeerNotFoundError, StoreError,
+        UnavailableError,
+    },
+    global::add_constants,
+};
 use pyo3::prelude::*;
 
 #[pymodule]
-fn rraft(_py: Python, m: &PyModule) -> PyResult<()> {
+fn rraft(py: Python, m: &PyModule) -> PyResult<()> {
     m.add_class::<bindings::config::Py_Config>()?;
     m.add_class::<bindings::config::Py_Config_Ref>()?;
     m.add_class::<bindings::error::Py_RaftError>()?;
@@ -95,8 +104,44 @@ fn rraft(_py: Python, m: &PyModule) -> PyResult<()> {
         m
     )?)?;
 
-    m.add_function(wrap_pyfunction!(utils::deserialize::deserialize_u64, m)?)?;
-    m.add_function(wrap_pyfunction!(utils::deserialize::deserialize_str, m)?)?;
+    m.add("RaftError", py.get_type::<RaftError>())?;
+    m.add("RaftStorageError", py.get_type::<RaftStorageError>())?;
+    m.add("CompactedError", py.get_type::<CompactedError>())?;
+    m.add(
+        "SnapshotOutOfDateError",
+        py.get_type::<SnapshotOutOfDateError>(),
+    )?;
+    m.add(
+        "SnapshotTemporarilyUnavailableError",
+        py.get_type::<SnapshotTemporarilyUnavailableError>(),
+    )?;
+    m.add("UnavailableError", py.get_type::<UnavailableError>())?;
+    m.add(
+        "LogTemporarilyUnavailableError",
+        py.get_type::<LogTemporarilyUnavailableError>(),
+    )?;
+    m.add("OtherError", py.get_type::<OtherError>())?;
+
+    m.add("ExistsError", py.get_type::<ExistsError>())?;
+    m.add("NotExistsError", py.get_type::<NotExistsError>())?;
+    m.add("ConfChangeError", py.get_type::<ConfChangeError>())?;
+    m.add("ConfigInvalidError", py.get_type::<ConfigInvalidError>())?;
+    m.add("IoError", py.get_type::<IoError>())?;
+    m.add("CodecError", py.get_type::<CodecError>())?;
+    m.add("StoreError", py.get_type::<StoreError>())?;
+    m.add("StepLocalMsgError", py.get_type::<StepLocalMsgError>())?;
+    m.add(
+        "StepPeerNotFoundError",
+        py.get_type::<StepPeerNotFoundError>(),
+    )?;
+    m.add(
+        "ProposalDroppedError",
+        py.get_type::<ProposalDroppedError>(),
+    )?;
+    m.add(
+        "RequestSnapshotDroppedError",
+        py.get_type::<RequestSnapshotDroppedError>(),
+    )?;
 
     add_constants(m)?;
 
