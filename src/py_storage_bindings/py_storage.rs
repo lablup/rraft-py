@@ -249,14 +249,20 @@ impl Py_Storage_Ref {
 impl Storage for Py_Storage {
     fn initial_state(&self) -> raft::Result<raft::RaftState> {
         Python::with_gil(|py| {
-            let py_result: &PyAny = self
-                .storage
-                .as_ref(py)
-                .call_method("initial_state", (), None)
-                .unwrap();
-
-            let raft_state: Py_RaftState_Mut = py_result.extract().unwrap();
-            Ok(raft_state.into())
+            match self.storage.as_ref(py).call_method("initial_state", (), None) {
+                Ok(py_result) => {
+                    match py_result.extract::<Py_RaftState_Mut>() {
+                        Ok(rs) => {
+                            let rs: raft::RaftState = rs.into();
+                            Ok(rs)
+                        },
+                        Err(e) => Err(raft::Error::Store(raft::StorageError::Other(Box::new(e)))),
+                    }
+                },
+                Err(e) => {
+                    Err(raft::Error::Store(raft::StorageError::Other(Box::new(e))))
+                }
+            }
         })
     }
 
