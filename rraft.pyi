@@ -1377,7 +1377,7 @@ class ConfState_Ref(__API_ConfState):
 
 class __API_ConfChangeV2(__Cloneable, __Encoder, __Decoder):
     def clone(self) -> "ConfChangeV2": ...
-    def get_changes(self) -> bytes:
+    def get_changes(self) -> List["ConfChangeSingle_Ref"]:
         """ """
     def set_changes(
         self, changes: List["ConfChangeSingle"] | List["ConfChangeSingle_Ref"]
