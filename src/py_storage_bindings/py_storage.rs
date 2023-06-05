@@ -8,11 +8,12 @@ use raftpb_bindings::hard_state::Py_HardState;
 use utils::errors::to_pyresult;
 
 use raftpb_bindings::entry::Py_Entry_Ref;
-use raftpb_bindings::snapshot::{Py_Snapshot, Py_Snapshot_Ref};
+use raftpb_bindings::snapshot::{Py_Snapshot_Mut, Py_Snapshot_Ref};
 use utils::reference::RustRef;
 
 use bindings::raft_state::{Py_RaftState_Mut, Py_RaftState_Ref};
 use raftpb_bindings::entry::Py_Entry_Mut;
+use utils::unsafe_cast::make_mut;
 
 #[derive(Clone)]
 #[pyclass(name = "Storage")]
@@ -48,147 +49,117 @@ impl Py_Storage {
 #[pymethods]
 impl Py_Storage_Ref {
     pub fn wl(&mut self) -> PyResult<PyObject> {
-        self.inner.map_as_mut(|inner| {
-            Python::with_gil(|py| {
-                let py_result = inner
-                    .storage
-                    .as_ref(py)
-                    .call_method("wl", (), None)
-                    .unwrap();
-
-                let res: PyObject = py_result.extract().unwrap();
-                res
+        self.inner
+            .map_as_mut(|inner| {
+                Python::with_gil(|py| inner.storage.call_method(py, "wl", (), None))
             })
-        })
+            .and_then(to_pyresult)
     }
 
     pub fn rl(&self) -> PyResult<PyObject> {
-        self.inner.map_as_ref(|inner| {
-            Python::with_gil(|py| {
-                let py_result = inner
-                    .storage
-                    .as_ref(py)
-                    .call_method("rl", (), None)
-                    .unwrap();
-
-                let res: PyObject = py_result.extract().unwrap();
-                res
+        self.inner
+            .map_as_ref(|inner| {
+                Python::with_gil(|py| inner.storage.call_method(py, "rl", (), None))
             })
-        })
+            .and_then(to_pyresult)
     }
 }
 
 #[pymethods]
 impl Py_Storage_Ref {
-    pub fn append(&mut self, ents: &PyList) -> PyResult<()> {
-        self.inner.map_as_mut(|inner| {
-            Python::with_gil(|py| {
-                inner
-                    .storage
-                    .as_ref(py)
-                    .call_method("append", (ents,), None)
-                    .unwrap();
-            })
-        })
+    pub fn append(&mut self, py: Python, ents: &PyList) -> PyResult<()> {
+        self.inner
+            .map_as_mut(|inner| inner.storage.call_method(py, "append", (ents,), None))
+            .and_then(to_pyresult)?;
+        Ok(())
     }
 
-    pub fn apply_snapshot(&mut self, snapshot: &PyAny) -> PyResult<()> {
-        self.inner.map_as_mut(|inner| {
-            Python::with_gil(|py| {
+    pub fn apply_snapshot(&mut self, py: Python, snapshot: &PyAny) -> PyResult<()> {
+        self.inner
+            .map_as_mut(|inner| {
                 inner
                     .storage
-                    .as_ref(py)
-                    .call_method("apply_snapshot", (snapshot,), None)
-                    .unwrap();
+                    .call_method(py, "apply_snapshot", (snapshot,), None)
             })
-        })
+            .and_then(to_pyresult)?;
+
+        Ok(())
     }
 
-    pub fn compact(&mut self, compact_index: u64) -> PyResult<()> {
-        self.inner.map_as_mut(|inner| {
-            Python::with_gil(|py| {
+    pub fn compact(&mut self, py: Python, compact_index: u64) -> PyResult<()> {
+        self.inner
+            .map_as_mut(|inner| {
                 inner
                     .storage
-                    .as_ref(py)
-                    .call_method("compact", (compact_index,), None)
-                    .unwrap();
+                    .call_method(py, "compact", (compact_index,), None)
             })
-        })
+            .and_then(to_pyresult)?;
+
+        Ok(())
     }
 
-    pub fn commit_to(&mut self, index: u64) -> PyResult<()> {
-        self.inner.map_as_mut(|inner| {
-            Python::with_gil(|py| {
+    pub fn commit_to(&mut self, py: Python, index: u64) -> PyResult<()> {
+        self.inner
+            .map_as_mut(|inner| inner.storage.call_method(py, "commit_to", (index,), None))
+            .and_then(to_pyresult)?;
+
+        Ok(())
+    }
+
+    pub fn commit_to_and_set_conf_states(
+        &mut self,
+        py: Python,
+        idx: u64,
+        cs: Option<&PyAny>,
+    ) -> PyResult<()> {
+        self.inner
+            .map_as_mut(|inner| {
                 inner
                     .storage
-                    .as_ref(py)
-                    .call_method("commit_to", (index,), None)
-                    .unwrap();
+                    .call_method(py, "commit_to_and_set_conf_states", (idx, cs), None)
             })
-        })
+            .and_then(to_pyresult)?;
+
+        Ok(())
     }
 
-    pub fn commit_to_and_set_conf_states(&mut self, idx: u64, cs: Option<&PyAny>) -> PyResult<()> {
-        self.inner.map_as_mut(|inner| {
-            Python::with_gil(|py| {
+    pub fn hard_state(&mut self, py: Python) -> PyResult<Py_HardState> {
+        self.inner
+            .map_as_mut(|inner| {
                 inner
                     .storage
-                    .as_ref(py)
-                    .call_method("commit_to_and_set_conf_states", (idx, cs), None)
-                    .unwrap();
+                    .call_method(py, "hard_state", (), None)
+                    .and_then(|py_result| py_result.extract::<_>(py))
             })
-        })
+            .and_then(to_pyresult)
     }
 
-    pub fn hard_state(&mut self) -> PyResult<Py_HardState> {
-        self.inner.map_as_mut(|inner| {
-            Python::with_gil(|py| {
-                let py_result = inner
-                    .storage
-                    .as_ref(py)
-                    .call_method("hard_state", (), None)
-                    .unwrap();
+    pub fn set_hardstate(&mut self, py: Python, hs: &PyAny) -> PyResult<()> {
+        self.inner
+            .map_as_mut(|inner| inner.storage.call_method(py, "set_hard_state", (hs,), None))
+            .and_then(to_pyresult)?;
 
-                let hs: Py_HardState = py_result.extract().unwrap();
-                hs
-            })
-        })
+        Ok(())
     }
 
-    pub fn set_hardstate(&mut self, hs: &PyAny) -> PyResult<()> {
-        self.inner.map_as_mut(|inner| {
-            Python::with_gil(|py| {
+    pub fn set_conf_state(&mut self, py: Python, cs: &PyAny) -> PyResult<()> {
+        self.inner
+            .map_as_mut(|inner| inner.storage.call_method(py, "set_conf_state", (cs,), None))
+            .and_then(to_pyresult)?;
+
+        Ok(())
+    }
+
+    pub fn trigger_snap_unavailable(&mut self, py: Python) -> PyResult<()> {
+        self.inner
+            .map_as_mut(|inner| {
                 inner
                     .storage
-                    .as_ref(py)
-                    .call_method("set_hard_state", (hs,), None)
-                    .unwrap();
+                    .call_method(py, "trigger_snap_unavailable", (), None)
             })
-        })
-    }
+            .and_then(to_pyresult)?;
 
-    pub fn set_conf_state(&mut self, cs: &PyAny) -> PyResult<()> {
-        self.inner.map_as_mut(|inner| {
-            Python::with_gil(|py| {
-                inner
-                    .storage
-                    .as_ref(py)
-                    .call_method("set_conf_state", (cs,), None)
-                    .unwrap();
-            })
-        })
-    }
-
-    pub fn trigger_snap_unavailable(&mut self) -> PyResult<()> {
-        self.inner.map_as_mut(|inner| {
-            Python::with_gil(|py| {
-                inner
-                    .storage
-                    .as_ref(py)
-                    .call_method("trigger_snap_unavailable", (), None)
-                    .unwrap();
-            })
-        })
+        Ok(())
     }
 }
 
@@ -249,20 +220,15 @@ impl Py_Storage_Ref {
 impl Storage for Py_Storage {
     fn initial_state(&self) -> raft::Result<raft::RaftState> {
         Python::with_gil(|py| {
-            match self.storage.as_ref(py).call_method("initial_state", (), None) {
-                Ok(py_result) => {
-                    match py_result.extract::<Py_RaftState_Mut>() {
-                        Ok(rs) => {
-                            let rs: raft::RaftState = rs.into();
-                            Ok(rs)
-                        },
-                        Err(e) => Err(raft::Error::Store(raft::StorageError::Other(Box::new(e)))),
-                    }
-                },
-                Err(e) => {
-                    Err(raft::Error::Store(raft::StorageError::Other(Box::new(e))))
-                }
-            }
+            self.storage
+                .as_ref(py)
+                .call_method("initial_state", (), None)
+                .and_then(|py_result| {
+                    py_result
+                        .extract::<_>()
+                        .and_then(|rs: Py_RaftState_Mut| Ok(rs.into()))
+                })
+                .map_err(|e| raft::Error::Store(raft::StorageError::Other(Box::new(e))))
         })
     }
 
@@ -277,87 +243,80 @@ impl Storage for Py_Storage {
         let mut context = Py_GetEntriesContext { inner: context };
 
         Python::with_gil(|py| {
-            let py_result: &PyAny = self
-                .storage
+            self.storage
                 .as_ref(py)
                 .call_method("entries", (low, high, context.make_ref(), max_size), None)
-                .unwrap();
-
-            let mut entries: Vec<Py_Entry_Mut> = py_result.extract().unwrap();
-            let entries = entries.iter_mut().map(|x| x.into()).collect::<Vec<_>>();
-            Ok(entries)
+                .and_then(|entries| {
+                    entries
+                        .extract::<Vec<Py_Entry_Mut>>()
+                        .and_then(|entries| Ok(entries.into_iter().map(|e| e.into()).collect()))
+                })
+                .map_err(|e| raft::Error::Store(raft::StorageError::Other(Box::new(e))))
         })
     }
 
     fn term(&self, idx: u64) -> raft::Result<u64> {
         Python::with_gil(|py| {
-            let py_result: &PyAny = self
-                .storage
+            self.storage
                 .as_ref(py)
                 .call_method("term", (idx,), None)
-                .unwrap();
-
-            let res: u64 = py_result.extract().unwrap();
-            Ok(res)
+                .and_then(|term| term.extract::<u64>())
+                .map_err(|e| raft::Error::Store(raft::StorageError::Other(Box::new(e))))
         })
     }
 
     fn first_index(&self) -> raft::Result<u64> {
         Python::with_gil(|py| {
-            let py_result: &PyAny = self
-                .storage
+            self.storage
                 .as_ref(py)
                 .call_method("first_index", (), None)
-                .unwrap();
-
-            let res: u64 = py_result.extract().unwrap();
-            Ok(res)
+                .and_then(|term| term.extract::<u64>())
+                .map_err(|e| raft::Error::Store(raft::StorageError::Other(Box::new(e))))
         })
     }
 
     fn last_index(&self) -> raft::Result<u64> {
         Python::with_gil(|py| {
-            let py_result: &PyAny = self
-                .storage
+            self.storage
                 .as_ref(py)
                 .call_method("last_index", (), None)
-                .unwrap();
-
-            let res: u64 = py_result.extract().unwrap();
-            Ok(res)
+                .and_then(|term| term.extract::<u64>())
+                .map_err(|e| raft::Error::Store(raft::StorageError::Other(Box::new(e))))
         })
     }
 
     fn snapshot(&self, request_index: u64, to: u64) -> raft::Result<raft::prelude::Snapshot> {
         Python::with_gil(|py| {
-            let py_result: &PyAny = self
-                .storage
+            self.storage
                 .as_ref(py)
                 .call_method("snapshot", (request_index, to), None)
-                .unwrap();
-
-            let res: PyResult<Py_Snapshot> = py_result.extract();
-            Ok(res.unwrap().inner)
+                .and_then(|py_result| {
+                    py_result
+                        .extract::<_>()
+                        .and_then(|ss: Py_Snapshot_Mut| Ok(ss.into()))
+                })
+                .map_err(|e| raft::Error::Store(raft::StorageError::Other(Box::new(e))))
         })
     }
 }
 
 impl Storage for Py_Storage_Ref {
     fn initial_state(&self) -> raft::Result<raft::RaftState> {
-        Python::with_gil(|py| {
-            self.inner
-                .map_as_ref(|inner| {
-                    let py_result = inner
+        unsafe { make_mut(&self.inner) }
+            .map_as_mut(|inner| {
+                Python::with_gil(|py| {
+                    inner
                         .storage
-                        .as_ref(py)
-                        .call_method("initial_state", (), None)
-                        .unwrap();
-
-                    let raft_state: Py_RaftState_Mut = py_result.extract().unwrap();
-                    Ok(raft_state.into())
+                        .call_method(py, "initial_state", (), None)
+                        .and_then(|py_result| {
+                            py_result
+                                .extract::<_>(py)
+                                .and_then(|rs: Py_RaftState_Mut| Ok(rs.into()))
+                        })
                 })
-                .unwrap()
-        })
+            })
+            .and_then(to_pyresult)
+            .map_err(|e| raft::Error::Store(raft::StorageError::Other(Box::new(e))))
     }
 
     fn entries(
@@ -367,87 +326,88 @@ impl Storage for Py_Storage_Ref {
         max_size: impl Into<Option<u64>>,
         context: GetEntriesContext,
     ) -> raft::Result<Vec<raft::prelude::Entry>> {
-        let mut context = Py_GetEntriesContext { inner: context };
         let max_size: Option<u64> = max_size.into();
+        let mut context = Py_GetEntriesContext { inner: context };
 
-        Python::with_gil(|py| {
-            self.inner
-                .map_as_ref(|inner| {
-                    let py_result: &PyAny = inner
+        unsafe { make_mut(&self.inner) }
+            .map_as_mut(|inner| {
+                Python::with_gil(|py| {
+                    inner
                         .storage
                         .as_ref(py)
                         .call_method("entries", (low, high, context.make_ref(), max_size), None)
-                        .unwrap();
-
-                    let mut entries: Vec<Py_Entry_Mut> = py_result.extract().unwrap();
-                    let entries = entries.iter_mut().map(|x| x.into()).collect::<Vec<_>>();
-                    Ok(entries)
+                        .and_then(|entries| {
+                            entries.extract::<Vec<Py_Entry_Mut>>().and_then(|entries| {
+                                Ok(entries.into_iter().map(|e| e.into()).collect())
+                            })
+                        })
+                        .map_err(|e| raft::Error::Store(raft::StorageError::Other(Box::new(e))))
                 })
-                .unwrap()
-        })
+            })
+            .and_then(to_pyresult)
+            .map_err(|e| raft::Error::Store(raft::StorageError::Other(Box::new(e))))
     }
 
     fn term(&self, idx: u64) -> raft::Result<u64> {
-        Python::with_gil(|py| {
-            self.inner.map_as_ref(|inner| {
-                let py_result: &PyAny = inner
-                    .storage
-                    .as_ref(py)
-                    .call_method("term", (idx,), None)
-                    .unwrap();
-
-                let res: u64 = py_result.extract().unwrap();
-                Ok(res)
+        unsafe { make_mut(&self.inner) }
+            .map_as_mut(|inner| {
+                Python::with_gil(|py| {
+                    inner
+                        .storage
+                        .as_ref(py)
+                        .call_method("term", (idx,), None)
+                        .and_then(|term| term.extract::<u64>())
+                })
             })
-        })
-        .unwrap()
+            .and_then(to_pyresult)
+            .map_err(|e| raft::Error::Store(raft::StorageError::Other(Box::new(e))))
     }
 
     fn first_index(&self) -> raft::Result<u64> {
-        Python::with_gil(|py| {
-            self.inner.map_as_ref(|inner| {
-                let py_result: &PyAny = inner
-                    .storage
-                    .as_ref(py)
-                    .call_method("first_index", (), None)
-                    .unwrap();
-
-                let res: u64 = py_result.extract().unwrap();
-                Ok(res)
+        unsafe { make_mut(&self.inner) }
+            .map_as_mut(|inner| {
+                Python::with_gil(|py| {
+                    inner
+                        .storage
+                        .as_ref(py)
+                        .call_method("first_index", (), None)
+                        .and_then(|term| term.extract::<u64>())
+                })
             })
-        })
-        .unwrap()
+            .and_then(to_pyresult)
+            .map_err(|e| raft::Error::Store(raft::StorageError::Other(Box::new(e))))
     }
 
     fn last_index(&self) -> raft::Result<u64> {
-        Python::with_gil(|py| {
-            self.inner.map_as_ref(|inner| {
-                let py_result: &PyAny = inner
-                    .storage
-                    .as_ref(py)
-                    .call_method("last_index", (), None)
-                    .unwrap();
-
-                let res: u64 = py_result.extract().unwrap();
-                Ok(res)
+        unsafe { make_mut(&self.inner) }
+            .map_as_mut(|inner| {
+                Python::with_gil(|py| {
+                    inner
+                        .storage
+                        .as_ref(py)
+                        .call_method("last_index", (), None)
+                        .and_then(|term| term.extract::<u64>())
+                })
             })
-        })
-        .unwrap()
+            .and_then(to_pyresult)
+            .map_err(|e| raft::Error::Store(raft::StorageError::Other(Box::new(e))))
     }
 
     fn snapshot(&self, request_index: u64, to: u64) -> raft::Result<raft::prelude::Snapshot> {
-        Python::with_gil(|py| {
-            self.inner.map_as_ref(|inner| {
-                let py_result: &PyAny = inner
-                    .storage
-                    .as_ref(py)
-                    .call_method("snapshot", (request_index, to), None)
-                    .unwrap();
-
-                let res: PyResult<Py_Snapshot> = py_result.extract();
-                Ok(res.unwrap().inner)
+        unsafe { make_mut(&self.inner) }
+            .map_as_mut(|inner| {
+                Python::with_gil(|py| {
+                    inner
+                        .storage
+                        .call_method(py, "snapshot", (request_index, to), None)
+                        .and_then(|py_result| {
+                            py_result
+                                .extract::<_>(py)
+                                .and_then(|ss: Py_Snapshot_Mut| Ok(ss.into()))
+                        })
+                })
             })
-        })
-        .unwrap()
+            .and_then(to_pyresult)
+            .map_err(|e| raft::Error::Store(raft::StorageError::Other(Box::new(e))))
     }
 }
