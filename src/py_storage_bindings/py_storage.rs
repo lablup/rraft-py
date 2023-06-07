@@ -1,3 +1,4 @@
+use bindings::error::{makeNativeRaftError, Py_RaftError};
 use bindings::get_entries_context::{Py_GetEntriesContext, Py_GetEntriesContext_Ref};
 use pyo3::types::PyList;
 use pyo3::{intern, prelude::*};
@@ -53,7 +54,10 @@ impl Py_Storage_Ref {
             .map_as_mut(|inner| {
                 Python::with_gil(|py| inner.storage.call_method(py, "wl", (), None))
             })
-            .and_then(to_pyresult)
+            .and_then(|x| match x {
+                Ok(x) => Ok(x),
+                Err(e) => Err(e),
+            })
     }
 
     pub fn rl(&self) -> PyResult<PyObject> {
@@ -61,7 +65,10 @@ impl Py_Storage_Ref {
             .map_as_ref(|inner| {
                 Python::with_gil(|py| inner.storage.call_method(py, "rl", (), None))
             })
-            .and_then(to_pyresult)
+            .and_then(|x| match x {
+                Ok(x) => Ok(x),
+                Err(e) => Err(e),
+            })
     }
 }
 
@@ -70,7 +77,11 @@ impl Py_Storage_Ref {
     pub fn append(&mut self, py: Python, ents: &PyList) -> PyResult<()> {
         self.inner
             .map_as_mut(|inner| inner.storage.call_method(py, "append", (ents,), None))
-            .and_then(to_pyresult)?;
+            .and_then(|x| match x {
+                Ok(_) => Ok(()),
+                Err(e) => Err(e),
+            })?;
+
         Ok(())
     }
 
@@ -81,7 +92,10 @@ impl Py_Storage_Ref {
                     .storage
                     .call_method(py, "apply_snapshot", (snapshot,), None)
             })
-            .and_then(to_pyresult)?;
+            .and_then(|x| match x {
+                Ok(_) => Ok(()),
+                Err(e) => Err(e),
+            })?;
 
         Ok(())
     }
@@ -93,7 +107,10 @@ impl Py_Storage_Ref {
                     .storage
                     .call_method(py, "compact", (compact_index,), None)
             })
-            .and_then(to_pyresult)?;
+            .and_then(|x| match x {
+                Ok(_) => Ok(()),
+                Err(e) => Err(e),
+            })?;
 
         Ok(())
     }
@@ -101,7 +118,10 @@ impl Py_Storage_Ref {
     pub fn commit_to(&mut self, py: Python, index: u64) -> PyResult<()> {
         self.inner
             .map_as_mut(|inner| inner.storage.call_method(py, "commit_to", (index,), None))
-            .and_then(to_pyresult)?;
+            .and_then(|x| match x {
+                Ok(_) => Ok(()),
+                Err(e) => Err(e),
+            })?;
 
         Ok(())
     }
@@ -118,7 +138,10 @@ impl Py_Storage_Ref {
                     .storage
                     .call_method(py, "commit_to_and_set_conf_states", (idx, cs), None)
             })
-            .and_then(to_pyresult)?;
+            .and_then(|x| match x {
+                Ok(_) => Ok(()),
+                Err(e) => Err(e),
+            })?;
 
         Ok(())
     }
@@ -131,13 +154,19 @@ impl Py_Storage_Ref {
                     .call_method(py, "hard_state", (), None)
                     .and_then(|py_result| py_result.extract::<_>(py))
             })
-            .and_then(to_pyresult)
+            .and_then(|x| match x {
+                Ok(hs) => Ok(hs),
+                Err(e) => Err(e),
+            })
     }
 
     pub fn set_hardstate(&mut self, py: Python, hs: &PyAny) -> PyResult<()> {
         self.inner
             .map_as_mut(|inner| inner.storage.call_method(py, "set_hard_state", (hs,), None))
-            .and_then(to_pyresult)?;
+            .and_then(|x| match x {
+                Ok(_) => Ok(()),
+                Err(e) => Err(e),
+            })?;
 
         Ok(())
     }
@@ -145,7 +174,10 @@ impl Py_Storage_Ref {
     pub fn set_conf_state(&mut self, py: Python, cs: &PyAny) -> PyResult<()> {
         self.inner
             .map_as_mut(|inner| inner.storage.call_method(py, "set_conf_state", (cs,), None))
-            .and_then(to_pyresult)?;
+            .and_then(|x| match x {
+                Ok(_) => Ok(()),
+                Err(e) => Err(e),
+            })?;
 
         Ok(())
     }
@@ -157,7 +189,10 @@ impl Py_Storage_Ref {
                     .storage
                     .call_method(py, "trigger_snap_unavailable", (), None)
             })
-            .and_then(to_pyresult)?;
+            .and_then(|x| match x {
+                Ok(_) => Ok(()),
+                Err(e) => Err(e),
+            })?;
 
         Ok(())
     }
@@ -166,9 +201,11 @@ impl Py_Storage_Ref {
 #[pymethods]
 impl Py_Storage_Ref {
     pub fn initial_state(&self) -> PyResult<Py_RaftState_Ref> {
-        to_pyresult(Storage::initial_state(self).map(|mut rs| Py_RaftState_Ref {
-            inner: RustRef::new(&mut rs),
-        }))
+        Storage::initial_state(self)
+            .map(|mut rs| Py_RaftState_Ref {
+                inner: RustRef::new(&mut rs),
+            })
+            .map_err(|e| Py_RaftError(e).into())
     }
 
     pub fn entries(
@@ -197,23 +234,23 @@ impl Py_Storage_Ref {
     }
 
     pub fn term(&self, idx: u64) -> PyResult<u64> {
-        to_pyresult(Storage::term(self, idx))
+        Storage::term(self, idx).map_err(|e| Py_RaftError(e).into())
     }
 
     pub fn first_index(&self) -> PyResult<u64> {
-        to_pyresult(Storage::first_index(self))
+        Storage::first_index(self).map_err(|e| Py_RaftError(e).into())
     }
 
     pub fn last_index(&self) -> PyResult<u64> {
-        to_pyresult(Storage::last_index(self))
+        Storage::last_index(self).map_err(|e| Py_RaftError(e).into())
     }
 
     pub fn snapshot(&self, request_index: u64, to: u64) -> PyResult<Py_Snapshot_Ref> {
-        to_pyresult(
-            Storage::snapshot(self, request_index, to).map(|mut snapshot| Py_Snapshot_Ref {
+        Storage::snapshot(self, request_index, to)
+            .map(|mut snapshot| Py_Snapshot_Ref {
                 inner: RustRef::new(&mut snapshot),
-            }),
-        )
+            })
+            .map_err(|e| Py_RaftError(e).into())
     }
 }
 
@@ -228,7 +265,7 @@ impl Storage for Py_Storage {
                         .extract::<_>()
                         .and_then(|rs: Py_RaftState_Mut| Ok(rs.into()))
                 })
-                .map_err(|e| raft::Error::Store(raft::StorageError::Other(Box::new(e))))
+                .map_err(|e| makeNativeRaftError(py, e))
         })
     }
 
@@ -251,7 +288,7 @@ impl Storage for Py_Storage {
                         .extract::<Vec<Py_Entry_Mut>>()
                         .and_then(|entries| Ok(entries.into_iter().map(|e| e.into()).collect()))
                 })
-                .map_err(|e| raft::Error::Store(raft::StorageError::Other(Box::new(e))))
+                .map_err(|e| makeNativeRaftError(py, e))
         })
     }
 
@@ -261,7 +298,7 @@ impl Storage for Py_Storage {
                 .as_ref(py)
                 .call_method("term", (idx,), None)
                 .and_then(|term| term.extract::<u64>())
-                .map_err(|e| raft::Error::Store(raft::StorageError::Other(Box::new(e))))
+                .map_err(|e| makeNativeRaftError(py, e))
         })
     }
 
@@ -271,7 +308,7 @@ impl Storage for Py_Storage {
                 .as_ref(py)
                 .call_method("first_index", (), None)
                 .and_then(|term| term.extract::<u64>())
-                .map_err(|e| raft::Error::Store(raft::StorageError::Other(Box::new(e))))
+                .map_err(|e| makeNativeRaftError(py, e))
         })
     }
 
@@ -281,7 +318,7 @@ impl Storage for Py_Storage {
                 .as_ref(py)
                 .call_method("last_index", (), None)
                 .and_then(|term| term.extract::<u64>())
-                .map_err(|e| raft::Error::Store(raft::StorageError::Other(Box::new(e))))
+                .map_err(|e| makeNativeRaftError(py, e))
         })
     }
 
@@ -295,7 +332,7 @@ impl Storage for Py_Storage {
                         .extract::<_>()
                         .and_then(|ss: Py_Snapshot_Mut| Ok(ss.into()))
                 })
-                .map_err(|e| raft::Error::Store(raft::StorageError::Other(Box::new(e))))
+                .map_err(|e| makeNativeRaftError(py, e))
         })
     }
 }
@@ -313,10 +350,10 @@ impl Storage for Py_Storage_Ref {
                                 .extract::<_>(py)
                                 .and_then(|rs: Py_RaftState_Mut| Ok(rs.into()))
                         })
+                        .map_err(|e| makeNativeRaftError(py, e))
                 })
             })
-            .and_then(to_pyresult)
-            .map_err(|e| raft::Error::Store(raft::StorageError::Other(Box::new(e))))
+            .unwrap()
     }
 
     fn entries(
@@ -341,11 +378,10 @@ impl Storage for Py_Storage_Ref {
                                 Ok(entries.into_iter().map(|e| e.into()).collect())
                             })
                         })
-                        .map_err(|e| raft::Error::Store(raft::StorageError::Other(Box::new(e))))
+                        .map_err(|e| makeNativeRaftError(py, e))
                 })
             })
-            .and_then(to_pyresult)
-            .map_err(|e| raft::Error::Store(raft::StorageError::Other(Box::new(e))))
+            .unwrap()
     }
 
     fn term(&self, idx: u64) -> raft::Result<u64> {
@@ -357,10 +393,10 @@ impl Storage for Py_Storage_Ref {
                         .as_ref(py)
                         .call_method("term", (idx,), None)
                         .and_then(|term| term.extract::<u64>())
+                        .map_err(|e| makeNativeRaftError(py, e))
                 })
             })
-            .and_then(to_pyresult)
-            .map_err(|e| raft::Error::Store(raft::StorageError::Other(Box::new(e))))
+            .unwrap()
     }
 
     fn first_index(&self) -> raft::Result<u64> {
@@ -372,10 +408,10 @@ impl Storage for Py_Storage_Ref {
                         .as_ref(py)
                         .call_method("first_index", (), None)
                         .and_then(|term| term.extract::<u64>())
+                        .map_err(|e| makeNativeRaftError(py, e))
                 })
             })
-            .and_then(to_pyresult)
-            .map_err(|e| raft::Error::Store(raft::StorageError::Other(Box::new(e))))
+            .unwrap()
     }
 
     fn last_index(&self) -> raft::Result<u64> {
@@ -387,10 +423,10 @@ impl Storage for Py_Storage_Ref {
                         .as_ref(py)
                         .call_method("last_index", (), None)
                         .and_then(|term| term.extract::<u64>())
+                        .map_err(|e| makeNativeRaftError(py, e))
                 })
             })
-            .and_then(to_pyresult)
-            .map_err(|e| raft::Error::Store(raft::StorageError::Other(Box::new(e))))
+            .unwrap()
     }
 
     fn snapshot(&self, request_index: u64, to: u64) -> raft::Result<raft::prelude::Snapshot> {
@@ -405,9 +441,9 @@ impl Storage for Py_Storage_Ref {
                                 .extract::<_>(py)
                                 .and_then(|ss: Py_Snapshot_Mut| Ok(ss.into()))
                         })
+                        .map_err(|e| makeNativeRaftError(py, e))
                 })
             })
-            .and_then(to_pyresult)
-            .map_err(|e| raft::Error::Store(raft::StorageError::Other(Box::new(e))))
+            .unwrap()
     }
 }

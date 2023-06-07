@@ -1,6 +1,11 @@
-use pyo3::{create_exception, exceptions::PyException, prelude::*, pyclass::CompareOp};
+use core::panic;
+
+use pyo3::{
+    create_exception, exceptions::PyException, prelude::*, pyclass::CompareOp, types::PyTuple,
+};
 
 use raft::{Error, StorageError};
+use utils::unsafe_cast::make_static;
 
 #[pyclass(name = "RaftError")]
 pub struct Py_RaftError(pub Error);
@@ -96,6 +101,82 @@ impl From<Py_StorageError> for PyErr {
             StorageError::Other(_) => OtherError::new_err(err.0.to_string()),
         }
     }
+}
+
+// Convert 'PyErr' to 'raft::Error' for passing the error to raft-rs
+// TODO: Complete below error handling logics.
+pub fn makeNativeRaftError(py: Python, py_err: PyErr) -> raft::Error {
+    let args = py_err.to_object(py).getattr(py, "args").unwrap();
+    let args = args.downcast::<PyTuple>(py).unwrap();
+
+    if py_err.is_instance_of::<ExistsError>(py) {
+        let id = args.get_item(0).unwrap().extract::<u64>().unwrap();
+        let set = args.get_item(1).unwrap().extract::<String>().unwrap();
+
+        return raft::Error::Exists {
+            id,
+            set: unsafe { make_static(set.clone().as_str()) },
+        };
+    } else if py_err.is_instance_of::<NotExistsError>(py) {
+        let id = args.get_item(0).unwrap().extract::<u64>().unwrap();
+        let set = args.get_item(1).unwrap().extract::<String>().unwrap();
+
+        return raft::Error::NotExists {
+            id,
+            set: unsafe { make_static(set.clone().as_str()) },
+        };
+    } else if py_err.is_instance_of::<ConfChangeError>(py) {
+        let err_msg = args.get_item(0).unwrap().extract::<String>().unwrap();
+        return raft::Error::ConfChangeError(err_msg);
+    } else if py_err.is_instance_of::<ConfigInvalidError>(py) {
+        let err_msg = args.get_item(0).unwrap().extract::<String>().unwrap();
+        return raft::Error::ConfigInvalid(err_msg);
+    } else if py_err.is_instance_of::<IoError>(py) {
+        return raft::Error::Io(std::io::Error::new(std::io::ErrorKind::Other, py_err));
+    } else if py_err.is_instance_of::<StepLocalMsgError>(py) {
+        return raft::Error::StepLocalMsg;
+    } else if py_err.is_instance_of::<StepPeerNotFoundError>(py) {
+        return raft::Error::StepPeerNotFound;
+    } else if py_err.is_instance_of::<ProposalDroppedError>(py) {
+        return raft::Error::ProposalDropped;
+    } else if py_err.is_instance_of::<RequestSnapshotDroppedError>(py) {
+        return raft::Error::RequestSnapshotDropped;
+    } else if py_err.is_instance_of::<StoreError>(py) {
+        let error_kind = args.get_item(0).unwrap();
+        return makeNativeStorageError(py_err, error_kind);
+    } else if py_err.is_instance_of::<CodecError>(py) {
+        unimplemented!()
+    }
+
+    // println!("Unreachable: {:?}", e);
+    panic!("Unreachable")
+}
+
+fn makeNativeStorageError(py_err: PyErr, error_kind: &PyAny) -> raft::Error {
+    if error_kind.is_instance_of::<CompactedError>().unwrap() {
+        return raft::Error::Store(raft::StorageError::Compacted);
+    } else if error_kind
+        .is_instance_of::<SnapshotOutOfDateError>()
+        .unwrap()
+    {
+        return raft::Error::Store(raft::StorageError::SnapshotOutOfDate);
+    } else if error_kind
+        .is_instance_of::<SnapshotTemporarilyUnavailableError>()
+        .unwrap()
+    {
+        return raft::Error::Store(raft::StorageError::SnapshotTemporarilyUnavailable);
+    } else if error_kind.is_instance_of::<UnavailableError>().unwrap() {
+        return raft::Error::Store(raft::StorageError::Unavailable);
+    } else if error_kind
+        .is_instance_of::<LogTemporarilyUnavailableError>()
+        .unwrap()
+    {
+        return raft::Error::Store(raft::StorageError::LogTemporarilyUnavailable);
+    } else if error_kind.is_instance_of::<OtherError>().unwrap() {
+        return raft::Error::Store(raft::StorageError::Other(Box::new(py_err)));
+    }
+
+    panic!("Unreachable, Invalid StoreError type occurred.")
 }
 
 create_exception!(rraft, RaftError, PyException);
