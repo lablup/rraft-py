@@ -72,11 +72,13 @@ impl<FromRust> RustRef<FromRust> {
 // adding boilerplate code for implementing the From trait for conversion between the two types.
 macro_rules! implement_type_conversion {
     ($Typ:ty, $Py_Typ_Mut:ident) => {
+        use utils::errors::DESTROYED_ERR_MSG;
+
         impl From<$Py_Typ_Mut<'_>> for $Typ {
             fn from(val: $Py_Typ_Mut<'_>) -> Self {
                 match val {
                     $Py_Typ_Mut::Owned(x) => x.inner.clone(),
-                    $Py_Typ_Mut::RefMut(mut x) => x.inner.map_as_mut(|x| x.clone()).unwrap(),
+                    $Py_Typ_Mut::RefMut(mut x) => x.inner.map_as_mut(|x| x.clone()).expect(DESTROYED_ERR_MSG),
                 }
             }
         }
@@ -85,7 +87,7 @@ macro_rules! implement_type_conversion {
             fn from(val: &mut $Py_Typ_Mut<'_>) -> Self {
                 match val {
                     $Py_Typ_Mut::Owned(x) => x.inner.clone(),
-                    $Py_Typ_Mut::RefMut(x) => x.inner.map_as_mut(|x| x.clone()).unwrap(),
+                    $Py_Typ_Mut::RefMut(x) => x.inner.map_as_mut(|x| x.clone()).expect(DESTROYED_ERR_MSG),
                 }
             }
         }
