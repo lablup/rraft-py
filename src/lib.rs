@@ -83,6 +83,9 @@ fn rraft(py: Python, m: &PyModule) -> PyResult<()> {
     m.add_class::<external_bindings::slog::Py_Logger_Ref>()?;
     m.add_class::<external_bindings::slog::Py_OverflowStrategy>()?;
 
+    m.add_class::<utils::errors::Py_RaftError>()?;
+    m.add_class::<utils::errors::Py_StorageError>()?;
+
     m.add_function(wrap_pyfunction!(bindings::global::majority, m)?)?;
     m.add_function(wrap_pyfunction!(bindings::global::default_logger, m)?)?;
     m.add_function(wrap_pyfunction!(bindings::global::vote_resp_msg_type, m)?)?;
@@ -92,9 +95,6 @@ fn rraft(py: Python, m: &PyModule) -> PyResult<()> {
         bindings::global::new_conf_change_single,
         m
     )?)?;
-
-    m.add_class::<utils::errors::Py_RaftError>()?;
-    m.add_class::<utils::errors::Py_StorageError>()?;
 
     m.add("RaftError", py.get_type::<utils::errors::RaftError>())?;
     m.add(

@@ -146,8 +146,8 @@ pub fn makeNativeRaftError(py: Python, py_err: PyErr) -> raft::Error {
     } else if py_err.is_instance_of::<RequestSnapshotDroppedError>(py) {
         return raft::Error::RequestSnapshotDropped;
     } else if py_err.is_instance_of::<StoreError>(py) {
-        let error_kind = args.get_item(0).unwrap();
-        return makeNativeStorageError(py_err, error_kind);
+        let err_kind = args.get_item(0).unwrap();
+        return makeNativeStorageError(py_err, err_kind);
     } else if py_err.is_instance_of::<CodecError>(py) {
         unimplemented!()
     }
@@ -156,27 +156,24 @@ pub fn makeNativeRaftError(py: Python, py_err: PyErr) -> raft::Error {
     panic!("Unreachable")
 }
 
-fn makeNativeStorageError(py_err: PyErr, error_kind: &PyAny) -> raft::Error {
-    if error_kind.is_instance_of::<CompactedError>().unwrap() {
+fn makeNativeStorageError(py_err: PyErr, err_kind: &PyAny) -> raft::Error {
+    if err_kind.is_instance_of::<CompactedError>().unwrap() {
         return raft::Error::Store(raft::StorageError::Compacted);
-    } else if error_kind
-        .is_instance_of::<SnapshotOutOfDateError>()
-        .unwrap()
-    {
+    } else if err_kind.is_instance_of::<SnapshotOutOfDateError>().unwrap() {
         return raft::Error::Store(raft::StorageError::SnapshotOutOfDate);
-    } else if error_kind
+    } else if err_kind
         .is_instance_of::<SnapshotTemporarilyUnavailableError>()
         .unwrap()
     {
         return raft::Error::Store(raft::StorageError::SnapshotTemporarilyUnavailable);
-    } else if error_kind.is_instance_of::<UnavailableError>().unwrap() {
+    } else if err_kind.is_instance_of::<UnavailableError>().unwrap() {
         return raft::Error::Store(raft::StorageError::Unavailable);
-    } else if error_kind
+    } else if err_kind
         .is_instance_of::<LogTemporarilyUnavailableError>()
         .unwrap()
     {
         return raft::Error::Store(raft::StorageError::LogTemporarilyUnavailable);
-    } else if error_kind.is_instance_of::<OtherError>().unwrap() {
+    } else if err_kind.is_instance_of::<OtherError>().unwrap() {
         return raft::Error::Store(raft::StorageError::Other(Box::new(py_err)));
     }
 
@@ -212,13 +209,12 @@ pub fn runtime_error(msg: &str) -> PyErr {
 
 #[inline]
 pub fn to_pyresult<T, E: std::fmt::Display>(res: Result<T, E>) -> PyResult<T> {
-    match res {
-        Ok(x) => Ok(x),
-        Err(err) => Err(PyRuntimeError::new_err(err.to_string())),
-    }
+    res.map_err(|err| PyRuntimeError::new_err(err.to_string()))
 }
+
+pub static DESTROYED_ERR_MSG: &str = "Cannot use a destroyed object's reference!";
 
 #[inline]
 pub fn destroyed_error() -> PyErr {
-    runtime_error("Cannot use a destroyed object's reference!")
+    runtime_error(DESTROYED_ERR_MSG)
 }

@@ -12,7 +12,7 @@ use utils::reference::RustRef;
 
 use bindings::raft_state::{Py_RaftState_Mut, Py_RaftState_Ref};
 use raftpb_bindings::entry::Py_Entry_Mut;
-use utils::errors::{makeNativeRaftError, Py_RaftError};
+use utils::errors::{makeNativeRaftError, Py_RaftError, DESTROYED_ERR_MSG};
 use utils::unsafe_cast::make_mut;
 
 #[derive(Clone)]
@@ -297,7 +297,7 @@ impl Storage for Py_Storage_Ref {
                         .map_err(|e| makeNativeRaftError(py, e))
                 })
             })
-            .unwrap()
+            .expect(DESTROYED_ERR_MSG)
     }
 
     fn entries(
@@ -325,7 +325,7 @@ impl Storage for Py_Storage_Ref {
                         .map_err(|e| makeNativeRaftError(py, e))
                 })
             })
-            .unwrap()
+            .expect(DESTROYED_ERR_MSG)
     }
 
     fn term(&self, idx: u64) -> raft::Result<u64> {
@@ -340,7 +340,7 @@ impl Storage for Py_Storage_Ref {
                         .map_err(|e| makeNativeRaftError(py, e))
                 })
             })
-            .unwrap()
+            .expect(DESTROYED_ERR_MSG)
     }
 
     fn first_index(&self) -> raft::Result<u64> {
@@ -355,7 +355,7 @@ impl Storage for Py_Storage_Ref {
                         .map_err(|e| makeNativeRaftError(py, e))
                 })
             })
-            .unwrap()
+            .expect(DESTROYED_ERR_MSG)
     }
 
     fn last_index(&self) -> raft::Result<u64> {
@@ -370,7 +370,7 @@ impl Storage for Py_Storage_Ref {
                         .map_err(|e| makeNativeRaftError(py, e))
                 })
             })
-            .unwrap()
+            .expect(DESTROYED_ERR_MSG)
     }
 
     fn snapshot(&self, request_index: u64, to: u64) -> raft::Result<raft::prelude::Snapshot> {
@@ -388,6 +388,6 @@ impl Storage for Py_Storage_Ref {
                         .map_err(|e| makeNativeRaftError(py, e))
                 })
             })
-            .unwrap()
+            .expect(DESTROYED_ERR_MSG)
     }
 }

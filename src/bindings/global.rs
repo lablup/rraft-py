@@ -52,7 +52,7 @@ pub fn is_response_msg(typ: &Py_MessageType) -> bool {
     _is_response_msg(typ.0)
 }
 
-// Global scope constant
+// Global scope constants
 pub fn add_constants(m: &PyModule) -> PyResult<()> {
     m.add("CAMPAIGN_ELECTION", CAMPAIGN_ELECTION)?;
     m.add("CAMPAIGN_PRE_ELECTION", CAMPAIGN_PRE_ELECTION)?;
