@@ -2,7 +2,7 @@ use pyo3::{intern, prelude::*, pyclass::CompareOp};
 
 use raft::Progress;
 
-use utils::reference::RustRef;
+use utils::{implement_type_conversion, reference::RustRef};
 
 use super::{
     inflights::{Py_Inflights_Mut, Py_Inflights_Ref},
@@ -27,23 +27,7 @@ pub enum Py_Progress_Mut<'p> {
     RefMut(Py_Progress_Ref),
 }
 
-impl From<Py_Progress_Mut<'_>> for Progress {
-    fn from(val: Py_Progress_Mut<'_>) -> Self {
-        match val {
-            Py_Progress_Mut::Owned(x) => x.inner.clone(),
-            Py_Progress_Mut::RefMut(mut x) => x.inner.map_as_mut(|x| x.clone()).unwrap(),
-        }
-    }
-}
-
-impl From<&mut Py_Progress_Mut<'_>> for Progress {
-    fn from(val: &mut Py_Progress_Mut<'_>) -> Self {
-        match val {
-            Py_Progress_Mut::Owned(x) => x.inner.clone(),
-            Py_Progress_Mut::RefMut(x) => x.inner.map_as_mut(|x| x.clone()).unwrap(),
-        }
-    }
-}
+implement_type_conversion!(Progress, Py_Progress_Mut);
 
 #[pymethods]
 impl Py_Progress {

@@ -2,7 +2,7 @@ use pyo3::{intern, prelude::*, pyclass::CompareOp, types::PyBytes};
 
 use raft::ReadState;
 
-use utils::reference::RustRef;
+use utils::{implement_type_conversion, reference::RustRef};
 
 #[derive(Clone)]
 #[pyclass(name = "ReadState")]
@@ -22,23 +22,7 @@ pub enum Py_ReadState_Mut<'p> {
     RefMut(Py_ReadState_Ref),
 }
 
-impl From<Py_ReadState_Mut<'_>> for ReadState {
-    fn from(val: Py_ReadState_Mut<'_>) -> Self {
-        match val {
-            Py_ReadState_Mut::Owned(x) => x.inner.clone(),
-            Py_ReadState_Mut::RefMut(mut x) => x.inner.map_as_mut(|x| x.clone()).unwrap(),
-        }
-    }
-}
-
-impl From<&mut Py_ReadState_Mut<'_>> for ReadState {
-    fn from(val: &mut Py_ReadState_Mut<'_>) -> Self {
-        match val {
-            Py_ReadState_Mut::Owned(x) => x.inner.clone(),
-            Py_ReadState_Mut::RefMut(x) => x.inner.map_as_mut(|x| x.clone()).unwrap(),
-        }
-    }
-}
+implement_type_conversion!(ReadState, Py_ReadState_Mut);
 
 #[pymethods]
 impl Py_ReadState {

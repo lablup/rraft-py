@@ -5,7 +5,7 @@ use pyo3::{intern, prelude::*, pyclass::CompareOp, types::PySet};
 use fxhash::FxHasher;
 use raft::JointConfig;
 
-use utils::reference::RustRef;
+use utils::{implement_type_conversion, reference::RustRef};
 
 #[derive(Clone)]
 #[pyclass(name = "JointConfig")]
@@ -25,35 +25,17 @@ pub enum Py_JointConfig_Mut<'p> {
     RefMut(Py_JointConfig_Ref),
 }
 
-impl From<Py_JointConfig_Mut<'_>> for JointConfig {
-    fn from(val: Py_JointConfig_Mut<'_>) -> Self {
-        match val {
-            Py_JointConfig_Mut::Owned(x) => x.inner.clone(),
-            Py_JointConfig_Mut::RefMut(mut x) => x.inner.map_as_mut(|x| x.clone()).unwrap(),
-        }
-    }
-}
-
-impl From<&mut Py_JointConfig_Mut<'_>> for JointConfig {
-    fn from(val: &mut Py_JointConfig_Mut<'_>) -> Self {
-        match val {
-            Py_JointConfig_Mut::Owned(x) => x.inner.clone(),
-            Py_JointConfig_Mut::RefMut(x) => x.inner.map_as_mut(|x| x.clone()).unwrap(),
-        }
-    }
-}
+implement_type_conversion!(JointConfig, Py_JointConfig_Mut);
 
 #[pymethods]
 impl Py_JointConfig {
     #[new]
-    pub fn new(voters: &PySet) -> Self {
-        Py_JointConfig {
+    pub fn new(voters: &PySet) -> PyResult<Self> {
+        Ok(Py_JointConfig {
             inner: JointConfig::new(
-                voters
-                    .extract::<HashSet<u64, BuildHasherDefault<FxHasher>>>()
-                    .unwrap(),
+                voters.extract::<HashSet<u64, BuildHasherDefault<FxHasher>>>()?,
             ),
-        }
+        })
     }
 
     pub fn make_ref(&mut self) -> Py_JointConfig_Ref {

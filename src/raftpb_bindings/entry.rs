@@ -4,6 +4,7 @@ use pyo3::pyclass::CompareOp;
 use pyo3::types::PyBytes;
 use pyo3::{intern, prelude::*};
 use raft::eraftpb::Entry;
+use utils::implement_type_conversion;
 use utils::{errors::to_pyresult, reference::RustRef};
 
 use super::entry_type::Py_EntryType;
@@ -26,23 +27,7 @@ pub enum Py_Entry_Mut<'p> {
     RefMut(Py_Entry_Ref),
 }
 
-impl From<Py_Entry_Mut<'_>> for Entry {
-    fn from(val: Py_Entry_Mut<'_>) -> Self {
-        match val {
-            Py_Entry_Mut::Owned(x) => x.inner.clone(),
-            Py_Entry_Mut::RefMut(mut x) => x.inner.map_as_mut(|x| x.clone()).unwrap(),
-        }
-    }
-}
-
-impl From<&mut Py_Entry_Mut<'_>> for Entry {
-    fn from(val: &mut Py_Entry_Mut<'_>) -> Self {
-        match val {
-            Py_Entry_Mut::Owned(x) => x.inner.clone(),
-            Py_Entry_Mut::RefMut(x) => x.inner.map_as_mut(|x| x.clone()).unwrap(),
-        }
-    }
-}
+implement_type_conversion!(Entry, Py_Entry_Mut);
 
 #[pymethods]
 impl Py_Entry {

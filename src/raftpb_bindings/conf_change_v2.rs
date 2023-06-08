@@ -7,7 +7,9 @@ use pyo3::{
     types::{PyBytes, PyList},
 };
 use raft::eraftpb::ConfChangeV2;
-use utils::{errors::to_pyresult, reference::RustRef, unsafe_cast::make_mut};
+use utils::{
+    errors::to_pyresult, implement_type_conversion, reference::RustRef, unsafe_cast::make_mut,
+};
 
 use super::{
     conf_change::Py_ConfChange_Ref,
@@ -33,23 +35,7 @@ pub enum Py_ConfChangeV2_Mut<'p> {
     RefMut(Py_ConfChangeV2_Ref),
 }
 
-impl From<Py_ConfChangeV2_Mut<'_>> for ConfChangeV2 {
-    fn from(val: Py_ConfChangeV2_Mut<'_>) -> Self {
-        match val {
-            Py_ConfChangeV2_Mut::Owned(x) => x.inner.clone(),
-            Py_ConfChangeV2_Mut::RefMut(mut x) => x.inner.map_as_mut(|x| x.clone()).unwrap(),
-        }
-    }
-}
-
-impl From<&mut Py_ConfChangeV2_Mut<'_>> for ConfChangeV2 {
-    fn from(val: &mut Py_ConfChangeV2_Mut<'_>) -> Self {
-        match val {
-            Py_ConfChangeV2_Mut::Owned(x) => x.inner.clone(),
-            Py_ConfChangeV2_Mut::RefMut(x) => x.inner.map_as_mut(|x| x.clone()).unwrap(),
-        }
-    }
-}
+implement_type_conversion!(ConfChangeV2, Py_ConfChangeV2_Mut);
 
 #[pymethods]
 impl Py_ConfChangeV2 {

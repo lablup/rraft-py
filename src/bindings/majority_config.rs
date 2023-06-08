@@ -4,7 +4,7 @@ use fxhash::FxHasher;
 use raft::MajorityConfig;
 use std::{collections::HashSet, hash::BuildHasherDefault};
 
-use utils::reference::RustRef;
+use utils::{implement_type_conversion, reference::RustRef};
 
 #[derive(Clone)]
 #[pyclass(name = "MajorityConfig")]
@@ -24,23 +24,7 @@ pub enum Py_MajorityConfig_Mut<'p> {
     RefMut(Py_MajorityConfig_Ref),
 }
 
-impl From<Py_MajorityConfig_Mut<'_>> for MajorityConfig {
-    fn from(val: Py_MajorityConfig_Mut<'_>) -> Self {
-        match val {
-            Py_MajorityConfig_Mut::Owned(x) => x.inner.clone(),
-            Py_MajorityConfig_Mut::RefMut(mut x) => x.inner.map_as_mut(|x| x.clone()).unwrap(),
-        }
-    }
-}
-
-impl From<&mut Py_MajorityConfig_Mut<'_>> for MajorityConfig {
-    fn from(val: &mut Py_MajorityConfig_Mut<'_>) -> Self {
-        match val {
-            Py_MajorityConfig_Mut::Owned(x) => x.inner.clone(),
-            Py_MajorityConfig_Mut::RefMut(x) => x.inner.map_as_mut(|x| x.clone()).unwrap(),
-        }
-    }
-}
+implement_type_conversion!(MajorityConfig, Py_MajorityConfig_Mut);
 
 #[pymethods]
 impl Py_MajorityConfig {

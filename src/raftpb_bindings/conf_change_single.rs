@@ -1,7 +1,7 @@
 use prost::Message as ProstMessage;
 use protobuf::Message as PbMessage;
 use pyo3::{intern, prelude::*, pyclass::CompareOp, types::PyBytes};
-use utils::{errors::to_pyresult, reference::RustRef};
+use utils::{errors::to_pyresult, implement_type_conversion, reference::RustRef};
 
 use super::conf_change_type::Py_ConfChangeType;
 
@@ -25,23 +25,7 @@ pub enum Py_ConfChangeSingle_Mut<'p> {
     RefMut(Py_ConfChangeSingle_Ref),
 }
 
-impl From<Py_ConfChangeSingle_Mut<'_>> for ConfChangeSingle {
-    fn from(val: Py_ConfChangeSingle_Mut<'_>) -> Self {
-        match val {
-            Py_ConfChangeSingle_Mut::Owned(x) => x.inner.clone(),
-            Py_ConfChangeSingle_Mut::RefMut(mut x) => x.inner.map_as_mut(|x| x.clone()).unwrap(),
-        }
-    }
-}
-
-impl From<&mut Py_ConfChangeSingle_Mut<'_>> for ConfChangeSingle {
-    fn from(val: &mut Py_ConfChangeSingle_Mut<'_>) -> Self {
-        match val {
-            Py_ConfChangeSingle_Mut::Owned(x) => x.inner.clone(),
-            Py_ConfChangeSingle_Mut::RefMut(x) => x.inner.map_as_mut(|x| x.clone()).unwrap(),
-        }
-    }
-}
+implement_type_conversion!(ConfChangeSingle, Py_ConfChangeSingle_Mut);
 
 #[pymethods]
 impl Py_ConfChangeSingle {

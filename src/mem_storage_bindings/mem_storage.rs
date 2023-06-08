@@ -3,7 +3,9 @@ use std::ops::{Deref, DerefMut};
 use pyo3::{intern, prelude::*};
 
 use raft::{prelude::ConfState, storage::MemStorage, storage::Storage, GetEntriesContext};
-use utils::{errors::Py_RaftError, reference::RustRef, unsafe_cast::make_mut};
+use utils::{
+    errors::Py_RaftError, implement_type_conversion, reference::RustRef, unsafe_cast::make_mut,
+};
 
 use raftpb_bindings::{conf_state::Py_ConfState_Mut, entry::Py_Entry, snapshot::Py_Snapshot};
 
@@ -29,23 +31,7 @@ pub enum Py_MemStorage_Mut<'p> {
     RefMut(Py_MemStorage_Ref),
 }
 
-impl From<Py_MemStorage_Mut<'_>> for MemStorage {
-    fn from(val: Py_MemStorage_Mut<'_>) -> Self {
-        match val {
-            Py_MemStorage_Mut::Owned(x) => x.inner.clone(),
-            Py_MemStorage_Mut::RefMut(mut x) => x.inner.map_as_mut(|x| x.clone()).unwrap(),
-        }
-    }
-}
-
-impl From<&mut Py_MemStorage_Mut<'_>> for MemStorage {
-    fn from(val: &mut Py_MemStorage_Mut<'_>) -> Self {
-        match val {
-            Py_MemStorage_Mut::Owned(x) => x.inner.clone(),
-            Py_MemStorage_Mut::RefMut(x) => x.inner.map_as_mut(|x| x.clone()).unwrap(),
-        }
-    }
-}
+implement_type_conversion!(MemStorage, Py_MemStorage_Mut);
 
 #[pymethods]
 impl Py_MemStorage {

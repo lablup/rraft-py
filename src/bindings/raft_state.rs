@@ -1,7 +1,7 @@
 use pyo3::{intern, prelude::*};
 
 use raft::storage::RaftState;
-use utils::reference::RustRef;
+use utils::{implement_type_conversion, reference::RustRef};
 
 use raftpb_bindings::{
     conf_state::{Py_ConfState_Mut, Py_ConfState_Ref},
@@ -26,23 +26,7 @@ pub enum Py_RaftState_Mut<'p> {
     RefMut(Py_RaftState_Ref),
 }
 
-impl From<Py_RaftState_Mut<'_>> for RaftState {
-    fn from(val: Py_RaftState_Mut<'_>) -> Self {
-        match val {
-            Py_RaftState_Mut::Owned(x) => x.inner.clone(),
-            Py_RaftState_Mut::RefMut(mut x) => x.inner.map_as_mut(|x| x.clone()).unwrap(),
-        }
-    }
-}
-
-impl From<&mut Py_RaftState_Mut<'_>> for RaftState {
-    fn from(val: &mut Py_RaftState_Mut<'_>) -> Self {
-        match val {
-            Py_RaftState_Mut::Owned(x) => x.inner.clone(),
-            Py_RaftState_Mut::RefMut(x) => x.inner.map_as_mut(|x| x.clone()).unwrap(),
-        }
-    }
-}
+implement_type_conversion!(RaftState, Py_RaftState_Mut);
 
 #[pymethods]
 impl Py_RaftState {

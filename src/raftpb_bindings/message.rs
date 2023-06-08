@@ -8,7 +8,7 @@ use pyo3::{
 };
 
 use raft::eraftpb::Message;
-use utils::{errors::to_pyresult, unsafe_cast::make_mut};
+use utils::{errors::to_pyresult, implement_type_conversion, unsafe_cast::make_mut};
 
 use utils::reference::RustRef;
 
@@ -36,23 +36,7 @@ pub enum Py_Message_Mut<'p> {
     RefMut(Py_Message_Ref),
 }
 
-impl From<Py_Message_Mut<'_>> for Message {
-    fn from(val: Py_Message_Mut<'_>) -> Self {
-        match val {
-            Py_Message_Mut::Owned(x) => x.inner.clone(),
-            Py_Message_Mut::RefMut(mut x) => x.inner.map_as_mut(|x| x.clone()).unwrap(),
-        }
-    }
-}
-
-impl From<&mut Py_Message_Mut<'_>> for Message {
-    fn from(val: &mut Py_Message_Mut<'_>) -> Self {
-        match val {
-            Py_Message_Mut::Owned(x) => x.inner.clone(),
-            Py_Message_Mut::RefMut(x) => x.inner.map_as_mut(|x| x.clone()).unwrap(),
-        }
-    }
-}
+implement_type_conversion!(Message, Py_Message_Mut);
 
 #[pymethods]
 impl Py_Message {

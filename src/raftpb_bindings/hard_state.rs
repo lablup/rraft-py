@@ -4,7 +4,7 @@ use pyo3::{intern, prelude::*, pyclass::CompareOp, types::PyBytes};
 
 use raft::eraftpb::HardState;
 
-use utils::{errors::to_pyresult, reference::RustRef};
+use utils::{errors::to_pyresult, implement_type_conversion, reference::RustRef};
 
 #[derive(Clone)]
 #[pyclass(name = "HardState")]
@@ -24,23 +24,7 @@ pub enum Py_HardState_Mut<'p> {
     RefMut(Py_HardState_Ref),
 }
 
-impl From<Py_HardState_Mut<'_>> for HardState {
-    fn from(val: Py_HardState_Mut<'_>) -> Self {
-        match val {
-            Py_HardState_Mut::Owned(x) => x.inner.clone(),
-            Py_HardState_Mut::RefMut(mut x) => x.inner.map_as_mut(|x| x.clone()).unwrap(),
-        }
-    }
-}
-
-impl From<&mut Py_HardState_Mut<'_>> for HardState {
-    fn from(val: &mut Py_HardState_Mut<'_>) -> Self {
-        match val {
-            Py_HardState_Mut::Owned(x) => x.inner.clone(),
-            Py_HardState_Mut::RefMut(x) => x.inner.map_as_mut(|x| x.clone()).unwrap(),
-        }
-    }
-}
+implement_type_conversion!(HardState, Py_HardState_Mut);
 
 #[pymethods]
 impl Py_HardState {

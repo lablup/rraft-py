@@ -7,6 +7,7 @@ use pyo3::{prelude::*, types::PySet};
 
 use fxhash::FxHasher;
 use raft::{Progress, ProgressTracker};
+use utils::implement_type_conversion;
 use utils::reference::RustRef;
 use utils::unsafe_cast::{make_mut, make_static};
 
@@ -31,23 +32,7 @@ pub enum Py_ProgressTracker_Mut<'p> {
     RefMut(Py_ProgressTracker_Ref),
 }
 
-impl From<Py_ProgressTracker_Mut<'_>> for ProgressTracker {
-    fn from(val: Py_ProgressTracker_Mut<'_>) -> Self {
-        match val {
-            Py_ProgressTracker_Mut::Owned(x) => x.inner.clone(),
-            Py_ProgressTracker_Mut::RefMut(mut x) => x.inner.map_as_mut(|x| x.clone()).unwrap(),
-        }
-    }
-}
-
-impl From<&mut Py_ProgressTracker_Mut<'_>> for ProgressTracker {
-    fn from(val: &mut Py_ProgressTracker_Mut<'_>) -> Self {
-        match val {
-            Py_ProgressTracker_Mut::Owned(x) => x.inner.clone(),
-            Py_ProgressTracker_Mut::RefMut(x) => x.inner.map_as_mut(|x| x.clone()).unwrap(),
-        }
-    }
-}
+implement_type_conversion!(ProgressTracker, Py_ProgressTracker_Mut);
 
 #[pymethods]
 impl Py_ProgressTracker {

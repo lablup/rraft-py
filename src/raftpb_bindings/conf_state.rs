@@ -8,6 +8,7 @@ use pyo3::{prelude::*, types::PyList};
 use raft::eraftpb::ConfState;
 
 use utils::errors::{runtime_error, to_pyresult};
+use utils::implement_type_conversion;
 use utils::reference::RustRef;
 
 #[derive(Clone)]
@@ -28,23 +29,7 @@ pub enum Py_ConfState_Mut<'p> {
     RefMut(Py_ConfState_Ref),
 }
 
-impl From<Py_ConfState_Mut<'_>> for ConfState {
-    fn from(val: Py_ConfState_Mut<'_>) -> Self {
-        match val {
-            Py_ConfState_Mut::Owned(x) => x.inner.clone(),
-            Py_ConfState_Mut::RefMut(mut x) => x.inner.map_as_mut(|x| x.clone()).unwrap(),
-        }
-    }
-}
-
-impl From<&mut Py_ConfState_Mut<'_>> for ConfState {
-    fn from(val: &mut Py_ConfState_Mut<'_>) -> Self {
-        match val {
-            Py_ConfState_Mut::Owned(x) => x.inner.clone(),
-            Py_ConfState_Mut::RefMut(x) => x.inner.map_as_mut(|x| x.clone()).unwrap(),
-        }
-    }
-}
+implement_type_conversion!(ConfState, Py_ConfState_Mut);
 
 #[pymethods]
 impl Py_ConfState {

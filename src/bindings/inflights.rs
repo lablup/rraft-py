@@ -2,7 +2,7 @@ use pyo3::{intern, prelude::*, pyclass::CompareOp};
 
 use raft::Inflights;
 
-use utils::reference::RustRef;
+use utils::{implement_type_conversion, reference::RustRef};
 
 #[derive(Clone)]
 #[pyclass(name = "Inflights")]
@@ -22,23 +22,7 @@ pub enum Py_Inflights_Mut<'p> {
     RefMut(Py_Inflights_Ref),
 }
 
-impl From<Py_Inflights_Mut<'_>> for Inflights {
-    fn from(val: Py_Inflights_Mut<'_>) -> Self {
-        match val {
-            Py_Inflights_Mut::Owned(x) => x.inner.clone(),
-            Py_Inflights_Mut::RefMut(mut x) => x.inner.map_as_mut(|x| x.clone()).unwrap(),
-        }
-    }
-}
-
-impl From<&mut Py_Inflights_Mut<'_>> for Inflights {
-    fn from(val: &mut Py_Inflights_Mut<'_>) -> Self {
-        match val {
-            Py_Inflights_Mut::Owned(x) => x.inner.clone(),
-            Py_Inflights_Mut::RefMut(x) => x.inner.map_as_mut(|x| x.clone()).unwrap(),
-        }
-    }
-}
+implement_type_conversion!(Inflights, Py_Inflights_Mut);
 
 #[pymethods]
 impl Py_Inflights {

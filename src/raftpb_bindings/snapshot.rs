@@ -3,7 +3,7 @@ use protobuf::Message as PbMessage;
 use pyo3::{intern, prelude::*, pyclass::CompareOp, types::PyBytes};
 
 use raft::eraftpb::Snapshot;
-use utils::{errors::to_pyresult, reference::RustRef};
+use utils::{errors::to_pyresult, implement_type_conversion, reference::RustRef};
 
 use super::snapshot_metadata::{Py_SnapshotMetadata_Mut, Py_SnapshotMetadata_Ref};
 
@@ -25,23 +25,7 @@ pub enum Py_Snapshot_Mut<'p> {
     RefMut(Py_Snapshot_Ref),
 }
 
-impl From<Py_Snapshot_Mut<'_>> for Snapshot {
-    fn from(val: Py_Snapshot_Mut<'_>) -> Self {
-        match val {
-            Py_Snapshot_Mut::Owned(x) => x.inner.clone(),
-            Py_Snapshot_Mut::RefMut(mut x) => x.inner.map_as_mut(|x| x.clone()).unwrap(),
-        }
-    }
-}
-
-impl From<&mut Py_Snapshot_Mut<'_>> for Snapshot {
-    fn from(val: &mut Py_Snapshot_Mut<'_>) -> Self {
-        match val {
-            Py_Snapshot_Mut::Owned(x) => x.inner.clone(),
-            Py_Snapshot_Mut::RefMut(x) => x.inner.map_as_mut(|x| x.clone()).unwrap(),
-        }
-    }
-}
+implement_type_conversion!(Snapshot, Py_Snapshot_Mut);
 
 #[pymethods]
 impl Py_Snapshot {

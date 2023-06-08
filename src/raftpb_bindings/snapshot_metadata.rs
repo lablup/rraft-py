@@ -4,7 +4,7 @@ use pyo3::{intern, prelude::*, pyclass::CompareOp, types::PyBytes};
 
 use raft::eraftpb::SnapshotMetadata;
 
-use utils::{errors::to_pyresult, reference::RustRef};
+use utils::{errors::to_pyresult, implement_type_conversion, reference::RustRef};
 
 use super::conf_state::{Py_ConfState_Mut, Py_ConfState_Ref};
 
@@ -26,23 +26,7 @@ pub enum Py_SnapshotMetadata_Mut<'p> {
     RefMut(Py_SnapshotMetadata_Ref),
 }
 
-impl From<Py_SnapshotMetadata_Mut<'_>> for SnapshotMetadata {
-    fn from(val: Py_SnapshotMetadata_Mut<'_>) -> Self {
-        match val {
-            Py_SnapshotMetadata_Mut::Owned(x) => x.inner.clone(),
-            Py_SnapshotMetadata_Mut::RefMut(mut x) => x.inner.map_as_mut(|x| x.clone()).unwrap(),
-        }
-    }
-}
-
-impl From<&mut Py_SnapshotMetadata_Mut<'_>> for SnapshotMetadata {
-    fn from(val: &mut Py_SnapshotMetadata_Mut<'_>) -> Self {
-        match val {
-            Py_SnapshotMetadata_Mut::Owned(x) => x.inner.clone(),
-            Py_SnapshotMetadata_Mut::RefMut(x) => x.inner.map_as_mut(|x| x.clone()).unwrap(),
-        }
-    }
-}
+implement_type_conversion!(SnapshotMetadata, Py_SnapshotMetadata_Mut);
 
 #[pymethods]
 impl Py_SnapshotMetadata {
