@@ -25,36 +25,39 @@ def quick_raft(storage: MemStorage, logger: Logger_Ref):
     return InMemoryRaftStorage(config, storage, logger)
 
 
-@pytest.mark.benchmark(group="Raft", warmup=True)
-def test_raft_creation1(benchmark):
+@pytest.mark.benchmark(group="raft-creation", warmup=True)
+def test_raft_creation_0_0(benchmark):
     logger = default_logger()
     storage = new_storage(0, 0)
     benchmark(quick_raft, storage, logger)
 
 
-@pytest.mark.benchmark(group="Raft", warmup=True)
-def test_raft_creation2(benchmark):
+@pytest.mark.benchmark(group="raft-creation", warmup=True)
+def test_raft_creation_3_1(benchmark):
     logger = default_logger()
     storage = new_storage(3, 1)
     benchmark(quick_raft, storage, logger)
 
 
-@pytest.mark.benchmark(group="Raft", warmup=True)
-def test_raft_creation3(benchmark):
+@pytest.mark.benchmark(group="raft-creation", warmup=True)
+def test_raft_creation_5_2(benchmark):
     logger = default_logger()
     storage = new_storage(5, 2)
     benchmark(quick_raft, storage, logger)
 
 
-@pytest.mark.benchmark(group="Raft", warmup=True)
-def test_raft_creation4(benchmark):
+@pytest.mark.benchmark(group="raft-creation", warmup=True)
+def test_raft_creation_7_3(benchmark):
     logger = default_logger()
     storage = new_storage(7, 3)
     benchmark(quick_raft, storage, logger)
 
 
-@pytest.mark.benchmark(group="Raft", warmup=True)
-def test_raft_campaign1_1(benchmark):
+# ---
+
+
+@pytest.mark.benchmark(group="raft-campaign", warmup=True)
+def test_raft_campaign__3_1_CampaignPreElection(benchmark):
     logger = default_logger()
     storage = new_storage(3, 1)
 
@@ -65,8 +68,8 @@ def test_raft_campaign1_1(benchmark):
     benchmark(bench, storage, logger)
 
 
-@pytest.mark.benchmark(group="Raft", warmup=True)
-def test_raft_campaign1_2(benchmark):
+@pytest.mark.benchmark(group="raft-campaign", warmup=True)
+def test_raft_campaign__3_1_CampaignElection(benchmark):
     logger = default_logger()
     storage = new_storage(3, 1)
 
@@ -77,8 +80,8 @@ def test_raft_campaign1_2(benchmark):
     benchmark(bench, storage, logger)
 
 
-@pytest.mark.benchmark(group="Raft", warmup=True)
-def test_raft_campaign1_3(benchmark):
+@pytest.mark.benchmark(group="raft-campaign", warmup=True)
+def test_raft_campaign__3_1_CampaignTransfer(benchmark):
     logger = default_logger()
     storage = new_storage(3, 1)
 
@@ -89,8 +92,8 @@ def test_raft_campaign1_3(benchmark):
     benchmark(bench, storage, logger)
 
 
-@pytest.mark.benchmark(group="Raft", warmup=True)
-def test_raft_campaign2_1(benchmark):
+@pytest.mark.benchmark(group="raft-campaign", warmup=True)
+def test_raft_campaign__5_2_CampaignPreElection(benchmark):
     logger = default_logger()
     storage = new_storage(5, 2)
 
@@ -101,8 +104,8 @@ def test_raft_campaign2_1(benchmark):
     benchmark(bench, storage, logger)
 
 
-@pytest.mark.benchmark(group="Raft", warmup=True)
-def test_raft_campaign2_2(benchmark):
+@pytest.mark.benchmark(group="raft-campaign", warmup=True)
+def test_raft_campaign__5_2_CampaignElection(benchmark):
     logger = default_logger()
     storage = new_storage(5, 2)
 
@@ -113,8 +116,8 @@ def test_raft_campaign2_2(benchmark):
     benchmark(bench, storage, logger)
 
 
-@pytest.mark.benchmark(group="Raft", warmup=True)
-def test_raft_campaign2_3(benchmark):
+@pytest.mark.benchmark(group="raft-campaign", warmup=True)
+def test_raft_campaign__5_2_CampaignTransfer(benchmark):
     logger = default_logger()
     storage = new_storage(5, 2)
 
@@ -125,8 +128,8 @@ def test_raft_campaign2_3(benchmark):
     benchmark(bench, storage, logger)
 
 
-@pytest.mark.benchmark(group="Raft", warmup=True)
-def test_raft_campaign3_1(benchmark):
+@pytest.mark.benchmark(group="raft-campaign", warmup=True)
+def test_raft_campaign__7_3_CampaignPreElection(benchmark):
     logger = default_logger()
     storage = new_storage(7, 3)
 
@@ -137,8 +140,8 @@ def test_raft_campaign3_1(benchmark):
     benchmark(bench, storage, logger)
 
 
-@pytest.mark.benchmark(group="Raft", warmup=True)
-def test_raft_campaign3_2(benchmark):
+@pytest.mark.benchmark(group="raft-campaign", warmup=True)
+def test_raft_campaign__7_3_CampaignElection(benchmark):
     logger = default_logger()
     storage = new_storage(7, 3)
 
@@ -149,8 +152,8 @@ def test_raft_campaign3_2(benchmark):
     benchmark(bench, storage, logger)
 
 
-@pytest.mark.benchmark(group="Raft", warmup=True)
-def test_raft_campaign3_3(benchmark):
+@pytest.mark.benchmark(group="raft-campaign", warmup=True)
+def test_raft_campaign__7_3_CampaignTransfer(benchmark):
     logger = default_logger()
     storage = new_storage(7, 3)
 
