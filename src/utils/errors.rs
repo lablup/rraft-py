@@ -157,23 +157,23 @@ pub fn makeNativeRaftError(py: Python, py_err: PyErr) -> raft::Error {
 }
 
 fn makeNativeStorageError(py_err: PyErr, err_kind: &PyAny) -> raft::Error {
-    if err_kind.is_instance_of::<CompactedError>().unwrap() {
+    if err_kind.is_instance_of::<CompactedError>() {
         return raft::Error::Store(raft::StorageError::Compacted);
-    } else if err_kind.is_instance_of::<SnapshotOutOfDateError>().unwrap() {
+    } else if err_kind.is_instance_of::<SnapshotOutOfDateError>() {
         return raft::Error::Store(raft::StorageError::SnapshotOutOfDate);
     } else if err_kind
         .is_instance_of::<SnapshotTemporarilyUnavailableError>()
-        .unwrap()
+
     {
         return raft::Error::Store(raft::StorageError::SnapshotTemporarilyUnavailable);
-    } else if err_kind.is_instance_of::<UnavailableError>().unwrap() {
+    } else if err_kind.is_instance_of::<UnavailableError>() {
         return raft::Error::Store(raft::StorageError::Unavailable);
     } else if err_kind
         .is_instance_of::<LogTemporarilyUnavailableError>()
-        .unwrap()
+
     {
         return raft::Error::Store(raft::StorageError::LogTemporarilyUnavailable);
-    } else if err_kind.is_instance_of::<OtherError>().unwrap() {
+    } else if err_kind.is_instance_of::<OtherError>() {
         return raft::Error::Store(raft::StorageError::Other(Box::new(py_err)));
     }
 
