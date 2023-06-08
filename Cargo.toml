@@ -5,14 +5,14 @@ name = "rraft-py"
 version = "0.1.0"
 authors = ["Lablup Inc."]
 license = "Apache-2.0"
-keywords = ["raft", "distributed-systems", "ha"]
 repository = "https://github.com/lablup/rraft-py"
 readme = "./README.md"
 homepage = "https://github.com/lablup/rraft-py"
 description = """
 Unofficial Python Binding of the tikv/raft-rs
 """
-categories = ["algorithms", "database-implementations"]
+keywords = ["raft", "distributed-systems", "consensus-algorithm", "replication", "distributed-database"]
+categories = ["distributed-systems", "database-implementations"]
 edition = "2021"
 
 [dependencies]
