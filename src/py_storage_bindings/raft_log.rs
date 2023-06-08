@@ -329,13 +329,13 @@ impl Py_RaftLog_Ref {
 
     pub fn slice(
         &self,
-        low: u64,
-        high: u64,
+        _low: u64,
+        _high: u64,
         context: &mut Py_GetEntriesContext_Ref,
-        max_size: Option<u64>,
-        py: Python,
+        _max_size: Option<u64>,
+        _py: Python,
     ) -> PyResult<PyObject> {
-        let context = context.inner.map_as_mut(|context| unsafe {
+        let _context = context.inner.map_as_mut(|context| unsafe {
             std::ptr::replace(context, GetEntriesContext::empty(false))
         })?;
 

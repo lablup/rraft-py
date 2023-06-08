@@ -44,8 +44,8 @@ impl Py_ConfState {
                 "voters and learners both values should or should not be given.",
             ))
         } else {
-            let voters = voters.unwrap().extract::<Vec<u64>>().unwrap();
-            let learners = learners.unwrap().extract::<Vec<u64>>().unwrap();
+            let voters = voters.unwrap().extract::<Vec<u64>>()?;
+            let learners = learners.unwrap().extract::<Vec<u64>>()?;
             Ok(Py_ConfState {
                 inner: ConfState::from((voters, learners)),
             })

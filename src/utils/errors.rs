@@ -119,36 +119,56 @@ pub fn makeNativeRaftError(py: Python, py_err: PyErr) -> raft::Error {
 
         return raft::Error::Exists {
             id,
-            set: unsafe { make_static(set.clone().as_str()) },
+            set: unsafe { make_static(set.as_str()) },
         };
-    } else if py_err.is_instance_of::<NotExistsError>(py) {
+    }
+
+    if py_err.is_instance_of::<NotExistsError>(py) {
         let id = args.get_item(0).unwrap().extract::<u64>().unwrap();
         let set = args.get_item(1).unwrap().extract::<String>().unwrap();
 
         return raft::Error::NotExists {
             id,
-            set: unsafe { make_static(set.clone().as_str()) },
+            set: unsafe { make_static(set.as_str()) },
         };
-    } else if py_err.is_instance_of::<ConfChangeError>(py) {
+    }
+
+    if py_err.is_instance_of::<ConfChangeError>(py) {
         let err_msg = args.get_item(0).unwrap().extract::<String>().unwrap();
         return raft::Error::ConfChangeError(err_msg);
-    } else if py_err.is_instance_of::<ConfigInvalidError>(py) {
+    }
+
+    if py_err.is_instance_of::<ConfigInvalidError>(py) {
         let err_msg = args.get_item(0).unwrap().extract::<String>().unwrap();
         return raft::Error::ConfigInvalid(err_msg);
-    } else if py_err.is_instance_of::<IoError>(py) {
+    }
+
+    if py_err.is_instance_of::<IoError>(py) {
         return raft::Error::Io(std::io::Error::new(std::io::ErrorKind::Other, py_err));
-    } else if py_err.is_instance_of::<StepLocalMsgError>(py) {
+    }
+
+    if py_err.is_instance_of::<StepLocalMsgError>(py) {
         return raft::Error::StepLocalMsg;
-    } else if py_err.is_instance_of::<StepPeerNotFoundError>(py) {
+    }
+
+    if py_err.is_instance_of::<StepPeerNotFoundError>(py) {
         return raft::Error::StepPeerNotFound;
-    } else if py_err.is_instance_of::<ProposalDroppedError>(py) {
+    }
+
+    if py_err.is_instance_of::<ProposalDroppedError>(py) {
         return raft::Error::ProposalDropped;
-    } else if py_err.is_instance_of::<RequestSnapshotDroppedError>(py) {
+    }
+
+    if py_err.is_instance_of::<RequestSnapshotDroppedError>(py) {
         return raft::Error::RequestSnapshotDropped;
-    } else if py_err.is_instance_of::<StoreError>(py) {
+    }
+
+    if py_err.is_instance_of::<StoreError>(py) {
         let err_kind = args.get_item(0).unwrap();
         return makeNativeStorageError(py_err, err_kind);
-    } else if py_err.is_instance_of::<CodecError>(py) {
+    }
+
+    if py_err.is_instance_of::<CodecError>(py) {
         unimplemented!()
     }
 
@@ -159,15 +179,25 @@ pub fn makeNativeRaftError(py: Python, py_err: PyErr) -> raft::Error {
 fn makeNativeStorageError(py_err: PyErr, err_kind: &PyAny) -> raft::Error {
     if err_kind.is_instance_of::<CompactedError>() {
         return raft::Error::Store(raft::StorageError::Compacted);
-    } else if err_kind.is_instance_of::<SnapshotOutOfDateError>() {
+    }
+
+    if err_kind.is_instance_of::<SnapshotOutOfDateError>() {
         return raft::Error::Store(raft::StorageError::SnapshotOutOfDate);
-    } else if err_kind.is_instance_of::<SnapshotTemporarilyUnavailableError>() {
+    }
+
+    if err_kind.is_instance_of::<SnapshotTemporarilyUnavailableError>() {
         return raft::Error::Store(raft::StorageError::SnapshotTemporarilyUnavailable);
-    } else if err_kind.is_instance_of::<UnavailableError>() {
+    }
+
+    if err_kind.is_instance_of::<UnavailableError>() {
         return raft::Error::Store(raft::StorageError::Unavailable);
-    } else if err_kind.is_instance_of::<LogTemporarilyUnavailableError>() {
+    }
+
+    if err_kind.is_instance_of::<LogTemporarilyUnavailableError>() {
         return raft::Error::Store(raft::StorageError::LogTemporarilyUnavailable);
-    } else if err_kind.is_instance_of::<OtherError>() {
+    }
+
+    if err_kind.is_instance_of::<OtherError>() {
         return raft::Error::Store(raft::StorageError::Other(Box::new(py_err)));
     }
 

@@ -206,8 +206,7 @@ impl Storage for Py_Storage {
                 .call_method("initial_state", (), None)
                 .and_then(|py_result| {
                     py_result
-                        .extract::<_>()
-                        .and_then(|rs: Py_RaftState_Mut| Ok(rs.into()))
+                        .extract::<_>().map(|rs: Py_RaftState_Mut| rs.into())
                 })
                 .map_err(|e| makeNativeRaftError(py, e))
         })
@@ -229,8 +228,7 @@ impl Storage for Py_Storage {
                 .call_method("entries", (low, high, context.make_ref(), max_size), None)
                 .and_then(|entries| {
                     entries
-                        .extract::<Vec<Py_Entry_Mut>>()
-                        .and_then(|entries| Ok(entries.into_iter().map(|e| e.into()).collect()))
+                        .extract::<Vec<Py_Entry_Mut>>().map(|entries| entries.into_iter().map(|e| e.into()).collect())
                 })
                 .map_err(|e| makeNativeRaftError(py, e))
         })
@@ -273,8 +271,7 @@ impl Storage for Py_Storage {
                 .call_method("snapshot", (request_index, to), None)
                 .and_then(|py_result| {
                     py_result
-                        .extract::<_>()
-                        .and_then(|ss: Py_Snapshot_Mut| Ok(ss.into()))
+                        .extract::<_>().map(|ss: Py_Snapshot_Mut| ss.into())
                 })
                 .map_err(|e| makeNativeRaftError(py, e))
         })
@@ -291,8 +288,7 @@ impl Storage for Py_Storage_Ref {
                         .call_method(py, "initial_state", (), None)
                         .and_then(|py_result| {
                             py_result
-                                .extract::<_>(py)
-                                .and_then(|rs: Py_RaftState_Mut| Ok(rs.into()))
+                                .extract::<_>(py).map(|rs: Py_RaftState_Mut| rs.into())
                         })
                         .map_err(|e| makeNativeRaftError(py, e))
                 })
@@ -318,9 +314,7 @@ impl Storage for Py_Storage_Ref {
                         .as_ref(py)
                         .call_method("entries", (low, high, context.make_ref(), max_size), None)
                         .and_then(|entries| {
-                            entries.extract::<Vec<Py_Entry_Mut>>().and_then(|entries| {
-                                Ok(entries.into_iter().map(|e| e.into()).collect())
-                            })
+                            entries.extract::<Vec<Py_Entry_Mut>>().map(|entries| entries.into_iter().map(|e| e.into()).collect())
                         })
                         .map_err(|e| makeNativeRaftError(py, e))
                 })
@@ -382,8 +376,7 @@ impl Storage for Py_Storage_Ref {
                         .call_method(py, "snapshot", (request_index, to), None)
                         .and_then(|py_result| {
                             py_result
-                                .extract::<_>(py)
-                                .and_then(|ss: Py_Snapshot_Mut| Ok(ss.into()))
+                                .extract::<_>(py).map(|ss: Py_Snapshot_Mut| ss.into())
                         })
                         .map_err(|e| makeNativeRaftError(py, e))
                 })

@@ -246,14 +246,10 @@ impl Py_Message_Ref {
     }
 
     pub fn set_entries(&mut self, ents: &PyList) -> PyResult<()> {
-        self.inner.map_as_mut(|inner| {
-            let entries = ents
-                .extract::<Vec<Py_Entry_Mut>>()
-                .unwrap()
-                .iter_mut()
-                .map(|x| x.into())
-                .collect::<Vec<_>>();
+        let mut entries: Vec<Py_Entry_Mut> = ents.extract::<Vec<Py_Entry_Mut>>()?;
 
+        self.inner.map_as_mut(|inner| {
+            let entries = entries.iter_mut().map(|x| x.into()).collect::<Vec<_>>();
             inner.set_entries(entries)
         })
     }

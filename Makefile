@@ -25,7 +25,12 @@ lint:
 	cargo clippy 
 
 lint-fix:
-	cargo clippy --fix --lib -p rraft-py
+	cargo clippy --fix --lib -p bindings
+	cargo clippy --fix --lib -p external_bindings
+	cargo clippy --fix --lib -p mem_storage_bindings
+	cargo clippy --fix --lib -p py_storage_bindings
+	cargo clippy --fix --lib -p raftpb_bindings
+	cargo clippy --fix --lib -p utils
 
 lint-fix-py:
 	python -m black **/*.py

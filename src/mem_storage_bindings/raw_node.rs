@@ -37,10 +37,15 @@ pub struct Py_InMemoryRawNode_Ref {
 #[pymethods]
 impl Py_InMemoryRawNode {
     #[new]
-    pub fn new(cfg: Py_Config_Mut, storage: Py_MemStorage_Mut, logger: Py_Logger_Mut) -> Self {
-        Py_InMemoryRawNode {
-            inner: RawNode::new(&cfg.into(), storage.into(), &logger.into()).unwrap(),
-        }
+    pub fn new(
+        cfg: Py_Config_Mut,
+        storage: Py_MemStorage_Mut,
+        logger: Py_Logger_Mut,
+    ) -> PyResult<Self> {
+        Ok(Py_InMemoryRawNode {
+            inner: RawNode::new(&cfg.into(), storage.into(), &logger.into())
+                .map_err(Py_RaftError)?,
+        })
     }
 
     pub fn make_ref(&mut self) -> Py_InMemoryRawNode_Ref {

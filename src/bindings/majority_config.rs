@@ -29,14 +29,12 @@ implement_type_conversion!(MajorityConfig, Py_MajorityConfig_Mut);
 #[pymethods]
 impl Py_MajorityConfig {
     #[new]
-    pub fn new(voters: &PySet) -> Self {
-        Py_MajorityConfig {
+    pub fn new(voters: &PySet) -> PyResult<Self> {
+        Ok(Py_MajorityConfig {
             inner: MajorityConfig::new(
-                voters
-                    .extract::<HashSet<u64, BuildHasherDefault<FxHasher>>>()
-                    .unwrap(),
+                voters.extract::<HashSet<u64, BuildHasherDefault<FxHasher>>>()?,
             ),
-        }
+        })
     }
 
     pub fn make_ref(&mut self) -> Py_MajorityConfig_Ref {
@@ -165,6 +163,6 @@ impl Py_MajorityConfig_Ref {
 
     pub fn try_reserve(&mut self, additional: usize) -> PyResult<()> {
         self.inner
-            .map_as_mut(|inner| inner.try_reserve(additional).unwrap())
+            .map_as_mut(|inner| inner.try_reserve(additional).expect("try_reserve failed!"))
     }
 }

@@ -21,5 +21,6 @@ pub unsafe fn make_static_mut<T: ?Sized>(ref_: &T) -> &'static mut T {
 /// TODO: Write some warnings here.
 #[inline]
 pub unsafe fn make_mut<T: ?Sized>(ref_: &T) -> &mut T {
+    #![allow(clippy::mut_from_ref)]
     &mut *(ref_ as *const T as *mut T)
 }
