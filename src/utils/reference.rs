@@ -69,7 +69,7 @@ impl<FromRust> RustRef<FromRust> {
 
 #[macro_export]
 // This macro accepts the raft-rs (Rust) type as the first argument and the Py type as the second argument,
-// adding boilerplate code for implementing the From trait for conversion between the two types.
+// And adds some boilerplate codes implementing the From trait for conversion between the two types.
 macro_rules! implement_type_conversion {
     ($Typ:ty, $Py_Typ_Mut:ident) => {
         use utils::errors::DESTROYED_ERR_MSG;
