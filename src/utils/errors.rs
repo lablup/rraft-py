@@ -213,8 +213,3 @@ pub fn to_pyresult<T, E: std::fmt::Display>(res: Result<T, E>) -> PyResult<T> {
 }
 
 pub static DESTROYED_ERR_MSG: &str = "Cannot use a destroyed object's reference!";
-
-#[inline]
-pub fn destroyed_error() -> PyErr {
-    runtime_error(DESTROYED_ERR_MSG)
-}

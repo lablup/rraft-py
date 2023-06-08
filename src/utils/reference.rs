@@ -1,8 +1,10 @@
 // Ref:: https://github.com/huggingface/tokenizers/tree/main/bindings/python
-use crate::errors::destroyed_error as _destroyed_error;
 use pyo3::prelude::*;
 use pyo3::PyErr;
 use std::sync::{Arc, Mutex};
+
+use crate::errors::DESTROYED_ERR_MSG;
+use crate::errors::runtime_error;
 
 #[derive(Clone)]
 pub struct RefMutContainer<T> {
@@ -63,7 +65,7 @@ impl<FromRust> RustRef<FromRust> {
     }
 
     pub fn destroyed_error() -> PyErr {
-        _destroyed_error()
+        runtime_error(DESTROYED_ERR_MSG)
     }
 }
 
