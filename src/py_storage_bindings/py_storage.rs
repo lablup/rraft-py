@@ -1,4 +1,3 @@
-use bindings::error::{makeNativeRaftError, Py_RaftError};
 use bindings::get_entries_context::{Py_GetEntriesContext, Py_GetEntriesContext_Ref};
 use pyo3::types::PyList;
 use pyo3::{intern, prelude::*};
@@ -6,7 +5,6 @@ use pyo3::{intern, prelude::*};
 use raft::storage::Storage;
 use raft::GetEntriesContext;
 use raftpb_bindings::hard_state::Py_HardState;
-use utils::errors::to_pyresult;
 
 use raftpb_bindings::entry::Py_Entry_Ref;
 use raftpb_bindings::snapshot::{Py_Snapshot_Mut, Py_Snapshot_Ref};
@@ -14,6 +12,7 @@ use utils::reference::RustRef;
 
 use bindings::raft_state::{Py_RaftState_Mut, Py_RaftState_Ref};
 use raftpb_bindings::entry::Py_Entry_Mut;
+use utils::errors::{makeNativeRaftError, Py_RaftError};
 use utils::unsafe_cast::make_mut;
 
 #[derive(Clone)]
@@ -50,25 +49,15 @@ impl Py_Storage {
 #[pymethods]
 impl Py_Storage_Ref {
     pub fn wl(&mut self) -> PyResult<PyObject> {
-        self.inner
-            .map_as_mut(|inner| {
-                Python::with_gil(|py| inner.storage.call_method(py, "wl", (), None))
-            })
-            .and_then(|x| match x {
-                Ok(x) => Ok(x),
-                Err(e) => Err(e),
-            })
+        self.inner.map_as_mut(|inner| {
+            Python::with_gil(|py| inner.storage.call_method(py, "wl", (), None))
+        })?
     }
 
     pub fn rl(&self) -> PyResult<PyObject> {
-        self.inner
-            .map_as_ref(|inner| {
-                Python::with_gil(|py| inner.storage.call_method(py, "rl", (), None))
-            })
-            .and_then(|x| match x {
-                Ok(x) => Ok(x),
-                Err(e) => Err(e),
-            })
+        self.inner.map_as_ref(|inner| {
+            Python::with_gil(|py| inner.storage.call_method(py, "rl", (), None))
+        })?
     }
 }
 
@@ -77,12 +66,7 @@ impl Py_Storage_Ref {
     pub fn append(&mut self, py: Python, ents: &PyList) -> PyResult<()> {
         self.inner
             .map_as_mut(|inner| inner.storage.call_method(py, "append", (ents,), None))
-            .and_then(|x| match x {
-                Ok(_) => Ok(()),
-                Err(e) => Err(e),
-            })?;
-
-        Ok(())
+            .and(Ok(()))
     }
 
     pub fn apply_snapshot(&mut self, py: Python, snapshot: &PyAny) -> PyResult<()> {
@@ -92,12 +76,7 @@ impl Py_Storage_Ref {
                     .storage
                     .call_method(py, "apply_snapshot", (snapshot,), None)
             })
-            .and_then(|x| match x {
-                Ok(_) => Ok(()),
-                Err(e) => Err(e),
-            })?;
-
-        Ok(())
+            .and(Ok(()))
     }
 
     pub fn compact(&mut self, py: Python, compact_index: u64) -> PyResult<()> {
@@ -107,23 +86,13 @@ impl Py_Storage_Ref {
                     .storage
                     .call_method(py, "compact", (compact_index,), None)
             })
-            .and_then(|x| match x {
-                Ok(_) => Ok(()),
-                Err(e) => Err(e),
-            })?;
-
-        Ok(())
+            .and(Ok(()))
     }
 
     pub fn commit_to(&mut self, py: Python, index: u64) -> PyResult<()> {
         self.inner
             .map_as_mut(|inner| inner.storage.call_method(py, "commit_to", (index,), None))
-            .and_then(|x| match x {
-                Ok(_) => Ok(()),
-                Err(e) => Err(e),
-            })?;
-
-        Ok(())
+            .and(Ok(()))
     }
 
     pub fn commit_to_and_set_conf_states(
@@ -138,48 +107,28 @@ impl Py_Storage_Ref {
                     .storage
                     .call_method(py, "commit_to_and_set_conf_states", (idx, cs), None)
             })
-            .and_then(|x| match x {
-                Ok(_) => Ok(()),
-                Err(e) => Err(e),
-            })?;
-
-        Ok(())
+            .and(Ok(()))
     }
 
     pub fn hard_state(&mut self, py: Python) -> PyResult<Py_HardState> {
-        self.inner
-            .map_as_mut(|inner| {
-                inner
-                    .storage
-                    .call_method(py, "hard_state", (), None)
-                    .and_then(|py_result| py_result.extract::<_>(py))
-            })
-            .and_then(|x| match x {
-                Ok(hs) => Ok(hs),
-                Err(e) => Err(e),
-            })
+        self.inner.map_as_mut(|inner| {
+            inner
+                .storage
+                .call_method(py, "hard_state", (), None)
+                .and_then(|py_result| py_result.extract::<_>(py))
+        })?
     }
 
     pub fn set_hardstate(&mut self, py: Python, hs: &PyAny) -> PyResult<()> {
         self.inner
             .map_as_mut(|inner| inner.storage.call_method(py, "set_hard_state", (hs,), None))
-            .and_then(|x| match x {
-                Ok(_) => Ok(()),
-                Err(e) => Err(e),
-            })?;
-
-        Ok(())
+            .and(Ok(()))
     }
 
     pub fn set_conf_state(&mut self, py: Python, cs: &PyAny) -> PyResult<()> {
         self.inner
             .map_as_mut(|inner| inner.storage.call_method(py, "set_conf_state", (cs,), None))
-            .and_then(|x| match x {
-                Ok(_) => Ok(()),
-                Err(e) => Err(e),
-            })?;
-
-        Ok(())
+            .and(Ok(()))
     }
 
     pub fn trigger_snap_unavailable(&mut self, py: Python) -> PyResult<()> {
@@ -189,12 +138,7 @@ impl Py_Storage_Ref {
                     .storage
                     .call_method(py, "trigger_snap_unavailable", (), None)
             })
-            .and_then(|x| match x {
-                Ok(_) => Ok(()),
-                Err(e) => Err(e),
-            })?;
-
-        Ok(())
+            .and(Ok(()))
     }
 }
 
@@ -220,8 +164,8 @@ impl Py_Storage_Ref {
             std::ptr::replace(context, GetEntriesContext::empty(false))
         })?;
 
-        to_pyresult(
-            Storage::entries(self, low, high, max_size, context).map(|mut entries| {
+        Storage::entries(self, low, high, max_size, context)
+            .map(|mut entries| {
                 let py_entries = entries
                     .iter_mut()
                     .map(|x| Py_Entry_Ref {
@@ -229,8 +173,8 @@ impl Py_Storage_Ref {
                     })
                     .collect::<Vec<_>>();
                 py_entries.into_py(py)
-            }),
-        )
+            })
+            .map_err(|e| Py_RaftError(e).into())
     }
 
     pub fn term(&self, idx: u64) -> PyResult<u64> {

@@ -18,7 +18,6 @@ use raftpb_bindings::{
 
 use bindings::{
     config::Py_Config_Mut,
-    error::Py_RaftError,
     progress_tracker::Py_ProgressTracker_Ref,
     read_state::{Py_ReadState, Py_ReadState_Mut},
     readonly_option::Py_ReadOnlyOption,
@@ -31,6 +30,7 @@ use crate::{
     py_storage::{Py_Storage, Py_Storage_Ref},
     raft_log::Py_RaftLog_Ref,
 };
+use utils::errors::Py_RaftError;
 
 #[pyclass(name = "Raft")]
 pub struct Py_Raft {

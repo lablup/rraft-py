@@ -1,11 +1,10 @@
 use pyo3::{intern, prelude::*};
 
 use raft::Config;
-use utils::errors::to_pyresult;
 
 use utils::reference::RustRef;
 
-use crate::error::Py_RaftError;
+use utils::errors::Py_RaftError;
 
 use super::readonly_option::Py_ReadOnlyOption;
 

@@ -2,7 +2,7 @@ use pyo3::{intern, prelude::*, pyclass::CompareOp};
 
 use raft::SoftState;
 
-use utils::{errors::to_pyresult, reference::RustRef};
+use utils::reference::RustRef;
 
 use super::state_role::Py_StateRole;
 
@@ -66,13 +66,11 @@ impl Py_SoftState_Ref {
         rhs: &Py_SoftState_Ref,
         op: CompareOp,
     ) -> PyResult<PyObject> {
-        self.inner
-            .map_as_ref(|inner| match op {
-                CompareOp::Eq => rhs.inner.map_as_ref(|x| (x == inner).into_py(py)),
-                CompareOp::Ne => rhs.inner.map_as_ref(|x| (x != inner).into_py(py)),
-                _ => Ok(py.NotImplemented()),
-            })
-            .and_then(to_pyresult)
+        self.inner.map_as_ref(|inner| match op {
+            CompareOp::Eq => rhs.inner.map_as_ref(|x| (x == inner).into_py(py)),
+            CompareOp::Ne => rhs.inner.map_as_ref(|x| (x != inner).into_py(py)),
+            _ => Ok(py.NotImplemented()),
+        })?
     }
 
     pub fn get_leader_id(&self) -> PyResult<u64> {

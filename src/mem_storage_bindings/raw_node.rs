@@ -1,4 +1,3 @@
-use bindings::error::Py_RaftError;
 use bindings::get_entries_context::Py_GetEntriesContext_Ref;
 use pyo3::{intern, prelude::*};
 
@@ -7,7 +6,6 @@ use raft::storage::MemStorage;
 use raft::GetEntriesContext;
 
 use raft::raw_node::RawNode;
-use utils::errors::to_pyresult;
 use utils::unsafe_cast::make_mut;
 
 use super::raft::Py_InMemoryRaftStorage_Ref;
@@ -23,6 +21,7 @@ use raftpb_bindings::snapshot::Py_Snapshot_Ref;
 
 use super::mem_storage::{Py_MemStorage_Mut, Py_MemStorage_Ref};
 use bindings::snapshot_status::Py_SnapshotStatus;
+use utils::errors::Py_RaftError;
 use utils::reference::RustRef;
 
 #[pyclass(name = "InMemoryRawNode")]
@@ -157,8 +156,7 @@ impl Py_InMemoryRawNode_Ref {
 
     pub fn campaign(&mut self) -> PyResult<()> {
         self.inner
-            .map_as_mut(|inner| inner.campaign())
-            .and_then(to_pyresult)
+            .map_as_mut(|inner| inner.campaign().map_err(|e| Py_RaftError(e).into()))?
     }
 
     pub fn propose(&mut self, context: &PyAny, data: &PyAny) -> PyResult<()> {
@@ -177,9 +175,11 @@ impl Py_InMemoryRawNode_Ref {
         let context = context.extract::<Vec<u8>>()?;
         let cc: ConfChange = cc.into();
 
-        self.inner
-            .map_as_mut(|inner| inner.propose_conf_change(context, cc))
-            .and_then(to_pyresult)
+        self.inner.map_as_mut(|inner| {
+            inner
+                .propose_conf_change(context, cc)
+                .map_err(|e| Py_RaftError(e).into())
+        })?
     }
 
     pub fn propose_conf_change_v2(
@@ -190,9 +190,11 @@ impl Py_InMemoryRawNode_Ref {
         let context = context.extract::<Vec<u8>>()?;
         let cc: ConfChangeV2 = cc.into();
 
-        self.inner
-            .map_as_mut(|inner| inner.propose_conf_change(context, cc))
-            .and_then(to_pyresult)
+        self.inner.map_as_mut(|inner| {
+            inner
+                .propose_conf_change(context, cc)
+                .map_err(|e| Py_RaftError(e).into())
+        })?
     }
 
     pub fn ping(&mut self) -> PyResult<()> {

@@ -1,21 +1,10 @@
-use bindings::{
-    error::{
-        CodecError, CompactedError, ConfChangeError, ConfigInvalidError, ExistsError, IoError,
-        LogTemporarilyUnavailableError, NotExistsError, OtherError, ProposalDroppedError,
-        RaftError, RaftStorageError, RequestSnapshotDroppedError, SnapshotOutOfDateError,
-        SnapshotTemporarilyUnavailableError, StepLocalMsgError, StepPeerNotFoundError, StoreError,
-        UnavailableError,
-    },
-    global::add_constants,
-};
+use bindings::global::add_constants;
 use pyo3::prelude::*;
 
 #[pymodule]
 fn rraft(py: Python, m: &PyModule) -> PyResult<()> {
     m.add_class::<bindings::config::Py_Config>()?;
     m.add_class::<bindings::config::Py_Config_Ref>()?;
-    m.add_class::<bindings::error::Py_RaftError>()?;
-    m.add_class::<bindings::error::Py_StorageError>()?;
     m.add_class::<bindings::inflights::Py_Inflights>()?;
     m.add_class::<bindings::inflights::Py_Inflights_Ref>()?;
     m.add_class::<bindings::joint_config::Py_JointConfig>()?;
@@ -104,43 +93,67 @@ fn rraft(py: Python, m: &PyModule) -> PyResult<()> {
         m
     )?)?;
 
-    m.add("RaftError", py.get_type::<RaftError>())?;
-    m.add("RaftStorageError", py.get_type::<RaftStorageError>())?;
-    m.add("CompactedError", py.get_type::<CompactedError>())?;
+    m.add_class::<utils::errors::Py_RaftError>()?;
+    m.add_class::<utils::errors::Py_StorageError>()?;
+
+    m.add("RaftError", py.get_type::<utils::errors::RaftError>())?;
+    m.add(
+        "RaftStorageError",
+        py.get_type::<utils::errors::RaftStorageError>(),
+    )?;
+    m.add(
+        "CompactedError",
+        py.get_type::<utils::errors::CompactedError>(),
+    )?;
     m.add(
         "SnapshotOutOfDateError",
-        py.get_type::<SnapshotOutOfDateError>(),
+        py.get_type::<utils::errors::SnapshotOutOfDateError>(),
     )?;
     m.add(
         "SnapshotTemporarilyUnavailableError",
-        py.get_type::<SnapshotTemporarilyUnavailableError>(),
+        py.get_type::<utils::errors::SnapshotTemporarilyUnavailableError>(),
     )?;
-    m.add("UnavailableError", py.get_type::<UnavailableError>())?;
+    m.add(
+        "UnavailableError",
+        py.get_type::<utils::errors::UnavailableError>(),
+    )?;
     m.add(
         "LogTemporarilyUnavailableError",
-        py.get_type::<LogTemporarilyUnavailableError>(),
+        py.get_type::<utils::errors::LogTemporarilyUnavailableError>(),
     )?;
-    m.add("OtherError", py.get_type::<OtherError>())?;
+    m.add("OtherError", py.get_type::<utils::errors::OtherError>())?;
 
-    m.add("ExistsError", py.get_type::<ExistsError>())?;
-    m.add("NotExistsError", py.get_type::<NotExistsError>())?;
-    m.add("ConfChangeError", py.get_type::<ConfChangeError>())?;
-    m.add("ConfigInvalidError", py.get_type::<ConfigInvalidError>())?;
-    m.add("IoError", py.get_type::<IoError>())?;
-    m.add("CodecError", py.get_type::<CodecError>())?;
-    m.add("StoreError", py.get_type::<StoreError>())?;
-    m.add("StepLocalMsgError", py.get_type::<StepLocalMsgError>())?;
+    m.add("ExistsError", py.get_type::<utils::errors::ExistsError>())?;
+    m.add(
+        "NotExistsError",
+        py.get_type::<utils::errors::NotExistsError>(),
+    )?;
+    m.add(
+        "ConfChangeError",
+        py.get_type::<utils::errors::ConfChangeError>(),
+    )?;
+    m.add(
+        "ConfigInvalidError",
+        py.get_type::<utils::errors::ConfigInvalidError>(),
+    )?;
+    m.add("IoError", py.get_type::<utils::errors::IoError>())?;
+    m.add("CodecError", py.get_type::<utils::errors::CodecError>())?;
+    m.add("StoreError", py.get_type::<utils::errors::StoreError>())?;
+    m.add(
+        "StepLocalMsgError",
+        py.get_type::<utils::errors::StepLocalMsgError>(),
+    )?;
     m.add(
         "StepPeerNotFoundError",
-        py.get_type::<StepPeerNotFoundError>(),
+        py.get_type::<utils::errors::StepPeerNotFoundError>(),
     )?;
     m.add(
         "ProposalDroppedError",
-        py.get_type::<ProposalDroppedError>(),
+        py.get_type::<utils::errors::ProposalDroppedError>(),
     )?;
     m.add(
         "RequestSnapshotDroppedError",
-        py.get_type::<RequestSnapshotDroppedError>(),
+        py.get_type::<utils::errors::RequestSnapshotDroppedError>(),
     )?;
 
     add_constants(m)?;

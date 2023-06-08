@@ -3,7 +3,7 @@ use std::ops::{Deref, DerefMut};
 use pyo3::{intern, prelude::*};
 
 use raft::{prelude::ConfState, storage::MemStorage, storage::Storage, GetEntriesContext};
-use utils::{errors::to_pyresult, reference::RustRef, unsafe_cast::make_mut};
+use utils::{errors::Py_RaftError, reference::RustRef, unsafe_cast::make_mut};
 
 use raftpb_bindings::{conf_state::Py_ConfState_Mut, entry::Py_Entry, snapshot::Py_Snapshot};
 
@@ -96,41 +96,40 @@ impl Py_MemStorage_Ref {
     }
 
     pub fn initial_state(&self) -> PyResult<Py_RaftState> {
-        self.inner
-            .map_as_ref(|inner| {
+        self.inner.map_as_ref(|inner| {
+            {
                 inner
                     .initial_state()
                     .map(|state| Py_RaftState { inner: state })
-            })
-            .and_then(to_pyresult)
+            }
+            .map_err(|e| Py_RaftError(e).into())
+        })?
     }
 
     pub fn first_index(&self) -> PyResult<u64> {
         self.inner
-            .map_as_ref(|inner| inner.first_index())
-            .and_then(to_pyresult)
+            .map_as_ref(|inner| inner.first_index().map_err(|e| Py_RaftError(e).into()))?
     }
 
     pub fn last_index(&self) -> PyResult<u64> {
         self.inner
-            .map_as_ref(|inner| inner.last_index())
-            .and_then(to_pyresult)
+            .map_as_ref(|inner| inner.last_index().map_err(|e| Py_RaftError(e).into()))?
     }
 
     pub fn term(&self, idx: u64) -> PyResult<u64> {
         self.inner
-            .map_as_ref(|inner| inner.term(idx))
-            .and_then(to_pyresult)
+            .map_as_ref(|inner| inner.term(idx).map_err(|e| Py_RaftError(e).into()))?
     }
 
     pub fn snapshot(&self, request_index: u64, _to: u64) -> PyResult<Py_Snapshot> {
-        self.inner
-            .map_as_ref(|inner| {
+        self.inner.map_as_ref(|inner| {
+            {
                 inner
                     .snapshot(request_index, _to)
                     .map(|snapshot| Py_Snapshot { inner: snapshot })
-            })
-            .and_then(to_pyresult)
+            }
+            .map_err(|e| Py_RaftError(e).into())
+        })?
     }
 
     pub fn entries(
@@ -145,8 +144,8 @@ impl Py_MemStorage_Ref {
             std::ptr::replace(context, GetEntriesContext::empty(false))
         })?;
 
-        self.inner
-            .map_as_ref(|inner| {
+        self.inner.map_as_ref(|inner| {
+            {
                 inner.entries(low, high, max_size, context).map(|entries| {
                     entries
                         .into_iter()
@@ -154,8 +153,9 @@ impl Py_MemStorage_Ref {
                         .collect::<Vec<_>>()
                         .into_py(py)
                 })
-            })
-            .and_then(to_pyresult)
+            }
+            .map_err(|e| Py_RaftError(e).into())
+        })?
     }
 
     pub fn wl(&mut self) -> PyResult<Py_MemStorageCore_Ref> {

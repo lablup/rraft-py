@@ -20,7 +20,6 @@ use raftpb_bindings::{
 
 use bindings::{
     config::Py_Config_Mut,
-    error::{Py_RaftError, RequestSnapshotDroppedError},
     progress_tracker::Py_ProgressTracker_Ref,
     read_state::{Py_ReadState, Py_ReadState_Mut},
     readonly_option::Py_ReadOnlyOption,
@@ -30,6 +29,7 @@ use bindings::{
 use external_bindings::slog::Py_Logger_Mut;
 
 use crate::raft_log::Py_InMemoryRaftLog_Ref;
+use utils::errors::Py_RaftError;
 
 use super::mem_storage::{Py_MemStorage_Mut, Py_MemStorage_Ref};
 

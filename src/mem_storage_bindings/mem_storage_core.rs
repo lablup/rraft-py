@@ -2,7 +2,7 @@ use bindings::get_entries_context::Py_GetEntriesContext;
 use pyo3::{intern, prelude::*, types::PyList};
 
 use raft::storage::MemStorageCore;
-use utils::{errors::to_pyresult, reference::RustRef};
+use utils::{errors::Py_RaftError, reference::RustRef};
 
 use raftpb_bindings::{
     conf_state::Py_ConfState_Mut,
@@ -47,35 +47,38 @@ impl Py_MemStorageCore_Ref {
     pub fn append(&mut self, ents: &PyList) -> PyResult<()> {
         let mut entries = ents.extract::<Vec<Py_Entry_Mut>>()?;
 
-        self.inner
-            .map_as_mut(|inner| {
-                inner.append(
+        self.inner.map_as_mut(|inner| {
+            inner
+                .append(
                     entries
                         .iter_mut()
                         .map(|x| x.into())
                         .collect::<Vec<_>>()
                         .as_slice(),
                 )
-            })
-            .and_then(to_pyresult)
+                .map_err(|e| Py_RaftError(e).into())
+        })?
     }
 
     pub fn apply_snapshot(&mut self, snapshot: Py_Snapshot_Mut) -> PyResult<()> {
-        self.inner
-            .map_as_mut(|inner| inner.apply_snapshot(snapshot.into()))
-            .and_then(to_pyresult)
+        self.inner.map_as_mut(|inner| {
+            inner
+                .apply_snapshot(snapshot.into())
+                .map_err(|e| Py_RaftError(e).into())
+        })?
     }
 
     pub fn compact(&mut self, compact_index: u64) -> PyResult<()> {
-        self.inner
-            .map_as_mut(|inner| inner.compact(compact_index))
-            .and_then(to_pyresult)
+        self.inner.map_as_mut(|inner| {
+            inner
+                .compact(compact_index)
+                .map_err(|e| Py_RaftError(e).into())
+        })?
     }
 
     pub fn commit_to(&mut self, index: u64) -> PyResult<()> {
         self.inner
-            .map_as_mut(|inner| inner.commit_to(index))
-            .and_then(to_pyresult)
+            .map_as_mut(|inner| inner.commit_to(index).map_err(|e| Py_RaftError(e).into()))?
     }
 
     pub fn commit_to_and_set_conf_states(
@@ -83,12 +86,13 @@ impl Py_MemStorageCore_Ref {
         idx: u64,
         cs: Option<Py_ConfState_Mut>,
     ) -> PyResult<()> {
-        self.inner
-            .map_as_mut(|inner| match cs {
+        self.inner.map_as_mut(|inner| {
+            match cs {
                 Some(x) => inner.commit_to_and_set_conf_states(idx, Some(x.into())),
                 None => inner.commit_to_and_set_conf_states(idx, None),
-            })
-            .and_then(to_pyresult)
+            }
+            .map_err(|e| Py_RaftError(e).into())
+        })?
     }
 
     pub fn hard_state(&mut self) -> PyResult<Py_HardState_Ref> {

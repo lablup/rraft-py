@@ -1,4 +1,3 @@
-use bindings::error::Py_RaftError;
 use bindings::get_entries_context::Py_GetEntriesContext_Ref;
 use pyo3::{intern, prelude::*};
 
@@ -6,7 +5,6 @@ use raft::prelude::{ConfChange, ConfChangeV2};
 use raft::GetEntriesContext;
 
 use raft::raw_node::RawNode;
-use utils::errors::to_pyresult;
 use utils::unsafe_cast::make_mut;
 
 use bindings::config::Py_Config_Mut;
@@ -24,6 +22,7 @@ use utils::reference::RustRef;
 
 use crate::py_storage::{Py_Storage, Py_Storage_Ref};
 use crate::raft::Py_Raft_Ref;
+use utils::errors::Py_RaftError;
 
 #[pyclass(name = "RawNode")]
 pub struct Py_RawNode {
@@ -118,11 +117,7 @@ impl Py_RawNode_Ref {
 
     pub fn request_snapshot(&mut self) -> PyResult<()> {
         self.inner
-            .map_as_mut(|inner| inner.request_snapshot())
-            .and_then(|res| match res {
-                Ok(_) => Ok(()),
-                Err(e) => Err(Py_RaftError(e).into()),
-            })
+            .map_as_mut(|inner| inner.request_snapshot().map_err(|e| Py_RaftError(e).into()))?
     }
 
     pub fn transfer_leader(&mut self, transferee: u64) -> PyResult<()> {
@@ -144,11 +139,7 @@ impl Py_RawNode_Ref {
 
     pub fn step(&mut self, msg: Py_Message_Mut) -> PyResult<()> {
         self.inner
-            .map_as_mut(|inner| inner.step(msg.into()))
-            .and_then(|res| match res {
-                Ok(()) => Ok(()),
-                Err(e) => Err(Py_RaftError(e).into()),
-            })
+            .map_as_mut(|inner| inner.step(msg.into()).map_err(|e| Py_RaftError(e).into()))?
     }
 
     pub fn skip_bcast_commit(&mut self, skip: bool) -> PyResult<()> {
@@ -157,26 +148,29 @@ impl Py_RawNode_Ref {
 
     pub fn campaign(&mut self) -> PyResult<()> {
         self.inner
-            .map_as_mut(|inner| inner.campaign())
-            .and_then(to_pyresult)
+            .map_as_mut(|inner| inner.campaign().map_err(|e| Py_RaftError(e).into()))?
     }
 
     pub fn propose(&mut self, context: &PyAny, data: &PyAny) -> PyResult<()> {
         let context = context.extract::<Vec<u8>>()?;
         let data = data.extract::<Vec<u8>>()?;
 
-        self.inner
-            .map_as_mut(|inner| inner.propose(context, data))
-            .and_then(to_pyresult)
+        self.inner.map_as_mut(|inner| {
+            inner
+                .propose(context, data)
+                .map_err(|e| Py_RaftError(e).into())
+        })?
     }
 
     pub fn propose_conf_change(&mut self, context: &PyAny, cc: Py_ConfChange_Mut) -> PyResult<()> {
         let context = context.extract::<Vec<u8>>()?;
         let cc: ConfChange = cc.into();
 
-        self.inner
-            .map_as_mut(|inner| inner.propose_conf_change(context, cc))
-            .and_then(to_pyresult)
+        self.inner.map_as_mut(|inner| {
+            inner
+                .propose_conf_change(context, cc)
+                .map_err(|e| Py_RaftError(e).into())
+        })?
     }
 
     pub fn propose_conf_change_v2(
@@ -187,9 +181,11 @@ impl Py_RawNode_Ref {
         let context = context.extract::<Vec<u8>>()?;
         let cc: ConfChangeV2 = cc.into();
 
-        self.inner
-            .map_as_mut(|inner| inner.propose_conf_change(context, cc))
-            .and_then(to_pyresult)
+        self.inner.map_as_mut(|inner| {
+            inner
+                .propose_conf_change(context, cc)
+                .map_err(|e| Py_RaftError(e).into())
+        })?
     }
 
     pub fn ping(&mut self) -> PyResult<()> {
@@ -203,33 +199,25 @@ impl Py_RawNode_Ref {
     }
 
     pub fn apply_conf_change(&mut self, cc: Py_ConfChange_Mut) -> PyResult<Py_ConfState> {
-        self.inner
-            .map_as_mut(|inner| {
-                let cc: ConfChange = cc.into();
+        self.inner.map_as_mut(|inner| {
+            let cc: ConfChange = cc.into();
 
-                inner
-                    .apply_conf_change(&cc)
-                    .map(|cs| Py_ConfState { inner: cs })
-            })
-            .and_then(|res| match res {
-                Ok(cs) => Ok(cs),
-                Err(e) => Err(Py_RaftError(e).into()),
-            })
+            inner
+                .apply_conf_change(&cc)
+                .map(|cs| Py_ConfState { inner: cs })
+                .map_err(|e| Py_RaftError(e).into())
+        })?
     }
 
     pub fn apply_conf_change_v2(&mut self, cc: Py_ConfChangeV2_Mut) -> PyResult<Py_ConfState> {
-        self.inner
-            .map_as_mut(|inner| {
-                let cc: ConfChangeV2 = cc.into();
+        self.inner.map_as_mut(|inner| {
+            let cc: ConfChangeV2 = cc.into();
 
-                inner
-                    .apply_conf_change(&cc)
-                    .map(|cs| Py_ConfState { inner: cs })
-            })
-            .and_then(|res| match res {
-                Ok(cs) => Ok(cs),
-                Err(e) => Err(Py_RaftError(e).into()),
-            })
+            inner
+                .apply_conf_change(&cc)
+                .map(|cs| Py_ConfState { inner: cs })
+                .map_err(|e| Py_RaftError(e).into())
+        })?
     }
 
     pub fn on_persist_ready(&mut self, number: u64) -> PyResult<()> {

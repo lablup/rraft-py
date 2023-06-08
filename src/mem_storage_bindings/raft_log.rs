@@ -1,7 +1,7 @@
 use bindings::get_entries_context::Py_GetEntriesContext_Ref;
 use pyo3::types::PyList;
 use pyo3::{intern, prelude::*};
-use utils::errors::to_pyresult;
+use utils::errors::Py_RaftError;
 use utils::unsafe_cast::make_mut;
 
 use external_bindings::slog::Py_Logger_Mut;
@@ -68,8 +68,8 @@ impl Py_InMemoryRaftLog_Ref {
             std::ptr::replace(context, GetEntriesContext::empty(false))
         })?;
 
-        self.inner
-            .map_as_ref(|inner| {
+        self.inner.map_as_ref(|inner| {
+            {
                 inner.entries(idx, max_size, context).map(|entries| {
                     entries
                         .into_iter()
@@ -77,8 +77,9 @@ impl Py_InMemoryRaftLog_Ref {
                         .collect::<Vec<_>>()
                         .into_py(py)
                 })
-            })
-            .and_then(to_pyresult)
+            }
+            .map_err(|e| Py_RaftError(e).into())
+        })?
     }
 
     pub fn all_entries(&self, py: Python) -> PyResult<PyObject> {
@@ -221,15 +222,16 @@ impl Py_InMemoryRaftLog_Ref {
     }
 
     pub fn snapshot(&self, request_index: u64, to: u64) -> PyResult<Py_Snapshot_Ref> {
-        self.inner
-            .map_as_ref(|inner| {
+        self.inner.map_as_ref(|inner| {
+            {
                 inner
                     .snapshot(request_index, to)
                     .map(|mut snapshot| Py_Snapshot_Ref {
                         inner: RustRef::new(&mut snapshot),
                     })
-            })
-            .and_then(to_pyresult)
+            }
+            .map_err(|e| Py_RaftError(e).into())
+        })?
     }
 
     pub fn stable_entries(&mut self, index: u64, term: u64) -> PyResult<()> {
@@ -243,8 +245,7 @@ impl Py_InMemoryRaftLog_Ref {
 
     pub fn term(&self, idx: u64) -> PyResult<u64> {
         self.inner
-            .map_as_ref(|inner| inner.term(idx))
-            .and_then(to_pyresult)
+            .map_as_ref(|inner| inner.term(idx).map_err(|e| Py_RaftError(e).into()))?
     }
 
     pub fn last_term(&self) -> PyResult<u64> {
