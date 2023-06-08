@@ -67,16 +67,16 @@ impl Py_RaftLog_Ref {
         })?;
 
         self.inner.map_as_ref(|inner| {
-            {
-                inner.entries(idx, max_size, context).map(|entries| {
+            inner
+                .entries(idx, max_size, context)
+                .map(|entries| {
                     entries
                         .into_iter()
                         .map(|entry| Py_Entry { inner: entry })
                         .collect::<Vec<_>>()
                         .into_py(py)
                 })
-            }
-            .map_err(|e| Py_RaftError(e).into())
+                .map_err(|e| Py_RaftError(e).into())
         })?
     }
 
@@ -221,14 +221,12 @@ impl Py_RaftLog_Ref {
 
     pub fn snapshot(&self, request_index: u64, to: u64) -> PyResult<Py_Snapshot_Ref> {
         self.inner.map_as_ref(|inner| {
-            {
-                inner
-                    .snapshot(request_index, to)
-                    .map(|mut snapshot| Py_Snapshot_Ref {
-                        inner: RustRef::new(&mut snapshot),
-                    })
-            }
-            .map_err(|e| Py_RaftError(e).into())
+            inner
+                .snapshot(request_index, to)
+                .map(|mut snapshot| Py_Snapshot_Ref {
+                    inner: RustRef::new(&mut snapshot),
+                })
+                .map_err(|e| Py_RaftError(e).into())
         })?
     }
 

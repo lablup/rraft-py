@@ -168,11 +168,7 @@ impl Py_Config_Ref {
 
     pub fn validate(&self) -> PyResult<()> {
         self.inner
-            .map_as_ref(|inner| inner.validate())
-            .and_then(|res| match res {
-                Ok(()) => Ok(()),
-                Err(e) => Err(Py_RaftError(e).into()),
-            })
+            .map_as_ref(|inner| inner.validate().map_err(|e| Py_RaftError(e).into()))?
     }
 
     pub fn get_read_only_option(&self) -> PyResult<Py_ReadOnlyOption> {

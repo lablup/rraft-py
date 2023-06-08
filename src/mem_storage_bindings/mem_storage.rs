@@ -83,12 +83,10 @@ impl Py_MemStorage_Ref {
 
     pub fn initial_state(&self) -> PyResult<Py_RaftState> {
         self.inner.map_as_ref(|inner| {
-            {
-                inner
-                    .initial_state()
-                    .map(|state| Py_RaftState { inner: state })
-            }
-            .map_err(|e| Py_RaftError(e).into())
+            inner
+                .initial_state()
+                .map(|state| Py_RaftState { inner: state })
+                .map_err(|e| Py_RaftError(e).into())
         })?
     }
 
@@ -109,12 +107,10 @@ impl Py_MemStorage_Ref {
 
     pub fn snapshot(&self, request_index: u64, _to: u64) -> PyResult<Py_Snapshot> {
         self.inner.map_as_ref(|inner| {
-            {
-                inner
-                    .snapshot(request_index, _to)
-                    .map(|snapshot| Py_Snapshot { inner: snapshot })
-            }
-            .map_err(|e| Py_RaftError(e).into())
+            inner
+                .snapshot(request_index, _to)
+                .map(|snapshot| Py_Snapshot { inner: snapshot })
+                .map_err(|e| Py_RaftError(e).into())
         })?
     }
 
@@ -131,16 +127,16 @@ impl Py_MemStorage_Ref {
         })?;
 
         self.inner.map_as_ref(|inner| {
-            {
-                inner.entries(low, high, max_size, context).map(|entries| {
+            inner
+                .entries(low, high, max_size, context)
+                .map(|entries| {
                     entries
                         .into_iter()
                         .map(|entry| Py_Entry { inner: entry })
                         .collect::<Vec<_>>()
                         .into_py(py)
                 })
-            }
-            .map_err(|e| Py_RaftError(e).into())
+                .map_err(|e| Py_RaftError(e).into())
         })?
     }
 

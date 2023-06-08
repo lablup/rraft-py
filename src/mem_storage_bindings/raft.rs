@@ -274,18 +274,14 @@ impl Py_InMemoryRaftStorage_Ref {
     }
 
     pub fn apply_conf_change(&mut self, cc: Py_ConfChangeV2_Mut) -> PyResult<Py_ConfState_Ref> {
-        self.inner
-            .map_as_mut(|inner| {
-                inner
-                    .apply_conf_change(&cc.into())
-                    .map(|cs| Py_ConfState_Ref {
-                        inner: RustRef::new(unsafe { make_mut(&cs) }),
-                    })
-            })
-            .and_then(|res| match res {
-                Ok(cs) => Ok(cs),
-                Err(e) => Err(Py_RaftError(e).into()),
-            })
+        self.inner.map_as_mut(|inner| {
+            inner
+                .apply_conf_change(&cc.into())
+                .map(|cs| Py_ConfState_Ref {
+                    inner: RustRef::new(unsafe { make_mut(&cs) }),
+                })
+                .map_err(|e| Py_RaftError(e).into())
+        })?
     }
 
     pub fn tick(&mut self) -> PyResult<bool> {
@@ -302,11 +298,7 @@ impl Py_InMemoryRaftStorage_Ref {
 
     pub fn step(&mut self, msg: Py_Message_Mut) -> PyResult<()> {
         self.inner
-            .map_as_mut(|inner| inner.step(msg.into()))
-            .and_then(|res| match res {
-                Ok(()) => Ok(()),
-                Err(e) => Err(Py_RaftError(e).into()),
-            })
+            .map_as_mut(|inner| inner.step(msg.into()).map_err(|e| Py_RaftError(e).into()))?
     }
 
     pub fn has_pending_conf(&self) -> PyResult<bool> {
@@ -335,11 +327,7 @@ impl Py_InMemoryRaftStorage_Ref {
 
     pub fn request_snapshot(&mut self) -> PyResult<()> {
         self.inner
-            .map_as_mut(|inner| inner.request_snapshot())
-            .and_then(|res| match res {
-                Ok(_) => Ok(()),
-                Err(e) => Err(Py_RaftError(e).into()),
-            })
+            .map_as_mut(|inner| inner.request_snapshot().map_err(|e| Py_RaftError(e).into()))?
     }
 
     pub fn prs(&mut self) -> PyResult<Py_ProgressTracker_Ref> {
