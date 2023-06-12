@@ -72,9 +72,9 @@ $ pip install rraft-py
 
 Are you interested in this project?
 
-The project is in need of various improvements such as code reviews, adding benchmarks, and adding missing methods.
+Currently, `rraft-py` is in need of various improvements such as code reviews, adding benchmarks, and adding missing methods.
 
-All kinds of contributions will be highly appreciated.
+So, All kinds of contributions will be highly appreciated.
 
 ### To do
 
