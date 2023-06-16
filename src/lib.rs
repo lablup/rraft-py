@@ -65,8 +65,8 @@ fn rraft(py: Python, m: &PyModule) -> PyResult<()> {
     m.add_class::<mem_storage_bindings::mem_storage::Py_MemStorage_Ref>()?;
     m.add_class::<mem_storage_bindings::raft_log::Py_InMemoryRaftLog>()?;
     m.add_class::<mem_storage_bindings::raft_log::Py_InMemoryRaftLog_Ref>()?;
-    m.add_class::<mem_storage_bindings::raft::Py_InMemoryRaftStorage>()?;
-    m.add_class::<mem_storage_bindings::raft::Py_InMemoryRaftStorage_Ref>()?;
+    m.add_class::<mem_storage_bindings::raft::Py_InMemoryRaft>()?;
+    m.add_class::<mem_storage_bindings::raft::Py_InMemoryRaft_Ref>()?;
     m.add_class::<mem_storage_bindings::raw_node::Py_InMemoryRawNode>()?;
     m.add_class::<mem_storage_bindings::raw_node::Py_InMemoryRawNode_Ref>()?;
 

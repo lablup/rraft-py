@@ -2511,7 +2511,7 @@ class __API_Raft:
         Set `max_committed_size_per_ready` to `size`.
         """
 
-class InMemoryRaftStorage(__API_Raft):
+class InMemoryRaft(__API_Raft):
     """
     A struct that represents the raft consensus itself. Stores details concerning the current
     and possible state the system can take.
@@ -2529,7 +2529,7 @@ class InMemoryRaftStorage(__API_Raft):
 
 class InMemoryRaft_Ref(__API_Raft):
     """
-    Reference type of :class:`InMemoryRaftStorage`.
+    Reference type of :class:`InMemoryRaft`.
     """
 
     def get_raft_log(self) -> "InMemoryRaftLog_Ref":
@@ -3238,7 +3238,7 @@ class Config_Ref(__API_Config):
 #     Represents the current status of the raft
 #     """
 
-#     def __init__(self, raft: InMemoryRaftStorage) -> None: ...
+#     def __init__(self, raft: InMemoryRaft) -> None: ...
 #     def make_ref(self) -> Status__Memstorage_Ref: ...
 
 # class InMemoryStatus_Ref(__API_Status):

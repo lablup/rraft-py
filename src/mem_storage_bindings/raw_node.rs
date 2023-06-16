@@ -8,7 +8,7 @@ use raft::GetEntriesContext;
 use raft::raw_node::RawNode;
 use utils::unsafe_cast::make_mut;
 
-use super::raft::Py_InMemoryRaftStorage_Ref;
+use super::raft::Py_InMemoryRaft_Ref;
 use bindings::config::Py_Config_Mut;
 use bindings::light_ready::Py_LightReady;
 use bindings::ready::{Py_Ready, Py_Ready_Ref};
@@ -237,8 +237,8 @@ impl Py_InMemoryRawNode_Ref {
         self.inner.map_as_mut(|inner| inner.read_index(rctx))
     }
 
-    pub fn get_raft(&mut self) -> PyResult<Py_InMemoryRaftStorage_Ref> {
-        self.inner.map_as_mut(|inner| Py_InMemoryRaftStorage_Ref {
+    pub fn get_raft(&mut self) -> PyResult<Py_InMemoryRaft_Ref> {
+        self.inner.map_as_mut(|inner| Py_InMemoryRaft_Ref {
             inner: RustRef::new(&mut inner.raft),
         })
     }

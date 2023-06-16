@@ -33,18 +33,18 @@ use utils::errors::Py_RaftError;
 
 use super::mem_storage::{Py_MemStorage_Mut, Py_MemStorage_Ref};
 
-#[pyclass(name = "InMemoryRaftStorage")]
-pub struct Py_InMemoryRaftStorage {
+#[pyclass(name = "InMemoryRaft")]
+pub struct Py_InMemoryRaft {
     pub inner: Raft<MemStorage>,
 }
 
 #[pyclass(name = "InMemoryRaft_Ref")]
-pub struct Py_InMemoryRaftStorage_Ref {
+pub struct Py_InMemoryRaft_Ref {
     pub inner: RustRef<Raft<MemStorage>>,
 }
 
 #[pymethods]
-impl Py_InMemoryRaftStorage {
+impl Py_InMemoryRaft {
     #[new]
     pub fn new(
         cfg: Py_Config_Mut,
@@ -52,12 +52,12 @@ impl Py_InMemoryRaftStorage {
         logger: Py_Logger_Mut,
     ) -> PyResult<Self> {
         Raft::new(&cfg.into(), store.into(), &logger.into())
-            .map(|r| Py_InMemoryRaftStorage { inner: r })
+            .map(|r| Py_InMemoryRaft { inner: r })
             .map_err(|e| Py_RaftError(e).into())
     }
 
-    pub fn make_ref(&mut self) -> Py_InMemoryRaftStorage_Ref {
-        Py_InMemoryRaftStorage_Ref {
+    pub fn make_ref(&mut self) -> Py_InMemoryRaft_Ref {
+        Py_InMemoryRaft_Ref {
             inner: RustRef::new(&mut self.inner),
         }
     }
@@ -69,7 +69,7 @@ impl Py_InMemoryRaftStorage {
 }
 
 #[pymethods]
-impl Py_InMemoryRaftStorage_Ref {
+impl Py_InMemoryRaft_Ref {
     pub fn __repr__(&mut self) -> PyResult<String> {
         self.inner.map_as_mut(|inner| {
             format!(

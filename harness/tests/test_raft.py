@@ -44,11 +44,10 @@ from rraft import (
     Logger_Ref,
     MemStorage,
     MemStorage_Ref,
-    MemStorageCore_Ref,
     Message,
     MessageType,
     ProgressState,
-    InMemoryRaftStorage,
+    InMemoryRaft,
     InMemoryRaft_Ref,
     InMemoryRaftLog_Ref,
     ProposalDroppedError,
@@ -62,7 +61,7 @@ from rraft import (
 )
 
 
-def read_messages(raft: InMemoryRaftStorage) -> List[Message]:
+def read_messages(raft: InMemoryRaft) -> List[Message]:
     return raft.take_msgs()
 
 
@@ -4134,7 +4133,7 @@ def test_new_raft_with_bad_config_errors():
     s = MemStorage.new_with_conf_state(ConfState([1, 2], []))
 
     with pytest.raises(ConfigInvalidError):
-        InMemoryRaftStorage(invalid_config, s, l)
+        InMemoryRaft(invalid_config, s, l)
 
 
 # tests whether MsgAppend are batched

@@ -16,7 +16,7 @@ from rraft import (
     MemStorage_Ref,
     Message,
     MessageType,
-    InMemoryRaftStorage,
+    InMemoryRaft,
     InMemoryRaftLog_Ref,
     Snapshot,
     SoftState,
@@ -125,7 +125,7 @@ def new_test_raft_with_config(
     storage: MemStorage | MemStorage_Ref,
     logger: Logger | Logger_Ref,
 ) -> Interface:
-    return Interface(InMemoryRaftStorage(config, storage, logger))
+    return Interface(InMemoryRaft(config, storage, logger))
 
 
 def hard_state(term: int, commit: int, vote: int) -> HardState:

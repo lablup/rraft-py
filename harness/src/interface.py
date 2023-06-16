@@ -3,7 +3,7 @@ from typing import List
 from rraft import (
     Message,
     Message_Ref,
-    InMemoryRaftStorage,
+    InMemoryRaft,
     InMemoryRaftLog_Ref,
 )
 
@@ -21,7 +21,7 @@ class Interface:
     # That's not worthy for just testing purpose.
     """
 
-    def __init__(self, r: InMemoryRaftStorage) -> None:
+    def __init__(self, r: InMemoryRaft) -> None:
         """
         Create a new interface to a new raft.
         """
