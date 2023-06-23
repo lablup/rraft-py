@@ -17,20 +17,6 @@ pub struct RefMutOwner<T> {
 unsafe impl<T: Send> Send for RefMutOwner<T> {}
 unsafe impl<T: Sync> Sync for RefMutOwner<T> {}
 
-impl<T> Drop for RefMutOwner<T> {
-    fn drop(&mut self) {
-        self.refs.iter_mut().for_each(|weak_ptr| {
-            if let Some(weak_inner) = weak_ptr.upgrade() {
-                if let Ok(mut inner) = weak_inner.lock() {
-                    *inner = None;
-                }
-            } else {
-                // Weak가 이미 해제되어 있어 Ref를 해제할 수 없는데 정작 내부에 들고 있는 레퍼런스들은 drop 되지 않았다.
-            }
-        });
-    }
-}
-
 impl<T> RefMutOwner<T> {
     pub fn new(inner: T) -> Self {
         Self {
@@ -54,6 +40,18 @@ impl<T> DerefMut for RefMutOwner<T> {
     }
 }
 
+impl<T> Drop for RefMutOwner<T> {
+    fn drop(&mut self) {
+        self.refs.iter_mut().for_each(|weak_ref| {
+            if let Some(arc) = weak_ref.upgrade() {
+                if let Ok(mut ptr) = arc.lock() {
+                    ptr.take();
+                }
+            }
+        });
+    }
+}
+
 #[derive(Clone)]
 pub struct RefMutContainer<T> {
     inner: Arc<Mutex<Option<*mut RefMutOwner<T>>>>,
@@ -63,7 +61,6 @@ impl<T> RefMutContainer<T> {
     pub fn new(content: &mut RefMutOwner<T>) -> Self {
         let arc: Arc<Mutex<Option<*mut RefMutOwner<T>>>> = Arc::new(Mutex::new(Some(content)));
         content.refs.push(Arc::downgrade(&arc));
-
         RefMutContainer { inner: arc }
     }
 
