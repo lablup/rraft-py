@@ -2,17 +2,16 @@ use pyo3::{intern, prelude::*};
 
 use raft::Config;
 
-use utils::implement_type_conversion;
-use utils::reference::RustRef;
+use utils::reference_v3::{RefMutOwner, RustRef};
 
-use utils::errors::Py_RaftError;
+use utils::errors::{Py_RaftError, DESTROYED_ERR_MSG};
 
 use super::readonly_option::Py_ReadOnlyOption;
 
 #[derive(Clone)]
 #[pyclass(name = "Config")]
 pub struct Py_Config {
-    pub inner: Config,
+    pub inner: RefMutOwner<Config>,
 }
 
 #[derive(Clone)]
@@ -27,7 +26,33 @@ pub enum Py_Config_Mut<'p> {
     RefMut(Py_Config_Ref),
 }
 
-implement_type_conversion!(Config, Py_Config_Mut);
+impl From<Py_Config_Mut<'_>> for Config {
+    fn from(val: Py_Config_Mut<'_>) -> Self {
+        match val {
+            Py_Config_Mut::Owned(x) => {
+                x.inner.to_owned().inner.lock().unwrap().clone()
+            },
+            Py_Config_Mut::RefMut(mut x) => {
+                x.inner.map_as_mut(|x| x.clone()).expect(DESTROYED_ERR_MSG)
+            }
+        }
+    }
+}
+
+impl From<&mut Py_Config_Mut<'_>> for Config {
+    fn from(val: &mut Py_Config_Mut<'_>) -> Self {
+        match val {
+            Py_Config_Mut::Owned(x) => {
+                x.inner.to_owned().inner.lock().unwrap().clone()
+            },
+            Py_Config_Mut::RefMut(x) => {
+                x.inner.map_as_mut(|x| x.clone()).expect(DESTROYED_ERR_MSG)
+            }
+        }
+    }
+}
+
+// implement_type_conversion_v3!(Config, Py_Config_Mut);
 
 fn format_config<T: Into<Config>>(cfg: T) -> String {
     let cfg: Config = cfg.into();
@@ -112,13 +137,15 @@ impl Py_Config {
         config.skip_bcast_commit = skip_bcast_commit.unwrap_or(config.skip_bcast_commit);
         config.read_only_option = read_only_option.map_or(config.read_only_option, |opt| opt.0);
 
-        Py_Config { inner: config }
+        Py_Config {
+            inner: RefMutOwner::new(config),
+        }
     }
 
     #[staticmethod]
     pub fn default() -> Py_Config {
         Py_Config {
-            inner: Config::default(),
+            inner: RefMutOwner::new(Config::default()),
         }
     }
 
@@ -128,9 +155,9 @@ impl Py_Config {
         }
     }
 
-    pub fn __repr__(&self) -> String {
-        format_config(self.inner.clone())
-    }
+    // pub fn __repr__(&self) -> String {
+    //     format_config(self.inner.inner)
+    // }
 
     fn __getattr__(this: PyObject, py: Python, attr: &str) -> PyResult<PyObject> {
         let reference = this.call_method0(py, intern!(py, "make_ref"))?;
@@ -146,7 +173,7 @@ impl Py_Config_Ref {
 
     pub fn clone(&self) -> PyResult<Py_Config> {
         Ok(Py_Config {
-            inner: self.inner.map_as_ref(|inner| inner.clone())?,
+            inner: RefMutOwner::new(self.inner.map_as_ref(|inner| inner.clone())?),
         })
     }
 
