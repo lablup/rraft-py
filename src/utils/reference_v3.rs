@@ -1,7 +1,6 @@
 // Ref:: https://github.com/huggingface/tokenizers/tree/main/bindings/python
 use pyo3::prelude::*;
 use pyo3::PyErr;
-use std::ptr::NonNull;
 use std::sync::{Arc, Mutex, Weak};
 
 use crate::errors::runtime_error;
@@ -25,43 +24,26 @@ pub struct RefMutOwner<T> {
 
 #[derive(Clone)]
 pub struct RefMutContainer<T> {
-    inner: Weak<Mutex<Option<NonNull<RefMutOwner<T>>>>>,
+    inner: Weak<Mutex<T>>,
 }
 
 impl<T> RefMutContainer<T> {
     pub fn new(content: &mut RefMutOwner<T>) -> Self {
-        let arc = Arc::new(Mutex::new(NonNull::new(content)));
         Self {
-            inner: Arc::downgrade(&arc),
+            inner: Arc::downgrade(&content.inner),
         }
     }
 
     pub fn map<F: FnOnce(&T) -> U, U>(&self, f: F) -> Option<U> {
-        self.inner.upgrade().and_then(|arc| {
-            arc.lock().ok().and_then(|guard| {
-                guard.as_ref().and_then(|owner| {
-                    unsafe { owner.clone().as_ref() }
-                        .inner
-                        .lock()
-                        .ok()
-                        .map(|guard| f(&*guard))
-                })
-            })
-        })
+        self.inner
+            .upgrade()
+            .and_then(|arc| arc.lock().ok().and_then(|guard| Some(f(&*guard))))
     }
 
     pub fn map_mut<F: FnOnce(&mut T) -> U, U>(&mut self, f: F) -> Option<U> {
-        self.inner.upgrade().and_then(|arc| {
-            arc.lock().ok().and_then(|mut guard| {
-                guard.as_mut().and_then(|owner| {
-                    unsafe { owner.clone().as_mut() }
-                        .inner
-                        .lock()
-                        .ok()
-                        .map(|mut guard| f(&mut *guard))
-                })
-            })
-        })
+        self.inner
+            .upgrade()
+            .and_then(|arc| arc.lock().ok().and_then(|mut guard| Some(f(&mut *guard))))
     }
 }
 

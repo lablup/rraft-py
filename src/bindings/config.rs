@@ -29,9 +29,7 @@ pub enum Py_Config_Mut<'p> {
 impl From<Py_Config_Mut<'_>> for Config {
     fn from(val: Py_Config_Mut<'_>) -> Self {
         match val {
-            Py_Config_Mut::Owned(x) => {
-                x.inner.to_owned().inner.lock().unwrap().clone()
-            },
+            Py_Config_Mut::Owned(x) => x.inner.to_owned().inner.lock().unwrap().clone(),
             Py_Config_Mut::RefMut(mut x) => {
                 x.inner.map_as_mut(|x| x.clone()).expect(DESTROYED_ERR_MSG)
             }
@@ -42,12 +40,8 @@ impl From<Py_Config_Mut<'_>> for Config {
 impl From<&mut Py_Config_Mut<'_>> for Config {
     fn from(val: &mut Py_Config_Mut<'_>) -> Self {
         match val {
-            Py_Config_Mut::Owned(x) => {
-                x.inner.to_owned().inner.lock().unwrap().clone()
-            },
-            Py_Config_Mut::RefMut(x) => {
-                x.inner.map_as_mut(|x| x.clone()).expect(DESTROYED_ERR_MSG)
-            }
+            Py_Config_Mut::Owned(x) => x.inner.to_owned().inner.lock().unwrap().clone(),
+            Py_Config_Mut::RefMut(x) => x.inner.map_as_mut(|x| x.clone()).expect(DESTROYED_ERR_MSG),
         }
     }
 }
