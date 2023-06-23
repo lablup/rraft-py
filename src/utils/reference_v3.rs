@@ -6,9 +6,6 @@ use std::sync::{Arc, Mutex, Weak};
 use crate::errors::runtime_error;
 use crate::errors::DESTROYED_ERR_MSG;
 
-unsafe impl<T: Send> Send for RefMutOwner<T> {}
-unsafe impl<T: Sync> Sync for RefMutOwner<T> {}
-
 impl<T> RefMutOwner<T> {
     pub fn new(inner: T) -> Self {
         Self {
