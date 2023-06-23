@@ -2,7 +2,6 @@ use pyo3::{intern, prelude::*};
 
 use raft::Config;
 
-use utils::implement_type_conversion;
 use utils::reference_v2::{RefMutOwner, RustRef};
 
 use utils::errors::{Py_RaftError, DESTROYED_ERR_MSG};
@@ -166,11 +165,11 @@ impl Py_Config_Ref {
         self.inner.map_as_ref(|inner| format_config(inner.clone()))
     }
 
-    // pub fn clone(&self) -> PyResult<Py_Config> {
-    //     Ok(Py_Config {
-    //         inner: self.inner.map_as_ref(|inner| inner.clone())?,
-    //     })
-    // }
+    pub fn clone(&self) -> PyResult<Py_Config> {
+        Ok(Py_Config {
+            inner: RefMutOwner::new(self.inner.map_as_ref(|inner| inner.clone())?),
+        })
+    }
 
     pub fn min_election_tick(&self) -> PyResult<usize> {
         self.inner.map_as_ref(|inner| inner.min_election_tick())

@@ -3,8 +3,7 @@ use pyo3::prelude::*;
 use pyo3::PyErr;
 use std::ops::Deref;
 use std::ops::DerefMut;
-use std::sync::Weak;
-use std::sync::{Arc, Mutex};
+use std::sync::{Arc, Mutex, Weak};
 
 use crate::errors::runtime_error;
 use crate::errors::DESTROYED_ERR_MSG;
@@ -20,24 +19,14 @@ unsafe impl<T: Sync> Sync for RefMutOwner<T> {}
 
 impl<T> Drop for RefMutOwner<T> {
     fn drop(&mut self) {
-        println!("config drop!");
-
         self.refs.iter_mut().for_each(|weak_ptr| {
             if let Some(weak_inner) = weak_ptr.upgrade() {
-                println!("upgrade!!");
                 if let Ok(mut inner) = weak_inner.lock() {
                     *inner = None;
                 }
             } else {
                 // Weak가 이미 해제되어 있어 Ref를 해제할 수 없는데 정작 내부에 들고 있는 레퍼런스들은 drop 되지 않았다.
-                println!("already dropped!!");
             }
-
-            // println!("drop ref!!");
-            // let p = r.to_owned();
-
-            // let k = r.upgrade().unwrap();
-            // k.lock().unwrap().as_ref().take();
         });
     }
 }
@@ -72,13 +61,10 @@ pub struct RefMutContainer<T> {
 
 impl<T> RefMutContainer<T> {
     pub fn new(content: &mut RefMutOwner<T>) -> Self {
-        let lock: Arc<Mutex<Option<*mut RefMutOwner<T>>>> = Arc::new(Mutex::new(Some(content)));
-        let wk = Arc::downgrade(&lock);
-        content.refs.push(wk);
+        let arc: Arc<Mutex<Option<*mut RefMutOwner<T>>>> = Arc::new(Mutex::new(Some(content)));
+        content.refs.push(Arc::downgrade(&arc));
 
-        RefMutContainer {
-            inner: Arc::new(Mutex::new(Some(content))),
-        }
+        RefMutContainer { inner: arc }
     }
 
     pub fn map<F: FnOnce(&T) -> U, U>(&self, f: F) -> Option<U> {
