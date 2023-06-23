@@ -3,6 +3,7 @@ use pyo3::prelude::*;
 use pyo3::PyErr;
 use std::ops::Deref;
 use std::ops::DerefMut;
+use std::ptr::NonNull;
 use std::sync::{Arc, Mutex, Weak};
 
 use crate::errors::runtime_error;
@@ -11,7 +12,7 @@ use crate::errors::DESTROYED_ERR_MSG;
 #[derive(Clone)]
 pub struct RefMutOwner<T> {
     pub inner: T,
-    pub refs: Vec<Weak<Mutex<Option<*mut RefMutOwner<T>>>>>,
+    pub refs: Vec<Weak<Mutex<Option<NonNull<RefMutOwner<T>>>>>>,
 }
 
 unsafe impl<T: Send> Send for RefMutOwner<T> {}
@@ -54,12 +55,13 @@ impl<T> Drop for RefMutOwner<T> {
 
 #[derive(Clone)]
 pub struct RefMutContainer<T> {
-    inner: Arc<Mutex<Option<*mut RefMutOwner<T>>>>,
+    inner: Arc<Mutex<Option<NonNull<RefMutOwner<T>>>>>,
 }
 
 impl<T> RefMutContainer<T> {
     pub fn new(content: &mut RefMutOwner<T>) -> Self {
-        let arc: Arc<Mutex<Option<*mut RefMutOwner<T>>>> = Arc::new(Mutex::new(Some(content)));
+        let arc: Arc<Mutex<Option<NonNull<RefMutOwner<T>>>>> =
+            Arc::new(Mutex::new(NonNull::new(content)));
         content.refs.push(Arc::downgrade(&arc));
         RefMutContainer { inner: arc }
     }
@@ -67,13 +69,13 @@ impl<T> RefMutContainer<T> {
     pub fn map<F: FnOnce(&T) -> U, U>(&self, f: F) -> Option<U> {
         let lock = self.inner.lock().unwrap();
         let ptr = lock.as_ref()?;
-        Some(f(unsafe { ptr.as_ref().unwrap() }))
+        Some(f(unsafe { ptr.as_ref() }))
     }
 
     pub fn map_mut<F: FnOnce(&mut T) -> U, U>(&mut self, f: F) -> Option<U> {
-        let lock = self.inner.lock().unwrap();
-        let ptr = lock.as_ref()?;
-        Some(f(unsafe { ptr.as_mut().unwrap() }))
+        let mut lock = self.inner.lock().unwrap();
+        let ptr = lock.as_mut()?;
+        Some(f(unsafe { ptr.as_mut() }))
     }
 }
 
