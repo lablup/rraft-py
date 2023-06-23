@@ -6,11 +6,15 @@ use std::sync::{Arc, Mutex, Weak};
 use crate::errors::runtime_error;
 use crate::errors::DESTROYED_ERR_MSG;
 
-impl<T> RefMutOwner<T> {
+impl<T: Clone> RefMutOwner<T> {
     pub fn new(inner: T) -> Self {
         Self {
             inner: Arc::new(Mutex::new(inner)),
         }
+    }
+
+    pub fn get_inner(&self) -> T {
+        self.inner.lock().unwrap().clone()
     }
 }
 
@@ -73,33 +77,33 @@ impl<T> RustRef<T> {
     }
 }
 
-// #[macro_export]
-// // This macro accepts the raft-rs (Rust) type as the first argument and the Py type as the second argument,
-// // And adds some boilerplate codes implementing the From trait for conversion between the two types.
-// macro_rules! implement_type_conversion_v3 {
-//     ($Typ:ty, $Py_Typ_Mut:ident) => {
-//         use utils::errors::DESTROYED_ERR_MSG;
+#[macro_export]
+// This macro accepts the raft-rs (Rust) type as the first argument and the Py type as the second argument,
+// And adds some boilerplate codes implementing the From trait for conversion between the two types.
+macro_rules! implement_type_conversion_v3 {
+    ($Typ:ty, $Py_Typ_Mut:ident) => {
+        use utils::errors::DESTROYED_ERR_MSG;
 
-//         impl From<$Py_Typ_Mut<'_>> for $Typ {
-//             fn from(val: $Py_Typ_Mut<'_>) -> Self {
-//                 match val {
-//                     $Py_Typ_Mut::Owned(x) => x.inner.clone(),
-//                     $Py_Typ_Mut::RefMut(mut x) => {
-//                         x.inner.map_as_mut(|x| x.clone()).expect(DESTROYED_ERR_MSG)
-//                     }
-//                 }
-//             }
-//         }
+        impl From<$Py_Typ_Mut<'_>> for $Typ {
+            fn from(val: $Py_Typ_Mut<'_>) -> Self {
+                match val {
+                    $Py_Typ_Mut::Owned(x) => x.inner.get_inner(),
+                    $Py_Typ_Mut::RefMut(mut x) => {
+                        x.inner.map_as_mut(|x| x.clone()).expect(DESTROYED_ERR_MSG)
+                    }
+                }
+            }
+        }
 
-//         impl From<&mut $Py_Typ_Mut<'_>> for $Typ {
-//             fn from(val: &mut $Py_Typ_Mut<'_>) -> Self {
-//                 match val {
-//                     $Py_Typ_Mut::Owned(x) => x.inner.clone(),
-//                     $Py_Typ_Mut::RefMut(x) => {
-//                         x.inner.map_as_mut(|x| x.clone()).expect(DESTROYED_ERR_MSG)
-//                     }
-//                 }
-//             }
-//         }
-//     };
-// }
+        impl From<&mut $Py_Typ_Mut<'_>> for $Typ {
+            fn from(val: &mut $Py_Typ_Mut<'_>) -> Self {
+                match val {
+                    $Py_Typ_Mut::Owned(x) => x.inner.get_inner(),
+                    $Py_Typ_Mut::RefMut(x) => {
+                        x.inner.map_as_mut(|x| x.clone()).expect(DESTROYED_ERR_MSG)
+                    }
+                }
+            }
+        }
+    };
+}

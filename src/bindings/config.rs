@@ -2,9 +2,10 @@ use pyo3::{intern, prelude::*};
 
 use raft::Config;
 
+use utils::implement_type_conversion_v3;
 use utils::reference_v3::{RefMutOwner, RustRef};
 
-use utils::errors::{Py_RaftError, DESTROYED_ERR_MSG};
+use utils::errors::{Py_RaftError};
 
 use super::readonly_option::Py_ReadOnlyOption;
 
@@ -26,27 +27,7 @@ pub enum Py_Config_Mut<'p> {
     RefMut(Py_Config_Ref),
 }
 
-impl From<Py_Config_Mut<'_>> for Config {
-    fn from(val: Py_Config_Mut<'_>) -> Self {
-        match val {
-            Py_Config_Mut::Owned(x) => x.inner.to_owned().inner.lock().unwrap().clone(),
-            Py_Config_Mut::RefMut(mut x) => {
-                x.inner.map_as_mut(|x| x.clone()).expect(DESTROYED_ERR_MSG)
-            }
-        }
-    }
-}
-
-impl From<&mut Py_Config_Mut<'_>> for Config {
-    fn from(val: &mut Py_Config_Mut<'_>) -> Self {
-        match val {
-            Py_Config_Mut::Owned(x) => x.inner.to_owned().inner.lock().unwrap().clone(),
-            Py_Config_Mut::RefMut(x) => x.inner.map_as_mut(|x| x.clone()).expect(DESTROYED_ERR_MSG),
-        }
-    }
-}
-
-// implement_type_conversion_v3!(Config, Py_Config_Mut);
+implement_type_conversion_v3!(Config, Py_Config_Mut);
 
 fn format_config<T: Into<Config>>(cfg: T) -> String {
     let cfg: Config = cfg.into();
@@ -149,9 +130,9 @@ impl Py_Config {
         }
     }
 
-    // pub fn __repr__(&self) -> String {
-    //     format_config(self.inner.inner)
-    // }
+    pub fn __repr__(&self) -> String {
+        format_config(self.inner.get_inner())
+    }
 
     fn __getattr__(this: PyObject, py: Python, attr: &str) -> PyResult<PyObject> {
         let reference = this.call_method0(py, intern!(py, "make_ref"))?;
