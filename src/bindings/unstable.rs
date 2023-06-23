@@ -147,11 +147,11 @@ impl Py_Unstable_Ref {
         })
     }
 
-    pub fn get_logger(&mut self) -> PyResult<Py_Logger_Ref> {
-        self.inner.map_as_mut(|inner| Py_Logger_Ref {
-            inner: RustRef::new(&mut inner.logger),
-        })
-    }
+    // pub fn get_logger(&mut self) -> PyResult<Py_Logger_Ref> {
+    //     self.inner.map_as_mut(|inner| Py_Logger_Ref {
+    //         inner: RustRef::new(&mut inner.logger),
+    //     })
+    // }
 
     pub fn set_logger(&mut self) -> PyResult<()> {
         todo!()

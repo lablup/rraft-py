@@ -2,7 +2,10 @@ use pyo3::{intern, prelude::*, types::PyString};
 use slog::*;
 use slog_async::OverflowStrategy;
 
-use utils::{implement_type_conversion, reference::RustRef};
+use utils::{
+    implement_type_conversion_v2,
+    reference_v2::{RefMutOwner, RustRef},
+};
 
 #[pyclass(name = "OverflowStrategy")]
 pub struct Py_OverflowStrategy(pub OverflowStrategy);
@@ -52,7 +55,7 @@ impl Py_OverflowStrategy {
 #[derive(Clone)]
 #[pyclass(name = "Logger")]
 pub struct Py_Logger {
-    pub inner: Logger,
+    pub inner: RefMutOwner<Logger>,
 }
 
 #[derive(Clone)]
@@ -67,7 +70,7 @@ pub enum Py_Logger_Mut<'p> {
     RefMut(Py_Logger_Ref),
 }
 
-implement_type_conversion!(Logger, Py_Logger_Mut);
+implement_type_conversion_v2!(Logger, Py_Logger_Mut);
 
 #[pymethods]
 impl Py_Logger {
@@ -83,7 +86,9 @@ impl Py_Logger {
 
         let logger = slog::Logger::root(drain, o!());
 
-        Py_Logger { inner: logger }
+        Py_Logger {
+            inner: RefMutOwner::new(logger),
+        }
     }
 
     pub fn make_ref(&mut self) -> Py_Logger_Ref {

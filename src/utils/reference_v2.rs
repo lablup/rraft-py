@@ -60,8 +60,7 @@ pub struct RefMutContainer<T> {
 
 impl<T> RefMutContainer<T> {
     pub fn new(content: &mut RefMutOwner<T>) -> Self {
-        let arc: Arc<Mutex<Option<NonNull<RefMutOwner<T>>>>> =
-            Arc::new(Mutex::new(NonNull::new(content)));
+        let arc = Arc::new(Mutex::new(NonNull::new(content)));
         content.refs.push(Arc::downgrade(&arc));
         RefMutContainer { inner: arc }
     }
