@@ -110,3 +110,34 @@ impl<T> RustRef<T> {
         runtime_error(DESTROYED_ERR_MSG)
     }
 }
+
+#[macro_export]
+// This macro accepts the raft-rs (Rust) type as the first argument and the Py type as the second argument,
+// And adds some boilerplate codes implementing the From trait for conversion between the two types.
+macro_rules! implement_type_conversion_v2 {
+    ($Typ:ty, $Py_Typ_Mut:ident) => {
+        use utils::errors::DESTROYED_ERR_MSG;
+
+        impl From<$Py_Typ_Mut<'_>> for $Typ {
+            fn from(val: $Py_Typ_Mut<'_>) -> Self {
+                match val {
+                    $Py_Typ_Mut::Owned(x) => x.inner.inner.clone(),
+                    $Py_Typ_Mut::RefMut(mut x) => {
+                        x.inner.map_as_mut(|x| x.clone()).expect(DESTROYED_ERR_MSG)
+                    }
+                }
+            }
+        }
+
+        impl From<&mut $Py_Typ_Mut<'_>> for $Typ {
+            fn from(val: &mut $Py_Typ_Mut<'_>) -> Self {
+                match val {
+                    $Py_Typ_Mut::Owned(x) => x.inner.inner.clone(),
+                    $Py_Typ_Mut::RefMut(x) => {
+                        x.inner.map_as_mut(|x| x.clone()).expect(DESTROYED_ERR_MSG)
+                    }
+                }
+            }
+        }
+    };
+}
