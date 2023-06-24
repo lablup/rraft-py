@@ -5,7 +5,7 @@ use raft::Config;
 use utils::implement_type_conversion_v3;
 use utils::reference_v3::{RefMutOwner, RustRef};
 
-use utils::errors::{Py_RaftError};
+use utils::errors::Py_RaftError;
 
 use super::readonly_option::Py_ReadOnlyOption;
 

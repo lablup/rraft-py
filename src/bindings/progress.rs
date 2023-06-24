@@ -1,8 +1,9 @@
 use pyo3::{intern, prelude::*, pyclass::CompareOp};
 
 use raft::Progress;
+use utils::{reference_v3::{RustRef, RefMutOwner}, implement_type_conversion_v3, implement_internal_new};
 
-use utils::{implement_type_conversion, reference::RustRef};
+use crate::inflights::Py_Inflights;
 
 use super::{
     inflights::{Py_Inflights_Mut, Py_Inflights_Ref},
@@ -12,7 +13,7 @@ use super::{
 #[derive(Clone)]
 #[pyclass(name = "Progress")]
 pub struct Py_Progress {
-    pub inner: Progress,
+    pub inner: RefMutOwner<Progress>,
 }
 
 #[derive(Clone)]
@@ -27,15 +28,15 @@ pub enum Py_Progress_Mut<'p> {
     RefMut(Py_Progress_Ref),
 }
 
-implement_type_conversion!(Progress, Py_Progress_Mut);
+implement_type_conversion_v3!(Progress, Py_Progress_Mut);
+
+implement_internal_new!(Progress, Py_Progress);
 
 #[pymethods]
 impl Py_Progress {
     #[new]
     pub fn new(next_idx: u64, ins_size: usize) -> Self {
-        Py_Progress {
-            inner: Progress::new(next_idx, ins_size),
-        }
+        Py_Progress::make_internal_new(Progress::new(next_idx, ins_size))
     }
 
     pub fn make_ref(&mut self) -> Py_Progress_Ref {
@@ -45,15 +46,15 @@ impl Py_Progress {
     }
 
     pub fn __repr__(&self) -> String {
-        format!("{:?}", self.inner)
+        format!("{:?}", self.inner.get_inner())
     }
 
     pub fn __richcmp__(&self, py: Python, rhs: Py_Progress_Mut, op: CompareOp) -> PyObject {
         let rhs: Progress = rhs.into();
 
         match op {
-            CompareOp::Eq => (self.inner == rhs).into_py(py),
-            CompareOp::Ne => (self.inner != rhs).into_py(py),
+            CompareOp::Eq => (self.inner.get_inner() == rhs).into_py(py),
+            CompareOp::Ne => (self.inner.get_inner() != rhs).into_py(py),
             _ => py.NotImplemented(),
         }
     }
@@ -88,9 +89,7 @@ impl Py_Progress_Ref {
     }
 
     pub fn clone(&self) -> PyResult<Py_Progress> {
-        Ok(Py_Progress {
-            inner: self.inner.map_as_ref(|x| x.clone())?,
-        })
+        Ok(Py_Progress::make_internal_new(self.inner.map_as_ref(|inner| inner.clone())?))
     }
 
     pub fn become_probe(&mut self) -> PyResult<()> {
@@ -154,8 +153,14 @@ impl Py_Progress_Ref {
     }
 
     pub fn get_ins(&mut self) -> PyResult<Py_Inflights_Ref> {
-        self.inner.map_as_mut(|inner| Py_Inflights_Ref {
-            inner: RustRef::new(&mut inner.ins),
+        self.inner.map_as_mut(|inner| {
+            // * Compile Error
+            // mismatched types
+            // expected mutable reference `&mut RefMutOwner<Inflights>`
+            // found mutable reference `&mut Inflights`
+            Py_Inflights_Ref {
+                inner: RustRef::new(&mut inner.ins),
+            }
         })
     }
 

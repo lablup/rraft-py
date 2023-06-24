@@ -6,13 +6,15 @@ use std::sync::{Arc, Mutex, Weak};
 use crate::errors::runtime_error;
 use crate::errors::DESTROYED_ERR_MSG;
 
-impl<T: Clone> RefMutOwner<T> {
+impl<T> RefMutOwner<T> {
     pub fn new(inner: T) -> Self {
         Self {
             inner: Arc::new(Mutex::new(inner)),
         }
     }
+}
 
+impl<T: Clone> RefMutOwner<T> {
     pub fn get_inner(&self) -> T {
         self.inner.lock().unwrap().clone()
     }
@@ -75,6 +77,19 @@ impl<T> RustRef<T> {
     pub fn destroyed_error() -> PyErr {
         runtime_error(DESTROYED_ERR_MSG)
     }
+}
+
+#[macro_export]
+macro_rules! implement_internal_new {
+    ($Typ:ty, $Py_Owner_Typ: ident) => {
+        impl $Py_Owner_Typ {
+            pub fn make_internal_new(inner: $Typ) -> Self {
+                $Py_Owner_Typ {
+                    inner: RefMutOwner::new(inner),
+                }
+            }
+        }
+    };
 }
 
 #[macro_export]
