@@ -1,5 +1,6 @@
 // Ref:
-// https://github.com/huggingface/tokenizers/tree/main/bindings/python
+// RefMutContainer implementation is greatly inspired from huggingface/tokenizer's python binding's.
+// https://github.com/huggingface/tokenizers/blob/main/bindings/python/src/utils/mod.rs
 use pyo3::prelude::*;
 use std::ops::Deref;
 use std::ops::DerefMut;
