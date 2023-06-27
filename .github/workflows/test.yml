@@ -1,4 +1,4 @@
-name: Test Automation
+name: Build, Lint, and Check all harness tests pass
 
 on:
   pull_request:
