@@ -12,7 +12,7 @@ use raftpb_bindings::snapshot::{Py_Snapshot_Mut, Py_Snapshot_Ref};
 use bindings::raft_state::{Py_RaftState_Mut, Py_RaftState_Ref};
 use raftpb_bindings::entry::Py_Entry_Mut;
 use utils::errors::{makeNativeRaftError, Py_RaftError, DESTROYED_ERR_MSG};
-use utils::reference::{RustRef, RefMutOwner};
+use utils::reference::{RefMutOwner, RustRef};
 use utils::unsafe_cast::make_mut;
 
 #[derive(Clone)]
@@ -221,7 +221,9 @@ impl Storage for Py_Storage {
         context: GetEntriesContext,
     ) -> raft::Result<Vec<raft::prelude::Entry>> {
         let max_size: Option<u64> = max_size.into();
-        let mut context = Py_GetEntriesContext { inner: RefMutOwner::new(context) };
+        let mut context = Py_GetEntriesContext {
+            inner: RefMutOwner::new(context),
+        };
 
         Python::with_gil(|py| {
             self.storage
@@ -308,7 +310,9 @@ impl Storage for Py_Storage_Ref {
         context: GetEntriesContext,
     ) -> raft::Result<Vec<raft::prelude::Entry>> {
         let max_size: Option<u64> = max_size.into();
-        let mut context = Py_GetEntriesContext { inner: RefMutOwner::new(context) };
+        let mut context = Py_GetEntriesContext {
+            inner: RefMutOwner::new(context),
+        };
 
         unsafe { make_mut(&self.inner) }
             .map_as_mut(|inner| {

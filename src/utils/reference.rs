@@ -1,12 +1,11 @@
 // Ref:: https://github.com/huggingface/tokenizers/tree/main/bindings/python
 use pyo3::prelude::*;
-use pyo3::PyErr;
 use std::ops::Deref;
 use std::ops::DerefMut;
 use std::ptr::NonNull;
 use std::sync::{Arc, Mutex, Weak};
 
-use crate::errors::runtime_error;
+use crate::errors::DestroyedRefUsedError;
 use crate::errors::DESTROYED_ERR_MSG;
 
 #[derive(Clone)]
@@ -72,13 +71,19 @@ impl<T> RefMutContainer<T> {
         }
     }
 
-    pub fn map<F: FnOnce(&T) -> U, U>(&self, f: F) -> Option<U> {
+    pub fn map<F, U>(&self, f: F) -> Option<U>
+    where
+        F: FnOnce(&T) -> U,
+    {
         let lock = self.inner.lock().unwrap();
         let ptr = lock.as_ref()?;
         Some(f(unsafe { ptr.as_ref() }))
     }
 
-    pub fn map_mut<F: FnOnce(&mut T) -> U, U>(&mut self, f: F) -> Option<U> {
+    pub fn map_mut<F, U>(&mut self, f: F) -> Option<U>
+    where
+        F: FnOnce(&mut T) -> U,
+    {
         let mut lock = self.inner.lock().unwrap();
         let ptr = lock.as_mut()?;
         Some(f(unsafe { ptr.as_mut() }))
@@ -92,16 +97,14 @@ unsafe impl<T: Sync> Sync for RefMutContainer<T> {}
 pub struct RustRef<T>(pub RefMutContainer<T>);
 
 impl<T> RustRef<T> {
+    /// Creates a new RustRef from a RefMutOwner which needs to be cleaned up when the owner drop in the Python.
     pub fn new(s: &mut RefMutOwner<T>) -> Self {
         Self(RefMutContainer::new(s))
     }
 
+    /// Creates a new RustRef from ref.
     pub fn new_raw(s: &mut T) -> Self {
         Self(RefMutContainer::new_raw(s))
-    }
-
-    pub fn destroyed_error() -> PyErr {
-        runtime_error(DESTROYED_ERR_MSG)
     }
 
     /// Provides a way to access a reference to the underlying data
@@ -109,7 +112,9 @@ impl<T> RustRef<T> {
     where
         F: FnOnce(&T) -> U,
     {
-        self.0.map(f).ok_or_else(Self::destroyed_error)
+        self.0
+            .map(f)
+            .ok_or(DestroyedRefUsedError::new_err(DESTROYED_ERR_MSG))
     }
 
     /// Provides a way to access a mutable reference to the underlying data
@@ -117,7 +122,9 @@ impl<T> RustRef<T> {
     where
         F: FnOnce(&mut T) -> U,
     {
-        self.0.map_mut(f).ok_or_else(Self::destroyed_error)
+        self.0
+            .map_mut(f)
+            .ok_or(DestroyedRefUsedError::new_err(DESTROYED_ERR_MSG))
     }
 }
 

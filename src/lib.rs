@@ -96,6 +96,11 @@ fn rraft(py: Python, m: &PyModule) -> PyResult<()> {
         m
     )?)?;
 
+    m.add(
+        "DestroyedRefUsedError",
+        py.get_type::<utils::errors::DestroyedRefUsedError>(),
+    )?;
+
     m.add("RaftError", py.get_type::<utils::errors::RaftError>())?;
     m.add(
         "RaftStorageError",

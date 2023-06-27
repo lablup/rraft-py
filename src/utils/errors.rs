@@ -1,4 +1,5 @@
 use core::panic;
+use std::fmt::Display;
 
 use pyo3::{
     create_exception,
@@ -226,13 +227,15 @@ create_exception!(rraft, UnavailableError, RaftStorageError);
 create_exception!(rraft, LogTemporarilyUnavailableError, RaftStorageError);
 create_exception!(rraft, OtherError, RaftStorageError);
 
+create_exception!(rraft, DestroyedRefUsedError, PyException);
+
 #[inline]
 pub fn runtime_error(msg: &str) -> PyErr {
     PyException::new_err(msg.to_string())
 }
 
 #[inline]
-pub fn to_pyresult<T, E: std::fmt::Display>(res: Result<T, E>) -> PyResult<T> {
+pub fn to_pyresult<T, E: Display>(res: Result<T, E>) -> PyResult<T> {
     res.map_err(|err| PyRuntimeError::new_err(err.to_string()))
 }
 
