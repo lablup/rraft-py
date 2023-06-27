@@ -9,18 +9,18 @@ use raft::eraftpb::ConfState;
 
 use utils::errors::{runtime_error, to_pyresult};
 use utils::implement_type_conversion;
-use utils::reference::RustRef;
+use utils::reference::{RefMutContainer, RefMutOwner};
 
 #[derive(Clone)]
 #[pyclass(name = "ConfState")]
 pub struct Py_ConfState {
-    pub inner: ConfState,
+    pub inner: RefMutOwner<ConfState>,
 }
 
 #[derive(Clone)]
 #[pyclass(name = "ConfState_Ref")]
 pub struct Py_ConfState_Ref {
-    pub inner: RustRef<ConfState>,
+    pub inner: RefMutContainer<ConfState>,
 }
 
 #[derive(FromPyObject)]
@@ -37,7 +37,7 @@ impl Py_ConfState {
     pub fn new(voters: Option<&PyList>, learners: Option<&PyList>) -> PyResult<Self> {
         if voters.and(learners).is_none() {
             Ok(Py_ConfState {
-                inner: ConfState::new(),
+                inner: RefMutOwner::new(ConfState::new()),
             })
         } else if voters.or(learners).is_none() {
             Err(runtime_error(
@@ -47,7 +47,7 @@ impl Py_ConfState {
             let voters = voters.unwrap().extract::<Vec<u64>>()?;
             let learners = learners.unwrap().extract::<Vec<u64>>()?;
             Ok(Py_ConfState {
-                inner: ConfState::from((voters, learners)),
+                inner: RefMutOwner::new(ConfState::from((voters, learners))),
             })
         }
     }
@@ -55,33 +55,33 @@ impl Py_ConfState {
     #[staticmethod]
     pub fn default() -> Self {
         Py_ConfState {
-            inner: ConfState::default(),
+            inner: RefMutOwner::new(ConfState::default()),
         }
     }
 
     #[staticmethod]
     pub fn decode(v: &[u8]) -> PyResult<Py_ConfState> {
         Ok(Py_ConfState {
-            inner: to_pyresult(ProstMessage::decode(v))?,
+            inner: RefMutOwner::new(to_pyresult(ProstMessage::decode(v))?),
         })
     }
 
     pub fn make_ref(&mut self) -> Py_ConfState_Ref {
         Py_ConfState_Ref {
-            inner: RustRef::new(&mut self.inner),
+            inner: RefMutContainer::new(&mut self.inner),
         }
     }
 
     pub fn __repr__(&self) -> String {
-        format!("{:?}", self.inner)
+        format!("{:?}", self.inner.inner)
     }
 
     pub fn __richcmp__(&self, py: Python, rhs: Py_ConfState_Mut, op: CompareOp) -> PyObject {
         let rhs: ConfState = rhs.into();
 
         match op {
-            CompareOp::Eq => (self.inner == rhs).into_py(py),
-            CompareOp::Ne => (self.inner != rhs).into_py(py),
+            CompareOp::Eq => (self.inner.inner == rhs).into_py(py),
+            CompareOp::Ne => (self.inner.inner != rhs).into_py(py),
             _ => py.NotImplemented(),
         }
     }
@@ -117,7 +117,7 @@ impl Py_ConfState_Ref {
 
     pub fn clone(&self) -> PyResult<Py_ConfState> {
         Ok(Py_ConfState {
-            inner: self.inner.map_as_ref(|inner| inner.clone())?,
+            inner: RefMutOwner::new(self.inner.map_as_ref(|inner| inner.clone())?),
         })
     }
 

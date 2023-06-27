@@ -16,6 +16,7 @@ use raftpb_bindings::message_type::{
 
 use external_bindings::slog::Py_Logger;
 use raftpb_bindings::message_type::Py_MessageType;
+use utils::reference::RefMutOwner;
 
 // Global scope functions
 #[pyfunction]
@@ -26,7 +27,7 @@ pub fn majority(total: usize) -> usize {
 #[pyfunction]
 pub fn default_logger() -> Py_Logger {
     Py_Logger {
-        inner: _default_logger(),
+        inner: RefMutOwner::new(_default_logger()),
     }
 }
 
@@ -38,7 +39,7 @@ pub fn vote_resp_msg_type(typ: &Py_MessageType) -> Py_MessageType {
 #[pyfunction]
 pub fn new_conf_change_single(node_id: u64, typ: &Py_ConfChangeType) -> Py_ConfChangeSingle {
     Py_ConfChangeSingle {
-        inner: _new_conf_change_single(node_id, typ.0),
+        inner: RefMutOwner::new(_new_conf_change_single(node_id, typ.0)),
     }
 }
 

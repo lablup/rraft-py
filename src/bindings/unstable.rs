@@ -1,24 +1,25 @@
 use pyo3::{intern, prelude::*, types::PyList};
 
-use external_bindings::slog::{Py_Logger_Mut, Py_Logger_Ref};
+use external_bindings::slog::Py_Logger_Mut;
 use raftpb_bindings::{
     entry::{Py_Entry_Mut, Py_Entry_Ref},
     snapshot::{Py_Snapshot_Mut, Py_Snapshot_Ref},
 };
 
 use raft::Unstable;
-use utils::unsafe_cast::make_mut;
-
-use utils::reference::RustRef;
+use utils::{
+    reference::{RefMutContainer, RefMutOwner},
+    unsafe_cast::make_mut,
+};
 
 #[pyclass(name = "Unstable")]
 pub struct Py_Unstable {
-    pub inner: Unstable,
+    pub inner: RefMutOwner<Unstable>,
 }
 
 #[pyclass(name = "Unstable_Ref")]
 pub struct Py_Unstable_Ref {
-    pub inner: RustRef<Unstable>,
+    pub inner: RefMutContainer<Unstable>,
 }
 
 #[pymethods]
@@ -26,18 +27,18 @@ impl Py_Unstable {
     #[new]
     pub fn new(offset: u64, logger: Py_Logger_Mut) -> Self {
         Py_Unstable {
-            inner: Unstable::new(offset, logger.into()),
+            inner: RefMutOwner::new(Unstable::new(offset, logger.into())),
         }
     }
 
     pub fn make_ref(&mut self) -> Py_Unstable_Ref {
         Py_Unstable_Ref {
-            inner: RustRef::new(&mut self.inner),
+            inner: RefMutContainer::new(&mut self.inner),
         }
     }
 
     pub fn __repr__(&self) -> String {
-        format!("{:?}", self.inner)
+        format!("{:?}", self.inner.inner)
     }
 
     fn __getattr__(this: PyObject, py: Python, attr: &str) -> PyResult<PyObject> {
@@ -75,7 +76,7 @@ impl Py_Unstable_Ref {
                 .slice(lo, hi)
                 .iter()
                 .map(|entry| Py_Entry_Ref {
-                    inner: RustRef::new(unsafe { make_mut(entry) }),
+                    inner: RefMutContainer::new_raw(unsafe { make_mut(entry) }),
                 })
                 .collect::<Vec<_>>()
                 .into_py(py)
@@ -132,7 +133,7 @@ impl Py_Unstable_Ref {
                 .entries
                 .iter_mut()
                 .map(|entry| Py_Entry_Ref {
-                    inner: RustRef::new(entry),
+                    inner: RefMutContainer::new_raw(entry),
                 })
                 .collect::<Vec<_>>()
                 .into_py(py)
@@ -147,11 +148,11 @@ impl Py_Unstable_Ref {
         })
     }
 
-    pub fn get_logger(&mut self) -> PyResult<Py_Logger_Ref> {
-        self.inner.map_as_mut(|inner| Py_Logger_Ref {
-            inner: RustRef::new(&mut inner.logger),
-        })
-    }
+    // pub fn get_logger(&mut self) -> PyResult<Py_Logger_Ref> {
+    //     self.inner.map_as_mut(|inner| Py_Logger_Ref {
+    //         inner: RefMutContainer::new(&mut inner.logger),
+    //     })
+    // }
 
     pub fn set_logger(&mut self) -> PyResult<()> {
         todo!()
@@ -160,7 +161,7 @@ impl Py_Unstable_Ref {
     pub fn get_snapshot(&mut self) -> PyResult<Option<Py_Snapshot_Ref>> {
         self.inner.map_as_mut(|inner| {
             inner.snapshot.as_ref().map(|snapshot| Py_Snapshot_Ref {
-                inner: RustRef::new(unsafe { make_mut(snapshot) }),
+                inner: RefMutContainer::new_raw(unsafe { make_mut(snapshot) }),
             })
         })
     }

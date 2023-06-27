@@ -3,7 +3,7 @@ use pyo3::{intern, prelude::*};
 use raft::Config;
 
 use utils::implement_type_conversion;
-use utils::reference::RustRef;
+use utils::reference::{RefMutContainer, RefMutOwner};
 
 use utils::errors::Py_RaftError;
 
@@ -12,13 +12,13 @@ use super::readonly_option::Py_ReadOnlyOption;
 #[derive(Clone)]
 #[pyclass(name = "Config")]
 pub struct Py_Config {
-    pub inner: Config,
+    pub inner: RefMutOwner<Config>,
 }
 
 #[derive(Clone)]
 #[pyclass(name = "Config_Ref")]
 pub struct Py_Config_Ref {
-    pub inner: RustRef<Config>,
+    pub inner: RefMutContainer<Config>,
 }
 
 #[derive(FromPyObject)]
@@ -112,24 +112,26 @@ impl Py_Config {
         config.skip_bcast_commit = skip_bcast_commit.unwrap_or(config.skip_bcast_commit);
         config.read_only_option = read_only_option.map_or(config.read_only_option, |opt| opt.0);
 
-        Py_Config { inner: config }
+        Py_Config {
+            inner: RefMutOwner::new(config),
+        }
     }
 
     #[staticmethod]
     pub fn default() -> Py_Config {
         Py_Config {
-            inner: Config::default(),
+            inner: RefMutOwner::new(Config::default()),
         }
     }
 
     pub fn make_ref(&mut self) -> Py_Config_Ref {
         Py_Config_Ref {
-            inner: RustRef::new(&mut self.inner),
+            inner: RefMutContainer::new(&mut self.inner),
         }
     }
 
     pub fn __repr__(&self) -> String {
-        format_config(self.inner.clone())
+        format_config(self.inner.inner.clone())
     }
 
     fn __getattr__(this: PyObject, py: Python, attr: &str) -> PyResult<PyObject> {
@@ -146,7 +148,7 @@ impl Py_Config_Ref {
 
     pub fn clone(&self) -> PyResult<Py_Config> {
         Ok(Py_Config {
-            inner: self.inner.map_as_ref(|inner| inner.clone())?,
+            inner: RefMutOwner::new(self.inner.map_as_ref(|inner| inner.clone())?),
         })
     }
 

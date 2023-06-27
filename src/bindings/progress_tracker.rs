@@ -8,7 +8,7 @@ use pyo3::{prelude::*, types::PySet};
 use fxhash::FxHasher;
 use raft::{Progress, ProgressTracker};
 use utils::implement_type_conversion;
-use utils::reference::RustRef;
+use utils::reference::{RefMutContainer, RefMutOwner};
 use utils::unsafe_cast::{make_mut, make_static};
 
 use super::joint_config::Py_JointConfig_Ref;
@@ -17,13 +17,13 @@ use super::progress::Py_Progress_Ref;
 #[derive(Clone)]
 #[pyclass(name = "ProgressTracker")]
 pub struct Py_ProgressTracker {
-    pub inner: ProgressTracker,
+    pub inner: RefMutOwner<ProgressTracker>,
 }
 
 #[derive(Clone)]
 #[pyclass(name = "ProgressTracker_Ref")]
 pub struct Py_ProgressTracker_Ref {
-    pub inner: RustRef<ProgressTracker>,
+    pub inner: RefMutContainer<ProgressTracker>,
 }
 
 #[derive(FromPyObject)]
@@ -39,19 +39,19 @@ impl Py_ProgressTracker {
     #[new]
     pub fn new(max_inflight: usize) -> Self {
         Py_ProgressTracker {
-            inner: ProgressTracker::new(max_inflight),
+            inner: RefMutOwner::new(ProgressTracker::new(max_inflight)),
         }
     }
 
     pub fn make_ref(&mut self) -> Py_ProgressTracker_Ref {
         Py_ProgressTracker_Ref {
-            inner: RustRef::new(&mut self.inner),
+            inner: RefMutContainer::new(&mut self.inner),
         }
     }
 
     pub fn __getitem__(&self, id: u64) -> Option<Py_Progress_Ref> {
         self.inner.get(id).map(|progress| Py_Progress_Ref {
-            inner: RustRef::new(unsafe { make_mut(progress) }),
+            inner: RefMutContainer::new_raw(unsafe { make_mut(progress) }),
         })
     }
 
@@ -72,7 +72,7 @@ impl Py_ProgressMapItem {
 
     pub fn progress(&self) -> Py_Progress_Ref {
         Py_Progress_Ref {
-            inner: RustRef::new(unsafe { make_mut(self.1) }),
+            inner: RefMutContainer::new_raw(unsafe { make_mut(self.1) }),
         }
     }
 }
@@ -81,14 +81,14 @@ impl Py_ProgressMapItem {
 impl Py_ProgressTracker_Ref {
     pub fn clone(&self) -> PyResult<Py_ProgressTracker> {
         Ok(Py_ProgressTracker {
-            inner: self.inner.map_as_ref(|x| x.clone())?,
+            inner: RefMutOwner::new(self.inner.map_as_ref(|x| x.clone())?),
         })
     }
 
     pub fn __getitem__(&self, id: u64) -> PyResult<Option<Py_Progress_Ref>> {
         self.inner.map_as_ref(|inner| {
             inner.get(id).map(|progress| Py_Progress_Ref {
-                inner: RustRef::new(unsafe { make_mut(progress) }),
+                inner: RefMutContainer::new_raw(unsafe { make_mut(progress) }),
             })
         })
     }
@@ -111,7 +111,7 @@ impl Py_ProgressTracker_Ref {
     pub fn get(&self, id: u64) -> PyResult<Option<Py_Progress_Ref>> {
         self.inner.map_as_ref(|inner| {
             inner.get(id).map(|progress| Py_Progress_Ref {
-                inner: RustRef::new(unsafe { make_mut(progress) }),
+                inner: RefMutContainer::new_raw(unsafe { make_mut(progress) }),
             })
         })
     }
@@ -172,7 +172,7 @@ impl Py_ProgressTracker_Ref {
 
     pub fn conf_voters(&mut self) -> PyResult<Py_JointConfig_Ref> {
         self.inner.map_as_mut(|inner| Py_JointConfig_Ref {
-            inner: RustRef::new(unsafe { make_mut(inner.conf().voters()) }),
+            inner: RefMutContainer::new_raw(unsafe { make_mut(inner.conf().voters()) }),
         })
     }
 

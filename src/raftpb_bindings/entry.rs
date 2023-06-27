@@ -4,21 +4,22 @@ use pyo3::pyclass::CompareOp;
 use pyo3::types::PyBytes;
 use pyo3::{intern, prelude::*};
 use raft::eraftpb::Entry;
+use utils::errors::to_pyresult;
 use utils::implement_type_conversion;
-use utils::{errors::to_pyresult, reference::RustRef};
+use utils::reference::{RefMutContainer, RefMutOwner};
 
 use super::entry_type::Py_EntryType;
 
 #[derive(Clone)]
 #[pyclass(name = "Entry")]
 pub struct Py_Entry {
-    pub inner: Entry,
+    pub inner: RefMutOwner<Entry>,
 }
 
 #[derive(Clone)]
 #[pyclass(name = "Entry_Ref")]
 pub struct Py_Entry_Ref {
-    pub inner: RustRef<Entry>,
+    pub inner: RefMutContainer<Entry>,
 }
 
 #[derive(FromPyObject)]
@@ -34,40 +35,40 @@ impl Py_Entry {
     #[new]
     pub fn new() -> Self {
         Py_Entry {
-            inner: Entry::new(),
+            inner: RefMutOwner::new(Entry::new()),
         }
     }
 
     #[staticmethod]
     pub fn default() -> Self {
         Py_Entry {
-            inner: Entry::default(),
+            inner: RefMutOwner::new(Entry::default()),
         }
     }
 
     #[staticmethod]
     pub fn decode(v: &[u8]) -> PyResult<Py_Entry> {
         Ok(Py_Entry {
-            inner: to_pyresult(ProstMessage::decode(v))?,
+            inner: RefMutOwner::new(to_pyresult(ProstMessage::decode(v))?),
         })
     }
 
     pub fn make_ref(&mut self) -> Py_Entry_Ref {
         Py_Entry_Ref {
-            inner: RustRef::new(&mut self.inner),
+            inner: RefMutContainer::new(&mut self.inner),
         }
     }
 
     pub fn __repr__(&self) -> String {
-        format!("{:?}", self.inner)
+        format!("{:?}", self.inner.inner)
     }
 
     pub fn __richcmp__(&self, py: Python, rhs: Py_Entry_Mut, op: CompareOp) -> PyObject {
         let rhs: Entry = rhs.into();
 
         match op {
-            CompareOp::Eq => (self.inner == rhs).into_py(py),
-            CompareOp::Ne => (self.inner != rhs).into_py(py),
+            CompareOp::Eq => (self.inner.inner == rhs).into_py(py),
+            CompareOp::Ne => (self.inner.inner != rhs).into_py(py),
             _ => py.NotImplemented(),
         }
     }
@@ -98,7 +99,7 @@ impl Py_Entry_Ref {
 
     pub fn clone(&self) -> PyResult<Py_Entry> {
         Ok(Py_Entry {
-            inner: self.inner.map_as_ref(|x| x.clone())?,
+            inner: RefMutOwner::new(self.inner.map_as_ref(|x| x.clone())?),
         })
     }
 

@@ -12,16 +12,19 @@ use super::{
     soft_state::Py_SoftState,
 };
 use raft::{raw_node::Ready, SoftState};
-use utils::{reference::RustRef, unsafe_cast::make_mut};
+use utils::{
+    reference::{RefMutContainer, RefMutOwner},
+    unsafe_cast::make_mut,
+};
 
 #[pyclass(name = "Ready")]
 pub struct Py_Ready {
-    pub inner: Ready,
+    pub inner: RefMutOwner<Ready>,
 }
 
 #[pyclass(name = "Ready_Ref")]
 pub struct Py_Ready_Ref {
-    pub inner: RustRef<Ready>,
+    pub inner: RefMutContainer<Ready>,
 }
 
 #[pymethods]
@@ -29,18 +32,18 @@ impl Py_Ready {
     #[staticmethod]
     pub fn default() -> Self {
         Py_Ready {
-            inner: Ready::default(),
+            inner: RefMutOwner::new(Ready::default()),
         }
     }
 
     pub fn make_ref(&mut self) -> Py_Ready_Ref {
         Py_Ready_Ref {
-            inner: RustRef::new(&mut self.inner),
+            inner: RefMutContainer::new(&mut self.inner),
         }
     }
 
     pub fn __repr__(&self) -> String {
-        format!("{:?}", self.inner)
+        format!("{:?}", self.inner.inner)
     }
 
     fn __getattr__(this: PyObject, py: Python, attr: &str) -> PyResult<PyObject> {
@@ -58,7 +61,7 @@ impl Py_Ready_Ref {
     pub fn hs(&mut self) -> PyResult<Option<Py_HardState_Ref>> {
         self.inner.map_as_mut(|inner| {
             inner.hs().map(|hs| Py_HardState_Ref {
-                inner: RustRef::new(unsafe { make_mut(hs) }),
+                inner: RefMutContainer::new_raw(unsafe { make_mut(hs) }),
             })
         })
     }
@@ -66,10 +69,10 @@ impl Py_Ready_Ref {
     pub fn ss(&mut self) -> PyResult<Option<Py_SoftState>> {
         self.inner.map_as_mut(|inner| {
             inner.ss().map(|ss| Py_SoftState {
-                inner: SoftState {
+                inner: RefMutOwner::new(SoftState {
                     leader_id: ss.leader_id,
                     raft_state: ss.raft_state,
-                },
+                }),
             })
         })
     }
@@ -84,7 +87,7 @@ impl Py_Ready_Ref {
 
     pub fn snapshot(&mut self) -> PyResult<Py_Snapshot_Ref> {
         self.inner.map_as_mut(|inner| Py_Snapshot_Ref {
-            inner: RustRef::new(unsafe { make_mut(inner.snapshot()) }),
+            inner: RefMutContainer::new_raw(unsafe { make_mut(inner.snapshot()) }),
         })
     }
 
@@ -93,7 +96,7 @@ impl Py_Ready_Ref {
             unsafe { make_mut(inner.committed_entries()) }
                 .iter_mut()
                 .map(|entry| Py_Entry_Ref {
-                    inner: RustRef::new(entry),
+                    inner: RefMutContainer::new_raw(entry),
                 })
                 .collect::<Vec<_>>()
                 .into_py(py)
@@ -105,7 +108,9 @@ impl Py_Ready_Ref {
             inner
                 .take_committed_entries()
                 .into_iter()
-                .map(|entry| Py_Entry { inner: entry })
+                .map(|entry| Py_Entry {
+                    inner: RefMutOwner::new(entry),
+                })
                 .collect::<Vec<_>>()
                 .into_py(py)
         })
@@ -116,7 +121,7 @@ impl Py_Ready_Ref {
             unsafe { make_mut(inner.entries()) }
                 .iter_mut()
                 .map(|entry| Py_Entry_Ref {
-                    inner: RustRef::new(entry),
+                    inner: RefMutContainer::new_raw(entry),
                 })
                 .collect::<Vec<_>>()
                 .into_py(py)
@@ -128,7 +133,9 @@ impl Py_Ready_Ref {
             inner
                 .take_entries()
                 .into_iter()
-                .map(|entry| Py_Entry { inner: entry })
+                .map(|entry| Py_Entry {
+                    inner: RefMutOwner::new(entry),
+                })
                 .collect::<Vec<_>>()
                 .into_py(py)
         })
@@ -140,7 +147,7 @@ impl Py_Ready_Ref {
                 .messages()
                 .iter()
                 .map(|msg| Py_Message_Ref {
-                    inner: RustRef::new(unsafe { make_mut(msg) }),
+                    inner: RefMutContainer::new_raw(unsafe { make_mut(msg) }),
                 })
                 .collect::<Vec<_>>()
                 .into_py(py)
@@ -152,7 +159,9 @@ impl Py_Ready_Ref {
             inner
                 .take_messages()
                 .into_iter()
-                .map(|msg| Py_Message { inner: msg })
+                .map(|msg| Py_Message {
+                    inner: RefMutOwner::new(msg),
+                })
                 .collect::<Vec<_>>()
                 .into_py(py)
         })
@@ -164,7 +173,7 @@ impl Py_Ready_Ref {
                 .persisted_messages()
                 .iter()
                 .map(|msg| Py_Message_Ref {
-                    inner: RustRef::new(unsafe { make_mut(msg) }),
+                    inner: RefMutContainer::new_raw(unsafe { make_mut(msg) }),
                 })
                 .collect::<Vec<_>>()
                 .into_py(py)
@@ -176,7 +185,9 @@ impl Py_Ready_Ref {
             inner
                 .take_persisted_messages()
                 .into_iter()
-                .map(|msg| Py_Message { inner: msg })
+                .map(|msg| Py_Message {
+                    inner: RefMutOwner::new(msg),
+                })
                 .collect::<Vec<_>>()
                 .into_py(py)
         })
@@ -188,7 +199,7 @@ impl Py_Ready_Ref {
                 .read_states()
                 .iter()
                 .map(|rs| Py_ReadState_Ref {
-                    inner: RustRef::new(unsafe { make_mut(rs) }),
+                    inner: RefMutContainer::new_raw(unsafe { make_mut(rs) }),
                 })
                 .collect::<Vec<_>>()
                 .into_py(py)
@@ -200,7 +211,9 @@ impl Py_Ready_Ref {
             inner
                 .take_read_states()
                 .into_iter()
-                .map(|rs| Py_ReadState { inner: rs })
+                .map(|rs| Py_ReadState {
+                    inner: RefMutOwner::new(rs),
+                })
                 .collect::<Vec<_>>()
                 .into_py(py)
         })

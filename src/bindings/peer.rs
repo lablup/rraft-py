@@ -1,17 +1,16 @@
 use pyo3::{intern, prelude::*, types::PyBytes};
 
 use raft::raw_node::Peer;
-
-use utils::reference::RustRef;
+use utils::reference::{RefMutContainer, RefMutOwner};
 
 #[pyclass(name = "Peer")]
 pub struct Py_Peer {
-    pub inner: Peer,
+    pub inner: RefMutOwner<Peer>,
 }
 
 #[pyclass(name = "Peer_Ref")]
 pub struct Py_Peer_Ref {
-    pub inner: RustRef<Peer>,
+    pub inner: RefMutContainer<Peer>,
 }
 
 #[pymethods]
@@ -19,18 +18,18 @@ impl Py_Peer {
     #[new]
     pub fn new() -> Self {
         Py_Peer {
-            inner: Peer::default(),
+            inner: RefMutOwner::new(Peer::default()),
         }
     }
 
     pub fn make_ref(&mut self) -> Py_Peer_Ref {
         Py_Peer_Ref {
-            inner: RustRef::new(&mut self.inner),
+            inner: RefMutContainer::new(&mut self.inner),
         }
     }
 
     pub fn __repr__(&self) -> String {
-        format!("{:?}", self.inner)
+        format!("{:?}", self.inner.inner)
     }
 
     fn __getattr__(this: PyObject, py: Python, attr: &str) -> PyResult<PyObject> {

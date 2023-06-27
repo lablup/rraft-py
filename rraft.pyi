@@ -3246,6 +3246,9 @@ class Config_Ref(__API_Config):
 #     Reference type of :class:`Status__Memstorage`.
 #     """
 
+class DestroyedRefUsedError(Exception):
+    """ """
+
 class RaftError(Exception):
     """ """
 

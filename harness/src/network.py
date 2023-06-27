@@ -5,6 +5,7 @@ from rraft import (
     ConfState,
     Config_Ref,
     Logger,
+    Logger_Ref,
     MemStorage,
     Message,
     Message_Ref,
@@ -65,7 +66,7 @@ class Network:
         return cfg
 
     @staticmethod
-    def new(peers: List[Optional[Interface]], l: Logger) -> "Network":
+    def new(peers: List[Optional[Interface]], l: Logger | Logger_Ref) -> "Network":
         """
         Initializes a network from `peers`.
 
@@ -74,14 +75,13 @@ class Network:
         A `None` node will be replaced with a new Raft node, and its configuration will
         be `peers`.
         """
-        cfg = Network.default_config()
-        return Network.new_with_config(peers, cfg, l)
+        return Network.new_with_config(peers, Network.default_config(), l)
 
     @staticmethod
     def new_with_config(
         peers: List[Optional[Interface]],
         config: Config | Config_Ref,
-        l: Logger,
+        l: Logger | Logger_Ref,
     ) -> "Network":
         """
         Initialize a network from `peers` with explicitly specified `config`.

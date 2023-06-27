@@ -8,7 +8,10 @@ use pyo3::{
 };
 use raft::eraftpb::ConfChangeV2;
 use utils::{
-    errors::to_pyresult, implement_type_conversion, reference::RustRef, unsafe_cast::make_mut,
+    errors::to_pyresult,
+    implement_type_conversion,
+    reference::{RefMutContainer, RefMutOwner},
+    unsafe_cast::make_mut,
 };
 
 use super::{
@@ -20,13 +23,13 @@ use super::{
 #[derive(Clone)]
 #[pyclass(name = "ConfChangeV2")]
 pub struct Py_ConfChangeV2 {
-    pub inner: ConfChangeV2,
+    pub inner: RefMutOwner<ConfChangeV2>,
 }
 
 #[derive(Clone)]
 #[pyclass(name = "ConfChangeV2_Ref")]
 pub struct Py_ConfChangeV2_Ref {
-    pub inner: RustRef<ConfChangeV2>,
+    pub inner: RefMutContainer<ConfChangeV2>,
 }
 
 #[derive(FromPyObject)]
@@ -42,40 +45,40 @@ impl Py_ConfChangeV2 {
     #[new]
     pub fn new() -> Self {
         Py_ConfChangeV2 {
-            inner: ConfChangeV2::new(),
+            inner: RefMutOwner::new(ConfChangeV2::new()),
         }
     }
 
     #[staticmethod]
     pub fn default() -> Self {
         Py_ConfChangeV2 {
-            inner: ConfChangeV2::default(),
+            inner: RefMutOwner::new(ConfChangeV2::default()),
         }
     }
 
     #[staticmethod]
     pub fn decode(v: &[u8]) -> PyResult<Py_ConfChangeV2> {
         Ok(Py_ConfChangeV2 {
-            inner: to_pyresult(ProstMessage::decode(v))?,
+            inner: RefMutOwner::new(to_pyresult(ProstMessage::decode(v))?),
         })
     }
 
     pub fn make_ref(&mut self) -> Py_ConfChangeV2_Ref {
         Py_ConfChangeV2_Ref {
-            inner: RustRef::new(&mut self.inner),
+            inner: RefMutContainer::new(&mut self.inner),
         }
     }
 
     pub fn __repr__(&self) -> String {
-        format!("{:?}", self.inner)
+        format!("{:?}", self.inner.inner)
     }
 
     pub fn __richcmp__(&self, py: Python, rhs: Py_ConfChangeV2_Mut, op: CompareOp) -> PyObject {
         let rhs: ConfChangeV2 = rhs.into();
 
         match op {
-            CompareOp::Eq => (self.inner == rhs).into_py(py),
-            CompareOp::Ne => (self.inner != rhs).into_py(py),
+            CompareOp::Eq => (self.inner.inner == rhs).into_py(py),
+            CompareOp::Ne => (self.inner.inner != rhs).into_py(py),
             _ => py.NotImplemented(),
         }
     }
@@ -117,7 +120,7 @@ impl Py_ConfChangeV2_Ref {
 
     pub fn clone(&self) -> PyResult<Py_ConfChangeV2> {
         Ok(Py_ConfChangeV2 {
-            inner: self.inner.map_as_ref(|x| x.clone())?,
+            inner: RefMutOwner::new(self.inner.map_as_ref(|x| x.clone())?),
         })
     }
 
@@ -132,7 +135,7 @@ impl Py_ConfChangeV2_Ref {
                 .get_changes()
                 .iter()
                 .map(|cs| Py_ConfChangeSingle_Ref {
-                    inner: RustRef::new(unsafe { make_mut(cs) }),
+                    inner: RefMutContainer::new_raw(unsafe { make_mut(cs) }),
                 })
                 .collect::<Vec<_>>()
                 .into_py(py)
@@ -202,7 +205,7 @@ impl Py_ConfChangeV2_Ref {
 
     pub fn into_v2(&mut self) -> PyResult<Py_ConfChangeV2> {
         self.inner.map_as_mut(|inner| Py_ConfChangeV2 {
-            inner: inner.clone(),
+            inner: RefMutOwner::new(inner.clone()),
         })
     }
 }

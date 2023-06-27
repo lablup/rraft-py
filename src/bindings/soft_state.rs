@@ -1,19 +1,18 @@
 use pyo3::{intern, prelude::*, pyclass::CompareOp};
 
 use raft::SoftState;
-
-use utils::reference::RustRef;
+use utils::reference::{RefMutContainer, RefMutOwner};
 
 use super::state_role::Py_StateRole;
 
 #[pyclass(name = "SoftState")]
 pub struct Py_SoftState {
-    pub inner: SoftState,
+    pub inner: RefMutOwner<SoftState>,
 }
 
 #[pyclass(name = "SoftState_Ref")]
 pub struct Py_SoftState_Ref {
-    pub inner: RustRef<SoftState>,
+    pub inner: RefMutContainer<SoftState>,
 }
 
 #[pymethods]
@@ -21,18 +20,18 @@ impl Py_SoftState {
     #[staticmethod]
     pub fn default() -> Self {
         Py_SoftState {
-            inner: SoftState::default(),
+            inner: RefMutOwner::new(SoftState::default()),
         }
     }
 
     pub fn make_ref(&mut self) -> Py_SoftState_Ref {
         Py_SoftState_Ref {
-            inner: RustRef::new(&mut self.inner),
+            inner: RefMutContainer::new(&mut self.inner),
         }
     }
 
     pub fn __repr__(&self) -> String {
-        format!("{:?}", self.inner)
+        format!("{:?}", self.inner.inner)
     }
 
     pub fn __richcmp__(
@@ -42,8 +41,12 @@ impl Py_SoftState {
         op: CompareOp,
     ) -> PyResult<PyObject> {
         match op {
-            CompareOp::Eq => rhs.inner.map_as_ref(|x| (x == &self.inner).into_py(py)),
-            CompareOp::Ne => rhs.inner.map_as_ref(|x| (x != &self.inner).into_py(py)),
+            CompareOp::Eq => rhs
+                .inner
+                .map_as_ref(|x| (x == &self.inner.inner).into_py(py)),
+            CompareOp::Ne => rhs
+                .inner
+                .map_as_ref(|x| (x != &self.inner.inner).into_py(py)),
             _ => Ok(py.NotImplemented()),
         }
     }

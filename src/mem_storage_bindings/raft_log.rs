@@ -2,6 +2,7 @@ use bindings::get_entries_context::Py_GetEntriesContext_Ref;
 use pyo3::types::PyList;
 use pyo3::{intern, prelude::*};
 use utils::errors::Py_RaftError;
+use utils::reference::{RefMutContainer, RefMutOwner};
 use utils::unsafe_cast::make_mut;
 
 use external_bindings::slog::Py_Logger_Mut;
@@ -10,19 +11,18 @@ use raftpb_bindings::snapshot::{Py_Snapshot_Mut, Py_Snapshot_Ref};
 use super::mem_storage::{Py_MemStorage_Mut, Py_MemStorage_Ref};
 use raft::RaftLog;
 use raft::{storage::MemStorage, GetEntriesContext};
-use utils::reference::RustRef;
 
 use bindings::unstable::Py_Unstable_Ref;
 use raftpb_bindings::entry::{Py_Entry, Py_Entry_Mut, Py_Entry_Ref};
 
 #[pyclass(name = "InMemoryRaftLog")]
 pub struct Py_InMemoryRaftLog {
-    pub inner: RaftLog<MemStorage>,
+    pub inner: RefMutOwner<RaftLog<MemStorage>>,
 }
 
 #[pyclass(name = "InMemoryRaftLog_Ref")]
 pub struct Py_InMemoryRaftLog_Ref {
-    pub inner: RustRef<RaftLog<MemStorage>>,
+    pub inner: RefMutContainer<RaftLog<MemStorage>>,
 }
 
 #[pymethods]
@@ -30,13 +30,13 @@ impl Py_InMemoryRaftLog {
     #[new]
     pub fn new(store: Py_MemStorage_Mut, logger: Py_Logger_Mut) -> Self {
         Py_InMemoryRaftLog {
-            inner: RaftLog::new(store.into(), logger.into()),
+            inner: RefMutOwner::new(RaftLog::new(store.into(), logger.into())),
         }
     }
 
     pub fn make_ref(&mut self) -> Py_InMemoryRaftLog_Ref {
         Py_InMemoryRaftLog_Ref {
-            inner: RustRef::new(&mut self.inner),
+            inner: RefMutContainer::new(&mut self.inner),
         }
     }
 
@@ -74,7 +74,9 @@ impl Py_InMemoryRaftLog_Ref {
                 .map(|entries| {
                     entries
                         .into_iter()
-                        .map(|entry| Py_Entry { inner: entry })
+                        .map(|entry| Py_Entry {
+                            inner: RefMutOwner::new(entry),
+                        })
                         .collect::<Vec<_>>()
                         .into_py(py)
                 })
@@ -87,7 +89,9 @@ impl Py_InMemoryRaftLog_Ref {
             inner
                 .all_entries()
                 .into_iter()
-                .map(|entry| Py_Entry { inner: entry })
+                .map(|entry| Py_Entry {
+                    inner: RefMutOwner::new(entry),
+                })
                 .collect::<Vec<_>>()
                 .into_py(py)
         })
@@ -98,7 +102,9 @@ impl Py_InMemoryRaftLog_Ref {
             inner.next_entries(max_size).map(|entries| {
                 entries
                     .into_iter()
-                    .map(|entry| Py_Entry { inner: entry })
+                    .map(|entry| Py_Entry {
+                        inner: RefMutOwner::new(entry),
+                    })
                     .collect::<Vec<_>>()
                     .into_py(py)
             })
@@ -117,7 +123,9 @@ impl Py_InMemoryRaftLog_Ref {
                 .map(|entries| {
                     entries
                         .into_iter()
-                        .map(|entry| Py_Entry { inner: entry })
+                        .map(|entry| Py_Entry {
+                            inner: RefMutOwner::new(entry),
+                        })
                         .collect::<Vec<_>>()
                         .into_py(py)
                 })
@@ -226,7 +234,7 @@ impl Py_InMemoryRaftLog_Ref {
             inner
                 .snapshot(request_index, to)
                 .map(|mut snapshot| Py_Snapshot_Ref {
-                    inner: RustRef::new(&mut snapshot),
+                    inner: RefMutContainer::new_raw(&mut snapshot),
                 })
                 .map_err(|e| Py_RaftError(e).into())
         })?
@@ -264,7 +272,7 @@ impl Py_InMemoryRaftLog_Ref {
 
     pub fn unstable(&self) -> PyResult<Py_Unstable_Ref> {
         self.inner.map_as_ref(|inner| Py_Unstable_Ref {
-            inner: RustRef::new(unsafe { make_mut(inner.unstable()) }),
+            inner: RefMutContainer::new_raw(unsafe { make_mut(inner.unstable()) }),
         })
     }
 
@@ -275,7 +283,7 @@ impl Py_InMemoryRaftLog_Ref {
                     .unstable_entries()
                     .iter()
                     .map(|entry| Py_Entry_Ref {
-                        inner: RustRef::new(unsafe { make_mut(entry) }),
+                        inner: RefMutContainer::new_raw(unsafe { make_mut(entry) }),
                     })
                     .collect::<Vec<_>>()
             })
@@ -288,7 +296,7 @@ impl Py_InMemoryRaftLog_Ref {
                 .unstable_snapshot()
                 .as_ref()
                 .map(|snapshot| Py_Snapshot_Ref {
-                    inner: RustRef::new(unsafe { make_mut(snapshot) }),
+                    inner: RefMutContainer::new_raw(unsafe { make_mut(snapshot) }),
                 })
         })
     }
@@ -319,13 +327,13 @@ impl Py_InMemoryRaftLog_Ref {
 
     pub fn store(&mut self) -> PyResult<Py_MemStorage_Ref> {
         self.inner.map_as_mut(|inner| Py_MemStorage_Ref {
-            inner: RustRef::new(inner.mut_store()),
+            inner: RefMutContainer::new_raw(inner.mut_store()),
         })
     }
 
     pub fn get_store(&mut self) -> PyResult<Py_MemStorage_Ref> {
         self.inner.map_as_mut(|inner| Py_MemStorage_Ref {
-            inner: RustRef::new(inner.mut_store()),
+            inner: RefMutContainer::new_raw(inner.mut_store()),
         })
     }
 
@@ -348,7 +356,7 @@ impl Py_InMemoryRaftLog_Ref {
         //         .map(|entries| {
         //             entries.iter().map(|entry| {
         //                 Py_Entry_Ref {
-        //                     inner: RustRef::new(unsafe { make_mut(entry) }),
+        //                     inner: RefMutContainer::new(unsafe { make_mut(entry) }),
         //                 }
         //             }).collect::<Vec<_>>()
         //         }).collect::<Result<Vec<Py_Entry_Ref>, _>>()

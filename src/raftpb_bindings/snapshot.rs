@@ -3,20 +3,24 @@ use protobuf::Message as PbMessage;
 use pyo3::{intern, prelude::*, pyclass::CompareOp, types::PyBytes};
 
 use raft::eraftpb::Snapshot;
-use utils::{errors::to_pyresult, implement_type_conversion, reference::RustRef};
+use utils::{
+    errors::to_pyresult,
+    implement_type_conversion,
+    reference::{RefMutContainer, RefMutOwner},
+};
 
 use super::snapshot_metadata::{Py_SnapshotMetadata_Mut, Py_SnapshotMetadata_Ref};
 
 #[derive(Clone)]
 #[pyclass(name = "Snapshot")]
 pub struct Py_Snapshot {
-    pub inner: Snapshot,
+    pub inner: RefMutOwner<Snapshot>,
 }
 
 #[derive(Clone)]
 #[pyclass(name = "Snapshot_Ref")]
 pub struct Py_Snapshot_Ref {
-    pub inner: RustRef<Snapshot>,
+    pub inner: RefMutContainer<Snapshot>,
 }
 
 #[derive(FromPyObject)]
@@ -32,32 +36,32 @@ impl Py_Snapshot {
     #[new]
     pub fn new() -> Self {
         Py_Snapshot {
-            inner: Snapshot::new(),
+            inner: RefMutOwner::new(Snapshot::new()),
         }
     }
 
     #[staticmethod]
     pub fn default() -> Py_Snapshot {
         Py_Snapshot {
-            inner: Snapshot::default(),
+            inner: RefMutOwner::new(Snapshot::default()),
         }
     }
 
     #[staticmethod]
     pub fn decode(v: &[u8]) -> PyResult<Py_Snapshot> {
         Ok(Py_Snapshot {
-            inner: to_pyresult(ProstMessage::decode(v))?,
+            inner: RefMutOwner::new(to_pyresult(ProstMessage::decode(v))?),
         })
     }
 
     pub fn make_ref(&mut self) -> Py_Snapshot_Ref {
         Py_Snapshot_Ref {
-            inner: RustRef::new(&mut self.inner),
+            inner: RefMutContainer::new(&mut self.inner),
         }
     }
 
     pub fn __repr__(&self) -> String {
-        format!("{:?}", self.inner)
+        format!("{:?}", self.inner.inner)
     }
 
     pub fn __bool__(&self) -> bool {
@@ -68,8 +72,8 @@ impl Py_Snapshot {
         let rhs: Snapshot = rhs.into();
 
         match op {
-            CompareOp::Eq => (self.inner == rhs).into_py(py),
-            CompareOp::Ne => (self.inner != rhs).into_py(py),
+            CompareOp::Eq => (self.inner.inner == rhs).into_py(py),
+            CompareOp::Ne => (self.inner.inner != rhs).into_py(py),
             _ => py.NotImplemented(),
         }
     }
@@ -109,7 +113,7 @@ impl Py_Snapshot_Ref {
 
     pub fn clone(&self) -> PyResult<Py_Snapshot> {
         Ok(Py_Snapshot {
-            inner: self.inner.map_as_ref(|inner| inner.clone())?,
+            inner: RefMutOwner::new(self.inner.map_as_ref(|inner| inner.clone())?),
         })
     }
 
@@ -134,7 +138,7 @@ impl Py_Snapshot_Ref {
 
     pub fn get_metadata(&mut self) -> PyResult<Py_SnapshotMetadata_Ref> {
         self.inner.map_as_mut(|inner| Py_SnapshotMetadata_Ref {
-            inner: RustRef::new(inner.mut_metadata()),
+            inner: RefMutContainer::new_raw(inner.mut_metadata()),
         })
     }
 

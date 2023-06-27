@@ -100,11 +100,12 @@ def new_raw_node_with_config(
     storage: MemStorage,
     logger: Logger_Ref,
 ) -> InMemoryRawNode:
+    initial_state = storage.initial_state()
     assert not (
-        storage.initial_state().initialized() and not peers
+        initial_state.initialized() and not peers
     ), f"new_raw_node with empty peers on initialized store"
 
-    if peers and not storage.initial_state().initialized():
+    if peers and not initial_state.initialized():
         storage.wl().apply_snapshot(new_snapshot(1, 1, peers))
 
     return InMemoryRawNode(config, storage, logger)
@@ -399,7 +400,8 @@ def test_raw_node_propose_and_conf_change():
         assert cs == exp
 
         conf_index = last_index
-        if cc.as_v2().enter_joint():
+        v2 = cc.as_v2()
+        if v2.enter_joint():
             # If this is an auto-leaving joint conf change, it will have
             # appended the entry that auto-leaves, so add one to the last
             # index that forms the basis of our expectations on

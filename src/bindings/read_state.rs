@@ -1,19 +1,21 @@
 use pyo3::{intern, prelude::*, pyclass::CompareOp, types::PyBytes};
 
 use raft::ReadState;
-
-use utils::{implement_type_conversion, reference::RustRef};
+use utils::{
+    implement_type_conversion,
+    reference::{RefMutContainer, RefMutOwner},
+};
 
 #[derive(Clone)]
 #[pyclass(name = "ReadState")]
 pub struct Py_ReadState {
-    pub inner: ReadState,
+    pub inner: RefMutOwner<ReadState>,
 }
 
 #[derive(Clone)]
 #[pyclass(name = "ReadState_Ref")]
 pub struct Py_ReadState_Ref {
-    pub inner: RustRef<ReadState>,
+    pub inner: RefMutContainer<ReadState>,
 }
 
 #[derive(FromPyObject)]
@@ -29,13 +31,13 @@ impl Py_ReadState {
     #[staticmethod]
     pub fn default() -> Self {
         Py_ReadState {
-            inner: ReadState::default(),
+            inner: RefMutOwner::new(ReadState::default()),
         }
     }
 
     pub fn make_ref(&mut self) -> Py_ReadState_Ref {
         Py_ReadState_Ref {
-            inner: RustRef::new(&mut self.inner),
+            inner: RefMutContainer::new(&mut self.inner),
         }
     }
 
@@ -46,15 +48,15 @@ impl Py_ReadState {
     }
 
     pub fn __repr__(&self) -> String {
-        format!("{:?}", self.inner)
+        format!("{:?}", self.inner.inner)
     }
 
     pub fn __richcmp__(&self, py: Python, rhs: Py_ReadState_Mut, op: CompareOp) -> PyObject {
         let rhs: ReadState = rhs.into();
 
         match op {
-            CompareOp::Eq => (self.inner == rhs).into_py(py),
-            CompareOp::Ne => (self.inner != rhs).into_py(py),
+            CompareOp::Eq => (self.inner.inner == rhs).into_py(py),
+            CompareOp::Ne => (self.inner.inner != rhs).into_py(py),
             _ => py.NotImplemented(),
         }
     }
@@ -90,7 +92,7 @@ impl Py_ReadState_Ref {
 
     pub fn clone(&self) -> PyResult<Py_ReadState> {
         Ok(Py_ReadState {
-            inner: self.inner.map_as_ref(|x| x.clone())?,
+            inner: RefMutOwner::new(self.inner.map_as_ref(|x| x.clone())?),
         })
     }
 
