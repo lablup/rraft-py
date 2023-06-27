@@ -3,13 +3,15 @@ use pyo3::{intern, prelude::*, pyclass::CompareOp, types::PySet};
 use fxhash::FxHasher;
 use raft::MajorityConfig;
 use std::{collections::HashSet, hash::BuildHasherDefault};
-
-use utils::{implement_type_conversion, reference::RustRef};
+use utils::{
+    implement_type_conversion,
+    reference::{RefMutOwner, RustRef},
+};
 
 #[derive(Clone)]
 #[pyclass(name = "MajorityConfig")]
 pub struct Py_MajorityConfig {
-    pub inner: MajorityConfig,
+    pub inner: RefMutOwner<MajorityConfig>,
 }
 
 #[derive(Clone)]
@@ -31,9 +33,9 @@ impl Py_MajorityConfig {
     #[new]
     pub fn new(voters: &PySet) -> PyResult<Self> {
         Ok(Py_MajorityConfig {
-            inner: MajorityConfig::new(
+            inner: RefMutOwner::new(MajorityConfig::new(
                 voters.extract::<HashSet<u64, BuildHasherDefault<FxHasher>>>()?,
-            ),
+            )),
         })
     }
 
@@ -44,15 +46,15 @@ impl Py_MajorityConfig {
     }
 
     pub fn __repr__(&self) -> String {
-        format!("{:?}", self.inner)
+        format!("{:?}", self.inner.inner)
     }
 
     pub fn __richcmp__(&self, py: Python, rhs: Py_MajorityConfig_Mut, op: CompareOp) -> PyObject {
         let rhs: MajorityConfig = rhs.into();
 
         match op {
-            CompareOp::Eq => (self.inner == rhs).into_py(py),
-            CompareOp::Ne => (self.inner != rhs).into_py(py),
+            CompareOp::Eq => (self.inner.inner == rhs).into_py(py),
+            CompareOp::Ne => (self.inner.inner != rhs).into_py(py),
             _ => py.NotImplemented(),
         }
     }
@@ -100,7 +102,7 @@ impl Py_MajorityConfig_Ref {
 
     pub fn clone(&self) -> PyResult<Py_MajorityConfig> {
         Ok(Py_MajorityConfig {
-            inner: self.inner.map_as_ref(|inner| inner.clone())?,
+            inner: RefMutOwner::new(self.inner.map_as_ref(|inner| inner.clone())?),
         })
     }
 

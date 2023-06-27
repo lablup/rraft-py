@@ -1,13 +1,15 @@
 use pyo3::{intern, prelude::*, pyclass::CompareOp};
 
 use raft::Inflights;
-
-use utils::{implement_type_conversion, reference::RustRef};
+use utils::{
+    implement_type_conversion,
+    reference::{RefMutOwner, RustRef},
+};
 
 #[derive(Clone)]
 #[pyclass(name = "Inflights")]
 pub struct Py_Inflights {
-    pub inner: Inflights,
+    pub inner: RefMutOwner<Inflights>,
 }
 
 #[derive(Clone)]
@@ -29,7 +31,7 @@ impl Py_Inflights {
     #[new]
     pub fn new(cap: usize) -> Self {
         Py_Inflights {
-            inner: Inflights::new(cap),
+            inner: RefMutOwner::new(Inflights::new(cap)),
         }
     }
 
@@ -40,15 +42,15 @@ impl Py_Inflights {
     }
 
     pub fn __repr__(&self) -> String {
-        format!("{:?}", self.inner)
+        format!("{:?}", self.inner.inner)
     }
 
     pub fn __richcmp__(&self, py: Python, rhs: Py_Inflights_Mut, op: CompareOp) -> PyObject {
         let rhs: Inflights = rhs.into();
 
         match op {
-            CompareOp::Eq => (self.inner == rhs).into_py(py),
-            CompareOp::Ne => (self.inner != rhs).into_py(py),
+            CompareOp::Eq => (self.inner.inner == rhs).into_py(py),
+            CompareOp::Ne => (self.inner.inner != rhs).into_py(py),
             _ => py.NotImplemented(),
         }
     }
@@ -84,7 +86,7 @@ impl Py_Inflights_Ref {
 
     pub fn clone(&self) -> PyResult<Py_Inflights> {
         Ok(Py_Inflights {
-            inner: self.inner.map_as_ref(|inner| inner.clone())?,
+            inner: RefMutOwner::new(self.inner.map_as_ref(|inner| inner.clone())?),
         })
     }
 

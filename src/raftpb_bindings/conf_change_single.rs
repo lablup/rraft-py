@@ -1,7 +1,11 @@
 use prost::Message as ProstMessage;
 use protobuf::Message as PbMessage;
 use pyo3::{intern, prelude::*, pyclass::CompareOp, types::PyBytes};
-use utils::{errors::to_pyresult, implement_type_conversion, reference::RustRef};
+use utils::{
+    errors::to_pyresult,
+    implement_type_conversion,
+    reference::{RefMutOwner, RustRef},
+};
 
 use super::conf_change_type::Py_ConfChangeType;
 
@@ -10,7 +14,7 @@ use raft::eraftpb::ConfChangeSingle;
 #[derive(Clone)]
 #[pyclass(name = "ConfChangeSingle")]
 pub struct Py_ConfChangeSingle {
-    pub inner: ConfChangeSingle,
+    pub inner: RefMutOwner<ConfChangeSingle>,
 }
 
 #[derive(Clone)]
@@ -32,21 +36,21 @@ impl Py_ConfChangeSingle {
     #[new]
     pub fn new() -> Self {
         Py_ConfChangeSingle {
-            inner: ConfChangeSingle::new(),
+            inner: RefMutOwner::new(ConfChangeSingle::new()),
         }
     }
 
     #[staticmethod]
     pub fn default() -> Self {
         Py_ConfChangeSingle {
-            inner: ConfChangeSingle::default(),
+            inner: RefMutOwner::new(ConfChangeSingle::default()),
         }
     }
 
     #[staticmethod]
     pub fn decode(v: &[u8]) -> PyResult<Py_ConfChangeSingle> {
         Ok(Py_ConfChangeSingle {
-            inner: to_pyresult(ProstMessage::decode(v))?,
+            inner: RefMutOwner::new(to_pyresult(ProstMessage::decode(v))?),
         })
     }
 
@@ -57,15 +61,15 @@ impl Py_ConfChangeSingle {
     }
 
     pub fn __repr__(&self) -> String {
-        format!("{:?}", self.inner)
+        format!("{:?}", self.inner.inner)
     }
 
     pub fn __richcmp__(&self, py: Python, rhs: Py_ConfChangeSingle_Mut, op: CompareOp) -> PyObject {
         let rhs: ConfChangeSingle = rhs.into();
 
         match op {
-            CompareOp::Eq => (self.inner == rhs).into_py(py),
-            CompareOp::Ne => (self.inner != rhs).into_py(py),
+            CompareOp::Eq => (self.inner.inner == rhs).into_py(py),
+            CompareOp::Ne => (self.inner.inner != rhs).into_py(py),
             _ => py.NotImplemented(),
         }
     }
@@ -101,7 +105,7 @@ impl Py_ConfChangeSingle_Ref {
 
     pub fn clone(&self) -> PyResult<Py_ConfChangeSingle> {
         Ok(Py_ConfChangeSingle {
-            inner: self.inner.map_as_ref(|x| x.clone())?,
+            inner: RefMutOwner::new(self.inner.map_as_ref(|x| x.clone())?),
         })
     }
 

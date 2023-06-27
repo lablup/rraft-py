@@ -1,11 +1,10 @@
 use pyo3::{intern, prelude::*};
 use raft::GetEntriesContext;
-
-use utils::reference::RustRef;
+use utils::reference::{RefMutOwner, RustRef};
 
 #[pyclass(name = "GetEntriesContext")]
 pub struct Py_GetEntriesContext {
-    pub inner: GetEntriesContext,
+    pub inner: RefMutOwner<GetEntriesContext>,
 }
 
 #[pyclass(name = "GetEntriesContext_Ref")]
@@ -18,7 +17,7 @@ impl Py_GetEntriesContext {
     #[staticmethod]
     pub fn empty(can_async: bool) -> Self {
         Py_GetEntriesContext {
-            inner: GetEntriesContext::empty(can_async),
+            inner: RefMutOwner::new(GetEntriesContext::empty(can_async)),
         }
     }
 
@@ -29,7 +28,7 @@ impl Py_GetEntriesContext {
     }
 
     pub fn __repr__(&self) -> String {
-        format!("{:?}", self.inner)
+        format!("{:?}", self.inner.inner)
     }
 
     fn __getattr__(this: PyObject, py: Python, attr: &str) -> PyResult<PyObject> {

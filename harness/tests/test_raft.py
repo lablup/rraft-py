@@ -3550,11 +3550,13 @@ def new_test_learner_raft(
     storage: MemStorage_Ref,
     logger: Logger_Ref,
 ) -> Interface:
+    initial_state = storage.initial_state()
+
     assert not (
-        storage.initial_state().initialized() and not peers
+        initial_state.initialized() and not peers
     ), f"new_test_raft with empty peers on initialized store"
 
-    if peers and not storage.initial_state().initialized():
+    if peers and not initial_state.initialized():
         storage.initialize_with_conf_state(ConfState(peers, learners))
 
     cfg = new_test_config(id, election, heartbeat)
@@ -4250,7 +4252,8 @@ def test_advance_commit_index_by_vote_request(use_prevote: bool):
             e.set_data(v1.encode())
         else:
             e.set_entry_type(EntryType.EntryConfChangeV2)
-            e.set_data(cc.as_v2().encode())
+            v2 = cc.as_v2()
+            e.set_data(v2.encode())
 
         # propose a confchange entry but don't let it commit
         nt.ignore(MessageType.MsgAppendResponse)
@@ -4381,7 +4384,8 @@ def test_advance_commit_index_by_vote_response(use_prevote: bool):
             e.set_data(v1.encode())
         else:
             e.set_entry_type(EntryType.EntryConfChangeV2)
-            e.set_data(cc.as_v2().encode())
+            v2 = cc.as_v2()
+            e.set_data(v2.encode())
 
         # propose a confchange entry but don't let it commit
         nt.ignore(MessageType.MsgAppendResponse)

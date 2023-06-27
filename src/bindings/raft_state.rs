@@ -1,17 +1,20 @@
 use pyo3::{intern, prelude::*};
 
 use raft::storage::RaftState;
-use utils::{implement_type_conversion, reference::RustRef};
 
 use raftpb_bindings::{
     conf_state::{Py_ConfState_Mut, Py_ConfState_Ref},
     hard_state::{Py_HardState_Mut, Py_HardState_Ref},
 };
+use utils::{
+    implement_type_conversion,
+    reference::{RefMutOwner, RustRef},
+};
 
 #[derive(Clone)]
 #[pyclass(name = "RaftState")]
 pub struct Py_RaftState {
-    pub inner: RaftState,
+    pub inner: RefMutOwner<RaftState>,
 }
 
 #[derive(Clone)]
@@ -33,14 +36,14 @@ impl Py_RaftState {
     #[new]
     pub fn new(hard_state: Py_HardState_Mut, conf_state: Py_ConfState_Mut) -> Self {
         Py_RaftState {
-            inner: RaftState::new(hard_state.into(), conf_state.into()),
+            inner: RefMutOwner::new(RaftState::new(hard_state.into(), conf_state.into())),
         }
     }
 
     #[staticmethod]
     pub fn default() -> Self {
         Py_RaftState {
-            inner: RaftState::default(),
+            inner: RefMutOwner::new(RaftState::default()),
         }
     }
 
@@ -51,7 +54,7 @@ impl Py_RaftState {
     }
 
     pub fn __repr__(&self) -> String {
-        format!("{:?}", self.inner)
+        format!("{:?}", self.inner.inner)
     }
 
     fn __getattr__(this: PyObject, py: Python, attr: &str) -> PyResult<PyObject> {
@@ -68,7 +71,7 @@ impl Py_RaftState_Ref {
 
     pub fn clone(&self) -> PyResult<Py_RaftState> {
         Ok(Py_RaftState {
-            inner: self.inner.map_as_ref(|x| x.clone())?,
+            inner: RefMutOwner::new(self.inner.map_as_ref(|x| x.clone())?),
         })
     }
 
@@ -78,7 +81,7 @@ impl Py_RaftState_Ref {
 
     pub fn get_conf_state(&mut self) -> PyResult<Py_ConfState_Ref> {
         self.inner.map_as_mut(|inner| Py_ConfState_Ref {
-            inner: RustRef::new(&mut inner.conf_state),
+            inner: RustRef::new_raw(&mut inner.conf_state),
         })
     }
 
@@ -88,7 +91,7 @@ impl Py_RaftState_Ref {
 
     pub fn get_hard_state(&mut self) -> PyResult<Py_HardState_Ref> {
         self.inner.map_as_mut(|inner| Py_HardState_Ref {
-            inner: RustRef::new(&mut inner.hard_state),
+            inner: RustRef::new_raw(&mut inner.hard_state),
         })
     }
 

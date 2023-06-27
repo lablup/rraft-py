@@ -8,9 +8,12 @@ use pyo3::{
 };
 
 use raft::eraftpb::Message;
-use utils::{errors::to_pyresult, implement_type_conversion, unsafe_cast::make_mut};
-
-use utils::reference::RustRef;
+use utils::{
+    errors::to_pyresult,
+    implement_type_conversion,
+    reference::{RefMutOwner, RustRef},
+    unsafe_cast::make_mut,
+};
 
 use super::{
     entry::{Py_Entry_Mut, Py_Entry_Ref},
@@ -21,7 +24,7 @@ use super::{
 #[derive(Clone)]
 #[pyclass(name = "Message")]
 pub struct Py_Message {
-    pub inner: Message,
+    pub inner: RefMutOwner<Message>,
 }
 
 #[derive(Clone)]
@@ -43,21 +46,21 @@ impl Py_Message {
     #[new]
     pub fn new() -> Self {
         Py_Message {
-            inner: Message::new(),
+            inner: RefMutOwner::new(Message::new()),
         }
     }
 
     #[staticmethod]
     pub fn default() -> Self {
         Py_Message {
-            inner: Message::default(),
+            inner: RefMutOwner::new(Message::default()),
         }
     }
 
     #[staticmethod]
     pub fn decode(v: &[u8]) -> PyResult<Py_Message> {
         Ok(Py_Message {
-            inner: to_pyresult(ProstMessage::decode(v))?,
+            inner: RefMutOwner::new(to_pyresult(ProstMessage::decode(v))?),
         })
     }
 
@@ -68,15 +71,15 @@ impl Py_Message {
     }
 
     pub fn __repr__(&self) -> String {
-        format!("{:?}", self.inner)
+        format!("{:?}", self.inner.inner)
     }
 
     pub fn __richcmp__(&self, py: Python, rhs: Py_Message_Mut, op: CompareOp) -> PyObject {
         let rhs: Message = rhs.into();
 
         match op {
-            CompareOp::Eq => (self.inner == rhs).into_py(py),
-            CompareOp::Ne => (self.inner != rhs).into_py(py),
+            CompareOp::Eq => (self.inner.inner == rhs).into_py(py),
+            CompareOp::Ne => (self.inner.inner != rhs).into_py(py),
             _ => py.NotImplemented(),
         }
     }
@@ -112,7 +115,7 @@ impl Py_Message_Ref {
 
     pub fn clone(&self) -> PyResult<Py_Message> {
         Ok(Py_Message {
-            inner: self.inner.map_as_ref(|x| x.clone())?,
+            inner: RefMutOwner::new(self.inner.map_as_ref(|x| x.clone())?),
         })
     }
 
@@ -237,7 +240,7 @@ impl Py_Message_Ref {
                 .get_entries()
                 .iter()
                 .map(|entry| Py_Entry_Ref {
-                    inner: RustRef::new(unsafe { make_mut(entry) }),
+                    inner: RustRef::new_raw(unsafe { make_mut(entry) }),
                 })
                 .collect::<Vec<_>>();
 
@@ -285,7 +288,7 @@ impl Py_Message_Ref {
 
     pub fn get_snapshot(&mut self) -> PyResult<Py_Snapshot_Ref> {
         self.inner.map_as_mut(|inner| Py_Snapshot_Ref {
-            inner: RustRef::new(inner.mut_snapshot()),
+            inner: RustRef::new_raw(inner.mut_snapshot()),
         })
     }
 

@@ -4,13 +4,15 @@ use pyo3::{intern, prelude::*, pyclass::CompareOp, types::PySet};
 
 use fxhash::FxHasher;
 use raft::JointConfig;
-
-use utils::{implement_type_conversion, reference::RustRef};
+use utils::{
+    implement_type_conversion,
+    reference::{RefMutOwner, RustRef},
+};
 
 #[derive(Clone)]
 #[pyclass(name = "JointConfig")]
 pub struct Py_JointConfig {
-    pub inner: JointConfig,
+    pub inner: RefMutOwner<JointConfig>,
 }
 
 #[derive(Clone)]
@@ -32,9 +34,9 @@ impl Py_JointConfig {
     #[new]
     pub fn new(voters: &PySet) -> PyResult<Self> {
         Ok(Py_JointConfig {
-            inner: JointConfig::new(
+            inner: RefMutOwner::new(JointConfig::new(
                 voters.extract::<HashSet<u64, BuildHasherDefault<FxHasher>>>()?,
-            ),
+            )),
         })
     }
 
@@ -45,15 +47,15 @@ impl Py_JointConfig {
     }
 
     pub fn __repr__(&self) -> String {
-        format!("{:?}", self.inner)
+        format!("{:?}", self.inner.inner)
     }
 
     pub fn __richcmp__(&self, py: Python, rhs: Py_JointConfig_Mut, op: CompareOp) -> PyObject {
         let rhs: JointConfig = rhs.into();
 
         match op {
-            CompareOp::Eq => (self.inner == rhs).into_py(py),
-            CompareOp::Ne => (self.inner != rhs).into_py(py),
+            CompareOp::Eq => (self.inner.inner == rhs).into_py(py),
+            CompareOp::Ne => (self.inner.inner != rhs).into_py(py),
             _ => py.NotImplemented(),
         }
     }
@@ -97,7 +99,7 @@ impl Py_JointConfig_Ref {
 
     pub fn clone(&self) -> PyResult<Py_JointConfig> {
         Ok(Py_JointConfig {
-            inner: self.inner.map_as_ref(|inner| inner.clone())?,
+            inner: RefMutOwner::new(self.inner.map_as_ref(|inner| inner.clone())?),
         })
     }
 

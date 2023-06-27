@@ -4,14 +4,18 @@ use pyo3::{intern, prelude::*, pyclass::CompareOp, types::PyBytes};
 
 use raft::eraftpb::SnapshotMetadata;
 
-use utils::{errors::to_pyresult, implement_type_conversion, reference::RustRef};
+use utils::{
+    errors::to_pyresult,
+    implement_type_conversion,
+    reference::{RefMutOwner, RustRef},
+};
 
 use super::conf_state::{Py_ConfState_Mut, Py_ConfState_Ref};
 
 #[derive(Clone)]
 #[pyclass(name = "SnapshotMetadata")]
 pub struct Py_SnapshotMetadata {
-    pub inner: SnapshotMetadata,
+    pub inner: RefMutOwner<SnapshotMetadata>,
 }
 
 #[derive(Clone)]
@@ -33,21 +37,21 @@ impl Py_SnapshotMetadata {
     #[new]
     pub fn new() -> Self {
         Py_SnapshotMetadata {
-            inner: SnapshotMetadata::new(),
+            inner: RefMutOwner::new(SnapshotMetadata::new()),
         }
     }
 
     #[staticmethod]
     pub fn default() -> Py_SnapshotMetadata {
         Py_SnapshotMetadata {
-            inner: SnapshotMetadata::default(),
+            inner: RefMutOwner::new(SnapshotMetadata::default()),
         }
     }
 
     #[staticmethod]
     pub fn decode(v: &[u8]) -> PyResult<Py_SnapshotMetadata> {
         Ok(Py_SnapshotMetadata {
-            inner: to_pyresult(ProstMessage::decode(v))?,
+            inner: RefMutOwner::new(to_pyresult(ProstMessage::decode(v))?),
         })
     }
 
@@ -58,15 +62,15 @@ impl Py_SnapshotMetadata {
     }
 
     pub fn __repr__(&self) -> String {
-        format!("{:?}", self.inner)
+        format!("{:?}", self.inner.inner)
     }
 
     pub fn __richcmp__(&self, py: Python, rhs: Py_SnapshotMetadata_Mut, op: CompareOp) -> PyObject {
         let rhs: SnapshotMetadata = rhs.into();
 
         match op {
-            CompareOp::Eq => (self.inner == rhs).into_py(py),
-            CompareOp::Ne => (self.inner != rhs).into_py(py),
+            CompareOp::Eq => (self.inner.inner == rhs).into_py(py),
+            CompareOp::Ne => (self.inner.inner != rhs).into_py(py),
             _ => py.NotImplemented(),
         }
     }
@@ -102,7 +106,7 @@ impl Py_SnapshotMetadata_Ref {
 
     pub fn clone(&self) -> PyResult<Py_SnapshotMetadata> {
         Ok(Py_SnapshotMetadata {
-            inner: self.inner.map_as_ref(|inner| inner.clone())?,
+            inner: RefMutOwner::new(self.inner.map_as_ref(|inner| inner.clone())?),
         })
     }
 
@@ -137,7 +141,7 @@ impl Py_SnapshotMetadata_Ref {
 
     pub fn get_conf_state(&mut self) -> PyResult<Py_ConfState_Ref> {
         self.inner.map_as_mut(|inner| Py_ConfState_Ref {
-            inner: RustRef::new(inner.mut_conf_state()),
+            inner: RustRef::new_raw(inner.mut_conf_state()),
         })
     }
 

@@ -1,8 +1,10 @@
 use pyo3::{intern, prelude::*, pyclass::CompareOp};
 
 use raft::Progress;
-
-use utils::{implement_type_conversion, reference::RustRef};
+use utils::{
+    implement_type_conversion,
+    reference::{RefMutOwner, RustRef},
+};
 
 use super::{
     inflights::{Py_Inflights_Mut, Py_Inflights_Ref},
@@ -12,7 +14,7 @@ use super::{
 #[derive(Clone)]
 #[pyclass(name = "Progress")]
 pub struct Py_Progress {
-    pub inner: Progress,
+    pub inner: RefMutOwner<Progress>,
 }
 
 #[derive(Clone)]
@@ -34,7 +36,7 @@ impl Py_Progress {
     #[new]
     pub fn new(next_idx: u64, ins_size: usize) -> Self {
         Py_Progress {
-            inner: Progress::new(next_idx, ins_size),
+            inner: RefMutOwner::new(Progress::new(next_idx, ins_size)),
         }
     }
 
@@ -45,15 +47,15 @@ impl Py_Progress {
     }
 
     pub fn __repr__(&self) -> String {
-        format!("{:?}", self.inner)
+        format!("{:?}", self.inner.inner)
     }
 
     pub fn __richcmp__(&self, py: Python, rhs: Py_Progress_Mut, op: CompareOp) -> PyObject {
         let rhs: Progress = rhs.into();
 
         match op {
-            CompareOp::Eq => (self.inner == rhs).into_py(py),
-            CompareOp::Ne => (self.inner != rhs).into_py(py),
+            CompareOp::Eq => (self.inner.inner == rhs).into_py(py),
+            CompareOp::Ne => (self.inner.inner != rhs).into_py(py),
             _ => py.NotImplemented(),
         }
     }
@@ -89,7 +91,7 @@ impl Py_Progress_Ref {
 
     pub fn clone(&self) -> PyResult<Py_Progress> {
         Ok(Py_Progress {
-            inner: self.inner.map_as_ref(|x| x.clone())?,
+            inner: RefMutOwner::new(self.inner.map_as_ref(|x| x.clone())?),
         })
     }
 
@@ -155,7 +157,7 @@ impl Py_Progress_Ref {
 
     pub fn get_ins(&mut self) -> PyResult<Py_Inflights_Ref> {
         self.inner.map_as_mut(|inner| Py_Inflights_Ref {
-            inner: RustRef::new(&mut inner.ins),
+            inner: RustRef::new_raw(&mut inner.ins),
         })
     }
 

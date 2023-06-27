@@ -3,8 +3,8 @@ use slog::*;
 use slog_async::OverflowStrategy;
 
 use utils::{
-    implement_type_conversion_v2,
-    reference_v2::{RefMutOwner, RustRef},
+    implement_type_conversion,
+    reference::{RefMutOwner, RustRef},
 };
 
 #[pyclass(name = "OverflowStrategy")]
@@ -70,7 +70,7 @@ pub enum Py_Logger_Mut<'p> {
     RefMut(Py_Logger_Ref),
 }
 
-implement_type_conversion_v2!(Logger, Py_Logger_Mut);
+implement_type_conversion!(Logger, Py_Logger_Mut);
 
 #[pymethods]
 impl Py_Logger {

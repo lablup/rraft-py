@@ -2,8 +2,8 @@ use pyo3::{intern, prelude::*};
 
 use raft::Config;
 
-use utils::implement_type_conversion_v2;
-use utils::reference_v2::{RefMutOwner, RustRef};
+use utils::implement_type_conversion;
+use utils::reference::{RefMutOwner, RustRef};
 
 use utils::errors::Py_RaftError;
 
@@ -27,7 +27,7 @@ pub enum Py_Config_Mut<'p> {
     RefMut(Py_Config_Ref),
 }
 
-implement_type_conversion_v2!(Config, Py_Config_Mut);
+implement_type_conversion!(Config, Py_Config_Mut);
 
 fn format_config<T: Into<Config>>(cfg: T) -> String {
     let cfg: Config = cfg.into();

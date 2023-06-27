@@ -7,13 +7,14 @@ use raftpb_bindings::{
 };
 
 use raft::Unstable;
-use utils::unsafe_cast::make_mut;
-
-use utils::reference::RustRef;
+use utils::{
+    reference::{RefMutOwner, RustRef},
+    unsafe_cast::make_mut,
+};
 
 #[pyclass(name = "Unstable")]
 pub struct Py_Unstable {
-    pub inner: Unstable,
+    pub inner: RefMutOwner<Unstable>,
 }
 
 #[pyclass(name = "Unstable_Ref")]
@@ -26,7 +27,7 @@ impl Py_Unstable {
     #[new]
     pub fn new(offset: u64, logger: Py_Logger_Mut) -> Self {
         Py_Unstable {
-            inner: Unstable::new(offset, logger.into()),
+            inner: RefMutOwner::new(Unstable::new(offset, logger.into())),
         }
     }
 
@@ -37,7 +38,7 @@ impl Py_Unstable {
     }
 
     pub fn __repr__(&self) -> String {
-        format!("{:?}", self.inner)
+        format!("{:?}", self.inner.inner)
     }
 
     fn __getattr__(this: PyObject, py: Python, attr: &str) -> PyResult<PyObject> {
@@ -75,7 +76,7 @@ impl Py_Unstable_Ref {
                 .slice(lo, hi)
                 .iter()
                 .map(|entry| Py_Entry_Ref {
-                    inner: RustRef::new(unsafe { make_mut(entry) }),
+                    inner: RustRef::new_raw(unsafe { make_mut(entry) }),
                 })
                 .collect::<Vec<_>>()
                 .into_py(py)
@@ -132,7 +133,7 @@ impl Py_Unstable_Ref {
                 .entries
                 .iter_mut()
                 .map(|entry| Py_Entry_Ref {
-                    inner: RustRef::new(entry),
+                    inner: RustRef::new_raw(entry),
                 })
                 .collect::<Vec<_>>()
                 .into_py(py)
@@ -160,7 +161,7 @@ impl Py_Unstable_Ref {
     pub fn get_snapshot(&mut self) -> PyResult<Option<Py_Snapshot_Ref>> {
         self.inner.map_as_mut(|inner| {
             inner.snapshot.as_ref().map(|snapshot| Py_Snapshot_Ref {
-                inner: RustRef::new(unsafe { make_mut(snapshot) }),
+                inner: RustRef::new_raw(unsafe { make_mut(snapshot) }),
             })
         })
     }

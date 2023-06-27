@@ -2,7 +2,10 @@ use bindings::get_entries_context::Py_GetEntriesContext;
 use pyo3::{intern, prelude::*, types::PyList};
 
 use raft::storage::MemStorageCore;
-use utils::{errors::Py_RaftError, reference::RustRef};
+use utils::{
+    errors::Py_RaftError,
+    reference::{RefMutOwner, RustRef},
+};
 
 use raftpb_bindings::{
     conf_state::Py_ConfState_Mut,
@@ -13,7 +16,7 @@ use raftpb_bindings::{
 
 #[pyclass(name = "MemStorageCore")]
 pub struct Py_MemStorageCore {
-    pub inner: MemStorageCore,
+    pub inner: RefMutOwner<MemStorageCore>,
 }
 
 #[pyclass(name = "MemStorageCore_Ref")]
@@ -26,7 +29,7 @@ impl Py_MemStorageCore {
     #[staticmethod]
     pub fn default() -> Self {
         Py_MemStorageCore {
-            inner: MemStorageCore::default(),
+            inner: RefMutOwner::new(MemStorageCore::default()),
         }
     }
 
@@ -97,7 +100,7 @@ impl Py_MemStorageCore_Ref {
 
     pub fn hard_state(&mut self) -> PyResult<Py_HardState_Ref> {
         self.inner.map_as_mut(|inner| Py_HardState_Ref {
-            inner: RustRef::new(inner.mut_hard_state()),
+            inner: RustRef::new_raw(inner.mut_hard_state()),
         })
     }
 
@@ -125,7 +128,9 @@ impl Py_MemStorageCore_Ref {
         self.inner.map_as_mut(|inner| {
             inner
                 .take_get_entries_context()
-                .map(|ctx| Py_GetEntriesContext { inner: ctx })
+                .map(|ctx| Py_GetEntriesContext {
+                    inner: RefMutOwner::new(ctx),
+                })
         })
     }
 }
