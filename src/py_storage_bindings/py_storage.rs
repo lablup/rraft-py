@@ -12,7 +12,7 @@ use raftpb_bindings::snapshot::{Py_Snapshot_Mut, Py_Snapshot_Ref};
 use bindings::raft_state::{Py_RaftState_Mut, Py_RaftState_Ref};
 use raftpb_bindings::entry::Py_Entry_Mut;
 use utils::errors::{makeNativeRaftError, Py_RaftError, DESTROYED_ERR_MSG};
-use utils::reference::{RefMutOwner, RustRef};
+use utils::reference::{RefMutContainer, RefMutOwner};
 use utils::unsafe_cast::make_mut;
 
 #[derive(Clone)]
@@ -24,7 +24,7 @@ pub struct Py_Storage {
 #[derive(Clone)]
 #[pyclass(name = "Storage_Ref")]
 pub struct Py_Storage_Ref {
-    pub inner: RustRef<Py_Storage>,
+    pub inner: RefMutContainer<Py_Storage>,
 }
 
 #[pymethods]
@@ -36,7 +36,7 @@ impl Py_Storage {
 
     pub fn make_ref(&mut self) -> Py_Storage_Ref {
         Py_Storage_Ref {
-            inner: RustRef::new_raw(self),
+            inner: RefMutContainer::new_raw(self),
         }
     }
 
@@ -147,7 +147,7 @@ impl Py_Storage_Ref {
     pub fn initial_state(&self) -> PyResult<Py_RaftState_Ref> {
         Storage::initial_state(self)
             .map(|mut rs| Py_RaftState_Ref {
-                inner: RustRef::new_raw(&mut rs),
+                inner: RefMutContainer::new_raw(&mut rs),
             })
             .map_err(|e| Py_RaftError(e).into())
     }
@@ -169,7 +169,7 @@ impl Py_Storage_Ref {
                 let py_entries = entries
                     .iter_mut()
                     .map(|x| Py_Entry_Ref {
-                        inner: RustRef::new_raw(x),
+                        inner: RefMutContainer::new_raw(x),
                     })
                     .collect::<Vec<_>>();
                 py_entries.into_py(py)
@@ -192,7 +192,7 @@ impl Py_Storage_Ref {
     pub fn snapshot(&self, request_index: u64, to: u64) -> PyResult<Py_Snapshot_Ref> {
         Storage::snapshot(self, request_index, to)
             .map(|mut snapshot| Py_Snapshot_Ref {
-                inner: RustRef::new_raw(&mut snapshot),
+                inner: RefMutContainer::new_raw(&mut snapshot),
             })
             .map_err(|e| Py_RaftError(e).into())
     }

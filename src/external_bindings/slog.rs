@@ -4,7 +4,7 @@ use slog_async::OverflowStrategy;
 
 use utils::{
     implement_type_conversion,
-    reference::{RefMutOwner, RustRef},
+    reference::{RefMutContainer, RefMutOwner},
 };
 
 #[pyclass(name = "OverflowStrategy")]
@@ -61,7 +61,7 @@ pub struct Py_Logger {
 #[derive(Clone)]
 #[pyclass(name = "Logger_Ref")]
 pub struct Py_Logger_Ref {
-    pub inner: RustRef<Logger>,
+    pub inner: RefMutContainer<Logger>,
 }
 
 #[derive(FromPyObject)]
@@ -93,7 +93,7 @@ impl Py_Logger {
 
     pub fn make_ref(&mut self) -> Py_Logger_Ref {
         Py_Logger_Ref {
-            inner: RustRef::new(&mut self.inner),
+            inner: RefMutContainer::new(&mut self.inner),
         }
     }
 

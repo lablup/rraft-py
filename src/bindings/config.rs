@@ -3,7 +3,7 @@ use pyo3::{intern, prelude::*};
 use raft::Config;
 
 use utils::implement_type_conversion;
-use utils::reference::{RefMutOwner, RustRef};
+use utils::reference::{RefMutContainer, RefMutOwner};
 
 use utils::errors::Py_RaftError;
 
@@ -18,7 +18,7 @@ pub struct Py_Config {
 #[derive(Clone)]
 #[pyclass(name = "Config_Ref")]
 pub struct Py_Config_Ref {
-    pub inner: RustRef<Config>,
+    pub inner: RefMutContainer<Config>,
 }
 
 #[derive(FromPyObject)]
@@ -126,7 +126,7 @@ impl Py_Config {
 
     pub fn make_ref(&mut self) -> Py_Config_Ref {
         Py_Config_Ref {
-            inner: RustRef::new(&mut self.inner),
+            inner: RefMutContainer::new(&mut self.inner),
         }
     }
 

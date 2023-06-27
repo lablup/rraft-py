@@ -6,7 +6,7 @@ use raft::{prelude::ConfState, storage::MemStorage, storage::Storage, GetEntries
 use utils::{
     errors::Py_RaftError,
     implement_type_conversion,
-    reference::{RefMutOwner, RustRef},
+    reference::{RefMutContainer, RefMutOwner},
     unsafe_cast::make_mut,
 };
 
@@ -25,7 +25,7 @@ pub struct Py_MemStorage {
 #[derive(Clone)]
 #[pyclass(name = "MemStorage_Ref")]
 pub struct Py_MemStorage_Ref {
-    pub inner: RustRef<MemStorage>,
+    pub inner: RefMutContainer<MemStorage>,
 }
 
 #[derive(FromPyObject)]
@@ -61,7 +61,7 @@ impl Py_MemStorage {
 
     pub fn make_ref(&mut self) -> Py_MemStorage_Ref {
         Py_MemStorage_Ref {
-            inner: RustRef::new(&mut self.inner),
+            inner: RefMutContainer::new(&mut self.inner),
         }
     }
 
@@ -151,13 +151,13 @@ impl Py_MemStorage_Ref {
 
     pub fn wl(&mut self) -> PyResult<Py_MemStorageCore_Ref> {
         self.inner.map_as_mut(|inner| Py_MemStorageCore_Ref {
-            inner: RustRef::new_raw(inner.wl().deref_mut()),
+            inner: RefMutContainer::new_raw(inner.wl().deref_mut()),
         })
     }
 
     pub fn rl(&self) -> PyResult<Py_MemStorageCore_Ref> {
         self.inner.map_as_ref(|inner| Py_MemStorageCore_Ref {
-            inner: RustRef::new_raw(unsafe { make_mut(inner.rl().deref()) }),
+            inner: RefMutContainer::new_raw(unsafe { make_mut(inner.rl().deref()) }),
         })
     }
 }

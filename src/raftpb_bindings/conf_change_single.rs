@@ -4,7 +4,7 @@ use pyo3::{intern, prelude::*, pyclass::CompareOp, types::PyBytes};
 use utils::{
     errors::to_pyresult,
     implement_type_conversion,
-    reference::{RefMutOwner, RustRef},
+    reference::{RefMutContainer, RefMutOwner},
 };
 
 use super::conf_change_type::Py_ConfChangeType;
@@ -20,7 +20,7 @@ pub struct Py_ConfChangeSingle {
 #[derive(Clone)]
 #[pyclass(name = "ConfChangeSingle_Ref")]
 pub struct Py_ConfChangeSingle_Ref {
-    pub inner: RustRef<ConfChangeSingle>,
+    pub inner: RefMutContainer<ConfChangeSingle>,
 }
 
 #[derive(FromPyObject)]
@@ -56,7 +56,7 @@ impl Py_ConfChangeSingle {
 
     pub fn make_ref(&mut self) -> Py_ConfChangeSingle_Ref {
         Py_ConfChangeSingle_Ref {
-            inner: RustRef::new(&mut self.inner),
+            inner: RefMutContainer::new(&mut self.inner),
         }
     }
 

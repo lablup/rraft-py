@@ -8,7 +8,7 @@ use raftpb_bindings::{
 
 use raft::Unstable;
 use utils::{
-    reference::{RefMutOwner, RustRef},
+    reference::{RefMutContainer, RefMutOwner},
     unsafe_cast::make_mut,
 };
 
@@ -19,7 +19,7 @@ pub struct Py_Unstable {
 
 #[pyclass(name = "Unstable_Ref")]
 pub struct Py_Unstable_Ref {
-    pub inner: RustRef<Unstable>,
+    pub inner: RefMutContainer<Unstable>,
 }
 
 #[pymethods]
@@ -33,7 +33,7 @@ impl Py_Unstable {
 
     pub fn make_ref(&mut self) -> Py_Unstable_Ref {
         Py_Unstable_Ref {
-            inner: RustRef::new(&mut self.inner),
+            inner: RefMutContainer::new(&mut self.inner),
         }
     }
 
@@ -76,7 +76,7 @@ impl Py_Unstable_Ref {
                 .slice(lo, hi)
                 .iter()
                 .map(|entry| Py_Entry_Ref {
-                    inner: RustRef::new_raw(unsafe { make_mut(entry) }),
+                    inner: RefMutContainer::new_raw(unsafe { make_mut(entry) }),
                 })
                 .collect::<Vec<_>>()
                 .into_py(py)
@@ -133,7 +133,7 @@ impl Py_Unstable_Ref {
                 .entries
                 .iter_mut()
                 .map(|entry| Py_Entry_Ref {
-                    inner: RustRef::new_raw(entry),
+                    inner: RefMutContainer::new_raw(entry),
                 })
                 .collect::<Vec<_>>()
                 .into_py(py)
@@ -150,7 +150,7 @@ impl Py_Unstable_Ref {
 
     // pub fn get_logger(&mut self) -> PyResult<Py_Logger_Ref> {
     //     self.inner.map_as_mut(|inner| Py_Logger_Ref {
-    //         inner: RustRef::new(&mut inner.logger),
+    //         inner: RefMutContainer::new(&mut inner.logger),
     //     })
     // }
 
@@ -161,7 +161,7 @@ impl Py_Unstable_Ref {
     pub fn get_snapshot(&mut self) -> PyResult<Option<Py_Snapshot_Ref>> {
         self.inner.map_as_mut(|inner| {
             inner.snapshot.as_ref().map(|snapshot| Py_Snapshot_Ref {
-                inner: RustRef::new_raw(unsafe { make_mut(snapshot) }),
+                inner: RefMutContainer::new_raw(unsafe { make_mut(snapshot) }),
             })
         })
     }

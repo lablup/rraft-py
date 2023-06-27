@@ -7,7 +7,7 @@ use raft::eraftpb::SnapshotMetadata;
 use utils::{
     errors::to_pyresult,
     implement_type_conversion,
-    reference::{RefMutOwner, RustRef},
+    reference::{RefMutContainer, RefMutOwner},
 };
 
 use super::conf_state::{Py_ConfState_Mut, Py_ConfState_Ref};
@@ -21,7 +21,7 @@ pub struct Py_SnapshotMetadata {
 #[derive(Clone)]
 #[pyclass(name = "SnapshotMetadata_Ref")]
 pub struct Py_SnapshotMetadata_Ref {
-    pub inner: RustRef<SnapshotMetadata>,
+    pub inner: RefMutContainer<SnapshotMetadata>,
 }
 
 #[derive(FromPyObject)]
@@ -57,7 +57,7 @@ impl Py_SnapshotMetadata {
 
     pub fn make_ref(&mut self) -> Py_SnapshotMetadata_Ref {
         Py_SnapshotMetadata_Ref {
-            inner: RustRef::new(&mut self.inner),
+            inner: RefMutContainer::new(&mut self.inner),
         }
     }
 
@@ -141,7 +141,7 @@ impl Py_SnapshotMetadata_Ref {
 
     pub fn get_conf_state(&mut self) -> PyResult<Py_ConfState_Ref> {
         self.inner.map_as_mut(|inner| Py_ConfState_Ref {
-            inner: RustRef::new_raw(inner.mut_conf_state()),
+            inner: RefMutContainer::new_raw(inner.mut_conf_state()),
         })
     }
 

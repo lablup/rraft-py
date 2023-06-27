@@ -4,7 +4,7 @@ use pyo3::{intern, prelude::*, types::PyList};
 use raft::storage::MemStorageCore;
 use utils::{
     errors::Py_RaftError,
-    reference::{RefMutOwner, RustRef},
+    reference::{RefMutContainer, RefMutOwner},
 };
 
 use raftpb_bindings::{
@@ -21,7 +21,7 @@ pub struct Py_MemStorageCore {
 
 #[pyclass(name = "MemStorageCore_Ref")]
 pub struct Py_MemStorageCore_Ref {
-    pub inner: RustRef<MemStorageCore>,
+    pub inner: RefMutContainer<MemStorageCore>,
 }
 
 #[pymethods]
@@ -35,7 +35,7 @@ impl Py_MemStorageCore {
 
     pub fn make_ref(&mut self) -> Py_MemStorageCore_Ref {
         Py_MemStorageCore_Ref {
-            inner: RustRef::new(&mut self.inner),
+            inner: RefMutContainer::new(&mut self.inner),
         }
     }
 
@@ -100,7 +100,7 @@ impl Py_MemStorageCore_Ref {
 
     pub fn hard_state(&mut self) -> PyResult<Py_HardState_Ref> {
         self.inner.map_as_mut(|inner| Py_HardState_Ref {
-            inner: RustRef::new_raw(inner.mut_hard_state()),
+            inner: RefMutContainer::new_raw(inner.mut_hard_state()),
         })
     }
 

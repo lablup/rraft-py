@@ -3,7 +3,7 @@ use pyo3::{intern, prelude::*, pyclass::CompareOp};
 use raft::Inflights;
 use utils::{
     implement_type_conversion,
-    reference::{RefMutOwner, RustRef},
+    reference::{RefMutContainer, RefMutOwner},
 };
 
 #[derive(Clone)]
@@ -15,7 +15,7 @@ pub struct Py_Inflights {
 #[derive(Clone)]
 #[pyclass(name = "Inflights_Ref")]
 pub struct Py_Inflights_Ref {
-    pub inner: RustRef<Inflights>,
+    pub inner: RefMutContainer<Inflights>,
 }
 
 #[derive(FromPyObject)]
@@ -37,7 +37,7 @@ impl Py_Inflights {
 
     pub fn make_ref(&mut self) -> Py_Inflights_Ref {
         Py_Inflights_Ref {
-            inner: RustRef::new(&mut self.inner),
+            inner: RefMutContainer::new(&mut self.inner),
         }
     }
 

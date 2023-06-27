@@ -4,7 +4,7 @@ use pyo3::{
     types::{PyList, PyString},
 };
 use utils::{
-    reference::{RefMutOwner, RustRef},
+    reference::{RefMutContainer, RefMutOwner},
     unsafe_cast::make_mut,
 };
 
@@ -43,7 +43,7 @@ pub struct Py_InMemoryRaft {
 
 #[pyclass(name = "InMemoryRaft_Ref")]
 pub struct Py_InMemoryRaft_Ref {
-    pub inner: RustRef<Raft<MemStorage>>,
+    pub inner: RefMutContainer<Raft<MemStorage>>,
 }
 
 #[pymethods]
@@ -63,7 +63,7 @@ impl Py_InMemoryRaft {
 
     pub fn make_ref(&mut self) -> Py_InMemoryRaft_Ref {
         Py_InMemoryRaft_Ref {
-            inner: RustRef::new(&mut self.inner),
+            inner: RefMutContainer::new(&mut self.inner),
         }
     }
 
@@ -283,7 +283,7 @@ impl Py_InMemoryRaft_Ref {
             inner
                 .apply_conf_change(&cc.into())
                 .map(|cs| Py_ConfState_Ref {
-                    inner: RustRef::new_raw(unsafe { make_mut(&cs) }),
+                    inner: RefMutContainer::new_raw(unsafe { make_mut(&cs) }),
                 })
                 .map_err(|e| Py_RaftError(e).into())
         })?
@@ -312,7 +312,7 @@ impl Py_InMemoryRaft_Ref {
 
     pub fn post_conf_change(&mut self) -> PyResult<Py_ConfState_Ref> {
         self.inner.map_as_mut(|inner| Py_ConfState_Ref {
-            inner: RustRef::new_raw(&mut inner.post_conf_change()),
+            inner: RefMutContainer::new_raw(&mut inner.post_conf_change()),
         })
     }
 
@@ -337,7 +337,7 @@ impl Py_InMemoryRaft_Ref {
 
     pub fn prs(&mut self) -> PyResult<Py_ProgressTracker_Ref> {
         self.inner.map_as_mut(|inner| Py_ProgressTracker_Ref {
-            inner: RustRef::new_raw(inner.mut_prs()),
+            inner: RefMutContainer::new_raw(inner.mut_prs()),
         })
     }
 
@@ -348,7 +348,7 @@ impl Py_InMemoryRaft_Ref {
     pub fn snap(&self) -> PyResult<Option<Py_Snapshot_Ref>> {
         self.inner.map_as_ref(|inner| {
             inner.snap().map(|snapshot| Py_Snapshot_Ref {
-                inner: RustRef::new_raw(unsafe { make_mut(snapshot) }),
+                inner: RefMutContainer::new_raw(unsafe { make_mut(snapshot) }),
             })
         })
     }
@@ -480,7 +480,7 @@ impl Py_InMemoryRaft_Ref {
                 .msgs
                 .iter_mut()
                 .map(|msg| Py_Message_Ref {
-                    inner: RustRef::new_raw(msg),
+                    inner: RefMutContainer::new_raw(msg),
                 })
                 .collect::<Vec<_>>()
                 .into_py(py)
@@ -510,7 +510,7 @@ impl Py_InMemoryRaft_Ref {
 
     pub fn get_raft_log(&mut self) -> PyResult<Py_InMemoryRaftLog_Ref> {
         self.inner.map_as_mut(|inner| Py_InMemoryRaftLog_Ref {
-            inner: RustRef::new_raw(&mut inner.raft_log),
+            inner: RefMutContainer::new_raw(&mut inner.raft_log),
         })
     }
 
@@ -548,7 +548,7 @@ impl Py_InMemoryRaft_Ref {
 
     pub fn store(&mut self) -> PyResult<Py_MemStorage_Ref> {
         self.inner.map_as_mut(|inner| Py_MemStorage_Ref {
-            inner: RustRef::new_raw(inner.mut_store()),
+            inner: RefMutContainer::new_raw(inner.mut_store()),
         })
     }
 

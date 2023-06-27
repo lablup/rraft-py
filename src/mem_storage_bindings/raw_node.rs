@@ -6,7 +6,7 @@ use raft::storage::MemStorage;
 use raft::GetEntriesContext;
 
 use raft::raw_node::RawNode;
-use utils::reference::{RefMutOwner, RustRef};
+use utils::reference::{RefMutContainer, RefMutOwner};
 use utils::unsafe_cast::make_mut;
 
 use super::raft::Py_InMemoryRaft_Ref;
@@ -31,7 +31,7 @@ pub struct Py_InMemoryRawNode {
 
 #[pyclass(name = "InMemoryRawNode_Ref")]
 pub struct Py_InMemoryRawNode_Ref {
-    pub inner: RustRef<RawNode<MemStorage>>,
+    pub inner: RefMutContainer<RawNode<MemStorage>>,
 }
 
 #[pymethods]
@@ -51,7 +51,7 @@ impl Py_InMemoryRawNode {
 
     pub fn make_ref(&mut self) -> Py_InMemoryRawNode_Ref {
         Py_InMemoryRawNode_Ref {
-            inner: RustRef::new(&mut self.inner),
+            inner: RefMutContainer::new(&mut self.inner),
         }
     }
 
@@ -134,7 +134,7 @@ impl Py_InMemoryRawNode_Ref {
     pub fn snap(&self) -> PyResult<Option<Py_Snapshot_Ref>> {
         self.inner.map_as_ref(|inner| {
             inner.snap().map(|snap| Py_Snapshot_Ref {
-                inner: RustRef::new_raw(unsafe { make_mut(snap) }),
+                inner: RefMutContainer::new_raw(unsafe { make_mut(snap) }),
             })
         })
     }
@@ -242,13 +242,13 @@ impl Py_InMemoryRawNode_Ref {
 
     pub fn get_raft(&mut self) -> PyResult<Py_InMemoryRaft_Ref> {
         self.inner.map_as_mut(|inner| Py_InMemoryRaft_Ref {
-            inner: RustRef::new_raw(&mut inner.raft),
+            inner: RefMutContainer::new_raw(&mut inner.raft),
         })
     }
 
     pub fn store(&mut self) -> PyResult<Py_MemStorage_Ref> {
         self.inner.map_as_mut(|inner| Py_MemStorage_Ref {
-            inner: RustRef::new_raw(inner.mut_store()),
+            inner: RefMutContainer::new_raw(inner.mut_store()),
         })
     }
 

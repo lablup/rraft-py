@@ -6,7 +6,7 @@ use fxhash::FxHasher;
 use raft::JointConfig;
 use utils::{
     implement_type_conversion,
-    reference::{RefMutOwner, RustRef},
+    reference::{RefMutContainer, RefMutOwner},
 };
 
 #[derive(Clone)]
@@ -18,7 +18,7 @@ pub struct Py_JointConfig {
 #[derive(Clone)]
 #[pyclass(name = "JointConfig_Ref")]
 pub struct Py_JointConfig_Ref {
-    pub inner: RustRef<JointConfig>,
+    pub inner: RefMutContainer<JointConfig>,
 }
 
 #[derive(FromPyObject)]
@@ -42,7 +42,7 @@ impl Py_JointConfig {
 
     pub fn make_ref(&mut self) -> Py_JointConfig_Ref {
         Py_JointConfig_Ref {
-            inner: RustRef::new(&mut self.inner),
+            inner: RefMutContainer::new(&mut self.inner),
         }
     }
 

@@ -6,7 +6,7 @@ use pyo3::{intern, prelude::*};
 use raft::eraftpb::Entry;
 use utils::errors::to_pyresult;
 use utils::implement_type_conversion;
-use utils::reference::{RefMutOwner, RustRef};
+use utils::reference::{RefMutContainer, RefMutOwner};
 
 use super::entry_type::Py_EntryType;
 
@@ -19,7 +19,7 @@ pub struct Py_Entry {
 #[derive(Clone)]
 #[pyclass(name = "Entry_Ref")]
 pub struct Py_Entry_Ref {
-    pub inner: RustRef<Entry>,
+    pub inner: RefMutContainer<Entry>,
 }
 
 #[derive(FromPyObject)]
@@ -55,7 +55,7 @@ impl Py_Entry {
 
     pub fn make_ref(&mut self) -> Py_Entry_Ref {
         Py_Entry_Ref {
-            inner: RustRef::new(&mut self.inner),
+            inner: RefMutContainer::new(&mut self.inner),
         }
     }
 

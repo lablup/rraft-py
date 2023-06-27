@@ -9,7 +9,7 @@ use raft::eraftpb::ConfState;
 
 use utils::errors::{runtime_error, to_pyresult};
 use utils::implement_type_conversion;
-use utils::reference::{RefMutOwner, RustRef};
+use utils::reference::{RefMutContainer, RefMutOwner};
 
 #[derive(Clone)]
 #[pyclass(name = "ConfState")]
@@ -20,7 +20,7 @@ pub struct Py_ConfState {
 #[derive(Clone)]
 #[pyclass(name = "ConfState_Ref")]
 pub struct Py_ConfState_Ref {
-    pub inner: RustRef<ConfState>,
+    pub inner: RefMutContainer<ConfState>,
 }
 
 #[derive(FromPyObject)]
@@ -68,7 +68,7 @@ impl Py_ConfState {
 
     pub fn make_ref(&mut self) -> Py_ConfState_Ref {
         Py_ConfState_Ref {
-            inner: RustRef::new(&mut self.inner),
+            inner: RefMutContainer::new(&mut self.inner),
         }
     }
 

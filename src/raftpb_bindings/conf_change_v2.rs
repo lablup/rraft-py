@@ -10,7 +10,7 @@ use raft::eraftpb::ConfChangeV2;
 use utils::{
     errors::to_pyresult,
     implement_type_conversion,
-    reference::{RefMutOwner, RustRef},
+    reference::{RefMutContainer, RefMutOwner},
     unsafe_cast::make_mut,
 };
 
@@ -29,7 +29,7 @@ pub struct Py_ConfChangeV2 {
 #[derive(Clone)]
 #[pyclass(name = "ConfChangeV2_Ref")]
 pub struct Py_ConfChangeV2_Ref {
-    pub inner: RustRef<ConfChangeV2>,
+    pub inner: RefMutContainer<ConfChangeV2>,
 }
 
 #[derive(FromPyObject)]
@@ -65,7 +65,7 @@ impl Py_ConfChangeV2 {
 
     pub fn make_ref(&mut self) -> Py_ConfChangeV2_Ref {
         Py_ConfChangeV2_Ref {
-            inner: RustRef::new(&mut self.inner),
+            inner: RefMutContainer::new(&mut self.inner),
         }
     }
 
@@ -135,7 +135,7 @@ impl Py_ConfChangeV2_Ref {
                 .get_changes()
                 .iter()
                 .map(|cs| Py_ConfChangeSingle_Ref {
-                    inner: RustRef::new_raw(unsafe { make_mut(cs) }),
+                    inner: RefMutContainer::new_raw(unsafe { make_mut(cs) }),
                 })
                 .collect::<Vec<_>>()
                 .into_py(py)

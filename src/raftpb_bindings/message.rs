@@ -11,7 +11,7 @@ use raft::eraftpb::Message;
 use utils::{
     errors::to_pyresult,
     implement_type_conversion,
-    reference::{RefMutOwner, RustRef},
+    reference::{RefMutContainer, RefMutOwner},
     unsafe_cast::make_mut,
 };
 
@@ -30,7 +30,7 @@ pub struct Py_Message {
 #[derive(Clone)]
 #[pyclass(name = "Message_Ref")]
 pub struct Py_Message_Ref {
-    pub inner: RustRef<Message>,
+    pub inner: RefMutContainer<Message>,
 }
 
 #[derive(FromPyObject)]
@@ -66,7 +66,7 @@ impl Py_Message {
 
     pub fn make_ref(&mut self) -> Py_Message_Ref {
         Py_Message_Ref {
-            inner: RustRef::new(&mut self.inner),
+            inner: RefMutContainer::new(&mut self.inner),
         }
     }
 
@@ -240,7 +240,7 @@ impl Py_Message_Ref {
                 .get_entries()
                 .iter()
                 .map(|entry| Py_Entry_Ref {
-                    inner: RustRef::new_raw(unsafe { make_mut(entry) }),
+                    inner: RefMutContainer::new_raw(unsafe { make_mut(entry) }),
                 })
                 .collect::<Vec<_>>();
 
@@ -288,7 +288,7 @@ impl Py_Message_Ref {
 
     pub fn get_snapshot(&mut self) -> PyResult<Py_Snapshot_Ref> {
         self.inner.map_as_mut(|inner| Py_Snapshot_Ref {
-            inner: RustRef::new_raw(inner.mut_snapshot()),
+            inner: RefMutContainer::new_raw(inner.mut_snapshot()),
         })
     }
 

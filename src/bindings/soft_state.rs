@@ -1,7 +1,7 @@
 use pyo3::{intern, prelude::*, pyclass::CompareOp};
 
 use raft::SoftState;
-use utils::reference::{RefMutOwner, RustRef};
+use utils::reference::{RefMutContainer, RefMutOwner};
 
 use super::state_role::Py_StateRole;
 
@@ -12,7 +12,7 @@ pub struct Py_SoftState {
 
 #[pyclass(name = "SoftState_Ref")]
 pub struct Py_SoftState_Ref {
-    pub inner: RustRef<SoftState>,
+    pub inner: RefMutContainer<SoftState>,
 }
 
 #[pymethods]
@@ -26,7 +26,7 @@ impl Py_SoftState {
 
     pub fn make_ref(&mut self) -> Py_SoftState_Ref {
         Py_SoftState_Ref {
-            inner: RustRef::new(&mut self.inner),
+            inner: RefMutContainer::new(&mut self.inner),
         }
     }
 

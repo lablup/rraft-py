@@ -5,7 +5,7 @@ use raftpb_bindings::{
     message::{Py_Message, Py_Message_Ref},
 };
 use utils::{
-    reference::{RefMutOwner, RustRef},
+    reference::{RefMutContainer, RefMutOwner},
     unsafe_cast::make_mut,
 };
 
@@ -16,7 +16,7 @@ pub struct Py_LightReady {
 
 #[pyclass(name = "LightReady_Ref")]
 pub struct Py_LightReady_Ref {
-    pub inner: RustRef<LightReady>,
+    pub inner: RefMutContainer<LightReady>,
 }
 
 #[pymethods]
@@ -30,7 +30,7 @@ impl Py_LightReady {
 
     pub fn make_ref(&mut self) -> Py_LightReady_Ref {
         Py_LightReady_Ref {
-            inner: RustRef::new(&mut self.inner),
+            inner: RefMutContainer::new(&mut self.inner),
         }
     }
 
@@ -60,7 +60,7 @@ impl Py_LightReady_Ref {
                 .committed_entries()
                 .iter()
                 .map(|entry| Py_Entry_Ref {
-                    inner: RustRef::new_raw(unsafe { make_mut(entry) }),
+                    inner: RefMutContainer::new_raw(unsafe { make_mut(entry) }),
                 })
                 .collect::<Vec<_>>()
                 .into_py(py)
@@ -86,7 +86,7 @@ impl Py_LightReady_Ref {
                 .messages()
                 .iter()
                 .map(|msg| Py_Message_Ref {
-                    inner: RustRef::new_raw(unsafe { make_mut(msg) }),
+                    inner: RefMutContainer::new_raw(unsafe { make_mut(msg) }),
                 })
                 .collect::<Vec<_>>()
                 .into_py(py)

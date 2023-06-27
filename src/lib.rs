@@ -1,4 +1,3 @@
-use bindings::global::add_constants;
 use pyo3::prelude::*;
 
 #[pymodule]
@@ -161,7 +160,7 @@ fn rraft(py: Python, m: &PyModule) -> PyResult<()> {
         py.get_type::<utils::errors::RequestSnapshotDroppedError>(),
     )?;
 
-    add_constants(m)?;
+    bindings::global::add_constants(m)?;
 
     Ok(())
 }

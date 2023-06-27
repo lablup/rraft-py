@@ -4,7 +4,7 @@ use pyo3::{intern, prelude::*, pyclass::CompareOp, types::PyBytes};
 use utils::{
     errors::to_pyresult,
     implement_type_conversion,
-    reference::{RefMutOwner, RustRef},
+    reference::{RefMutContainer, RefMutOwner},
 };
 
 use super::{conf_change_type::Py_ConfChangeType, conf_change_v2::Py_ConfChangeV2};
@@ -23,7 +23,7 @@ pub struct Py_ConfChange {
 #[derive(Clone)]
 #[pyclass(name = "ConfChange_Ref")]
 pub struct Py_ConfChange_Ref {
-    pub inner: RustRef<ConfChange>,
+    pub inner: RefMutContainer<ConfChange>,
 }
 
 #[derive(FromPyObject)]
@@ -59,7 +59,7 @@ impl Py_ConfChange {
 
     pub fn make_ref(&mut self) -> Py_ConfChange_Ref {
         Py_ConfChange_Ref {
-            inner: RustRef::new(&mut self.inner),
+            inner: RefMutContainer::new(&mut self.inner),
         }
     }
 
@@ -188,7 +188,7 @@ impl Py_ConfChange_Ref {
     pub fn as_v1(&mut self) -> PyResult<Option<Py_ConfChange_Ref>> {
         self.inner.map_as_mut(|inner| {
             Some(Py_ConfChange_Ref {
-                inner: RustRef::new_raw(inner),
+                inner: RefMutContainer::new_raw(inner),
             })
         })
     }

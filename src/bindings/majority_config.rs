@@ -5,7 +5,7 @@ use raft::MajorityConfig;
 use std::{collections::HashSet, hash::BuildHasherDefault};
 use utils::{
     implement_type_conversion,
-    reference::{RefMutOwner, RustRef},
+    reference::{RefMutContainer, RefMutOwner},
 };
 
 #[derive(Clone)]
@@ -17,7 +17,7 @@ pub struct Py_MajorityConfig {
 #[derive(Clone)]
 #[pyclass(name = "MajorityConfig_Ref")]
 pub struct Py_MajorityConfig_Ref {
-    pub inner: RustRef<MajorityConfig>,
+    pub inner: RefMutContainer<MajorityConfig>,
 }
 
 #[derive(FromPyObject)]
@@ -41,7 +41,7 @@ impl Py_MajorityConfig {
 
     pub fn make_ref(&mut self) -> Py_MajorityConfig_Ref {
         Py_MajorityConfig_Ref {
-            inner: RustRef::new(&mut self.inner),
+            inner: RefMutContainer::new(&mut self.inner),
         }
     }
 

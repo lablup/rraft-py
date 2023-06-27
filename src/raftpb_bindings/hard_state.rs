@@ -7,7 +7,7 @@ use raft::eraftpb::HardState;
 use utils::{
     errors::to_pyresult,
     implement_type_conversion,
-    reference::{RefMutOwner, RustRef},
+    reference::{RefMutContainer, RefMutOwner},
 };
 
 #[derive(Clone)]
@@ -19,7 +19,7 @@ pub struct Py_HardState {
 #[derive(Clone)]
 #[pyclass(name = "HardState_Ref")]
 pub struct Py_HardState_Ref {
-    pub inner: RustRef<HardState>,
+    pub inner: RefMutContainer<HardState>,
 }
 
 #[derive(FromPyObject)]
@@ -55,7 +55,7 @@ impl Py_HardState {
 
     pub fn make_ref(&mut self) -> Py_HardState_Ref {
         Py_HardState_Ref {
-            inner: RustRef::new(&mut self.inner),
+            inner: RefMutContainer::new(&mut self.inner),
         }
     }
 

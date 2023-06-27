@@ -3,7 +3,7 @@ use pyo3::{intern, prelude::*, pyclass::CompareOp};
 use raft::Progress;
 use utils::{
     implement_type_conversion,
-    reference::{RefMutOwner, RustRef},
+    reference::{RefMutContainer, RefMutOwner},
 };
 
 use super::{
@@ -20,7 +20,7 @@ pub struct Py_Progress {
 #[derive(Clone)]
 #[pyclass(name = "Progress_Ref")]
 pub struct Py_Progress_Ref {
-    pub inner: RustRef<Progress>,
+    pub inner: RefMutContainer<Progress>,
 }
 
 #[derive(FromPyObject)]
@@ -42,7 +42,7 @@ impl Py_Progress {
 
     pub fn make_ref(&mut self) -> Py_Progress_Ref {
         Py_Progress_Ref {
-            inner: RustRef::new(&mut self.inner),
+            inner: RefMutContainer::new(&mut self.inner),
         }
     }
 
@@ -157,7 +157,7 @@ impl Py_Progress_Ref {
 
     pub fn get_ins(&mut self) -> PyResult<Py_Inflights_Ref> {
         self.inner.map_as_mut(|inner| Py_Inflights_Ref {
-            inner: RustRef::new_raw(&mut inner.ins),
+            inner: RefMutContainer::new_raw(&mut inner.ins),
         })
     }
 

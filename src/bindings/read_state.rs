@@ -3,7 +3,7 @@ use pyo3::{intern, prelude::*, pyclass::CompareOp, types::PyBytes};
 use raft::ReadState;
 use utils::{
     implement_type_conversion,
-    reference::{RefMutOwner, RustRef},
+    reference::{RefMutContainer, RefMutOwner},
 };
 
 #[derive(Clone)]
@@ -15,7 +15,7 @@ pub struct Py_ReadState {
 #[derive(Clone)]
 #[pyclass(name = "ReadState_Ref")]
 pub struct Py_ReadState_Ref {
-    pub inner: RustRef<ReadState>,
+    pub inner: RefMutContainer<ReadState>,
 }
 
 #[derive(FromPyObject)]
@@ -37,7 +37,7 @@ impl Py_ReadState {
 
     pub fn make_ref(&mut self) -> Py_ReadState_Ref {
         Py_ReadState_Ref {
-            inner: RustRef::new(&mut self.inner),
+            inner: RefMutContainer::new(&mut self.inner),
         }
     }
 

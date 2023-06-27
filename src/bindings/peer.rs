@@ -1,7 +1,7 @@
 use pyo3::{intern, prelude::*, types::PyBytes};
 
 use raft::raw_node::Peer;
-use utils::reference::{RefMutOwner, RustRef};
+use utils::reference::{RefMutContainer, RefMutOwner};
 
 #[pyclass(name = "Peer")]
 pub struct Py_Peer {
@@ -10,7 +10,7 @@ pub struct Py_Peer {
 
 #[pyclass(name = "Peer_Ref")]
 pub struct Py_Peer_Ref {
-    pub inner: RustRef<Peer>,
+    pub inner: RefMutContainer<Peer>,
 }
 
 #[pymethods]
@@ -24,7 +24,7 @@ impl Py_Peer {
 
     pub fn make_ref(&mut self) -> Py_Peer_Ref {
         Py_Peer_Ref {
-            inner: RustRef::new(&mut self.inner),
+            inner: RefMutContainer::new(&mut self.inner),
         }
     }
 

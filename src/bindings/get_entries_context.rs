@@ -1,6 +1,6 @@
 use pyo3::{intern, prelude::*};
 use raft::GetEntriesContext;
-use utils::reference::{RefMutOwner, RustRef};
+use utils::reference::{RefMutContainer, RefMutOwner};
 
 #[pyclass(name = "GetEntriesContext")]
 pub struct Py_GetEntriesContext {
@@ -9,7 +9,7 @@ pub struct Py_GetEntriesContext {
 
 #[pyclass(name = "GetEntriesContext_Ref")]
 pub struct Py_GetEntriesContext_Ref {
-    pub inner: RustRef<GetEntriesContext>,
+    pub inner: RefMutContainer<GetEntriesContext>,
 }
 
 #[pymethods]
@@ -23,7 +23,7 @@ impl Py_GetEntriesContext {
 
     pub fn make_ref(&mut self) -> Py_GetEntriesContext_Ref {
         Py_GetEntriesContext_Ref {
-            inner: RustRef::new(&mut self.inner),
+            inner: RefMutContainer::new(&mut self.inner),
         }
     }
 

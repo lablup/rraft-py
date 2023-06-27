@@ -8,7 +8,7 @@ use raftpb_bindings::{
 };
 use utils::{
     implement_type_conversion,
-    reference::{RefMutOwner, RustRef},
+    reference::{RefMutContainer, RefMutOwner},
 };
 
 #[derive(Clone)]
@@ -20,7 +20,7 @@ pub struct Py_RaftState {
 #[derive(Clone)]
 #[pyclass(name = "RaftState_Ref")]
 pub struct Py_RaftState_Ref {
-    pub inner: RustRef<RaftState>,
+    pub inner: RefMutContainer<RaftState>,
 }
 
 #[derive(FromPyObject)]
@@ -49,7 +49,7 @@ impl Py_RaftState {
 
     pub fn make_ref(&mut self) -> Py_RaftState_Ref {
         Py_RaftState_Ref {
-            inner: RustRef::new(&mut self.inner),
+            inner: RefMutContainer::new(&mut self.inner),
         }
     }
 
@@ -81,7 +81,7 @@ impl Py_RaftState_Ref {
 
     pub fn get_conf_state(&mut self) -> PyResult<Py_ConfState_Ref> {
         self.inner.map_as_mut(|inner| Py_ConfState_Ref {
-            inner: RustRef::new_raw(&mut inner.conf_state),
+            inner: RefMutContainer::new_raw(&mut inner.conf_state),
         })
     }
 
@@ -91,7 +91,7 @@ impl Py_RaftState_Ref {
 
     pub fn get_hard_state(&mut self) -> PyResult<Py_HardState_Ref> {
         self.inner.map_as_mut(|inner| Py_HardState_Ref {
-            inner: RustRef::new_raw(&mut inner.hard_state),
+            inner: RefMutContainer::new_raw(&mut inner.hard_state),
         })
     }
 
