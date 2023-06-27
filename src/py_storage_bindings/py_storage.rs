@@ -11,7 +11,7 @@ use raftpb_bindings::snapshot::{Py_Snapshot_Mut, Py_Snapshot_Ref};
 
 use bindings::raft_state::{Py_RaftState_Mut, Py_RaftState_Ref};
 use raftpb_bindings::entry::Py_Entry_Mut;
-use utils::errors::{makeNativeRaftError, Py_RaftError, DESTROYED_ERR_MSG};
+use utils::errors::{make_native_raft_error, Py_RaftError, DESTROYED_ERR_MSG};
 use utils::reference::{RefMutContainer, RefMutOwner};
 use utils::unsafe_cast::make_mut;
 
@@ -209,7 +209,7 @@ impl Storage for Py_Storage {
                         .extract::<_>()
                         .map(|rs: Py_RaftState_Mut| rs.into())
                 })
-                .map_err(|e| makeNativeRaftError(py, e))
+                .map_err(|e| make_native_raft_error(py, e))
         })
     }
 
@@ -234,7 +234,7 @@ impl Storage for Py_Storage {
                         .extract::<Vec<Py_Entry_Mut>>()
                         .map(|entries| entries.into_iter().map(|e| e.into()).collect())
                 })
-                .map_err(|e| makeNativeRaftError(py, e))
+                .map_err(|e| make_native_raft_error(py, e))
         })
     }
 
@@ -244,7 +244,7 @@ impl Storage for Py_Storage {
                 .as_ref(py)
                 .call_method("term", (idx,), None)
                 .and_then(|term| term.extract::<u64>())
-                .map_err(|e| makeNativeRaftError(py, e))
+                .map_err(|e| make_native_raft_error(py, e))
         })
     }
 
@@ -254,7 +254,7 @@ impl Storage for Py_Storage {
                 .as_ref(py)
                 .call_method("first_index", (), None)
                 .and_then(|term| term.extract::<u64>())
-                .map_err(|e| makeNativeRaftError(py, e))
+                .map_err(|e| make_native_raft_error(py, e))
         })
     }
 
@@ -264,7 +264,7 @@ impl Storage for Py_Storage {
                 .as_ref(py)
                 .call_method("last_index", (), None)
                 .and_then(|term| term.extract::<u64>())
-                .map_err(|e| makeNativeRaftError(py, e))
+                .map_err(|e| make_native_raft_error(py, e))
         })
     }
 
@@ -278,7 +278,7 @@ impl Storage for Py_Storage {
                         .extract::<_>()
                         .map(|ss: Py_Snapshot_Mut| ss.into())
                 })
-                .map_err(|e| makeNativeRaftError(py, e))
+                .map_err(|e| make_native_raft_error(py, e))
         })
     }
 }
@@ -296,7 +296,7 @@ impl Storage for Py_Storage_Ref {
                                 .extract::<_>(py)
                                 .map(|rs: Py_RaftState_Mut| rs.into())
                         })
-                        .map_err(|e| makeNativeRaftError(py, e))
+                        .map_err(|e| make_native_raft_error(py, e))
                 })
             })
             .expect(DESTROYED_ERR_MSG)
@@ -326,7 +326,7 @@ impl Storage for Py_Storage_Ref {
                                 .extract::<Vec<Py_Entry_Mut>>()
                                 .map(|entries| entries.into_iter().map(|e| e.into()).collect())
                         })
-                        .map_err(|e| makeNativeRaftError(py, e))
+                        .map_err(|e| make_native_raft_error(py, e))
                 })
             })
             .expect(DESTROYED_ERR_MSG)
@@ -341,7 +341,7 @@ impl Storage for Py_Storage_Ref {
                         .as_ref(py)
                         .call_method("term", (idx,), None)
                         .and_then(|term| term.extract::<u64>())
-                        .map_err(|e| makeNativeRaftError(py, e))
+                        .map_err(|e| make_native_raft_error(py, e))
                 })
             })
             .expect(DESTROYED_ERR_MSG)
@@ -356,7 +356,7 @@ impl Storage for Py_Storage_Ref {
                         .as_ref(py)
                         .call_method("first_index", (), None)
                         .and_then(|term| term.extract::<u64>())
-                        .map_err(|e| makeNativeRaftError(py, e))
+                        .map_err(|e| make_native_raft_error(py, e))
                 })
             })
             .expect(DESTROYED_ERR_MSG)
@@ -371,7 +371,7 @@ impl Storage for Py_Storage_Ref {
                         .as_ref(py)
                         .call_method("last_index", (), None)
                         .and_then(|term| term.extract::<u64>())
-                        .map_err(|e| makeNativeRaftError(py, e))
+                        .map_err(|e| make_native_raft_error(py, e))
                 })
             })
             .expect(DESTROYED_ERR_MSG)
@@ -389,7 +389,7 @@ impl Storage for Py_Storage_Ref {
                                 .extract::<_>(py)
                                 .map(|ss: Py_Snapshot_Mut| ss.into())
                         })
-                        .map_err(|e| makeNativeRaftError(py, e))
+                        .map_err(|e| make_native_raft_error(py, e))
                 })
             })
             .expect(DESTROYED_ERR_MSG)

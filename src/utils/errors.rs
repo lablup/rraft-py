@@ -110,7 +110,7 @@ impl From<Py_StorageError> for PyErr {
 
 // Convert 'PyErr' to 'raft::Error' for passing the error to raft-rs
 // TODO: Complete below error handling logics.
-pub fn makeNativeRaftError(py: Python, py_err: PyErr) -> raft::Error {
+pub fn make_native_raft_error(py: Python, py_err: PyErr) -> raft::Error {
     let args = py_err.to_object(py).getattr(py, "args").unwrap();
     let args = args.downcast::<PyTuple>(py).unwrap();
 
@@ -166,7 +166,7 @@ pub fn makeNativeRaftError(py: Python, py_err: PyErr) -> raft::Error {
 
     if py_err.is_instance_of::<StoreError>(py) {
         let err_kind = args.get_item(0).unwrap();
-        return makeNativeStorageError(py_err, err_kind);
+        return make_native_storage_error(py_err, err_kind);
     }
 
     if py_err.is_instance_of::<CodecError>(py) {
@@ -177,7 +177,7 @@ pub fn makeNativeRaftError(py: Python, py_err: PyErr) -> raft::Error {
     panic!("Unreachable")
 }
 
-fn makeNativeStorageError(py_err: PyErr, err_kind: &PyAny) -> raft::Error {
+fn make_native_storage_error(py_err: PyErr, err_kind: &PyAny) -> raft::Error {
     if err_kind.is_instance_of::<CompactedError>() {
         return raft::Error::Store(raft::StorageError::Compacted);
     }
