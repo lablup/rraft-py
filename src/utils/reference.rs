@@ -2,6 +2,7 @@
 // RefMutContainer implementation is greatly inspired from huggingface/tokenizer's python binding's.
 // https://github.com/huggingface/tokenizers/blob/main/bindings/python/src/utils/mod.rs
 use pyo3::prelude::*;
+use std::collections::HashMap;
 use std::ops::{Deref, DerefMut};
 use std::ptr::NonNull;
 use std::sync::{Arc, Mutex, Weak};
@@ -12,8 +13,8 @@ use crate::errors::DESTROYED_ERR_MSG;
 #[derive(Clone)]
 pub struct RefMutOwner<T> {
     pub inner: T,
-    // List of references that need to be cleaned up.
-    refs: Vec<Weak<Mutex<Option<NonNull<T>>>>>,
+    // References that need to be cleaned up.
+    refs: HashMap<u64, Weak<Mutex<Option<NonNull<T>>>>>,
 }
 
 unsafe impl<T: Send> Send for RefMutOwner<T> {}
@@ -23,7 +24,7 @@ impl<T> RefMutOwner<T> {
     pub fn new(inner: T) -> Self {
         Self {
             inner,
-            refs: vec![],
+            refs: HashMap::new(),
         }
     }
 }
@@ -45,7 +46,7 @@ impl<T> DerefMut for RefMutOwner<T> {
 impl<T> Drop for RefMutOwner<T> {
     fn drop(&mut self) {
         self.refs.iter_mut().for_each(|weak_ref| {
-            if let Some(arc) = weak_ref.upgrade() {
+            if let Some(arc) = weak_ref.1.upgrade() {
                 if let Ok(mut ptr) = arc.lock() {
                     ptr.take();
                 }
@@ -57,18 +58,39 @@ impl<T> Drop for RefMutOwner<T> {
 #[derive(Clone)]
 pub struct RefMutContainer<T> {
     inner: Arc<Mutex<Option<NonNull<T>>>>,
+    id: Option<u64>,
+    owner_table: Option<NonNull<HashMap<u64, Weak<Mutex<Option<NonNull<T>>>>>>>,
+}
+
+impl<T> Drop for RefMutContainer<T> {
+    fn drop(&mut self) {
+        if let Some(id) = self.id {
+            println!("Object removed: '{}'", id);
+            let mut owner_table_ptr = self.owner_table.unwrap();
+            let owner_table = unsafe { owner_table_ptr.as_mut() };
+            owner_table.remove(&id);
+        }
+    }
 }
 
 impl<T> RefMutContainer<T> {
     pub fn new(content: &mut RefMutOwner<T>) -> Self {
         let arc = Arc::new(Mutex::new(NonNull::new(&mut content.inner)));
-        content.refs.push(Arc::downgrade(&arc));
-        RefMutContainer { inner: arc }
+        let id = content.refs.keys().max().unwrap_or_else(|| &0) + 1;
+        content.refs.insert(id, Arc::downgrade(&arc));
+
+        RefMutContainer {
+            inner: arc,
+            id: Some(id),
+            owner_table: NonNull::new(&mut content.refs),
+        }
     }
 
     pub fn new_raw(content: &mut T) -> Self {
         RefMutContainer {
             inner: Arc::new(Mutex::new(NonNull::new(content))),
+            id: None,
+            owner_table: None,
         }
     }
 
