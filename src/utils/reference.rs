@@ -65,7 +65,6 @@ pub struct RefMutContainer<T> {
 impl<T> Drop for RefMutContainer<T> {
     fn drop(&mut self) {
         if let Some(id) = self.id {
-            println!("Object removed: '{}'", id);
             let mut owner_table_ptr = self.owner_table.unwrap();
             let owner_table = unsafe { owner_table_ptr.as_mut() };
             owner_table.remove(&id);
