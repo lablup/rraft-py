@@ -7,8 +7,7 @@ use std::ops::{Deref, DerefMut};
 use std::ptr::NonNull;
 use std::sync::{Arc, Mutex, Weak};
 
-use crate::errors::DestroyedRefUsedError;
-use crate::errors::DESTROYED_ERR_MSG;
+use crate::errors::{DestroyedRefUsedError, DESTROYED_ERR_MSG};
 
 #[derive(Clone)]
 pub struct RefMutOwner<T> {
