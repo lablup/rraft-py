@@ -63,10 +63,8 @@ pub struct RefMutContainer<T> {
 
 impl<T> Drop for RefMutContainer<T> {
     fn drop(&mut self) {
-        if let Some(id) = self.id {
-            if let Some(owner_refs_ptr) = self.owner_refs.upgrade() {
-                owner_refs_ptr.lock().unwrap().remove(&id);
-            }
+        if let Some(owner_refs_ptr) = self.owner_refs.upgrade() {
+            owner_refs_ptr.lock().unwrap().remove(&self.id.unwrap());
         }
     }
 }
@@ -76,7 +74,6 @@ impl<T> RefMutContainer<T> {
         let arc = Arc::new(Mutex::new(NonNull::new(&mut content.inner)));
         let mut map = content.refs.lock().unwrap();
         let id = map.keys().max().cloned().unwrap_or(0) + 1;
-
         map.insert(id, Arc::downgrade(&arc));
 
         RefMutContainer {
