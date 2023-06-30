@@ -31,11 +31,10 @@ jobs:
     - name: Set up Rust toolchain
       uses: actions-rs/toolchain@v1
       with:
-        toolchain: nightly
+        toolchain: stable
         override: true
 
     - name: Build and Test
       run: |
-        cargo update -p syn --precise 1.0.99; cargo update -p proc-macro2 --precise 1.0.43
         make install
         make test
