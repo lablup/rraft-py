@@ -9,11 +9,13 @@ use std::sync::{Arc, Mutex, Weak};
 
 use crate::errors::{DestroyedRefUsedError, DESTROYED_ERR_MSG};
 
+// References that need to be cleaned up.
+type RefMutContainerTable<T> = HashMap<u64, Weak<Mutex<Option<NonNull<T>>>>>;
+
 #[derive(Clone)]
 pub struct RefMutOwner<T> {
     pub inner: T,
-    // References that need to be cleaned up.
-    refs: Arc<Mutex<HashMap<u64, Weak<Mutex<Option<NonNull<T>>>>>>>,
+    refs: Arc<Mutex<RefMutContainerTable<T>>>,
 }
 
 unsafe impl<T: Send> Send for RefMutOwner<T> {}
@@ -58,7 +60,7 @@ impl<T> Drop for RefMutOwner<T> {
 pub struct RefMutContainer<T> {
     inner: Arc<Mutex<Option<NonNull<T>>>>,
     id: Option<u64>,
-    owner_refs: Weak<Mutex<HashMap<u64, Weak<Mutex<Option<NonNull<T>>>>>>>,
+    owner_refs: Weak<Mutex<RefMutContainerTable<T>>>,
 }
 
 impl<T> Drop for RefMutContainer<T> {
