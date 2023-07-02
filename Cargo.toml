@@ -1,5 +1,3 @@
-cargo-features = ["profile-rustflags"]
-
 [package]
 name = "rraft-py"
 version = "0.1.0"
@@ -47,13 +45,3 @@ members = [
 [lib]
 name = "rraft"
 crate-type = ["cdylib"]
-
-[profile.dev]
-rustflags = [
-	"-A", "non-snake-case",
-	"-A", "non-upper-case-globals",
-	"-A", "non-camel-case-types",
-	"-A", "clippy::should-implement-trait",
-	"-A", "clippy::new-without-default",
-	"-A", "clippy::module-inception",
-]

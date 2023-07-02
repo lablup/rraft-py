@@ -31,7 +31,7 @@ jobs:
     - name: Set up Rust toolchain
       uses: actions-rs/toolchain@v1
       with:
-        toolchain: nightly
+        toolchain: stable
         override: true
 
     - name: Build and Test

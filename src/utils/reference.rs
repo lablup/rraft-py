@@ -9,11 +9,13 @@ use std::sync::{Arc, Mutex, Weak};
 
 use crate::errors::{DestroyedRefUsedError, DESTROYED_ERR_MSG};
 
+// References that need to be cleaned up.
+type RefMutContainerTable<T> = HashMap<u64, Weak<Mutex<Option<NonNull<T>>>>>;
+
 #[derive(Clone)]
 pub struct RefMutOwner<T> {
     pub inner: T,
-    // References that need to be cleaned up.
-    refs: HashMap<u64, Weak<Mutex<Option<NonNull<T>>>>>,
+    refs: Arc<Mutex<RefMutContainerTable<T>>>,
 }
 
 unsafe impl<T: Send> Send for RefMutOwner<T> {}
@@ -23,7 +25,7 @@ impl<T> RefMutOwner<T> {
     pub fn new(inner: T) -> Self {
         Self {
             inner,
-            refs: HashMap::new(),
+            refs: Arc::new(Mutex::new(HashMap::new())),
         }
     }
 }
@@ -44,7 +46,7 @@ impl<T> DerefMut for RefMutOwner<T> {
 
 impl<T> Drop for RefMutOwner<T> {
     fn drop(&mut self) {
-        self.refs.iter_mut().for_each(|weak_ref| {
+        self.refs.lock().unwrap().iter_mut().for_each(|weak_ref| {
             if let Some(arc) = weak_ref.1.upgrade() {
                 if let Ok(mut ptr) = arc.lock() {
                     ptr.take();
@@ -58,15 +60,13 @@ impl<T> Drop for RefMutOwner<T> {
 pub struct RefMutContainer<T> {
     inner: Arc<Mutex<Option<NonNull<T>>>>,
     id: Option<u64>,
-    owner_table: Option<NonNull<HashMap<u64, Weak<Mutex<Option<NonNull<T>>>>>>>,
+    owner_refs: Weak<Mutex<RefMutContainerTable<T>>>,
 }
 
 impl<T> Drop for RefMutContainer<T> {
     fn drop(&mut self) {
-        if let Some(id) = self.id {
-            let mut owner_table_ptr = self.owner_table.unwrap();
-            let owner_table = unsafe { owner_table_ptr.as_mut() };
-            owner_table.remove(&id);
+        if let Some(owner_refs_ptr) = self.owner_refs.upgrade() {
+            owner_refs_ptr.lock().unwrap().remove(&self.id.unwrap());
         }
     }
 }
@@ -74,13 +74,14 @@ impl<T> Drop for RefMutContainer<T> {
 impl<T> RefMutContainer<T> {
     pub fn new(content: &mut RefMutOwner<T>) -> Self {
         let arc = Arc::new(Mutex::new(NonNull::new(&mut content.inner)));
-        let id = content.refs.keys().max().unwrap_or_else(|| &0) + 1;
-        content.refs.insert(id, Arc::downgrade(&arc));
+        let mut map = content.refs.lock().unwrap();
+        let id = map.keys().max().cloned().unwrap_or(0) + 1;
+        map.insert(id, Arc::downgrade(&arc));
 
         RefMutContainer {
             inner: arc,
             id: Some(id),
-            owner_table: NonNull::new(&mut content.refs),
+            owner_refs: Arc::downgrade(&content.refs),
         }
     }
 
@@ -88,7 +89,7 @@ impl<T> RefMutContainer<T> {
         RefMutContainer {
             inner: Arc::new(Mutex::new(NonNull::new(content))),
             id: None,
-            owner_table: None,
+            owner_refs: Weak::new(),
         }
     }
 
