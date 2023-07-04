@@ -1,16 +1,16 @@
 use pyo3::{intern, prelude::*, types::PyList};
 
-use external_bindings::slog::Py_Logger_Mut;
-use raftpb_bindings::{
+use crate::external_bindings::slog::Py_Logger_Mut;
+use crate::raftpb_bindings::{
     entry::{Py_Entry_Mut, Py_Entry_Ref},
     snapshot::{Py_Snapshot_Mut, Py_Snapshot_Ref},
 };
 
-use raft::Unstable;
-use utils::{
+use crate::utils::{
     reference::{RefMutContainer, RefMutOwner},
     unsafe_cast::make_mut,
 };
+use raft::Unstable;
 
 #[pyclass(name = "Unstable")]
 pub struct Py_Unstable {

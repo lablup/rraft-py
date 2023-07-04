@@ -1,10 +1,8 @@
 use pyo3::{intern, prelude::*, pyclass::CompareOp, types::PyBytes};
 
+use crate::implement_type_conversion;
+use crate::utils::reference::{RefMutContainer, RefMutOwner};
 use raft::ReadState;
-use utils::{
-    implement_type_conversion,
-    reference::{RefMutContainer, RefMutOwner},
-};
 
 #[derive(Clone)]
 #[pyclass(name = "ReadState")]

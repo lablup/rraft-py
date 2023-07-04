@@ -7,7 +7,7 @@ use std::ops::{Deref, DerefMut};
 use std::ptr::NonNull;
 use std::sync::{Arc, Mutex, Weak};
 
-use crate::errors::{DestroyedRefUsedError, DESTROYED_ERR_MSG};
+use super::errors::{DestroyedRefUsedError, DESTROYED_ERR_MSG};
 
 // References that need to be cleaned up.
 type RefMutContainerTable<T> = HashMap<u64, Weak<Mutex<Option<NonNull<T>>>>>;
@@ -124,7 +124,7 @@ unsafe impl<T: Sync> Sync for RefMutContainer<T> {}
 // And adds some boilerplate codes implementing the From trait for conversion between the two types.
 macro_rules! implement_type_conversion {
     ($Typ:ty, $Py_Typ_Mut:ident) => {
-        use utils::errors::DESTROYED_ERR_MSG;
+        use $crate::utils::errors::DESTROYED_ERR_MSG;
 
         impl From<$Py_Typ_Mut<'_>> for $Typ {
             fn from(val: $Py_Typ_Mut<'_>) -> Self {

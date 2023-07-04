@@ -1,3 +1,9 @@
+use crate::implement_type_conversion;
+use crate::utils::{
+    errors::to_pyresult,
+    reference::{RefMutContainer, RefMutOwner},
+    unsafe_cast::make_mut,
+};
 use prost::Message as ProstMessage;
 use protobuf::Message as PbMessage;
 use pyo3::{
@@ -7,12 +13,6 @@ use pyo3::{
     types::{PyBytes, PyList},
 };
 use raft::eraftpb::ConfChangeV2;
-use utils::{
-    errors::to_pyresult,
-    implement_type_conversion,
-    reference::{RefMutContainer, RefMutOwner},
-    unsafe_cast::make_mut,
-};
 
 use super::{
     conf_change::Py_ConfChange_Ref,

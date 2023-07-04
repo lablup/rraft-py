@@ -2,10 +2,8 @@ use pyo3::{intern, prelude::*, types::PyString};
 use slog::*;
 use slog_async::OverflowStrategy;
 
-use utils::{
-    implement_type_conversion,
-    reference::{RefMutContainer, RefMutOwner},
-};
+use crate::implement_type_conversion;
+use crate::utils::reference::{RefMutContainer, RefMutOwner};
 
 #[pyclass(name = "OverflowStrategy")]
 pub struct Py_OverflowStrategy(pub OverflowStrategy);

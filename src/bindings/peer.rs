@@ -1,7 +1,7 @@
 use pyo3::{intern, prelude::*, types::PyBytes};
 
+use crate::utils::reference::{RefMutContainer, RefMutOwner};
 use raft::raw_node::Peer;
-use utils::reference::{RefMutContainer, RefMutOwner};
 
 #[pyclass(name = "Peer")]
 pub struct Py_Peer {

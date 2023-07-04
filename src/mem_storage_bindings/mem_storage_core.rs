@@ -1,13 +1,13 @@
-use bindings::get_entries_context::Py_GetEntriesContext;
+use crate::bindings::get_entries_context::Py_GetEntriesContext;
 use pyo3::{intern, prelude::*, types::PyList};
 
-use raft::storage::MemStorageCore;
-use utils::{
+use crate::utils::{
     errors::Py_RaftError,
     reference::{RefMutContainer, RefMutOwner},
 };
+use raft::storage::MemStorageCore;
 
-use raftpb_bindings::{
+use crate::raftpb_bindings::{
     conf_state::Py_ConfState_Mut,
     entry::Py_Entry_Mut,
     hard_state::{Py_HardState_Mut, Py_HardState_Ref},

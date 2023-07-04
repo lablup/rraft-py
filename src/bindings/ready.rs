@@ -1,6 +1,6 @@
 use pyo3::{intern, prelude::*};
 
-use raftpb_bindings::{
+use crate::raftpb_bindings::{
     entry::{Py_Entry, Py_Entry_Ref},
     hard_state::Py_HardState_Ref,
     message::{Py_Message, Py_Message_Ref},
@@ -11,11 +11,11 @@ use super::{
     read_state::{Py_ReadState, Py_ReadState_Ref},
     soft_state::Py_SoftState,
 };
-use raft::{raw_node::Ready, SoftState};
-use utils::{
+use crate::utils::{
     reference::{RefMutContainer, RefMutOwner},
     unsafe_cast::make_mut,
 };
+use raft::{raw_node::Ready, SoftState};
 
 #[pyclass(name = "Ready")]
 pub struct Py_Ready {

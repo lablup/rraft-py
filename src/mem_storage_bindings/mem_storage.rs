@@ -2,19 +2,21 @@ use std::ops::{Deref, DerefMut};
 
 use pyo3::{intern, prelude::*};
 
-use raft::{prelude::ConfState, storage::MemStorage, storage::Storage, GetEntriesContext};
-use utils::{
+use crate::implement_type_conversion;
+use crate::utils::{
     errors::Py_RaftError,
-    implement_type_conversion,
     reference::{RefMutContainer, RefMutOwner},
     unsafe_cast::make_mut,
 };
+use raft::{prelude::ConfState, storage::MemStorage, storage::Storage, GetEntriesContext};
 
-use raftpb_bindings::{conf_state::Py_ConfState_Mut, entry::Py_Entry, snapshot::Py_Snapshot};
+use crate::raftpb_bindings::{
+    conf_state::Py_ConfState_Mut, entry::Py_Entry, snapshot::Py_Snapshot,
+};
 
 use super::mem_storage_core::Py_MemStorageCore_Ref;
 
-use bindings::{get_entries_context::Py_GetEntriesContext_Ref, raft_state::Py_RaftState};
+use crate::bindings::{get_entries_context::Py_GetEntriesContext_Ref, raft_state::Py_RaftState};
 
 #[derive(Clone)]
 #[pyclass(name = "MemStorage")]

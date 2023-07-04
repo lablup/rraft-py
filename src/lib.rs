@@ -1,4 +1,18 @@
+#![allow(non_camel_case_types)]
+#![allow(non_snake_case)]
+#![allow(non_upper_case_globals)]
+#![allow(clippy::module_inception)]
+#![allow(clippy::new_without_default)]
+#![allow(clippy::should_implement_trait)]
+
 use pyo3::prelude::*;
+
+mod bindings;
+mod external_bindings;
+mod mem_storage_bindings;
+mod py_storage_bindings;
+mod raftpb_bindings;
+mod utils;
 
 #[pymodule]
 fn rraft(py: Python, m: &PyModule) -> PyResult<()> {

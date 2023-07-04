@@ -1,13 +1,13 @@
-use pyo3::{intern, prelude::*};
-use raft::raw_node::LightReady;
-use raftpb_bindings::{
+use crate::raftpb_bindings::{
     entry::{Py_Entry, Py_Entry_Ref},
     message::{Py_Message, Py_Message_Ref},
 };
-use utils::{
+use crate::utils::{
     reference::{RefMutContainer, RefMutOwner},
     unsafe_cast::make_mut,
 };
+use pyo3::{intern, prelude::*};
+use raft::raw_node::LightReady;
 
 #[pyclass(name = "LightReady")]
 pub struct Py_LightReady {

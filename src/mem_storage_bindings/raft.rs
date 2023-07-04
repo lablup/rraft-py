@@ -1,18 +1,18 @@
+use crate::utils::{
+    reference::{RefMutContainer, RefMutOwner},
+    unsafe_cast::make_mut,
+};
 use pyo3::{
     intern,
     prelude::*,
     types::{PyList, PyString},
-};
-use utils::{
-    reference::{RefMutContainer, RefMutOwner},
-    unsafe_cast::make_mut,
 };
 
 use raft::{
     storage::MemStorage, Raft, CAMPAIGN_ELECTION, CAMPAIGN_PRE_ELECTION, CAMPAIGN_TRANSFER,
 };
 
-use raftpb_bindings::{
+use crate::raftpb_bindings::{
     conf_change_v2::Py_ConfChangeV2_Mut,
     conf_state::Py_ConfState_Ref,
     entry::Py_Entry_Mut,
@@ -21,7 +21,7 @@ use raftpb_bindings::{
     snapshot::{Py_Snapshot_Mut, Py_Snapshot_Ref},
 };
 
-use bindings::{
+use crate::bindings::{
     config::Py_Config_Mut,
     progress_tracker::Py_ProgressTracker_Ref,
     read_state::{Py_ReadState, Py_ReadState_Mut},
@@ -29,10 +29,10 @@ use bindings::{
     soft_state::Py_SoftState,
     state_role::Py_StateRole,
 };
-use external_bindings::slog::Py_Logger_Mut;
+use crate::external_bindings::slog::Py_Logger_Mut;
 
-use crate::raft_log::Py_InMemoryRaftLog_Ref;
-use utils::errors::Py_RaftError;
+use super::raft_log::Py_InMemoryRaftLog_Ref;
+use crate::utils::errors::Py_RaftError;
 
 use super::mem_storage::{Py_MemStorage_Mut, Py_MemStorage_Ref};
 

@@ -1,6 +1,6 @@
+use crate::utils::reference::{RefMutContainer, RefMutOwner};
 use pyo3::{intern, prelude::*};
 use raft::GetEntriesContext;
-use utils::reference::{RefMutContainer, RefMutOwner};
 
 #[pyclass(name = "GetEntriesContext")]
 pub struct Py_GetEntriesContext {
