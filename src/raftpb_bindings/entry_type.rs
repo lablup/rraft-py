@@ -1,7 +1,7 @@
 use pyo3::{prelude::*, pyclass::CompareOp};
 
-use raft::eraftpb::EntryType;
 use crate::utils::errors::runtime_error;
+use raft::eraftpb::EntryType;
 
 #[derive(Clone)]
 #[pyclass(name = "EntryType")]

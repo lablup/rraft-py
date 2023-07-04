@@ -7,13 +7,13 @@ use pyo3::{
     types::{PyBytes, PyList},
 };
 
-use raft::eraftpb::Message;
 use crate::implement_type_conversion;
 use crate::utils::{
     errors::to_pyresult,
     reference::{RefMutContainer, RefMutOwner},
     unsafe_cast::make_mut,
 };
+use raft::eraftpb::Message;
 
 use super::{
     entry::{Py_Entry_Mut, Py_Entry_Ref},

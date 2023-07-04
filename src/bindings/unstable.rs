@@ -6,11 +6,11 @@ use crate::raftpb_bindings::{
     snapshot::{Py_Snapshot_Mut, Py_Snapshot_Ref},
 };
 
-use raft::Unstable;
 use crate::utils::{
     reference::{RefMutContainer, RefMutOwner},
     unsafe_cast::make_mut,
 };
+use raft::Unstable;
 
 #[pyclass(name = "Unstable")]
 pub struct Py_Unstable {

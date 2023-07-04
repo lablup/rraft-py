@@ -4,9 +4,9 @@ use pyo3::{intern, prelude::*};
 use raft::prelude::{ConfChange, ConfChangeV2};
 use raft::GetEntriesContext;
 
-use raft::raw_node::RawNode;
 use crate::utils::reference::{RefMutContainer, RefMutOwner};
 use crate::utils::unsafe_cast::make_mut;
+use raft::raw_node::RawNode;
 
 use crate::bindings::config::Py_Config_Mut;
 use crate::bindings::light_ready::Py_LightReady;

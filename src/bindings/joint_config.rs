@@ -2,12 +2,10 @@ use std::{collections::HashSet, hash::BuildHasherDefault};
 
 use pyo3::{intern, prelude::*, pyclass::CompareOp, types::PySet};
 
+use crate::implement_type_conversion;
+use crate::utils::reference::{RefMutContainer, RefMutOwner};
 use fxhash::FxHasher;
 use raft::JointConfig;
-use crate::implement_type_conversion;
-use crate::utils::{
-    reference::{RefMutContainer, RefMutOwner},
-};
 
 #[derive(Clone)]
 #[pyclass(name = "JointConfig")]

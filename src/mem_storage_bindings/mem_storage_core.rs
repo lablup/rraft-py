@@ -1,11 +1,11 @@
 use crate::bindings::get_entries_context::Py_GetEntriesContext;
 use pyo3::{intern, prelude::*, types::PyList};
 
-use raft::storage::MemStorageCore;
 use crate::utils::{
     errors::Py_RaftError,
     reference::{RefMutContainer, RefMutOwner},
 };
+use raft::storage::MemStorageCore;
 
 use crate::raftpb_bindings::{
     conf_state::Py_ConfState_Mut,

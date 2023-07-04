@@ -1,7 +1,7 @@
-use pyo3::types::PyList;
-use pyo3::{intern, prelude::*};
 use crate::utils::reference::{RefMutContainer, RefMutOwner};
 use crate::utils::unsafe_cast::make_mut;
+use pyo3::types::PyList;
+use pyo3::{intern, prelude::*};
 
 use crate::external_bindings::slog::Py_Logger_Mut;
 use crate::raftpb_bindings::snapshot::{Py_Snapshot_Mut, Py_Snapshot_Ref};

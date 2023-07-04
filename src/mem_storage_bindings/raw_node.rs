@@ -5,9 +5,9 @@ use raft::prelude::{ConfChange, ConfChangeV2};
 use raft::storage::MemStorage;
 use raft::GetEntriesContext;
 
-use raft::raw_node::RawNode;
 use crate::utils::reference::{RefMutContainer, RefMutOwner};
 use crate::utils::unsafe_cast::make_mut;
+use raft::raw_node::RawNode;
 
 use super::raft::Py_InMemoryRaft_Ref;
 use crate::bindings::config::Py_Config_Mut;

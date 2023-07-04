@@ -1,9 +1,9 @@
 use crate::bindings::get_entries_context::Py_GetEntriesContext_Ref;
-use pyo3::types::PyList;
-use pyo3::{intern, prelude::*};
 use crate::utils::errors::Py_RaftError;
 use crate::utils::reference::{RefMutContainer, RefMutOwner};
 use crate::utils::unsafe_cast::make_mut;
+use pyo3::types::PyList;
+use pyo3::{intern, prelude::*};
 
 use crate::external_bindings::slog::Py_Logger_Mut;
 use crate::raftpb_bindings::snapshot::{Py_Snapshot_Mut, Py_Snapshot_Ref};

@@ -1,11 +1,11 @@
+use crate::utils::{
+    reference::{RefMutContainer, RefMutOwner},
+    unsafe_cast::make_mut,
+};
 use pyo3::{
     intern,
     prelude::*,
     types::{PyList, PyString},
-};
-use crate::utils::{
-    reference::{RefMutContainer, RefMutOwner},
-    unsafe_cast::make_mut,
 };
 
 use raft::{Raft, CAMPAIGN_ELECTION, CAMPAIGN_PRE_ELECTION, CAMPAIGN_TRANSFER};

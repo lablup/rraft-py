@@ -1,7 +1,7 @@
 use pyo3::{intern, prelude::*, pyclass::CompareOp};
 
-use raft::SoftState;
 use crate::utils::reference::{RefMutContainer, RefMutOwner};
+use raft::SoftState;
 
 use super::state_role::Py_StateRole;
 

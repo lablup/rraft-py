@@ -2,12 +2,12 @@ use prost::Message as ProstMessage;
 use protobuf::Message as PbMessage;
 use pyo3::{intern, prelude::*, pyclass::CompareOp, types::PyBytes};
 
-use raft::eraftpb::Snapshot;
 use crate::implement_type_conversion;
 use crate::utils::{
     errors::to_pyresult,
     reference::{RefMutContainer, RefMutOwner},
 };
+use raft::eraftpb::Snapshot;
 
 use super::snapshot_metadata::{Py_SnapshotMetadata_Mut, Py_SnapshotMetadata_Ref};
 

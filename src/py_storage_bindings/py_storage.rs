@@ -2,9 +2,9 @@ use crate::bindings::get_entries_context::{Py_GetEntriesContext, Py_GetEntriesCo
 use pyo3::types::PyList;
 use pyo3::{intern, prelude::*};
 
+use crate::raftpb_bindings::hard_state::Py_HardState;
 use raft::storage::Storage;
 use raft::GetEntriesContext;
-use crate::raftpb_bindings::hard_state::Py_HardState;
 
 use crate::raftpb_bindings::entry::Py_Entry_Ref;
 use crate::raftpb_bindings::snapshot::{Py_Snapshot_Mut, Py_Snapshot_Ref};

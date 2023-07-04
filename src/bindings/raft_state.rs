@@ -2,14 +2,12 @@ use pyo3::{intern, prelude::*};
 
 use raft::storage::RaftState;
 
+use crate::implement_type_conversion;
 use crate::raftpb_bindings::{
     conf_state::{Py_ConfState_Mut, Py_ConfState_Ref},
     hard_state::{Py_HardState_Mut, Py_HardState_Ref},
 };
-use crate::implement_type_conversion;
-use crate::utils::{
-    reference::{RefMutContainer, RefMutOwner},
-};
+use crate::utils::reference::{RefMutContainer, RefMutOwner};
 
 #[derive(Clone)]
 #[pyclass(name = "RaftState")]

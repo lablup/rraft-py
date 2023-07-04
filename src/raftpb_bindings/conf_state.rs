@@ -7,8 +7,8 @@ use pyo3::{prelude::*, types::PyList};
 
 use raft::eraftpb::ConfState;
 
-use crate::utils::errors::{runtime_error, to_pyresult};
 use crate::implement_type_conversion;
+use crate::utils::errors::{runtime_error, to_pyresult};
 use crate::utils::reference::{RefMutContainer, RefMutOwner};
 
 #[derive(Clone)]

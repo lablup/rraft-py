@@ -1,10 +1,8 @@
 use pyo3::{intern, prelude::*, pyclass::CompareOp};
 
-use raft::Progress;
 use crate::implement_type_conversion;
-use crate::utils::{
-    reference::{RefMutContainer, RefMutOwner},
-};
+use crate::utils::reference::{RefMutContainer, RefMutOwner};
+use raft::Progress;
 
 use super::{
     inflights::{Py_Inflights_Mut, Py_Inflights_Ref},
