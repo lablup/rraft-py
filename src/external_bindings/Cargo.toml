@@ -5,7 +5,7 @@ authors = ["Lablup Inc."]
 edition = "2021"
 
 [dependencies]
-pyo3 = { version = "0.19.0", features = ["extension-module", "multiple-pymethods"] }
+pyo3 = { version = "0.19.1", features = ["extension-module", "multiple-pymethods"] }
 slog = { version = "2.2", features = ["max_level_debug", "release_max_level_debug"] }
 slog-envlogger = "2.1.0"
 slog-term = "2.9.0"

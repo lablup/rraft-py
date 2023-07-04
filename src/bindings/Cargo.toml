@@ -7,7 +7,7 @@ edition = "2021"
 [dependencies]
 prost = { version = "0.11", optional = true }
 protobuf = "2"
-pyo3 = { version = "0.19.0", features = ["extension-module", "multiple-pymethods"] }
+pyo3 = { version = "0.19.1", features = ["extension-module", "multiple-pymethods"] }
 raft = { version = "0.7.0", features = ["prost-codec", "default-logger"], default-features = false }
 fxhash = "0.2.1"
 utils = { path = "../utils" }
