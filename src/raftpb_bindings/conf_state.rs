@@ -7,9 +7,9 @@ use pyo3::{prelude::*, types::PyList};
 
 use raft::eraftpb::ConfState;
 
-use utils::errors::{runtime_error, to_pyresult};
-use utils::implement_type_conversion;
-use utils::reference::{RefMutContainer, RefMutOwner};
+use crate::utils::errors::{runtime_error, to_pyresult};
+use crate::implement_type_conversion;
+use crate::utils::reference::{RefMutContainer, RefMutOwner};
 
 #[derive(Clone)]
 #[pyclass(name = "ConfState")]

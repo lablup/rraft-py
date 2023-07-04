@@ -1,19 +1,19 @@
-use bindings::get_entries_context::{Py_GetEntriesContext, Py_GetEntriesContext_Ref};
+use crate::bindings::get_entries_context::{Py_GetEntriesContext, Py_GetEntriesContext_Ref};
 use pyo3::types::PyList;
 use pyo3::{intern, prelude::*};
 
 use raft::storage::Storage;
 use raft::GetEntriesContext;
-use raftpb_bindings::hard_state::Py_HardState;
+use crate::raftpb_bindings::hard_state::Py_HardState;
 
-use raftpb_bindings::entry::Py_Entry_Ref;
-use raftpb_bindings::snapshot::{Py_Snapshot_Mut, Py_Snapshot_Ref};
+use crate::raftpb_bindings::entry::Py_Entry_Ref;
+use crate::raftpb_bindings::snapshot::{Py_Snapshot_Mut, Py_Snapshot_Ref};
 
-use bindings::raft_state::{Py_RaftState_Mut, Py_RaftState_Ref};
-use raftpb_bindings::entry::Py_Entry_Mut;
-use utils::errors::{make_native_raft_error, Py_RaftError, DESTROYED_ERR_MSG};
-use utils::reference::{RefMutContainer, RefMutOwner};
-use utils::unsafe_cast::make_mut;
+use crate::bindings::raft_state::{Py_RaftState_Mut, Py_RaftState_Ref};
+use crate::raftpb_bindings::entry::Py_Entry_Mut;
+use crate::utils::errors::{make_native_raft_error, Py_RaftError, DESTROYED_ERR_MSG};
+use crate::utils::reference::{RefMutContainer, RefMutOwner};
+use crate::utils::unsafe_cast::make_mut;
 
 #[derive(Clone)]
 #[pyclass(name = "Storage")]

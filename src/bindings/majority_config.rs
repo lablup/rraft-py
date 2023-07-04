@@ -3,8 +3,8 @@ use pyo3::{intern, prelude::*, pyclass::CompareOp, types::PySet};
 use fxhash::FxHasher;
 use raft::MajorityConfig;
 use std::{collections::HashSet, hash::BuildHasherDefault};
-use utils::{
-    implement_type_conversion,
+use crate::implement_type_conversion;
+use crate::utils::{
     reference::{RefMutContainer, RefMutOwner},
 };
 

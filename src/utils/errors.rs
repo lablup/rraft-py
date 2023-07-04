@@ -9,7 +9,7 @@ use pyo3::{
     types::PyTuple,
 };
 
-use crate::unsafe_cast::make_static;
+use super::unsafe_cast::make_static;
 use raft::{Error, StorageError};
 
 #[pyclass(name = "RaftError")]

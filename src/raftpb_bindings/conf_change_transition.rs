@@ -1,7 +1,7 @@
 use pyo3::{prelude::*, pyclass::CompareOp};
 
 use raft::eraftpb::ConfChangeTransition;
-use utils::errors::runtime_error;
+use crate::utils::errors::runtime_error;
 
 #[derive(Clone)]
 #[pyclass(name = "ConfChangeTransition")]

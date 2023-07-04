@@ -2,10 +2,10 @@ use pyo3::{intern, prelude::*};
 
 use raft::Config;
 
-use utils::implement_type_conversion;
-use utils::reference::{RefMutContainer, RefMutOwner};
+use crate::implement_type_conversion;
+use crate::utils::reference::{RefMutContainer, RefMutOwner};
 
-use utils::errors::Py_RaftError;
+use crate::utils::errors::Py_RaftError;
 
 use super::readonly_option::Py_ReadOnlyOption;
 

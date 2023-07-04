@@ -7,9 +7,9 @@ use pyo3::{
     types::{PyBytes, PyList},
 };
 use raft::eraftpb::ConfChangeV2;
-use utils::{
+use crate::implement_type_conversion;
+use crate::utils::{
     errors::to_pyresult,
-    implement_type_conversion,
     reference::{RefMutContainer, RefMutOwner},
     unsafe_cast::make_mut,
 };

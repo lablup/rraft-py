@@ -4,9 +4,9 @@ use pyo3::pyclass::CompareOp;
 use pyo3::types::PyBytes;
 use pyo3::{intern, prelude::*};
 use raft::eraftpb::Entry;
-use utils::errors::to_pyresult;
-use utils::implement_type_conversion;
-use utils::reference::{RefMutContainer, RefMutOwner};
+use crate::utils::errors::to_pyresult;
+use crate::implement_type_conversion;
+use crate::utils::reference::{RefMutContainer, RefMutOwner};
 
 use super::entry_type::Py_EntryType;
 
