@@ -1,11 +1,5 @@
 # rraft-py
 
-## ⚠️ Warning
-
-🚧 This repository is WIP and not yet *production-ready* although it currently passes [almost all harness tests](https://github.com/lablup/rraft-py/tree/main/harness) and have [working example codes](https://github.com/lablup/rraft-py/tree/main/example). I'd recommend not use this lib in your application yet unless you're interested in contributing to this bindings itself because the API could change a lot.
-
----
-
 This library provides Python bindings of the *[tikv/raft-rs](https://github.com/tikv/raft-rs)* crate, allowing for integration of the [*Raft consensus algorithm*](https://en.wikipedia.org/wiki/Raft_(algorithm)) in Python applications.
 
 The *raft-rs* crate implements the *Raft consensus algorithm*, which is a widely used and well-documented method for maintaining a replicated state machine in a distributed system.
@@ -14,7 +8,7 @@ Whether you're building a distributed database, a highly-available service, or a
 
 ## ✨ Hightlights
 
-* Provides almost the same APIs with raft-rs to Python, along with concrete type hints and even annotations for all types.
+* Provides almost the same APIs with `tikv/raft-rs` to Python, even along with concrete type hints and comments for all types.
 
 * Provides reliable implementation with more than 10,000 lines of test code porting.
 
