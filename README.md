@@ -2,8 +2,6 @@
 
 This library provides Python bindings of the *[tikv/raft-rs](https://github.com/tikv/raft-rs)* crate, allowing for integration of the [*Raft consensus algorithm*](https://en.wikipedia.org/wiki/Raft_(algorithm)) in Python applications.
 
-The *raft-rs* crate implements the *Raft consensus algorithm*, which is a widely used and well-documented method for maintaining a replicated state machine in a distributed system.
-
 Whether you're building a distributed database, a highly-available service, or any other type of application that requires consensus among a set of nodes, this binding makes it simple to get started.
 
 ## ✨ Hightlights
@@ -14,7 +12,7 @@ Whether you're building a distributed database, a highly-available service, or a
 
 * Provides flexible design inherited from `tikv/raft-rs`, which means `rraft-py` lets users could combine any storage and network layer they want through Python.
 
-## Why?
+## 🤔 Why?
 
 There have been several attempts to implement a *Raft implementation* in the Python ecosystem before, but unfortunately, there is no library being used as a *de-facto* standard as of now.
 
@@ -32,13 +30,9 @@ However, if you want to integrate *well-tested* Raft implementation that is reli
 
 The library provides a different API compared to other Python libraries to bypass the memory management differences between Python and Rust.
 
-Please refer to the [*How it works*](https://github.com/lablup/rraft-py/wiki/How-it-works) section in the Wiki for more details.
+Refer to the [*How it works*](https://github.com/lablup/rraft-py/wiki/How-it-works) page in the Wiki for more details.
 
-### Benchmarks
-
-TBU
-
-## Getting started
+## 🚀 Getting started
 
 ### Installation
 
