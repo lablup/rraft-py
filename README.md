@@ -38,15 +38,11 @@ Refer to the [*How it works*](https://github.com/lablup/rraft-py/wiki/How-it-wor
 
 #### With pip
 
-TBU
-
-<!--
+```
 $ pip install rraft-py
-``` -->
+```
 
 #### Example
-
-
 
 - [Example using coroutine with single in-memory node](https://github.com/lablup/rraft-py/blob/main/example/single_mem_node/use_coroutine.py)
 
