@@ -3,29 +3,29 @@ use pyo3::{intern, prelude::*, pyclass::CompareOp};
 use crate::utils::reference::{RefMutContainer, RefMutOwner};
 use raft::SoftState;
 
-use super::state_role::Py_StateRole;
+use super::state_role::PyStateRole;
 
 #[pyclass(name = "SoftState")]
-pub struct Py_SoftState {
+pub struct PySoftState {
     pub inner: RefMutOwner<SoftState>,
 }
 
 #[pyclass(name = "SoftState_Ref")]
-pub struct Py_SoftState_Ref {
+pub struct PySoftStateRef {
     pub inner: RefMutContainer<SoftState>,
 }
 
 #[pymethods]
-impl Py_SoftState {
+impl PySoftState {
     #[staticmethod]
     pub fn default() -> Self {
-        Py_SoftState {
+        PySoftState {
             inner: RefMutOwner::new(SoftState::default()),
         }
     }
 
-    pub fn make_ref(&mut self) -> Py_SoftState_Ref {
-        Py_SoftState_Ref {
+    pub fn make_ref(&mut self) -> PySoftStateRef {
+        PySoftStateRef {
             inner: RefMutContainer::new(&mut self.inner),
         }
     }
@@ -37,7 +37,7 @@ impl Py_SoftState {
     pub fn __richcmp__(
         &self,
         py: Python,
-        rhs: &Py_SoftState_Ref,
+        rhs: &PySoftStateRef,
         op: CompareOp,
     ) -> PyResult<PyObject> {
         match op {
@@ -58,7 +58,7 @@ impl Py_SoftState {
 }
 
 #[pymethods]
-impl Py_SoftState_Ref {
+impl PySoftStateRef {
     pub fn __repr__(&self) -> PyResult<String> {
         self.inner.map_as_ref(|inner| format!("{:?}", inner))
     }
@@ -66,7 +66,7 @@ impl Py_SoftState_Ref {
     pub fn __richcmp__(
         &self,
         py: Python,
-        rhs: &Py_SoftState_Ref,
+        rhs: &PySoftStateRef,
         op: CompareOp,
     ) -> PyResult<PyObject> {
         self.inner.map_as_ref(|inner| match op {
@@ -84,11 +84,11 @@ impl Py_SoftState_Ref {
         self.inner.map_as_mut(|inner| inner.leader_id = leader_id)
     }
 
-    pub fn get_raft_state(&self) -> PyResult<Py_StateRole> {
+    pub fn get_raft_state(&self) -> PyResult<PyStateRole> {
         self.inner.map_as_ref(|inner| inner.raft_state.into())
     }
 
-    pub fn set_raft_state(&mut self, rs: &Py_StateRole) -> PyResult<()> {
+    pub fn set_raft_state(&mut self, rs: &PyStateRole) -> PyResult<()> {
         self.inner.map_as_mut(|inner| inner.raft_state = rs.0)
     }
 }

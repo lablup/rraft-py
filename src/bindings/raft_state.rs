@@ -4,49 +4,49 @@ use raft::storage::RaftState;
 
 use crate::implement_type_conversion;
 use crate::raftpb_bindings::{
-    conf_state::{Py_ConfState_Mut, Py_ConfState_Ref},
-    hard_state::{Py_HardState_Mut, Py_HardState_Ref},
+    conf_state::{PyConfStateMut, PyConfStateRef},
+    hard_state::{PyHardStateMut, PyHardStateRef},
 };
 use crate::utils::reference::{RefMutContainer, RefMutOwner};
 
 #[derive(Clone)]
 #[pyclass(name = "RaftState")]
-pub struct Py_RaftState {
+pub struct PyRaftState {
     pub inner: RefMutOwner<RaftState>,
 }
 
 #[derive(Clone)]
 #[pyclass(name = "RaftState_Ref")]
-pub struct Py_RaftState_Ref {
+pub struct PyRaftStateRef {
     pub inner: RefMutContainer<RaftState>,
 }
 
 #[derive(FromPyObject)]
-pub enum Py_RaftState_Mut<'p> {
-    Owned(PyRefMut<'p, Py_RaftState>),
-    RefMut(Py_RaftState_Ref),
+pub enum PyRaftStateMut<'p> {
+    Owned(PyRefMut<'p, PyRaftState>),
+    RefMut(PyRaftStateRef),
 }
 
-implement_type_conversion!(RaftState, Py_RaftState_Mut);
+implement_type_conversion!(RaftState, PyRaftStateMut);
 
 #[pymethods]
-impl Py_RaftState {
+impl PyRaftState {
     #[new]
-    pub fn new(hard_state: Py_HardState_Mut, conf_state: Py_ConfState_Mut) -> Self {
-        Py_RaftState {
+    pub fn new(hard_state: PyHardStateMut, conf_state: PyConfStateMut) -> Self {
+        PyRaftState {
             inner: RefMutOwner::new(RaftState::new(hard_state.into(), conf_state.into())),
         }
     }
 
     #[staticmethod]
     pub fn default() -> Self {
-        Py_RaftState {
+        PyRaftState {
             inner: RefMutOwner::new(RaftState::default()),
         }
     }
 
-    pub fn make_ref(&mut self) -> Py_RaftState_Ref {
-        Py_RaftState_Ref {
+    pub fn make_ref(&mut self) -> PyRaftStateRef {
+        PyRaftStateRef {
             inner: RefMutContainer::new(&mut self.inner),
         }
     }
@@ -62,13 +62,13 @@ impl Py_RaftState {
 }
 
 #[pymethods]
-impl Py_RaftState_Ref {
+impl PyRaftStateRef {
     pub fn __repr__(&self) -> PyResult<String> {
         self.inner.map_as_ref(|inner| format!("{:?}", inner))
     }
 
-    pub fn clone(&self) -> PyResult<Py_RaftState> {
-        Ok(Py_RaftState {
+    pub fn clone(&self) -> PyResult<PyRaftState> {
+        Ok(PyRaftState {
             inner: RefMutOwner::new(self.inner.map_as_ref(|x| x.clone())?),
         })
     }
@@ -77,23 +77,23 @@ impl Py_RaftState_Ref {
         self.inner.map_as_ref(|inner| inner.initialized())
     }
 
-    pub fn get_conf_state(&mut self) -> PyResult<Py_ConfState_Ref> {
-        self.inner.map_as_mut(|inner| Py_ConfState_Ref {
+    pub fn get_conf_state(&mut self) -> PyResult<PyConfStateRef> {
+        self.inner.map_as_mut(|inner| PyConfStateRef {
             inner: RefMutContainer::new_raw(&mut inner.conf_state),
         })
     }
 
-    pub fn set_conf_state(&mut self, cs: Py_ConfState_Mut) -> PyResult<()> {
+    pub fn set_conf_state(&mut self, cs: PyConfStateMut) -> PyResult<()> {
         self.inner.map_as_mut(|inner| inner.conf_state = cs.into())
     }
 
-    pub fn get_hard_state(&mut self) -> PyResult<Py_HardState_Ref> {
-        self.inner.map_as_mut(|inner| Py_HardState_Ref {
+    pub fn get_hard_state(&mut self) -> PyResult<PyHardStateRef> {
+        self.inner.map_as_mut(|inner| PyHardStateRef {
             inner: RefMutContainer::new_raw(&mut inner.hard_state),
         })
     }
 
-    pub fn set_hard_state(&mut self, hs: Py_HardState_Mut) -> PyResult<()> {
+    pub fn set_hard_state(&mut self, hs: PyHardStateMut) -> PyResult<()> {
         self.inner.map_as_mut(|inner| inner.hard_state = hs.into())
     }
 }

@@ -6,35 +6,35 @@ use raft::Inflights;
 
 #[derive(Clone)]
 #[pyclass(name = "Inflights")]
-pub struct Py_Inflights {
+pub struct PyInflights {
     pub inner: RefMutOwner<Inflights>,
 }
 
 #[derive(Clone)]
 #[pyclass(name = "Inflights_Ref")]
-pub struct Py_Inflights_Ref {
+pub struct PyInflightsRef {
     pub inner: RefMutContainer<Inflights>,
 }
 
 #[derive(FromPyObject)]
-pub enum Py_Inflights_Mut<'p> {
-    Owned(PyRefMut<'p, Py_Inflights>),
-    RefMut(Py_Inflights_Ref),
+pub enum PyInflightsMut<'p> {
+    Owned(PyRefMut<'p, PyInflights>),
+    RefMut(PyInflightsRef),
 }
 
-implement_type_conversion!(Inflights, Py_Inflights_Mut);
+implement_type_conversion!(Inflights, PyInflightsMut);
 
 #[pymethods]
-impl Py_Inflights {
+impl PyInflights {
     #[new]
     pub fn new(cap: usize) -> Self {
-        Py_Inflights {
+        PyInflights {
             inner: RefMutOwner::new(Inflights::new(cap)),
         }
     }
 
-    pub fn make_ref(&mut self) -> Py_Inflights_Ref {
-        Py_Inflights_Ref {
+    pub fn make_ref(&mut self) -> PyInflightsRef {
+        PyInflightsRef {
             inner: RefMutContainer::new(&mut self.inner),
         }
     }
@@ -43,7 +43,7 @@ impl Py_Inflights {
         format!("{:?}", self.inner.inner)
     }
 
-    pub fn __richcmp__(&self, py: Python, rhs: Py_Inflights_Mut, op: CompareOp) -> PyObject {
+    pub fn __richcmp__(&self, py: Python, rhs: PyInflightsMut, op: CompareOp) -> PyObject {
         let rhs: Inflights = rhs.into();
 
         match op {
@@ -60,7 +60,7 @@ impl Py_Inflights {
 }
 
 #[pymethods]
-impl Py_Inflights_Ref {
+impl PyInflightsRef {
     pub fn __repr__(&self) -> PyResult<String> {
         self.inner.map_as_ref(|inner| format!("{:?}", inner))
     }
@@ -68,7 +68,7 @@ impl Py_Inflights_Ref {
     pub fn __richcmp__(
         &self,
         py: Python,
-        rhs: Py_Inflights_Mut,
+        rhs: PyInflightsMut,
         op: CompareOp,
     ) -> PyResult<PyObject> {
         self.inner.map_as_ref(|inner| {
@@ -82,8 +82,8 @@ impl Py_Inflights_Ref {
         })
     }
 
-    pub fn clone(&self) -> PyResult<Py_Inflights> {
-        Ok(Py_Inflights {
+    pub fn clone(&self) -> PyResult<PyInflights> {
+        Ok(PyInflights {
             inner: RefMutOwner::new(self.inner.map_as_ref(|inner| inner.clone())?),
         })
     }

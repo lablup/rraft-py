@@ -1,40 +1,40 @@
-use crate::bindings::get_entries_context::Py_GetEntriesContext;
+﻿use crate::bindings::get_entries_context::PyGetEntriesContext;
 use pyo3::{intern, prelude::*, types::PyList};
 
 use crate::utils::{
-    errors::Py_RaftError,
+    errors::PyRaftError,
     reference::{RefMutContainer, RefMutOwner},
 };
 use raft::storage::MemStorageCore;
 
 use crate::raftpb_bindings::{
-    conf_state::Py_ConfState_Mut,
-    entry::Py_Entry_Mut,
-    hard_state::{Py_HardState_Mut, Py_HardState_Ref},
-    snapshot::Py_Snapshot_Mut,
+    conf_state::PyConfStateMut,
+    entry::PyEntryMut,
+    hard_state::{PyHardStateMut, PyHardStateRef},
+    snapshot::PySnapshotMut,
 };
 
 #[pyclass(name = "MemStorageCore")]
-pub struct Py_MemStorageCore {
+pub struct PyMemStorageCore {
     pub inner: RefMutOwner<MemStorageCore>,
 }
 
 #[pyclass(name = "MemStorageCore_Ref")]
-pub struct Py_MemStorageCore_Ref {
+pub struct PyMemStorageCoreRef {
     pub inner: RefMutContainer<MemStorageCore>,
 }
 
 #[pymethods]
-impl Py_MemStorageCore {
+impl PyMemStorageCore {
     #[staticmethod]
     pub fn default() -> Self {
-        Py_MemStorageCore {
+        PyMemStorageCore {
             inner: RefMutOwner::new(MemStorageCore::default()),
         }
     }
 
-    pub fn make_ref(&mut self) -> Py_MemStorageCore_Ref {
-        Py_MemStorageCore_Ref {
+    pub fn make_ref(&mut self) -> PyMemStorageCoreRef {
+        PyMemStorageCoreRef {
             inner: RefMutContainer::new(&mut self.inner),
         }
     }
@@ -46,9 +46,9 @@ impl Py_MemStorageCore {
 }
 
 #[pymethods]
-impl Py_MemStorageCore_Ref {
+impl PyMemStorageCoreRef {
     pub fn append(&mut self, ents: &PyList) -> PyResult<()> {
-        let mut entries = ents.extract::<Vec<Py_Entry_Mut>>()?;
+        let mut entries = ents.extract::<Vec<PyEntryMut>>()?;
 
         self.inner.map_as_mut(|inner| {
             inner
@@ -59,15 +59,15 @@ impl Py_MemStorageCore_Ref {
                         .collect::<Vec<_>>()
                         .as_slice(),
                 )
-                .map_err(|e| Py_RaftError(e).into())
+                .map_err(|e| PyRaftError(e).into())
         })?
     }
 
-    pub fn apply_snapshot(&mut self, snapshot: Py_Snapshot_Mut) -> PyResult<()> {
+    pub fn apply_snapshot(&mut self, snapshot: PySnapshotMut) -> PyResult<()> {
         self.inner.map_as_mut(|inner| {
             inner
                 .apply_snapshot(snapshot.into())
-                .map_err(|e| Py_RaftError(e).into())
+                .map_err(|e| PyRaftError(e).into())
         })?
     }
 
@@ -75,41 +75,41 @@ impl Py_MemStorageCore_Ref {
         self.inner.map_as_mut(|inner| {
             inner
                 .compact(compact_index)
-                .map_err(|e| Py_RaftError(e).into())
+                .map_err(|e| PyRaftError(e).into())
         })?
     }
 
     pub fn commit_to(&mut self, index: u64) -> PyResult<()> {
         self.inner
-            .map_as_mut(|inner| inner.commit_to(index).map_err(|e| Py_RaftError(e).into()))?
+            .map_as_mut(|inner| inner.commit_to(index).map_err(|e| PyRaftError(e).into()))?
     }
 
     pub fn commit_to_and_set_conf_states(
         &mut self,
         idx: u64,
-        cs: Option<Py_ConfState_Mut>,
+        cs: Option<PyConfStateMut>,
     ) -> PyResult<()> {
         self.inner.map_as_mut(|inner| {
             match cs {
                 Some(x) => inner.commit_to_and_set_conf_states(idx, Some(x.into())),
                 None => inner.commit_to_and_set_conf_states(idx, None),
             }
-            .map_err(|e| Py_RaftError(e).into())
+            .map_err(|e| PyRaftError(e).into())
         })?
     }
 
-    pub fn hard_state(&mut self) -> PyResult<Py_HardState_Ref> {
-        self.inner.map_as_mut(|inner| Py_HardState_Ref {
+    pub fn hard_state(&mut self) -> PyResult<PyHardStateRef> {
+        self.inner.map_as_mut(|inner| PyHardStateRef {
             inner: RefMutContainer::new_raw(inner.mut_hard_state()),
         })
     }
 
-    pub fn set_hardstate(&mut self, hs: Py_HardState_Mut) -> PyResult<()> {
+    pub fn set_hardstate(&mut self, hs: PyHardStateMut) -> PyResult<()> {
         self.inner
             .map_as_mut(|inner| inner.set_hardstate(hs.into()))
     }
 
-    pub fn set_conf_state(&mut self, cs: Py_ConfState_Mut) -> PyResult<()> {
+    pub fn set_conf_state(&mut self, cs: PyConfStateMut) -> PyResult<()> {
         self.inner
             .map_as_mut(|inner| inner.set_conf_state(cs.into()))
     }
@@ -124,11 +124,11 @@ impl Py_MemStorageCore_Ref {
             .map_as_mut(|inner| inner.trigger_log_unavailable(v))
     }
 
-    pub fn take_get_entries_context(&mut self) -> PyResult<Option<Py_GetEntriesContext>> {
+    pub fn take_get_entries_context(&mut self) -> PyResult<Option<PyGetEntriesContext>> {
         self.inner.map_as_mut(|inner| {
             inner
                 .take_get_entries_context()
-                .map(|ctx| Py_GetEntriesContext {
+                .map(|ctx| PyGetEntriesContext {
                     inner: RefMutOwner::new(ctx),
                 })
         })

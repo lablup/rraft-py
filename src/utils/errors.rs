@@ -13,11 +13,11 @@ use super::unsafe_cast::make_static;
 use raft::{Error, StorageError};
 
 #[pyclass(name = "RaftError")]
-pub struct Py_RaftError(pub Error);
+pub struct PyRaftError(pub Error);
 
 #[pymethods]
-impl Py_RaftError {
-    pub fn __richcmp__(&self, py: Python, rhs: &Py_RaftError, op: CompareOp) -> PyObject {
+impl PyRaftError {
+    pub fn __richcmp__(&self, py: Python, rhs: &PyRaftError, op: CompareOp) -> PyObject {
         match op {
             CompareOp::Eq => (self.0 == rhs.0).into_py(py),
             CompareOp::Ne => (self.0 != rhs.0).into_py(py),
@@ -43,11 +43,11 @@ impl Py_RaftError {
 }
 
 #[pyclass(name = "StorageError")]
-pub struct Py_StorageError(pub StorageError);
+pub struct PyStorageError(pub StorageError);
 
 #[pymethods]
-impl Py_StorageError {
-    pub fn __richcmp__(&self, py: Python, rhs: &Py_StorageError, op: CompareOp) -> PyObject {
+impl PyStorageError {
+    pub fn __richcmp__(&self, py: Python, rhs: &PyStorageError, op: CompareOp) -> PyObject {
         match op {
             CompareOp::Eq => (self.0 == rhs.0).into_py(py),
             CompareOp::Ne => (self.0 != rhs.0).into_py(py),
@@ -69,8 +69,8 @@ impl Py_StorageError {
     }
 }
 
-impl From<Py_RaftError> for PyErr {
-    fn from(err: Py_RaftError) -> PyErr {
+impl From<PyRaftError> for PyErr {
+    fn from(err: PyRaftError) -> PyErr {
         match err.0 {
             Error::Exists { id, set } => ExistsError::new_err(format!("id: {}, set: {}", id, set)),
             Error::NotExists { id, set } => {
@@ -91,8 +91,8 @@ impl From<Py_RaftError> for PyErr {
     }
 }
 
-impl From<Py_StorageError> for PyErr {
-    fn from(err: Py_StorageError) -> PyErr {
+impl From<PyStorageError> for PyErr {
+    fn from(err: PyStorageError) -> PyErr {
         match err.0 {
             StorageError::Compacted => CompactedError::new_err(err.0.to_string()),
             StorageError::SnapshotOutOfDate => SnapshotOutOfDateError::new_err(err.0.to_string()),

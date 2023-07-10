@@ -9,37 +9,37 @@ use raft::JointConfig;
 
 #[derive(Clone)]
 #[pyclass(name = "JointConfig")]
-pub struct Py_JointConfig {
+pub struct PyJointConfig {
     pub inner: RefMutOwner<JointConfig>,
 }
 
 #[derive(Clone)]
 #[pyclass(name = "JointConfig_Ref")]
-pub struct Py_JointConfig_Ref {
+pub struct PyJointConfigRef {
     pub inner: RefMutContainer<JointConfig>,
 }
 
 #[derive(FromPyObject)]
-pub enum Py_JointConfig_Mut<'p> {
-    Owned(PyRefMut<'p, Py_JointConfig>),
-    RefMut(Py_JointConfig_Ref),
+pub enum PyJointConfigMut<'p> {
+    Owned(PyRefMut<'p, PyJointConfig>),
+    RefMut(PyJointConfigRef),
 }
 
-implement_type_conversion!(JointConfig, Py_JointConfig_Mut);
+implement_type_conversion!(JointConfig, PyJointConfigMut);
 
 #[pymethods]
-impl Py_JointConfig {
+impl PyJointConfig {
     #[new]
     pub fn new(voters: &PySet) -> PyResult<Self> {
-        Ok(Py_JointConfig {
+        Ok(PyJointConfig {
             inner: RefMutOwner::new(JointConfig::new(
                 voters.extract::<HashSet<u64, BuildHasherDefault<FxHasher>>>()?,
             )),
         })
     }
 
-    pub fn make_ref(&mut self) -> Py_JointConfig_Ref {
-        Py_JointConfig_Ref {
+    pub fn make_ref(&mut self) -> PyJointConfigRef {
+        PyJointConfigRef {
             inner: RefMutContainer::new(&mut self.inner),
         }
     }
@@ -48,7 +48,7 @@ impl Py_JointConfig {
         format!("{:?}", self.inner.inner)
     }
 
-    pub fn __richcmp__(&self, py: Python, rhs: Py_JointConfig_Mut, op: CompareOp) -> PyObject {
+    pub fn __richcmp__(&self, py: Python, rhs: PyJointConfigMut, op: CompareOp) -> PyObject {
         let rhs: JointConfig = rhs.into();
 
         match op {
@@ -69,7 +69,7 @@ impl Py_JointConfig {
 }
 
 #[pymethods]
-impl Py_JointConfig_Ref {
+impl PyJointConfigRef {
     pub fn __repr__(&self) -> PyResult<String> {
         self.inner.map_as_ref(|inner| format!("{:?}", inner))
     }
@@ -77,7 +77,7 @@ impl Py_JointConfig_Ref {
     pub fn __richcmp__(
         &self,
         py: Python,
-        rhs: Py_JointConfig_Mut,
+        rhs: PyJointConfigMut,
         op: CompareOp,
     ) -> PyResult<PyObject> {
         self.inner.map_as_ref(|inner| {
@@ -95,8 +95,8 @@ impl Py_JointConfig_Ref {
         self.inner.map_as_ref(|inner| inner.contains(id))
     }
 
-    pub fn clone(&self) -> PyResult<Py_JointConfig> {
-        Ok(Py_JointConfig {
+    pub fn clone(&self) -> PyResult<PyJointConfig> {
+        Ok(PyJointConfig {
             inner: RefMutOwner::new(self.inner.map_as_ref(|inner| inner.clone())?),
         })
     }
@@ -119,7 +119,7 @@ impl Py_JointConfig_Ref {
     }
 
     // TODO: AckedIndexer Trait is not public, so cannot write below function signature. Write below function when it will be possible.
-    // pub fn committed_index(&mut self, use_group_commit: bool, acked_indexer: &Py_AckedIndexer) {
+    // pub fn committed_index(&mut self, use_group_commit: bool, acked_indexer: &PyAckedIndexer) {
     //     self.inner.committed_index(use_group_commit, l)
     // }
 

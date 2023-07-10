@@ -7,55 +7,55 @@ use prost::Message as ProstMessage;
 use protobuf::Message as PbMessage;
 use pyo3::{intern, prelude::*, pyclass::CompareOp, types::PyBytes};
 
-use super::conf_change_type::Py_ConfChangeType;
+use super::conf_change_type::PyConfChangeType;
 
 use raft::eraftpb::ConfChangeSingle;
 
 #[derive(Clone)]
 #[pyclass(name = "ConfChangeSingle")]
-pub struct Py_ConfChangeSingle {
+pub struct PyConfChangeSingle {
     pub inner: RefMutOwner<ConfChangeSingle>,
 }
 
 #[derive(Clone)]
 #[pyclass(name = "ConfChangeSingle_Ref")]
-pub struct Py_ConfChangeSingle_Ref {
+pub struct PyConfChangeSingleRef {
     pub inner: RefMutContainer<ConfChangeSingle>,
 }
 
 #[derive(FromPyObject)]
-pub enum Py_ConfChangeSingle_Mut<'p> {
-    Owned(PyRefMut<'p, Py_ConfChangeSingle>),
-    RefMut(Py_ConfChangeSingle_Ref),
+pub enum PyConfChangeSingleMut<'p> {
+    Owned(PyRefMut<'p, PyConfChangeSingle>),
+    RefMut(PyConfChangeSingleRef),
 }
 
-implement_type_conversion!(ConfChangeSingle, Py_ConfChangeSingle_Mut);
+implement_type_conversion!(ConfChangeSingle, PyConfChangeSingleMut);
 
 #[pymethods]
-impl Py_ConfChangeSingle {
+impl PyConfChangeSingle {
     #[new]
     pub fn new() -> Self {
-        Py_ConfChangeSingle {
+        PyConfChangeSingle {
             inner: RefMutOwner::new(ConfChangeSingle::new()),
         }
     }
 
     #[staticmethod]
     pub fn default() -> Self {
-        Py_ConfChangeSingle {
+        PyConfChangeSingle {
             inner: RefMutOwner::new(ConfChangeSingle::default()),
         }
     }
 
     #[staticmethod]
-    pub fn decode(v: &[u8]) -> PyResult<Py_ConfChangeSingle> {
-        Ok(Py_ConfChangeSingle {
+    pub fn decode(v: &[u8]) -> PyResult<PyConfChangeSingle> {
+        Ok(PyConfChangeSingle {
             inner: RefMutOwner::new(to_pyresult(ProstMessage::decode(v))?),
         })
     }
 
-    pub fn make_ref(&mut self) -> Py_ConfChangeSingle_Ref {
-        Py_ConfChangeSingle_Ref {
+    pub fn make_ref(&mut self) -> PyConfChangeSingleRef {
+        PyConfChangeSingleRef {
             inner: RefMutContainer::new(&mut self.inner),
         }
     }
@@ -64,7 +64,7 @@ impl Py_ConfChangeSingle {
         format!("{:?}", self.inner.inner)
     }
 
-    pub fn __richcmp__(&self, py: Python, rhs: Py_ConfChangeSingle_Mut, op: CompareOp) -> PyObject {
+    pub fn __richcmp__(&self, py: Python, rhs: PyConfChangeSingleMut, op: CompareOp) -> PyObject {
         let rhs: ConfChangeSingle = rhs.into();
 
         match op {
@@ -81,7 +81,7 @@ impl Py_ConfChangeSingle {
 }
 
 #[pymethods]
-impl Py_ConfChangeSingle_Ref {
+impl PyConfChangeSingleRef {
     pub fn __repr__(&self) -> PyResult<String> {
         self.inner.map_as_ref(|inner| format!("{:?}", inner))
     }
@@ -89,7 +89,7 @@ impl Py_ConfChangeSingle_Ref {
     pub fn __richcmp__(
         &self,
         py: Python,
-        rhs: Py_ConfChangeSingle_Mut,
+        rhs: PyConfChangeSingleMut,
         op: CompareOp,
     ) -> PyResult<PyObject> {
         self.inner.map_as_ref(|inner| {
@@ -103,8 +103,8 @@ impl Py_ConfChangeSingle_Ref {
         })
     }
 
-    pub fn clone(&self) -> PyResult<Py_ConfChangeSingle> {
-        Ok(Py_ConfChangeSingle {
+    pub fn clone(&self) -> PyResult<PyConfChangeSingle> {
+        Ok(PyConfChangeSingle {
             inner: RefMutOwner::new(self.inner.map_as_ref(|x| x.clone())?),
         })
     }
@@ -126,12 +126,12 @@ impl Py_ConfChangeSingle_Ref {
         self.inner.map_as_mut(|inner| inner.clear_node_id())
     }
 
-    pub fn get_change_type(&self) -> PyResult<Py_ConfChangeType> {
+    pub fn get_change_type(&self) -> PyResult<PyConfChangeType> {
         self.inner
-            .map_as_ref(|inner| Py_ConfChangeType(inner.get_change_type()))
+            .map_as_ref(|inner| PyConfChangeType(inner.get_change_type()))
     }
 
-    pub fn set_change_type(&mut self, v: &Py_ConfChangeType) -> PyResult<()> {
+    pub fn set_change_type(&mut self, v: &PyConfChangeType) -> PyResult<()> {
         self.inner.map_as_mut(|inner| inner.set_change_type(v.0))
     }
 

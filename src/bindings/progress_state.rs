@@ -4,26 +4,26 @@ use raft::ProgressState;
 
 #[derive(Clone)]
 #[pyclass(name = "ProgressState")]
-pub struct Py_ProgressState(pub ProgressState);
+pub struct PyProgressState(pub ProgressState);
 
-impl From<Py_ProgressState> for ProgressState {
-    fn from(val: Py_ProgressState) -> Self {
+impl From<PyProgressState> for ProgressState {
+    fn from(val: PyProgressState) -> Self {
         val.0
     }
 }
 
-impl From<ProgressState> for Py_ProgressState {
+impl From<ProgressState> for PyProgressState {
     fn from(x: ProgressState) -> Self {
         match x {
-            ProgressState::Probe => Py_ProgressState(ProgressState::Probe),
-            ProgressState::Replicate => Py_ProgressState(ProgressState::Replicate),
-            ProgressState::Snapshot => Py_ProgressState(ProgressState::Snapshot),
+            ProgressState::Probe => PyProgressState(ProgressState::Probe),
+            ProgressState::Replicate => PyProgressState(ProgressState::Replicate),
+            ProgressState::Snapshot => PyProgressState(ProgressState::Snapshot),
         }
     }
 }
 
 #[pymethods]
-impl Py_ProgressState {
+impl PyProgressState {
     pub fn __repr__(&self) -> String {
         match self.0 {
             ProgressState::Probe => "Probe".to_string(),
@@ -32,7 +32,7 @@ impl Py_ProgressState {
         }
     }
 
-    pub fn __richcmp__(&self, py: Python, rhs: Py_ProgressState, op: CompareOp) -> PyObject {
+    pub fn __richcmp__(&self, py: Python, rhs: PyProgressState, op: CompareOp) -> PyObject {
         match op {
             CompareOp::Eq => (self.0 == rhs.0).into_py(py),
             CompareOp::Ne => (self.0 != rhs.0).into_py(py),
@@ -46,16 +46,16 @@ impl Py_ProgressState {
 
     #[classattr]
     pub fn Probe() -> Self {
-        Py_ProgressState(ProgressState::Probe)
+        PyProgressState(ProgressState::Probe)
     }
 
     #[classattr]
     pub fn Replicate() -> Self {
-        Py_ProgressState(ProgressState::Replicate)
+        PyProgressState(ProgressState::Replicate)
     }
 
     #[classattr]
     pub fn Snapshot() -> Self {
-        Py_ProgressState(ProgressState::Snapshot)
+        PyProgressState(ProgressState::Snapshot)
     }
 }

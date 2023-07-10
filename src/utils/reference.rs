@@ -123,25 +123,25 @@ unsafe impl<T: Sync> Sync for RefMutContainer<T> {}
 // This macro accepts the raft-rs (Rust) type as the first argument and the Py type as the second argument,
 // And adds some boilerplate codes implementing the From trait for conversion between the two types.
 macro_rules! implement_type_conversion {
-    ($Typ:ty, $Py_Typ_Mut:ident) => {
+    ($Typ:ty, $PyTypMut:ident) => {
         use $crate::utils::errors::DESTROYED_ERR_MSG;
 
-        impl From<$Py_Typ_Mut<'_>> for $Typ {
-            fn from(val: $Py_Typ_Mut<'_>) -> Self {
+        impl From<$PyTypMut<'_>> for $Typ {
+            fn from(val: $PyTypMut<'_>) -> Self {
                 match val {
-                    $Py_Typ_Mut::Owned(x) => x.inner.inner.clone(),
-                    $Py_Typ_Mut::RefMut(mut x) => {
+                    $PyTypMut::Owned(x) => x.inner.inner.clone(),
+                    $PyTypMut::RefMut(mut x) => {
                         x.inner.map_as_mut(|x| x.clone()).expect(DESTROYED_ERR_MSG)
                     }
                 }
             }
         }
 
-        impl From<&mut $Py_Typ_Mut<'_>> for $Typ {
-            fn from(val: &mut $Py_Typ_Mut<'_>) -> Self {
+        impl From<&mut $PyTypMut<'_>> for $Typ {
+            fn from(val: &mut $PyTypMut<'_>) -> Self {
                 match val {
-                    $Py_Typ_Mut::Owned(x) => x.inner.inner.clone(),
-                    $Py_Typ_Mut::RefMut(x) => {
+                    $PyTypMut::Owned(x) => x.inner.inner.clone(),
+                    $PyTypMut::RefMut(x) => {
                         x.inner.map_as_mut(|x| x.clone()).expect(DESTROYED_ERR_MSG)
                     }
                 }

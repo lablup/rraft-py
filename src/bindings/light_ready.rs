@@ -1,6 +1,6 @@
 use crate::raftpb_bindings::{
-    entry::{Py_Entry, Py_Entry_Ref},
-    message::{Py_Message, Py_Message_Ref},
+    entry::{PyEntry, PyEntryRef},
+    message::{PyMessage, PyMessageRef},
 };
 use crate::utils::{
     reference::{RefMutContainer, RefMutOwner},
@@ -10,26 +10,26 @@ use pyo3::{intern, prelude::*};
 use raft::raw_node::LightReady;
 
 #[pyclass(name = "LightReady")]
-pub struct Py_LightReady {
+pub struct PyLightReady {
     pub inner: RefMutOwner<LightReady>,
 }
 
 #[pyclass(name = "LightReady_Ref")]
-pub struct Py_LightReady_Ref {
+pub struct PyLightReadyRef {
     pub inner: RefMutContainer<LightReady>,
 }
 
 #[pymethods]
-impl Py_LightReady {
+impl PyLightReady {
     #[staticmethod]
     pub fn default() -> Self {
-        Py_LightReady {
+        PyLightReady {
             inner: RefMutOwner::new(LightReady::default()),
         }
     }
 
-    pub fn make_ref(&mut self) -> Py_LightReady_Ref {
-        Py_LightReady_Ref {
+    pub fn make_ref(&mut self) -> PyLightReadyRef {
+        PyLightReadyRef {
             inner: RefMutContainer::new(&mut self.inner),
         }
     }
@@ -45,7 +45,7 @@ impl Py_LightReady {
 }
 
 #[pymethods]
-impl Py_LightReady_Ref {
+impl PyLightReadyRef {
     pub fn __repr__(&self) -> PyResult<String> {
         self.inner.map_as_ref(|inner| format!("{:?}", inner))
     }
@@ -59,7 +59,7 @@ impl Py_LightReady_Ref {
             inner
                 .committed_entries()
                 .iter()
-                .map(|entry| Py_Entry_Ref {
+                .map(|entry| PyEntryRef {
                     inner: RefMutContainer::new_raw(unsafe { make_mut(entry) }),
                 })
                 .collect::<Vec<_>>()
@@ -72,7 +72,7 @@ impl Py_LightReady_Ref {
             inner
                 .take_committed_entries()
                 .into_iter()
-                .map(|entry| Py_Entry {
+                .map(|entry| PyEntry {
                     inner: RefMutOwner::new(entry),
                 })
                 .collect::<Vec<_>>()
@@ -85,7 +85,7 @@ impl Py_LightReady_Ref {
             inner
                 .messages()
                 .iter()
-                .map(|msg| Py_Message_Ref {
+                .map(|msg| PyMessageRef {
                     inner: RefMutContainer::new_raw(unsafe { make_mut(msg) }),
                 })
                 .collect::<Vec<_>>()
@@ -98,7 +98,7 @@ impl Py_LightReady_Ref {
             inner
                 .take_messages()
                 .into_iter()
-                .map(|msg| Py_Message {
+                .map(|msg| PyMessage {
                     inner: RefMutOwner::new(msg),
                 })
                 .collect::<Vec<_>>()

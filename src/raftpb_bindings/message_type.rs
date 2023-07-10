@@ -5,47 +5,47 @@ use raft::eraftpb::MessageType;
 
 #[derive(Clone)]
 #[pyclass(name = "MessageType")]
-pub struct Py_MessageType(pub MessageType);
+pub struct PyMessageType(pub MessageType);
 
-impl From<Py_MessageType> for MessageType {
-    fn from(val: Py_MessageType) -> Self {
+impl From<PyMessageType> for MessageType {
+    fn from(val: PyMessageType) -> Self {
         val.0
     }
 }
 
-impl From<MessageType> for Py_MessageType {
+impl From<MessageType> for PyMessageType {
     fn from(x: MessageType) -> Self {
         match x {
-            MessageType::MsgHup => Py_MessageType(MessageType::MsgHup),
-            MessageType::MsgBeat => Py_MessageType(MessageType::MsgBeat),
-            MessageType::MsgPropose => Py_MessageType(MessageType::MsgPropose),
-            MessageType::MsgAppend => Py_MessageType(MessageType::MsgAppend),
-            MessageType::MsgAppendResponse => Py_MessageType(MessageType::MsgAppendResponse),
-            MessageType::MsgRequestVote => Py_MessageType(MessageType::MsgRequestVote),
+            MessageType::MsgHup => PyMessageType(MessageType::MsgHup),
+            MessageType::MsgBeat => PyMessageType(MessageType::MsgBeat),
+            MessageType::MsgPropose => PyMessageType(MessageType::MsgPropose),
+            MessageType::MsgAppend => PyMessageType(MessageType::MsgAppend),
+            MessageType::MsgAppendResponse => PyMessageType(MessageType::MsgAppendResponse),
+            MessageType::MsgRequestVote => PyMessageType(MessageType::MsgRequestVote),
             MessageType::MsgRequestVoteResponse => {
-                Py_MessageType(MessageType::MsgRequestVoteResponse)
+                PyMessageType(MessageType::MsgRequestVoteResponse)
             }
-            MessageType::MsgSnapshot => Py_MessageType(MessageType::MsgSnapshot),
-            MessageType::MsgHeartbeat => Py_MessageType(MessageType::MsgHeartbeat),
-            MessageType::MsgHeartbeatResponse => Py_MessageType(MessageType::MsgHeartbeatResponse),
-            MessageType::MsgUnreachable => Py_MessageType(MessageType::MsgUnreachable),
-            MessageType::MsgSnapStatus => Py_MessageType(MessageType::MsgSnapStatus),
-            MessageType::MsgCheckQuorum => Py_MessageType(MessageType::MsgCheckQuorum),
-            MessageType::MsgTransferLeader => Py_MessageType(MessageType::MsgTransferLeader),
-            MessageType::MsgTimeoutNow => Py_MessageType(MessageType::MsgTimeoutNow),
-            MessageType::MsgReadIndex => Py_MessageType(MessageType::MsgReadIndex),
-            MessageType::MsgReadIndexResp => Py_MessageType(MessageType::MsgReadIndexResp),
-            MessageType::MsgRequestPreVote => Py_MessageType(MessageType::MsgRequestPreVote),
+            MessageType::MsgSnapshot => PyMessageType(MessageType::MsgSnapshot),
+            MessageType::MsgHeartbeat => PyMessageType(MessageType::MsgHeartbeat),
+            MessageType::MsgHeartbeatResponse => PyMessageType(MessageType::MsgHeartbeatResponse),
+            MessageType::MsgUnreachable => PyMessageType(MessageType::MsgUnreachable),
+            MessageType::MsgSnapStatus => PyMessageType(MessageType::MsgSnapStatus),
+            MessageType::MsgCheckQuorum => PyMessageType(MessageType::MsgCheckQuorum),
+            MessageType::MsgTransferLeader => PyMessageType(MessageType::MsgTransferLeader),
+            MessageType::MsgTimeoutNow => PyMessageType(MessageType::MsgTimeoutNow),
+            MessageType::MsgReadIndex => PyMessageType(MessageType::MsgReadIndex),
+            MessageType::MsgReadIndexResp => PyMessageType(MessageType::MsgReadIndexResp),
+            MessageType::MsgRequestPreVote => PyMessageType(MessageType::MsgRequestPreVote),
             MessageType::MsgRequestPreVoteResponse => {
-                Py_MessageType(MessageType::MsgRequestPreVoteResponse)
+                PyMessageType(MessageType::MsgRequestPreVoteResponse)
             }
         }
     }
 }
 
 #[pymethods]
-impl Py_MessageType {
-    pub fn __richcmp__(&self, py: Python, rhs: &Py_MessageType, op: CompareOp) -> PyObject {
+impl PyMessageType {
+    pub fn __richcmp__(&self, py: Python, rhs: &PyMessageType, op: CompareOp) -> PyObject {
         match op {
             CompareOp::Eq => (self.0 == rhs.0).into_py(py),
             CompareOp::Ne => (self.0 != rhs.0).into_py(py),
@@ -88,103 +88,103 @@ impl Py_MessageType {
     #[staticmethod]
     pub fn from_int(v: i32, py: Python) -> PyResult<PyObject> {
         MessageType::from_i32(v)
-            .map(|x| Py_MessageType(x).into_py(py))
+            .map(|x| PyMessageType(x).into_py(py))
             .ok_or_else(|| runtime_error("Invalid value"))
     }
 
     #[classattr]
     pub fn MsgHup() -> Self {
-        Py_MessageType(MessageType::MsgHup)
+        PyMessageType(MessageType::MsgHup)
     }
 
     #[classattr]
     pub fn MsgBeat() -> Self {
-        Py_MessageType(MessageType::MsgBeat)
+        PyMessageType(MessageType::MsgBeat)
     }
 
     #[classattr]
     pub fn MsgPropose() -> Self {
-        Py_MessageType(MessageType::MsgPropose)
+        PyMessageType(MessageType::MsgPropose)
     }
 
     #[classattr]
     pub fn MsgAppend() -> Self {
-        Py_MessageType(MessageType::MsgAppend)
+        PyMessageType(MessageType::MsgAppend)
     }
 
     #[classattr]
     pub fn MsgAppendResponse() -> Self {
-        Py_MessageType(MessageType::MsgAppendResponse)
+        PyMessageType(MessageType::MsgAppendResponse)
     }
 
     #[classattr]
     pub fn MsgRequestVote() -> Self {
-        Py_MessageType(MessageType::MsgRequestVote)
+        PyMessageType(MessageType::MsgRequestVote)
     }
 
     #[classattr]
     pub fn MsgRequestVoteResponse() -> Self {
-        Py_MessageType(MessageType::MsgRequestVoteResponse)
+        PyMessageType(MessageType::MsgRequestVoteResponse)
     }
 
     #[classattr]
     pub fn MsgSnapshot() -> Self {
-        Py_MessageType(MessageType::MsgSnapshot)
+        PyMessageType(MessageType::MsgSnapshot)
     }
 
     #[classattr]
     pub fn MsgHeartbeat() -> Self {
-        Py_MessageType(MessageType::MsgHeartbeat)
+        PyMessageType(MessageType::MsgHeartbeat)
     }
 
     #[classattr]
     pub fn MsgHeartbeatResponse() -> Self {
-        Py_MessageType(MessageType::MsgHeartbeatResponse)
+        PyMessageType(MessageType::MsgHeartbeatResponse)
     }
 
     #[classattr]
     pub fn MsgUnreachable() -> Self {
-        Py_MessageType(MessageType::MsgUnreachable)
+        PyMessageType(MessageType::MsgUnreachable)
     }
 
     #[classattr]
     pub fn MsgSnapStatus() -> Self {
-        Py_MessageType(MessageType::MsgSnapStatus)
+        PyMessageType(MessageType::MsgSnapStatus)
     }
 
     #[classattr]
     pub fn MsgCheckQuorum() -> Self {
-        Py_MessageType(MessageType::MsgCheckQuorum)
+        PyMessageType(MessageType::MsgCheckQuorum)
     }
 
     #[classattr]
     pub fn MsgTransferLeader() -> Self {
-        Py_MessageType(MessageType::MsgTransferLeader)
+        PyMessageType(MessageType::MsgTransferLeader)
     }
 
     #[classattr]
     pub fn MsgTimeoutNow() -> Self {
-        Py_MessageType(MessageType::MsgTimeoutNow)
+        PyMessageType(MessageType::MsgTimeoutNow)
     }
 
     #[classattr]
     pub fn MsgReadIndex() -> Self {
-        Py_MessageType(MessageType::MsgReadIndex)
+        PyMessageType(MessageType::MsgReadIndex)
     }
 
     #[classattr]
     pub fn MsgReadIndexResp() -> Self {
-        Py_MessageType(MessageType::MsgReadIndexResp)
+        PyMessageType(MessageType::MsgReadIndexResp)
     }
 
     #[classattr]
     pub fn MsgRequestPreVote() -> Self {
-        Py_MessageType(MessageType::MsgRequestPreVote)
+        PyMessageType(MessageType::MsgRequestPreVote)
     }
 
     #[classattr]
     pub fn MsgRequestPreVoteResponse() -> Self {
-        Py_MessageType(MessageType::MsgRequestPreVoteResponse)
+        PyMessageType(MessageType::MsgRequestPreVoteResponse)
     }
 }
 

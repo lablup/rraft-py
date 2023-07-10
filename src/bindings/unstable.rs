@@ -1,9 +1,9 @@
 use pyo3::{intern, prelude::*, types::PyList};
 
-use crate::external_bindings::slog::Py_Logger_Mut;
+use crate::external_bindings::slog::PyLoggerMut;
 use crate::raftpb_bindings::{
-    entry::{Py_Entry_Mut, Py_Entry_Ref},
-    snapshot::{Py_Snapshot_Mut, Py_Snapshot_Ref},
+    entry::{PyEntryMut, PyEntryRef},
+    snapshot::{PySnapshotMut, PySnapshotRef},
 };
 
 use crate::utils::{
@@ -13,26 +13,26 @@ use crate::utils::{
 use raft::Unstable;
 
 #[pyclass(name = "Unstable")]
-pub struct Py_Unstable {
+pub struct PyUnstable {
     pub inner: RefMutOwner<Unstable>,
 }
 
 #[pyclass(name = "Unstable_Ref")]
-pub struct Py_Unstable_Ref {
+pub struct PyUnstableRef {
     pub inner: RefMutContainer<Unstable>,
 }
 
 #[pymethods]
-impl Py_Unstable {
+impl PyUnstable {
     #[new]
-    pub fn new(offset: u64, logger: Py_Logger_Mut) -> Self {
-        Py_Unstable {
+    pub fn new(offset: u64, logger: PyLoggerMut) -> Self {
+        PyUnstable {
             inner: RefMutOwner::new(Unstable::new(offset, logger.into())),
         }
     }
 
-    pub fn make_ref(&mut self) -> Py_Unstable_Ref {
-        Py_Unstable_Ref {
+    pub fn make_ref(&mut self) -> PyUnstableRef {
+        PyUnstableRef {
             inner: RefMutContainer::new(&mut self.inner),
         }
     }
@@ -48,7 +48,7 @@ impl Py_Unstable {
 }
 
 #[pymethods]
-impl Py_Unstable_Ref {
+impl PyUnstableRef {
     pub fn __repr__(&self) -> PyResult<String> {
         self.inner.map_as_ref(|inner| format!("{:?}", inner))
     }
@@ -75,7 +75,7 @@ impl Py_Unstable_Ref {
             inner
                 .slice(lo, hi)
                 .iter()
-                .map(|entry| Py_Entry_Ref {
+                .map(|entry| PyEntryRef {
                     inner: RefMutContainer::new_raw(unsafe { make_mut(entry) }),
                 })
                 .collect::<Vec<_>>()
@@ -92,12 +92,12 @@ impl Py_Unstable_Ref {
             .map_as_mut(|inner| inner.stable_entries(index, term))
     }
 
-    pub fn restore(&mut self, snap: Py_Snapshot_Mut) -> PyResult<()> {
+    pub fn restore(&mut self, snap: PySnapshotMut) -> PyResult<()> {
         self.inner.map_as_mut(|inner| inner.restore(snap.into()))
     }
 
     pub fn truncate_and_append(&mut self, ents: &PyList) -> PyResult<()> {
-        let mut entries = ents.extract::<Vec<Py_Entry_Mut>>()?;
+        let mut entries = ents.extract::<Vec<PyEntryMut>>()?;
 
         self.inner.map_as_mut(|inner| {
             inner.truncate_and_append(
@@ -132,7 +132,7 @@ impl Py_Unstable_Ref {
             inner
                 .entries
                 .iter_mut()
-                .map(|entry| Py_Entry_Ref {
+                .map(|entry| PyEntryRef {
                     inner: RefMutContainer::new_raw(entry),
                 })
                 .collect::<Vec<_>>()
@@ -141,15 +141,15 @@ impl Py_Unstable_Ref {
     }
 
     pub fn set_entries(&mut self, ents: &PyList) -> PyResult<()> {
-        let mut entries = ents.extract::<Vec<Py_Entry_Mut>>()?;
+        let mut entries = ents.extract::<Vec<PyEntryMut>>()?;
 
         self.inner.map_as_mut(|inner| {
             inner.entries = entries.iter_mut().map(|x| x.into()).collect::<Vec<_>>();
         })
     }
 
-    // pub fn get_logger(&mut self) -> PyResult<Py_Logger_Ref> {
-    //     self.inner.map_as_mut(|inner| Py_Logger_Ref {
+    // pub fn get_logger(&mut self) -> PyResult<PyLoggerRef> {
+    //     self.inner.map_as_mut(|inner| PyLoggerRef {
     //         inner: RefMutContainer::new(&mut inner.logger),
     //     })
     // }
@@ -158,15 +158,15 @@ impl Py_Unstable_Ref {
         todo!()
     }
 
-    pub fn get_snapshot(&mut self) -> PyResult<Option<Py_Snapshot_Ref>> {
+    pub fn get_snapshot(&mut self) -> PyResult<Option<PySnapshotRef>> {
         self.inner.map_as_mut(|inner| {
-            inner.snapshot.as_ref().map(|snapshot| Py_Snapshot_Ref {
+            inner.snapshot.as_ref().map(|snapshot| PySnapshotRef {
                 inner: RefMutContainer::new_raw(unsafe { make_mut(snapshot) }),
             })
         })
     }
 
-    pub fn set_snapshot(&mut self, snapshot: Option<Py_Snapshot_Mut>) -> PyResult<()> {
+    pub fn set_snapshot(&mut self, snapshot: Option<PySnapshotMut>) -> PyResult<()> {
         self.inner.map_as_mut(|inner| match snapshot {
             Some(snapshot) => inner.snapshot = Some(snapshot.into()),
             None => inner.snapshot = None,

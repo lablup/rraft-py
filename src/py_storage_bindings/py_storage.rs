@@ -1,41 +1,41 @@
-use crate::bindings::get_entries_context::{Py_GetEntriesContext, Py_GetEntriesContext_Ref};
+use crate::bindings::get_entries_context::{PyGetEntriesContext, PyGetEntriesContextRef};
 use pyo3::types::PyList;
 use pyo3::{intern, prelude::*};
 
-use crate::raftpb_bindings::hard_state::Py_HardState;
+use crate::raftpb_bindings::hard_state::PyHardState;
 use raft::storage::Storage;
 use raft::GetEntriesContext;
 
-use crate::raftpb_bindings::entry::Py_Entry_Ref;
-use crate::raftpb_bindings::snapshot::{Py_Snapshot_Mut, Py_Snapshot_Ref};
+use crate::raftpb_bindings::entry::PyEntryRef;
+use crate::raftpb_bindings::snapshot::{PySnapshotMut, PySnapshotRef};
 
-use crate::bindings::raft_state::{Py_RaftState_Mut, Py_RaftState_Ref};
-use crate::raftpb_bindings::entry::Py_Entry_Mut;
-use crate::utils::errors::{make_native_raft_error, Py_RaftError, DESTROYED_ERR_MSG};
+use crate::bindings::raft_state::{PyRaftStateMut, PyRaftStateRef};
+use crate::raftpb_bindings::entry::PyEntryMut;
+use crate::utils::errors::{make_native_raft_error, PyRaftError, DESTROYED_ERR_MSG};
 use crate::utils::reference::{RefMutContainer, RefMutOwner};
 use crate::utils::unsafe_cast::make_mut;
 
 #[derive(Clone)]
 #[pyclass(name = "Storage")]
-pub struct Py_Storage {
+pub struct PyStorage {
     pub storage: Py<PyAny>,
 }
 
 #[derive(Clone)]
 #[pyclass(name = "Storage_Ref")]
-pub struct Py_Storage_Ref {
-    pub inner: RefMutContainer<Py_Storage>,
+pub struct PyStorageRef {
+    pub inner: RefMutContainer<PyStorage>,
 }
 
 #[pymethods]
-impl Py_Storage {
+impl PyStorage {
     #[new]
     pub fn new(storage: Py<PyAny>) -> Self {
-        Py_Storage { storage }
+        PyStorage { storage }
     }
 
-    pub fn make_ref(&mut self) -> Py_Storage_Ref {
-        Py_Storage_Ref {
+    pub fn make_ref(&mut self) -> PyStorageRef {
+        PyStorageRef {
             inner: RefMutContainer::new_raw(self),
         }
     }
@@ -47,7 +47,7 @@ impl Py_Storage {
 }
 
 #[pymethods]
-impl Py_Storage_Ref {
+impl PyStorageRef {
     pub fn wl(&mut self) -> PyResult<PyObject> {
         self.inner.map_as_mut(|inner| {
             Python::with_gil(|py| inner.storage.call_method(py, "wl", (), None))
@@ -62,7 +62,7 @@ impl Py_Storage_Ref {
 }
 
 #[pymethods]
-impl Py_Storage_Ref {
+impl PyStorageRef {
     pub fn append(&mut self, py: Python, ents: &PyList) -> PyResult<()> {
         self.inner
             .map_as_mut(|inner| inner.storage.call_method(py, "append", (ents,), None))
@@ -110,7 +110,7 @@ impl Py_Storage_Ref {
             .and(Ok(()))
     }
 
-    pub fn hard_state(&mut self, py: Python) -> PyResult<Py_HardState> {
+    pub fn hard_state(&mut self, py: Python) -> PyResult<PyHardState> {
         self.inner.map_as_mut(|inner| {
             inner
                 .storage
@@ -143,20 +143,20 @@ impl Py_Storage_Ref {
 }
 
 #[pymethods]
-impl Py_Storage_Ref {
-    pub fn initial_state(&self) -> PyResult<Py_RaftState_Ref> {
+impl PyStorageRef {
+    pub fn initial_state(&self) -> PyResult<PyRaftStateRef> {
         Storage::initial_state(self)
-            .map(|mut rs| Py_RaftState_Ref {
+            .map(|mut rs| PyRaftStateRef {
                 inner: RefMutContainer::new_raw(&mut rs),
             })
-            .map_err(|e| Py_RaftError(e).into())
+            .map_err(|e| PyRaftError(e).into())
     }
 
     pub fn entries(
         &self,
         low: u64,
         high: u64,
-        context: &mut Py_GetEntriesContext_Ref,
+        context: &mut PyGetEntriesContextRef,
         max_size: Option<u64>,
         py: Python,
     ) -> PyResult<PyObject> {
@@ -168,47 +168,43 @@ impl Py_Storage_Ref {
             .map(|mut entries| {
                 let py_entries = entries
                     .iter_mut()
-                    .map(|x| Py_Entry_Ref {
+                    .map(|x| PyEntryRef {
                         inner: RefMutContainer::new_raw(x),
                     })
                     .collect::<Vec<_>>();
                 py_entries.into_py(py)
             })
-            .map_err(|e| Py_RaftError(e).into())
+            .map_err(|e| PyRaftError(e).into())
     }
 
     pub fn term(&self, idx: u64) -> PyResult<u64> {
-        Storage::term(self, idx).map_err(|e| Py_RaftError(e).into())
+        Storage::term(self, idx).map_err(|e| PyRaftError(e).into())
     }
 
     pub fn first_index(&self) -> PyResult<u64> {
-        Storage::first_index(self).map_err(|e| Py_RaftError(e).into())
+        Storage::first_index(self).map_err(|e| PyRaftError(e).into())
     }
 
     pub fn last_index(&self) -> PyResult<u64> {
-        Storage::last_index(self).map_err(|e| Py_RaftError(e).into())
+        Storage::last_index(self).map_err(|e| PyRaftError(e).into())
     }
 
-    pub fn snapshot(&self, request_index: u64, to: u64) -> PyResult<Py_Snapshot_Ref> {
+    pub fn snapshot(&self, request_index: u64, to: u64) -> PyResult<PySnapshotRef> {
         Storage::snapshot(self, request_index, to)
-            .map(|mut snapshot| Py_Snapshot_Ref {
+            .map(|mut snapshot| PySnapshotRef {
                 inner: RefMutContainer::new_raw(&mut snapshot),
             })
-            .map_err(|e| Py_RaftError(e).into())
+            .map_err(|e| PyRaftError(e).into())
     }
 }
 
-impl Storage for Py_Storage {
+impl Storage for PyStorage {
     fn initial_state(&self) -> raft::Result<raft::RaftState> {
         Python::with_gil(|py| {
             self.storage
                 .as_ref(py)
                 .call_method("initial_state", (), None)
-                .and_then(|py_result| {
-                    py_result
-                        .extract::<_>()
-                        .map(|rs: Py_RaftState_Mut| rs.into())
-                })
+                .and_then(|py_result| py_result.extract::<_>().map(|rs: PyRaftStateMut| rs.into()))
                 .map_err(|e| make_native_raft_error(py, e))
         })
     }
@@ -221,7 +217,7 @@ impl Storage for Py_Storage {
         context: GetEntriesContext,
     ) -> raft::Result<Vec<raft::prelude::Entry>> {
         let max_size: Option<u64> = max_size.into();
-        let mut context = Py_GetEntriesContext {
+        let mut context = PyGetEntriesContext {
             inner: RefMutOwner::new(context),
         };
 
@@ -231,7 +227,7 @@ impl Storage for Py_Storage {
                 .call_method("entries", (low, high, context.make_ref(), max_size), None)
                 .and_then(|entries| {
                     entries
-                        .extract::<Vec<Py_Entry_Mut>>()
+                        .extract::<Vec<PyEntryMut>>()
                         .map(|entries| entries.into_iter().map(|e| e.into()).collect())
                 })
                 .map_err(|e| make_native_raft_error(py, e))
@@ -273,17 +269,13 @@ impl Storage for Py_Storage {
             self.storage
                 .as_ref(py)
                 .call_method("snapshot", (request_index, to), None)
-                .and_then(|py_result| {
-                    py_result
-                        .extract::<_>()
-                        .map(|ss: Py_Snapshot_Mut| ss.into())
-                })
+                .and_then(|py_result| py_result.extract::<_>().map(|ss: PySnapshotMut| ss.into()))
                 .map_err(|e| make_native_raft_error(py, e))
         })
     }
 }
 
-impl Storage for Py_Storage_Ref {
+impl Storage for PyStorageRef {
     fn initial_state(&self) -> raft::Result<raft::RaftState> {
         unsafe { make_mut(&self.inner) }
             .map_as_mut(|inner| {
@@ -294,7 +286,7 @@ impl Storage for Py_Storage_Ref {
                         .and_then(|py_result| {
                             py_result
                                 .extract::<_>(py)
-                                .map(|rs: Py_RaftState_Mut| rs.into())
+                                .map(|rs: PyRaftStateMut| rs.into())
                         })
                         .map_err(|e| make_native_raft_error(py, e))
                 })
@@ -310,7 +302,7 @@ impl Storage for Py_Storage_Ref {
         context: GetEntriesContext,
     ) -> raft::Result<Vec<raft::prelude::Entry>> {
         let max_size: Option<u64> = max_size.into();
-        let mut context = Py_GetEntriesContext {
+        let mut context = PyGetEntriesContext {
             inner: RefMutOwner::new(context),
         };
 
@@ -323,7 +315,7 @@ impl Storage for Py_Storage_Ref {
                         .call_method("entries", (low, high, context.make_ref(), max_size), None)
                         .and_then(|entries| {
                             entries
-                                .extract::<Vec<Py_Entry_Mut>>()
+                                .extract::<Vec<PyEntryMut>>()
                                 .map(|entries| entries.into_iter().map(|e| e.into()).collect())
                         })
                         .map_err(|e| make_native_raft_error(py, e))
@@ -387,7 +379,7 @@ impl Storage for Py_Storage_Ref {
                         .and_then(|py_result| {
                             py_result
                                 .extract::<_>(py)
-                                .map(|ss: Py_Snapshot_Mut| ss.into())
+                                .map(|ss: PySnapshotMut| ss.into())
                         })
                         .map_err(|e| make_native_raft_error(py, e))
                 })

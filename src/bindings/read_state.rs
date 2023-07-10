@@ -6,41 +6,41 @@ use raft::ReadState;
 
 #[derive(Clone)]
 #[pyclass(name = "ReadState")]
-pub struct Py_ReadState {
+pub struct PyReadState {
     pub inner: RefMutOwner<ReadState>,
 }
 
 #[derive(Clone)]
 #[pyclass(name = "ReadState_Ref")]
-pub struct Py_ReadState_Ref {
+pub struct PyReadStateRef {
     pub inner: RefMutContainer<ReadState>,
 }
 
 #[derive(FromPyObject)]
-pub enum Py_ReadState_Mut<'p> {
-    Owned(PyRefMut<'p, Py_ReadState>),
-    RefMut(Py_ReadState_Ref),
+pub enum PyReadStateMut<'p> {
+    Owned(PyRefMut<'p, PyReadState>),
+    RefMut(PyReadStateRef),
 }
 
-implement_type_conversion!(ReadState, Py_ReadState_Mut);
+implement_type_conversion!(ReadState, PyReadStateMut);
 
 #[pymethods]
-impl Py_ReadState {
+impl PyReadState {
     #[staticmethod]
     pub fn default() -> Self {
-        Py_ReadState {
+        PyReadState {
             inner: RefMutOwner::new(ReadState::default()),
         }
     }
 
-    pub fn make_ref(&mut self) -> Py_ReadState_Ref {
-        Py_ReadState_Ref {
+    pub fn make_ref(&mut self) -> PyReadStateRef {
+        PyReadStateRef {
             inner: RefMutContainer::new(&mut self.inner),
         }
     }
 
-    pub fn clone(&self) -> Py_ReadState {
-        Py_ReadState {
+    pub fn clone(&self) -> PyReadState {
+        PyReadState {
             inner: self.inner.clone(),
         }
     }
@@ -49,7 +49,7 @@ impl Py_ReadState {
         format!("{:?}", self.inner.inner)
     }
 
-    pub fn __richcmp__(&self, py: Python, rhs: Py_ReadState_Mut, op: CompareOp) -> PyObject {
+    pub fn __richcmp__(&self, py: Python, rhs: PyReadStateMut, op: CompareOp) -> PyObject {
         let rhs: ReadState = rhs.into();
 
         match op {
@@ -66,7 +66,7 @@ impl Py_ReadState {
 }
 
 #[pymethods]
-impl Py_ReadState_Ref {
+impl PyReadStateRef {
     pub fn __repr__(&self) -> PyResult<String> {
         self.inner.map_as_ref(|inner| format!("{:?}", inner))
     }
@@ -74,7 +74,7 @@ impl Py_ReadState_Ref {
     pub fn __richcmp__(
         &self,
         py: Python,
-        rhs: Py_ReadState_Mut,
+        rhs: PyReadStateMut,
         op: CompareOp,
     ) -> PyResult<PyObject> {
         self.inner.map_as_ref(|inner| {
@@ -88,8 +88,8 @@ impl Py_ReadState_Ref {
         })
     }
 
-    pub fn clone(&self) -> PyResult<Py_ReadState> {
-        Ok(Py_ReadState {
+    pub fn clone(&self) -> PyResult<PyReadState> {
+        Ok(PyReadState {
             inner: RefMutOwner::new(self.inner.map_as_ref(|x| x.clone())?),
         })
     }

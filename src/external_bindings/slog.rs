@@ -6,21 +6,21 @@ use crate::implement_type_conversion;
 use crate::utils::reference::{RefMutContainer, RefMutOwner};
 
 #[pyclass(name = "OverflowStrategy")]
-pub struct Py_OverflowStrategy(pub OverflowStrategy);
+pub struct PyOverflowStrategy(pub OverflowStrategy);
 
-impl From<OverflowStrategy> for Py_OverflowStrategy {
+impl From<OverflowStrategy> for PyOverflowStrategy {
     fn from(x: OverflowStrategy) -> Self {
         match x {
-            OverflowStrategy::Block => Py_OverflowStrategy(OverflowStrategy::Block),
-            OverflowStrategy::Drop => Py_OverflowStrategy(OverflowStrategy::Drop),
-            OverflowStrategy::DropAndReport => Py_OverflowStrategy(OverflowStrategy::DropAndReport),
+            OverflowStrategy::Block => PyOverflowStrategy(OverflowStrategy::Block),
+            OverflowStrategy::Drop => PyOverflowStrategy(OverflowStrategy::Drop),
+            OverflowStrategy::DropAndReport => PyOverflowStrategy(OverflowStrategy::DropAndReport),
             _ => todo!(),
         }
     }
 }
 
 #[pymethods]
-impl Py_OverflowStrategy {
+impl PyOverflowStrategy {
     pub fn __hash__(&self) -> u64 {
         self.0 as u64
     }
@@ -36,44 +36,44 @@ impl Py_OverflowStrategy {
 
     #[classattr]
     pub fn Block() -> Self {
-        Py_OverflowStrategy(OverflowStrategy::Block)
+        PyOverflowStrategy(OverflowStrategy::Block)
     }
 
     #[classattr]
     pub fn Drop() -> Self {
-        Py_OverflowStrategy(OverflowStrategy::Drop)
+        PyOverflowStrategy(OverflowStrategy::Drop)
     }
 
     #[classattr]
     pub fn DropAndReport() -> Self {
-        Py_OverflowStrategy(OverflowStrategy::DropAndReport)
+        PyOverflowStrategy(OverflowStrategy::DropAndReport)
     }
 }
 
 #[derive(Clone)]
 #[pyclass(name = "Logger")]
-pub struct Py_Logger {
+pub struct PyLogger {
     pub inner: RefMutOwner<Logger>,
 }
 
 #[derive(Clone)]
 #[pyclass(name = "Logger_Ref")]
-pub struct Py_Logger_Ref {
+pub struct PyLoggerRef {
     pub inner: RefMutContainer<Logger>,
 }
 
 #[derive(FromPyObject)]
-pub enum Py_Logger_Mut<'p> {
-    Owned(PyRefMut<'p, Py_Logger>),
-    RefMut(Py_Logger_Ref),
+pub enum PyLoggerMut<'p> {
+    Owned(PyRefMut<'p, PyLogger>),
+    RefMut(PyLoggerRef),
 }
 
-implement_type_conversion!(Logger, Py_Logger_Mut);
+implement_type_conversion!(Logger, PyLoggerMut);
 
 #[pymethods]
-impl Py_Logger {
+impl PyLogger {
     #[new]
-    pub fn new(chan_size: usize, overflow_strategy: &Py_OverflowStrategy) -> Self {
+    pub fn new(chan_size: usize, overflow_strategy: &PyOverflowStrategy) -> Self {
         let decorator = slog_term::TermDecorator::new().build();
         let drain = slog_term::FullFormat::new(decorator).build().fuse();
         let drain = slog_async::Async::new(drain)
@@ -84,13 +84,13 @@ impl Py_Logger {
 
         let logger = slog::Logger::root(drain, o!());
 
-        Py_Logger {
+        PyLogger {
             inner: RefMutOwner::new(logger),
         }
     }
 
-    pub fn make_ref(&mut self) -> Py_Logger_Ref {
-        Py_Logger_Ref {
+    pub fn make_ref(&mut self) -> PyLoggerRef {
+        PyLoggerRef {
             inner: RefMutContainer::new(&mut self.inner),
         }
     }
@@ -102,7 +102,7 @@ impl Py_Logger {
 }
 
 #[pymethods]
-impl Py_Logger_Ref {
+impl PyLoggerRef {
     pub fn info(&mut self, s: &PyString) -> PyResult<()> {
         self.inner
             .map_as_ref(|inner| info!(inner, "{}", format!("{}", s)))

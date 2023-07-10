@@ -5,41 +5,41 @@ use crate::utils::reference::{RefMutContainer, RefMutOwner};
 use raft::Progress;
 
 use super::{
-    inflights::{Py_Inflights_Mut, Py_Inflights_Ref},
-    progress_state::Py_ProgressState,
+    inflights::{PyInflightsMut, PyInflightsRef},
+    progress_state::PyProgressState,
 };
 
 #[derive(Clone)]
 #[pyclass(name = "Progress")]
-pub struct Py_Progress {
+pub struct PyProgress {
     pub inner: RefMutOwner<Progress>,
 }
 
 #[derive(Clone)]
 #[pyclass(name = "Progress_Ref")]
-pub struct Py_Progress_Ref {
+pub struct PyProgressRef {
     pub inner: RefMutContainer<Progress>,
 }
 
 #[derive(FromPyObject)]
-pub enum Py_Progress_Mut<'p> {
-    Owned(PyRefMut<'p, Py_Progress>),
-    RefMut(Py_Progress_Ref),
+pub enum PyProgressMut<'p> {
+    Owned(PyRefMut<'p, PyProgress>),
+    RefMut(PyProgressRef),
 }
 
-implement_type_conversion!(Progress, Py_Progress_Mut);
+implement_type_conversion!(Progress, PyProgressMut);
 
 #[pymethods]
-impl Py_Progress {
+impl PyProgress {
     #[new]
     pub fn new(next_idx: u64, ins_size: usize) -> Self {
-        Py_Progress {
+        PyProgress {
             inner: RefMutOwner::new(Progress::new(next_idx, ins_size)),
         }
     }
 
-    pub fn make_ref(&mut self) -> Py_Progress_Ref {
-        Py_Progress_Ref {
+    pub fn make_ref(&mut self) -> PyProgressRef {
+        PyProgressRef {
             inner: RefMutContainer::new(&mut self.inner),
         }
     }
@@ -48,7 +48,7 @@ impl Py_Progress {
         format!("{:?}", self.inner.inner)
     }
 
-    pub fn __richcmp__(&self, py: Python, rhs: Py_Progress_Mut, op: CompareOp) -> PyObject {
+    pub fn __richcmp__(&self, py: Python, rhs: PyProgressMut, op: CompareOp) -> PyObject {
         let rhs: Progress = rhs.into();
 
         match op {
@@ -65,17 +65,12 @@ impl Py_Progress {
 }
 
 #[pymethods]
-impl Py_Progress_Ref {
+impl PyProgressRef {
     pub fn __repr__(&self) -> PyResult<String> {
         self.inner.map_as_ref(|inner| format!("{:?}", inner))
     }
 
-    pub fn __richcmp__(
-        &self,
-        py: Python,
-        rhs: Py_Progress_Mut,
-        op: CompareOp,
-    ) -> PyResult<PyObject> {
+    pub fn __richcmp__(&self, py: Python, rhs: PyProgressMut, op: CompareOp) -> PyResult<PyObject> {
         self.inner.map_as_ref(|inner| {
             let rhs: Progress = rhs.into();
 
@@ -87,8 +82,8 @@ impl Py_Progress_Ref {
         })
     }
 
-    pub fn clone(&self) -> PyResult<Py_Progress> {
-        Ok(Py_Progress {
+    pub fn clone(&self) -> PyResult<PyProgress> {
+        Ok(PyProgress {
             inner: RefMutOwner::new(self.inner.map_as_ref(|x| x.clone())?),
         })
     }
@@ -153,13 +148,13 @@ impl Py_Progress_Ref {
         self.inner.map_as_mut(|inner| inner.optimistic_update(n))
     }
 
-    pub fn get_ins(&mut self) -> PyResult<Py_Inflights_Ref> {
-        self.inner.map_as_mut(|inner| Py_Inflights_Ref {
+    pub fn get_ins(&mut self) -> PyResult<PyInflightsRef> {
+        self.inner.map_as_mut(|inner| PyInflightsRef {
             inner: RefMutContainer::new_raw(&mut inner.ins),
         })
     }
 
-    pub fn set_ins(&mut self, inflights: Py_Inflights_Mut) -> PyResult<()> {
+    pub fn set_ins(&mut self, inflights: PyInflightsMut) -> PyResult<()> {
         self.inner.map_as_mut(|inner| inner.ins = inflights.into())
     }
 
@@ -229,11 +224,11 @@ impl Py_Progress_Ref {
         self.inner.map_as_mut(|inner| inner.paused = v)
     }
 
-    pub fn get_state(&self) -> PyResult<Py_ProgressState> {
-        self.inner.map_as_ref(|inner| Py_ProgressState(inner.state))
+    pub fn get_state(&self) -> PyResult<PyProgressState> {
+        self.inner.map_as_ref(|inner| PyProgressState(inner.state))
     }
 
-    pub fn set_state(&mut self, v: &Py_ProgressState) -> PyResult<()> {
+    pub fn set_state(&mut self, v: &PyProgressState) -> PyResult<()> {
         self.inner.map_as_mut(|inner| inner.state = v.0)
     }
 }

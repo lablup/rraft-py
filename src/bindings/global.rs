@@ -1,8 +1,8 @@
 use pyo3::prelude::*;
 
 use crate::raftpb_bindings::conf_change::new_conf_change_single as _new_conf_change_single;
-use crate::raftpb_bindings::conf_change_single::Py_ConfChangeSingle;
-use crate::raftpb_bindings::conf_change_type::Py_ConfChangeType;
+use crate::raftpb_bindings::conf_change_single::PyConfChangeSingle;
+use crate::raftpb_bindings::conf_change_type::PyConfChangeType;
 use crate::raftpb_bindings::message_type::{
     is_local_msg as _is_local_msg, is_response_msg as _is_response_msg,
 };
@@ -14,8 +14,8 @@ use raft::{
     NO_LIMIT,
 };
 
-use crate::external_bindings::slog::Py_Logger;
-use crate::raftpb_bindings::message_type::Py_MessageType;
+use crate::external_bindings::slog::PyLogger;
+use crate::raftpb_bindings::message_type::PyMessageType;
 use crate::utils::reference::RefMutOwner;
 
 // Global scope functions
@@ -25,31 +25,31 @@ pub fn majority(total: usize) -> usize {
 }
 
 #[pyfunction]
-pub fn default_logger() -> Py_Logger {
-    Py_Logger {
+pub fn default_logger() -> PyLogger {
+    PyLogger {
         inner: RefMutOwner::new(_default_logger()),
     }
 }
 
 #[pyfunction]
-pub fn vote_resp_msg_type(typ: &Py_MessageType) -> Py_MessageType {
-    Py_MessageType(_vote_resp_msg_type(typ.0))
+pub fn vote_resp_msg_type(typ: &PyMessageType) -> PyMessageType {
+    PyMessageType(_vote_resp_msg_type(typ.0))
 }
 
 #[pyfunction]
-pub fn new_conf_change_single(node_id: u64, typ: &Py_ConfChangeType) -> Py_ConfChangeSingle {
-    Py_ConfChangeSingle {
+pub fn new_conf_change_single(node_id: u64, typ: &PyConfChangeType) -> PyConfChangeSingle {
+    PyConfChangeSingle {
         inner: RefMutOwner::new(_new_conf_change_single(node_id, typ.0)),
     }
 }
 
 #[pyfunction]
-pub fn is_local_msg(typ: &Py_MessageType) -> bool {
+pub fn is_local_msg(typ: &PyMessageType) -> bool {
     _is_local_msg(typ.0)
 }
 
 #[pyfunction]
-pub fn is_response_msg(typ: &Py_MessageType) -> bool {
+pub fn is_response_msg(typ: &PyMessageType) -> bool {
     _is_response_msg(typ.0)
 }
 

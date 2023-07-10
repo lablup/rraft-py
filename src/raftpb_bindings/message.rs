@@ -16,56 +16,56 @@ use crate::utils::{
 use raft::eraftpb::Message;
 
 use super::{
-    entry::{Py_Entry_Mut, Py_Entry_Ref},
-    message_type::Py_MessageType,
-    snapshot::{Py_Snapshot_Mut, Py_Snapshot_Ref},
+    entry::{PyEntryMut, PyEntryRef},
+    message_type::PyMessageType,
+    snapshot::{PySnapshotMut, PySnapshotRef},
 };
 
 #[derive(Clone)]
 #[pyclass(name = "Message")]
-pub struct Py_Message {
+pub struct PyMessage {
     pub inner: RefMutOwner<Message>,
 }
 
 #[derive(Clone)]
 #[pyclass(name = "Message_Ref")]
-pub struct Py_Message_Ref {
+pub struct PyMessageRef {
     pub inner: RefMutContainer<Message>,
 }
 
 #[derive(FromPyObject)]
-pub enum Py_Message_Mut<'p> {
-    Owned(PyRefMut<'p, Py_Message>),
-    RefMut(Py_Message_Ref),
+pub enum PyMessageMut<'p> {
+    Owned(PyRefMut<'p, PyMessage>),
+    RefMut(PyMessageRef),
 }
 
-implement_type_conversion!(Message, Py_Message_Mut);
+implement_type_conversion!(Message, PyMessageMut);
 
 #[pymethods]
-impl Py_Message {
+impl PyMessage {
     #[new]
     pub fn new() -> Self {
-        Py_Message {
+        PyMessage {
             inner: RefMutOwner::new(Message::new()),
         }
     }
 
     #[staticmethod]
     pub fn default() -> Self {
-        Py_Message {
+        PyMessage {
             inner: RefMutOwner::new(Message::default()),
         }
     }
 
     #[staticmethod]
-    pub fn decode(v: &[u8]) -> PyResult<Py_Message> {
-        Ok(Py_Message {
+    pub fn decode(v: &[u8]) -> PyResult<PyMessage> {
+        Ok(PyMessage {
             inner: RefMutOwner::new(to_pyresult(ProstMessage::decode(v))?),
         })
     }
 
-    pub fn make_ref(&mut self) -> Py_Message_Ref {
-        Py_Message_Ref {
+    pub fn make_ref(&mut self) -> PyMessageRef {
+        PyMessageRef {
             inner: RefMutContainer::new(&mut self.inner),
         }
     }
@@ -74,7 +74,7 @@ impl Py_Message {
         format!("{:?}", self.inner.inner)
     }
 
-    pub fn __richcmp__(&self, py: Python, rhs: Py_Message_Mut, op: CompareOp) -> PyObject {
+    pub fn __richcmp__(&self, py: Python, rhs: PyMessageMut, op: CompareOp) -> PyObject {
         let rhs: Message = rhs.into();
 
         match op {
@@ -91,17 +91,12 @@ impl Py_Message {
 }
 
 #[pymethods]
-impl Py_Message_Ref {
+impl PyMessageRef {
     pub fn __repr__(&self) -> PyResult<String> {
         self.inner.map_as_ref(|inner| format!("{:?}", inner))
     }
 
-    pub fn __richcmp__(
-        &self,
-        py: Python,
-        rhs: Py_Message_Mut,
-        op: CompareOp,
-    ) -> PyResult<PyObject> {
+    pub fn __richcmp__(&self, py: Python, rhs: PyMessageMut, op: CompareOp) -> PyResult<PyObject> {
         self.inner.map_as_ref(|inner| {
             let rhs: Message = rhs.into();
 
@@ -113,8 +108,8 @@ impl Py_Message_Ref {
         })
     }
 
-    pub fn clone(&self) -> PyResult<Py_Message> {
-        Ok(Py_Message {
+    pub fn clone(&self) -> PyResult<PyMessage> {
+        Ok(PyMessage {
             inner: RefMutOwner::new(self.inner.map_as_ref(|x| x.clone())?),
         })
     }
@@ -239,7 +234,7 @@ impl Py_Message_Ref {
             let entries = inner
                 .get_entries()
                 .iter()
-                .map(|entry| Py_Entry_Ref {
+                .map(|entry| PyEntryRef {
                     inner: RefMutContainer::new_raw(unsafe { make_mut(entry) }),
                 })
                 .collect::<Vec<_>>();
@@ -249,7 +244,7 @@ impl Py_Message_Ref {
     }
 
     pub fn set_entries(&mut self, ents: &PyList) -> PyResult<()> {
-        let mut entries: Vec<Py_Entry_Mut> = ents.extract::<Vec<Py_Entry_Mut>>()?;
+        let mut entries: Vec<PyEntryMut> = ents.extract::<Vec<PyEntryMut>>()?;
 
         self.inner.map_as_mut(|inner| {
             let entries = entries.iter_mut().map(|x| x.into()).collect::<Vec<_>>();
@@ -261,12 +256,12 @@ impl Py_Message_Ref {
         self.inner.map_as_mut(|inner| inner.clear_entries())
     }
 
-    pub fn get_msg_type(&self) -> PyResult<Py_MessageType> {
+    pub fn get_msg_type(&self) -> PyResult<PyMessageType> {
         self.inner
-            .map_as_ref(|inner| Py_MessageType(inner.get_msg_type()))
+            .map_as_ref(|inner| PyMessageType(inner.get_msg_type()))
     }
 
-    pub fn set_msg_type(&mut self, typ: &Py_MessageType) -> PyResult<()> {
+    pub fn set_msg_type(&mut self, typ: &PyMessageType) -> PyResult<()> {
         self.inner.map_as_mut(|inner| inner.set_msg_type(typ.0))
     }
 
@@ -286,13 +281,13 @@ impl Py_Message_Ref {
         self.inner.map_as_mut(|inner| inner.clear_reject())
     }
 
-    pub fn get_snapshot(&mut self) -> PyResult<Py_Snapshot_Ref> {
-        self.inner.map_as_mut(|inner| Py_Snapshot_Ref {
+    pub fn get_snapshot(&mut self) -> PyResult<PySnapshotRef> {
+        self.inner.map_as_mut(|inner| PySnapshotRef {
             inner: RefMutContainer::new_raw(inner.mut_snapshot()),
         })
     }
 
-    pub fn set_snapshot(&mut self, snapshot: Py_Snapshot_Mut) -> PyResult<()> {
+    pub fn set_snapshot(&mut self, snapshot: PySnapshotMut) -> PyResult<()> {
         self.inner
             .map_as_mut(|inner| inner.set_snapshot(snapshot.into()))
     }
@@ -344,7 +339,7 @@ impl Py_Message_Ref {
 }
 
 #[pymethods]
-impl Py_Message_Ref {
+impl PyMessageRef {
     pub fn compute_size(&self) -> PyResult<u32> {
         self.inner.map_as_ref(|inner| inner.compute_size())
     }

@@ -8,37 +8,37 @@ use std::{collections::HashSet, hash::BuildHasherDefault};
 
 #[derive(Clone)]
 #[pyclass(name = "MajorityConfig")]
-pub struct Py_MajorityConfig {
+pub struct PyMajorityConfig {
     pub inner: RefMutOwner<MajorityConfig>,
 }
 
 #[derive(Clone)]
 #[pyclass(name = "MajorityConfig_Ref")]
-pub struct Py_MajorityConfig_Ref {
+pub struct PyMajorityConfigRef {
     pub inner: RefMutContainer<MajorityConfig>,
 }
 
 #[derive(FromPyObject)]
-pub enum Py_MajorityConfig_Mut<'p> {
-    Owned(PyRefMut<'p, Py_MajorityConfig>),
-    RefMut(Py_MajorityConfig_Ref),
+pub enum PyMajorityConfigMut<'p> {
+    Owned(PyRefMut<'p, PyMajorityConfig>),
+    RefMut(PyMajorityConfigRef),
 }
 
-implement_type_conversion!(MajorityConfig, Py_MajorityConfig_Mut);
+implement_type_conversion!(MajorityConfig, PyMajorityConfigMut);
 
 #[pymethods]
-impl Py_MajorityConfig {
+impl PyMajorityConfig {
     #[new]
     pub fn new(voters: &PySet) -> PyResult<Self> {
-        Ok(Py_MajorityConfig {
+        Ok(PyMajorityConfig {
             inner: RefMutOwner::new(MajorityConfig::new(
                 voters.extract::<HashSet<u64, BuildHasherDefault<FxHasher>>>()?,
             )),
         })
     }
 
-    pub fn make_ref(&mut self) -> Py_MajorityConfig_Ref {
-        Py_MajorityConfig_Ref {
+    pub fn make_ref(&mut self) -> PyMajorityConfigRef {
+        PyMajorityConfigRef {
             inner: RefMutContainer::new(&mut self.inner),
         }
     }
@@ -47,7 +47,7 @@ impl Py_MajorityConfig {
         format!("{:?}", self.inner.inner)
     }
 
-    pub fn __richcmp__(&self, py: Python, rhs: Py_MajorityConfig_Mut, op: CompareOp) -> PyObject {
+    pub fn __richcmp__(&self, py: Python, rhs: PyMajorityConfigMut, op: CompareOp) -> PyObject {
         let rhs: MajorityConfig = rhs.into();
 
         match op {
@@ -68,7 +68,7 @@ impl Py_MajorityConfig {
 }
 
 #[pymethods]
-impl Py_MajorityConfig_Ref {
+impl PyMajorityConfigRef {
     pub fn __repr__(&self) -> PyResult<String> {
         self.inner.map_as_ref(|inner| format!("{:?}", inner))
     }
@@ -76,7 +76,7 @@ impl Py_MajorityConfig_Ref {
     pub fn __richcmp__(
         &self,
         py: Python,
-        rhs: Py_MajorityConfig_Mut,
+        rhs: PyMajorityConfigMut,
         op: CompareOp,
     ) -> PyResult<PyObject> {
         self.inner.map_as_ref(|inner| {
@@ -98,8 +98,8 @@ impl Py_MajorityConfig_Ref {
         self.inner.map_as_ref(|inner| inner.len())
     }
 
-    pub fn clone(&self) -> PyResult<Py_MajorityConfig> {
-        Ok(Py_MajorityConfig {
+    pub fn clone(&self) -> PyResult<PyMajorityConfig> {
+        Ok(PyMajorityConfig {
             inner: RefMutOwner::new(self.inner.map_as_ref(|inner| inner.clone())?),
         })
     }

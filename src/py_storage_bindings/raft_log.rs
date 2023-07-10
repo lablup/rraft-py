@@ -3,37 +3,37 @@ use crate::utils::unsafe_cast::make_mut;
 use pyo3::types::PyList;
 use pyo3::{intern, prelude::*};
 
-use crate::external_bindings::slog::Py_Logger_Mut;
-use crate::raftpb_bindings::snapshot::{Py_Snapshot_Mut, Py_Snapshot_Ref};
+use crate::external_bindings::slog::PyLoggerMut;
+use crate::raftpb_bindings::snapshot::{PySnapshotMut, PySnapshotRef};
 
 use raft::{GetEntriesContext, RaftLog};
 
-use super::py_storage::{Py_Storage, Py_Storage_Ref};
-use crate::bindings::{get_entries_context::Py_GetEntriesContext_Ref, unstable::Py_Unstable_Ref};
-use crate::raftpb_bindings::entry::{Py_Entry, Py_Entry_Mut, Py_Entry_Ref};
-use crate::utils::errors::Py_RaftError;
+use super::py_storage::{PyStorage, PyStorageRef};
+use crate::bindings::{get_entries_context::PyGetEntriesContextRef, unstable::PyUnstableRef};
+use crate::raftpb_bindings::entry::{PyEntry, PyEntryMut, PyEntryRef};
+use crate::utils::errors::PyRaftError;
 
 #[pyclass(name = "RaftLog")]
-pub struct Py_RaftLog {
-    pub inner: RefMutOwner<RaftLog<Py_Storage>>,
+pub struct PyRaftLog {
+    pub inner: RefMutOwner<RaftLog<PyStorage>>,
 }
 
 #[pyclass(name = "RaftLog_Ref")]
-pub struct Py_RaftLog_Ref {
-    pub inner: RefMutContainer<RaftLog<Py_Storage>>,
+pub struct PyRaftLogRef {
+    pub inner: RefMutContainer<RaftLog<PyStorage>>,
 }
 
 #[pymethods]
-impl Py_RaftLog {
+impl PyRaftLog {
     #[new]
-    pub fn new(store: &Py_Storage, logger: Py_Logger_Mut) -> Self {
-        Py_RaftLog {
+    pub fn new(store: &PyStorage, logger: PyLoggerMut) -> Self {
+        PyRaftLog {
             inner: RefMutOwner::new(RaftLog::new(store.clone(), logger.into())),
         }
     }
 
-    pub fn make_ref(&mut self) -> Py_RaftLog_Ref {
-        Py_RaftLog_Ref {
+    pub fn make_ref(&mut self) -> PyRaftLogRef {
+        PyRaftLogRef {
             inner: RefMutContainer::new(&mut self.inner),
         }
     }
@@ -49,7 +49,7 @@ impl Py_RaftLog {
 }
 
 #[pymethods]
-impl Py_RaftLog_Ref {
+impl PyRaftLogRef {
     pub fn __repr__(&self) -> PyResult<String> {
         self.inner
             .map_as_ref(|inner| format!("{:?}", inner.to_string(),))
@@ -58,7 +58,7 @@ impl Py_RaftLog_Ref {
     pub fn entries(
         &self,
         idx: u64,
-        context: &mut Py_GetEntriesContext_Ref,
+        context: &mut PyGetEntriesContextRef,
         max_size: Option<u64>,
         py: Python,
     ) -> PyResult<PyObject> {
@@ -72,13 +72,13 @@ impl Py_RaftLog_Ref {
                 .map(|entries| {
                     entries
                         .into_iter()
-                        .map(|entry| Py_Entry {
+                        .map(|entry| PyEntry {
                             inner: RefMutOwner::new(entry),
                         })
                         .collect::<Vec<_>>()
                         .into_py(py)
                 })
-                .map_err(|e| Py_RaftError(e).into())
+                .map_err(|e| PyRaftError(e).into())
         })?
     }
 
@@ -87,7 +87,7 @@ impl Py_RaftLog_Ref {
             inner
                 .all_entries()
                 .into_iter()
-                .map(|entry| Py_Entry {
+                .map(|entry| PyEntry {
                     inner: RefMutOwner::new(entry),
                 })
                 .collect::<Vec<_>>()
@@ -100,7 +100,7 @@ impl Py_RaftLog_Ref {
             inner.next_entries(max_size).map(|entries| {
                 entries
                     .into_iter()
-                    .map(|entry| Py_Entry {
+                    .map(|entry| PyEntry {
                         inner: RefMutOwner::new(entry),
                     })
                     .collect::<Vec<_>>()
@@ -121,7 +121,7 @@ impl Py_RaftLog_Ref {
                 .map(|entries| {
                     entries
                         .into_iter()
-                        .map(|entry| Py_Entry {
+                        .map(|entry| PyEntry {
                             inner: RefMutOwner::new(entry),
                         })
                         .collect::<Vec<_>>()
@@ -131,7 +131,7 @@ impl Py_RaftLog_Ref {
     }
 
     pub fn append(&mut self, ents: &PyList) -> PyResult<u64> {
-        let mut entries = ents.extract::<Vec<Py_Entry_Mut>>()?;
+        let mut entries = ents.extract::<Vec<PyEntryMut>>()?;
 
         self.inner.map_as_mut(|inner| {
             inner.append(
@@ -149,7 +149,7 @@ impl Py_RaftLog_Ref {
     }
 
     pub fn find_conflict(&self, ents: &PyList) -> PyResult<u64> {
-        let mut entries = ents.extract::<Vec<Py_Entry_Mut>>()?;
+        let mut entries = ents.extract::<Vec<PyEntryMut>>()?;
 
         self.inner.map_as_ref(|inner| {
             inner.find_conflict(
@@ -211,7 +211,7 @@ impl Py_RaftLog_Ref {
         committed: u64,
         ents: &PyList,
     ) -> PyResult<Option<(u64, u64)>> {
-        let mut entries = ents.extract::<Vec<Py_Entry_Mut>>()?;
+        let mut entries = ents.extract::<Vec<PyEntryMut>>()?;
 
         self.inner.map_as_mut(|inner| {
             inner.maybe_append(
@@ -227,14 +227,14 @@ impl Py_RaftLog_Ref {
         })
     }
 
-    pub fn snapshot(&self, request_index: u64, to: u64) -> PyResult<Py_Snapshot_Ref> {
+    pub fn snapshot(&self, request_index: u64, to: u64) -> PyResult<PySnapshotRef> {
         self.inner.map_as_ref(|inner| {
             inner
                 .snapshot(request_index, to)
-                .map(|mut snapshot| Py_Snapshot_Ref {
+                .map(|mut snapshot| PySnapshotRef {
                     inner: RefMutContainer::new_raw(&mut snapshot),
                 })
-                .map_err(|e| Py_RaftError(e).into())
+                .map_err(|e| PyRaftError(e).into())
         })?
     }
 
@@ -249,7 +249,7 @@ impl Py_RaftLog_Ref {
 
     pub fn term(&self, idx: u64) -> PyResult<u64> {
         self.inner
-            .map_as_ref(|inner| inner.term(idx).map_err(|e| Py_RaftError(e).into()))?
+            .map_as_ref(|inner| inner.term(idx).map_err(|e| PyRaftError(e).into()))?
     }
 
     pub fn last_term(&self) -> PyResult<u64> {
@@ -268,8 +268,8 @@ impl Py_RaftLog_Ref {
         self.inner.map_as_ref(|inner| inner.last_index())
     }
 
-    pub fn unstable(&self) -> PyResult<Py_Unstable_Ref> {
-        self.inner.map_as_ref(|inner| Py_Unstable_Ref {
+    pub fn unstable(&self) -> PyResult<PyUnstableRef> {
+        self.inner.map_as_ref(|inner| PyUnstableRef {
             inner: RefMutContainer::new_raw(unsafe { make_mut(inner.unstable()) }),
         })
     }
@@ -280,7 +280,7 @@ impl Py_RaftLog_Ref {
                 inner
                     .unstable_entries()
                     .iter()
-                    .map(|entry| Py_Entry_Ref {
+                    .map(|entry| PyEntryRef {
                         inner: RefMutContainer::new_raw(unsafe { make_mut(entry) }),
                     })
                     .collect::<Vec<_>>()
@@ -288,12 +288,12 @@ impl Py_RaftLog_Ref {
             .map(|entries| entries.into_py(py))
     }
 
-    pub fn unstable_snapshot(&self) -> PyResult<Option<Py_Snapshot_Ref>> {
+    pub fn unstable_snapshot(&self) -> PyResult<Option<PySnapshotRef>> {
         self.inner.map_as_ref(|inner| {
             inner
                 .unstable_snapshot()
                 .as_ref()
-                .map(|snapshot| Py_Snapshot_Ref {
+                .map(|snapshot| PySnapshotRef {
                     inner: RefMutContainer::new_raw(unsafe { make_mut(snapshot) }),
                 })
         })
@@ -323,14 +323,14 @@ impl Py_RaftLog_Ref {
         self.inner.map_as_mut(|inner| inner.persisted = v)
     }
 
-    pub fn store(&mut self) -> PyResult<Py_Storage_Ref> {
-        self.inner.map_as_mut(|inner| Py_Storage_Ref {
+    pub fn store(&mut self) -> PyResult<PyStorageRef> {
+        self.inner.map_as_mut(|inner| PyStorageRef {
             inner: RefMutContainer::new_raw(inner.mut_store()),
         })
     }
 
-    pub fn get_store(&mut self) -> PyResult<Py_Storage_Ref> {
-        self.inner.map_as_mut(|inner| Py_Storage_Ref {
+    pub fn get_store(&mut self) -> PyResult<PyStorageRef> {
+        self.inner.map_as_mut(|inner| PyStorageRef {
             inner: RefMutContainer::new_raw(inner.mut_store()),
         })
     }
@@ -339,7 +339,7 @@ impl Py_RaftLog_Ref {
         &self,
         _low: u64,
         _high: u64,
-        context: &mut Py_GetEntriesContext_Ref,
+        context: &mut PyGetEntriesContextRef,
         _max_size: Option<u64>,
         _py: Python,
     ) -> PyResult<PyObject> {
@@ -353,17 +353,17 @@ impl Py_RaftLog_Ref {
         //         .iter()
         //         .map(|entries| {
         //             entries.iter().map(|entry| {
-        //                 Py_Entry_Ref {
+        //                 PyEntryRef {
         //                     inner: RefMutContainer::new(unsafe { make_mut(entry) }),
         //                 }
         //             }).collect::<Vec<_>>()
-        //         }).collect::<Result<Vec<Py_Entry_Ref>, _>>()
+        //         }).collect::<Result<Vec<PyEntryRef>, _>>()
         // }).and_then(to_pyresult)
 
         todo!()
     }
 
-    pub fn restore(&mut self, snapshot: Py_Snapshot_Mut) -> PyResult<()> {
+    pub fn restore(&mut self, snapshot: PySnapshotMut) -> PyResult<()> {
         self.inner
             .map_as_mut(|inner| inner.restore(snapshot.into()))
     }

@@ -8,53 +8,53 @@ use pyo3::types::PyBytes;
 use pyo3::{intern, prelude::*};
 use raft::eraftpb::Entry;
 
-use super::entry_type::Py_EntryType;
+use super::entry_type::PyEntryType;
 
 #[derive(Clone)]
 #[pyclass(name = "Entry")]
-pub struct Py_Entry {
+pub struct PyEntry {
     pub inner: RefMutOwner<Entry>,
 }
 
 #[derive(Clone)]
 #[pyclass(name = "Entry_Ref")]
-pub struct Py_Entry_Ref {
+pub struct PyEntryRef {
     pub inner: RefMutContainer<Entry>,
 }
 
 #[derive(FromPyObject)]
-pub enum Py_Entry_Mut<'p> {
-    Owned(PyRefMut<'p, Py_Entry>),
-    RefMut(Py_Entry_Ref),
+pub enum PyEntryMut<'p> {
+    Owned(PyRefMut<'p, PyEntry>),
+    RefMut(PyEntryRef),
 }
 
-implement_type_conversion!(Entry, Py_Entry_Mut);
+implement_type_conversion!(Entry, PyEntryMut);
 
 #[pymethods]
-impl Py_Entry {
+impl PyEntry {
     #[new]
     pub fn new() -> Self {
-        Py_Entry {
+        PyEntry {
             inner: RefMutOwner::new(Entry::new()),
         }
     }
 
     #[staticmethod]
     pub fn default() -> Self {
-        Py_Entry {
+        PyEntry {
             inner: RefMutOwner::new(Entry::default()),
         }
     }
 
     #[staticmethod]
-    pub fn decode(v: &[u8]) -> PyResult<Py_Entry> {
-        Ok(Py_Entry {
+    pub fn decode(v: &[u8]) -> PyResult<PyEntry> {
+        Ok(PyEntry {
             inner: RefMutOwner::new(to_pyresult(ProstMessage::decode(v))?),
         })
     }
 
-    pub fn make_ref(&mut self) -> Py_Entry_Ref {
-        Py_Entry_Ref {
+    pub fn make_ref(&mut self) -> PyEntryRef {
+        PyEntryRef {
             inner: RefMutContainer::new(&mut self.inner),
         }
     }
@@ -63,7 +63,7 @@ impl Py_Entry {
         format!("{:?}", self.inner.inner)
     }
 
-    pub fn __richcmp__(&self, py: Python, rhs: Py_Entry_Mut, op: CompareOp) -> PyObject {
+    pub fn __richcmp__(&self, py: Python, rhs: PyEntryMut, op: CompareOp) -> PyObject {
         let rhs: Entry = rhs.into();
 
         match op {
@@ -80,12 +80,12 @@ impl Py_Entry {
 }
 
 #[pymethods]
-impl Py_Entry_Ref {
+impl PyEntryRef {
     pub fn __repr__(&self) -> PyResult<String> {
         self.inner.map_as_ref(|inner| format!("{:?}", inner))
     }
 
-    pub fn __richcmp__(&self, py: Python, rhs: Py_Entry_Mut, op: CompareOp) -> PyResult<PyObject> {
+    pub fn __richcmp__(&self, py: Python, rhs: PyEntryMut, op: CompareOp) -> PyResult<PyObject> {
         self.inner.map_as_ref(|inner| {
             let rhs: Entry = rhs.into();
 
@@ -97,8 +97,8 @@ impl Py_Entry_Ref {
         })
     }
 
-    pub fn clone(&self) -> PyResult<Py_Entry> {
-        Ok(Py_Entry {
+    pub fn clone(&self) -> PyResult<PyEntry> {
+        Ok(PyEntry {
             inner: RefMutOwner::new(self.inner.map_as_ref(|x| x.clone())?),
         })
     }
@@ -136,11 +136,11 @@ impl Py_Entry_Ref {
         self.inner.map_as_mut(|inner| inner.clear_data())
     }
 
-    pub fn get_entry_type(&self) -> PyResult<Py_EntryType> {
+    pub fn get_entry_type(&self) -> PyResult<PyEntryType> {
         self.inner.map_as_ref(|inner| inner.get_entry_type().into())
     }
 
-    pub fn set_entry_type(&mut self, typ: &Py_EntryType) -> PyResult<()> {
+    pub fn set_entry_type(&mut self, typ: &PyEntryType) -> PyResult<()> {
         self.inner.map_as_mut(|inner| inner.set_entry_type(typ.0))
     }
 
@@ -186,7 +186,7 @@ impl Py_Entry_Ref {
 }
 
 #[pymethods]
-impl Py_Entry_Ref {
+impl PyEntryRef {
     pub fn compute_size(&self) -> PyResult<u32> {
         self.inner.map_as_ref(|inner| inner.compute_size())
     }

@@ -15,56 +15,56 @@ use pyo3::{
 use raft::eraftpb::ConfChangeV2;
 
 use super::{
-    conf_change::Py_ConfChange_Ref,
-    conf_change_single::{Py_ConfChangeSingle_Mut, Py_ConfChangeSingle_Ref},
-    conf_change_transition::Py_ConfChangeTransition,
+    conf_change::PyConfChangeRef,
+    conf_change_single::{PyConfChangeSingleMut, PyConfChangeSingleRef},
+    conf_change_transition::PyConfChangeTransition,
 };
 
 #[derive(Clone)]
 #[pyclass(name = "ConfChangeV2")]
-pub struct Py_ConfChangeV2 {
+pub struct PyConfChangeV2 {
     pub inner: RefMutOwner<ConfChangeV2>,
 }
 
 #[derive(Clone)]
 #[pyclass(name = "ConfChangeV2_Ref")]
-pub struct Py_ConfChangeV2_Ref {
+pub struct PyConfChangeV2Ref {
     pub inner: RefMutContainer<ConfChangeV2>,
 }
 
 #[derive(FromPyObject)]
-pub enum Py_ConfChangeV2_Mut<'p> {
-    Owned(PyRefMut<'p, Py_ConfChangeV2>),
-    RefMut(Py_ConfChangeV2_Ref),
+pub enum PyConfChangeV2Mut<'p> {
+    Owned(PyRefMut<'p, PyConfChangeV2>),
+    RefMut(PyConfChangeV2Ref),
 }
 
-implement_type_conversion!(ConfChangeV2, Py_ConfChangeV2_Mut);
+implement_type_conversion!(ConfChangeV2, PyConfChangeV2Mut);
 
 #[pymethods]
-impl Py_ConfChangeV2 {
+impl PyConfChangeV2 {
     #[new]
     pub fn new() -> Self {
-        Py_ConfChangeV2 {
+        PyConfChangeV2 {
             inner: RefMutOwner::new(ConfChangeV2::new()),
         }
     }
 
     #[staticmethod]
     pub fn default() -> Self {
-        Py_ConfChangeV2 {
+        PyConfChangeV2 {
             inner: RefMutOwner::new(ConfChangeV2::default()),
         }
     }
 
     #[staticmethod]
-    pub fn decode(v: &[u8]) -> PyResult<Py_ConfChangeV2> {
-        Ok(Py_ConfChangeV2 {
+    pub fn decode(v: &[u8]) -> PyResult<PyConfChangeV2> {
+        Ok(PyConfChangeV2 {
             inner: RefMutOwner::new(to_pyresult(ProstMessage::decode(v))?),
         })
     }
 
-    pub fn make_ref(&mut self) -> Py_ConfChangeV2_Ref {
-        Py_ConfChangeV2_Ref {
+    pub fn make_ref(&mut self) -> PyConfChangeV2Ref {
+        PyConfChangeV2Ref {
             inner: RefMutContainer::new(&mut self.inner),
         }
     }
@@ -73,7 +73,7 @@ impl Py_ConfChangeV2 {
         format!("{:?}", self.inner.inner)
     }
 
-    pub fn __richcmp__(&self, py: Python, rhs: Py_ConfChangeV2_Mut, op: CompareOp) -> PyObject {
+    pub fn __richcmp__(&self, py: Python, rhs: PyConfChangeV2Mut, op: CompareOp) -> PyObject {
         let rhs: ConfChangeV2 = rhs.into();
 
         match op {
@@ -89,14 +89,14 @@ impl Py_ConfChangeV2 {
     }
 }
 
-impl Default for Py_ConfChangeV2 {
+impl Default for PyConfChangeV2 {
     fn default() -> Self {
         Self::new()
     }
 }
 
 #[pymethods]
-impl Py_ConfChangeV2_Ref {
+impl PyConfChangeV2Ref {
     pub fn __repr__(&self) -> PyResult<String> {
         self.inner.map_as_ref(|inner| format!("{:?}", inner))
     }
@@ -104,7 +104,7 @@ impl Py_ConfChangeV2_Ref {
     pub fn __richcmp__(
         &self,
         py: Python,
-        rhs: Py_ConfChangeV2_Mut,
+        rhs: PyConfChangeV2Mut,
         op: CompareOp,
     ) -> PyResult<PyObject> {
         self.inner.map_as_ref(|inner| {
@@ -118,8 +118,8 @@ impl Py_ConfChangeV2_Ref {
         })
     }
 
-    pub fn clone(&self) -> PyResult<Py_ConfChangeV2> {
-        Ok(Py_ConfChangeV2 {
+    pub fn clone(&self) -> PyResult<PyConfChangeV2> {
+        Ok(PyConfChangeV2 {
             inner: RefMutOwner::new(self.inner.map_as_ref(|x| x.clone())?),
         })
     }
@@ -134,7 +134,7 @@ impl Py_ConfChangeV2_Ref {
             inner
                 .get_changes()
                 .iter()
-                .map(|cs| Py_ConfChangeSingle_Ref {
+                .map(|cs| PyConfChangeSingleRef {
                     inner: RefMutContainer::new_raw(unsafe { make_mut(cs) }),
                 })
                 .collect::<Vec<_>>()
@@ -146,7 +146,7 @@ impl Py_ConfChangeV2_Ref {
         self.inner.map_as_mut(|inner| {
             inner.set_changes(
                 v.iter()
-                    .map(|cs| cs.extract::<Py_ConfChangeSingle_Mut>().unwrap().into())
+                    .map(|cs| cs.extract::<PyConfChangeSingleMut>().unwrap().into())
                     .collect::<Vec<_>>(),
             )
         })
@@ -170,12 +170,12 @@ impl Py_ConfChangeV2_Ref {
         self.inner.map_as_mut(|inner| inner.clear_context())
     }
 
-    pub fn get_transition(&self) -> PyResult<Py_ConfChangeTransition> {
+    pub fn get_transition(&self) -> PyResult<PyConfChangeTransition> {
         self.inner
-            .map_as_ref(|inner| Py_ConfChangeTransition(inner.get_transition()))
+            .map_as_ref(|inner| PyConfChangeTransition(inner.get_transition()))
     }
 
-    pub fn set_transition(&mut self, v: &Py_ConfChangeTransition) -> PyResult<()> {
+    pub fn set_transition(&mut self, v: &PyConfChangeTransition) -> PyResult<()> {
         self.inner.map_as_mut(|inner| inner.set_transition(v.0))
     }
 
@@ -193,25 +193,25 @@ impl Py_ConfChangeV2_Ref {
 }
 
 #[pymethods]
-impl Py_ConfChangeV2_Ref {
-    pub fn as_v1(&mut self) -> PyResult<Option<Py_ConfChange_Ref>> {
+impl PyConfChangeV2Ref {
+    pub fn as_v1(&mut self) -> PyResult<Option<PyConfChangeRef>> {
         self.inner.map_as_mut(|_inner| None)
     }
 
     // TODO: Apply COW to below method
-    pub fn as_v2(&mut self) -> PyResult<Py_ConfChangeV2> {
+    pub fn as_v2(&mut self) -> PyResult<PyConfChangeV2> {
         self.clone().unwrap().make_ref().into_v2()
     }
 
-    pub fn into_v2(&mut self) -> PyResult<Py_ConfChangeV2> {
-        self.inner.map_as_mut(|inner| Py_ConfChangeV2 {
+    pub fn into_v2(&mut self) -> PyResult<PyConfChangeV2> {
+        self.inner.map_as_mut(|inner| PyConfChangeV2 {
             inner: RefMutOwner::new(inner.clone()),
         })
     }
 }
 
 #[pymethods]
-impl Py_ConfChangeV2_Ref {
+impl PyConfChangeV2Ref {
     // This function could be implemented in Python by using `Decode`
     // and set properties one by one manually, but it is implemented here
     // to maintain concise code and assist in achieving better performance.

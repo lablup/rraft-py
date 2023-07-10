@@ -5,29 +5,29 @@ use raft::Config;
 use crate::implement_type_conversion;
 use crate::utils::reference::{RefMutContainer, RefMutOwner};
 
-use crate::utils::errors::Py_RaftError;
+use crate::utils::errors::PyRaftError;
 
-use super::readonly_option::Py_ReadOnlyOption;
+use super::readonly_option::PyReadOnlyOption;
 
 #[derive(Clone)]
 #[pyclass(name = "Config")]
-pub struct Py_Config {
+pub struct PyConfig {
     pub inner: RefMutOwner<Config>,
 }
 
 #[derive(Clone)]
 #[pyclass(name = "Config_Ref")]
-pub struct Py_Config_Ref {
+pub struct PyConfigRef {
     pub inner: RefMutContainer<Config>,
 }
 
 #[derive(FromPyObject)]
-pub enum Py_Config_Mut<'p> {
-    Owned(PyRefMut<'p, Py_Config>),
-    RefMut(Py_Config_Ref),
+pub enum PyConfigMut<'p> {
+    Owned(PyRefMut<'p, PyConfig>),
+    RefMut(PyConfigRef),
 }
 
-implement_type_conversion!(Config, Py_Config_Mut);
+implement_type_conversion!(Config, PyConfigMut);
 
 fn format_config<T: Into<Config>>(cfg: T) -> String {
     let cfg: Config = cfg.into();
@@ -71,7 +71,7 @@ fn format_config<T: Into<Config>>(cfg: T) -> String {
 }
 
 #[pymethods]
-impl Py_Config {
+impl PyConfig {
     #![allow(clippy::too_many_arguments)]
     #[new]
     pub fn new(
@@ -85,7 +85,7 @@ impl Py_Config {
         pre_vote: Option<bool>,
         min_election_tick: Option<usize>,
         max_election_tick: Option<usize>,
-        read_only_option: Option<&Py_ReadOnlyOption>,
+        read_only_option: Option<&PyReadOnlyOption>,
         skip_bcast_commit: Option<bool>,
         batch_append: Option<bool>,
         priority: Option<i64>,
@@ -112,20 +112,20 @@ impl Py_Config {
         config.skip_bcast_commit = skip_bcast_commit.unwrap_or(config.skip_bcast_commit);
         config.read_only_option = read_only_option.map_or(config.read_only_option, |opt| opt.0);
 
-        Py_Config {
+        PyConfig {
             inner: RefMutOwner::new(config),
         }
     }
 
     #[staticmethod]
-    pub fn default() -> Py_Config {
-        Py_Config {
+    pub fn default() -> PyConfig {
+        PyConfig {
             inner: RefMutOwner::new(Config::default()),
         }
     }
 
-    pub fn make_ref(&mut self) -> Py_Config_Ref {
-        Py_Config_Ref {
+    pub fn make_ref(&mut self) -> PyConfigRef {
+        PyConfigRef {
             inner: RefMutContainer::new(&mut self.inner),
         }
     }
@@ -141,13 +141,13 @@ impl Py_Config {
 }
 
 #[pymethods]
-impl Py_Config_Ref {
+impl PyConfigRef {
     pub fn __repr__(&self) -> PyResult<String> {
         self.inner.map_as_ref(|inner| format_config(inner.clone()))
     }
 
-    pub fn clone(&self) -> PyResult<Py_Config> {
-        Ok(Py_Config {
+    pub fn clone(&self) -> PyResult<PyConfig> {
+        Ok(PyConfig {
             inner: RefMutOwner::new(self.inner.map_as_ref(|inner| inner.clone())?),
         })
     }
@@ -170,15 +170,15 @@ impl Py_Config_Ref {
 
     pub fn validate(&self) -> PyResult<()> {
         self.inner
-            .map_as_ref(|inner| inner.validate().map_err(|e| Py_RaftError(e).into()))?
+            .map_as_ref(|inner| inner.validate().map_err(|e| PyRaftError(e).into()))?
     }
 
-    pub fn get_read_only_option(&self) -> PyResult<Py_ReadOnlyOption> {
+    pub fn get_read_only_option(&self) -> PyResult<PyReadOnlyOption> {
         self.inner
-            .map_as_ref(|inner| Py_ReadOnlyOption(inner.read_only_option))
+            .map_as_ref(|inner| PyReadOnlyOption(inner.read_only_option))
     }
 
-    pub fn set_read_only_option(&mut self, read_only_option: &Py_ReadOnlyOption) -> PyResult<()> {
+    pub fn set_read_only_option(&mut self, read_only_option: &PyReadOnlyOption) -> PyResult<()> {
         self.inner.map_as_mut(|inner| {
             inner.read_only_option = read_only_option.0;
         })

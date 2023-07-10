@@ -9,53 +9,53 @@ use crate::utils::{
 };
 use raft::eraftpb::Snapshot;
 
-use super::snapshot_metadata::{Py_SnapshotMetadata_Mut, Py_SnapshotMetadata_Ref};
+use super::snapshot_metadata::{PySnapshotMetadataMut, PySnapshotMetadataRef};
 
 #[derive(Clone)]
 #[pyclass(name = "Snapshot")]
-pub struct Py_Snapshot {
+pub struct PySnapshot {
     pub inner: RefMutOwner<Snapshot>,
 }
 
 #[derive(Clone)]
 #[pyclass(name = "Snapshot_Ref")]
-pub struct Py_Snapshot_Ref {
+pub struct PySnapshotRef {
     pub inner: RefMutContainer<Snapshot>,
 }
 
 #[derive(FromPyObject)]
-pub enum Py_Snapshot_Mut<'p> {
-    Owned(PyRefMut<'p, Py_Snapshot>),
-    RefMut(Py_Snapshot_Ref),
+pub enum PySnapshotMut<'p> {
+    Owned(PyRefMut<'p, PySnapshot>),
+    RefMut(PySnapshotRef),
 }
 
-implement_type_conversion!(Snapshot, Py_Snapshot_Mut);
+implement_type_conversion!(Snapshot, PySnapshotMut);
 
 #[pymethods]
-impl Py_Snapshot {
+impl PySnapshot {
     #[new]
     pub fn new() -> Self {
-        Py_Snapshot {
+        PySnapshot {
             inner: RefMutOwner::new(Snapshot::new()),
         }
     }
 
     #[staticmethod]
-    pub fn default() -> Py_Snapshot {
-        Py_Snapshot {
+    pub fn default() -> PySnapshot {
+        PySnapshot {
             inner: RefMutOwner::new(Snapshot::default()),
         }
     }
 
     #[staticmethod]
-    pub fn decode(v: &[u8]) -> PyResult<Py_Snapshot> {
-        Ok(Py_Snapshot {
+    pub fn decode(v: &[u8]) -> PyResult<PySnapshot> {
+        Ok(PySnapshot {
             inner: RefMutOwner::new(to_pyresult(ProstMessage::decode(v))?),
         })
     }
 
-    pub fn make_ref(&mut self) -> Py_Snapshot_Ref {
-        Py_Snapshot_Ref {
+    pub fn make_ref(&mut self) -> PySnapshotRef {
+        PySnapshotRef {
             inner: RefMutContainer::new(&mut self.inner),
         }
     }
@@ -68,7 +68,7 @@ impl Py_Snapshot {
         !self.inner.is_empty()
     }
 
-    pub fn __richcmp__(&self, py: Python, rhs: Py_Snapshot_Mut, op: CompareOp) -> PyObject {
+    pub fn __richcmp__(&self, py: Python, rhs: PySnapshotMut, op: CompareOp) -> PyObject {
         let rhs: Snapshot = rhs.into();
 
         match op {
@@ -85,17 +85,12 @@ impl Py_Snapshot {
 }
 
 #[pymethods]
-impl Py_Snapshot_Ref {
+impl PySnapshotRef {
     pub fn __repr__(&self) -> PyResult<String> {
         self.inner.map_as_ref(|inner| format!("{:?}", inner))
     }
 
-    pub fn __richcmp__(
-        &self,
-        py: Python,
-        rhs: Py_Snapshot_Mut,
-        op: CompareOp,
-    ) -> PyResult<PyObject> {
+    pub fn __richcmp__(&self, py: Python, rhs: PySnapshotMut, op: CompareOp) -> PyResult<PyObject> {
         self.inner.map_as_ref(|inner| {
             let rhs: Snapshot = rhs.into();
 
@@ -111,8 +106,8 @@ impl Py_Snapshot_Ref {
         self.inner.map_as_ref(|inner| !inner.is_empty())
     }
 
-    pub fn clone(&self) -> PyResult<Py_Snapshot> {
-        Ok(Py_Snapshot {
+    pub fn clone(&self) -> PyResult<PySnapshot> {
+        Ok(PySnapshot {
             inner: RefMutOwner::new(self.inner.map_as_ref(|inner| inner.clone())?),
         })
     }
@@ -136,13 +131,13 @@ impl Py_Snapshot_Ref {
         self.inner.map_as_mut(|inner| inner.clear_data())
     }
 
-    pub fn get_metadata(&mut self) -> PyResult<Py_SnapshotMetadata_Ref> {
-        self.inner.map_as_mut(|inner| Py_SnapshotMetadata_Ref {
+    pub fn get_metadata(&mut self) -> PyResult<PySnapshotMetadataRef> {
+        self.inner.map_as_mut(|inner| PySnapshotMetadataRef {
             inner: RefMutContainer::new_raw(inner.mut_metadata()),
         })
     }
 
-    pub fn set_metadata(&mut self, snapshot_meta_data: Py_SnapshotMetadata_Mut) -> PyResult<()> {
+    pub fn set_metadata(&mut self, snapshot_meta_data: PySnapshotMetadataMut) -> PyResult<()> {
         self.inner
             .map_as_mut(|inner| inner.set_metadata(snapshot_meta_data.into()))
     }

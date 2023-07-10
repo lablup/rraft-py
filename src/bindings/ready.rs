@@ -1,15 +1,15 @@
 use pyo3::{intern, prelude::*};
 
 use crate::raftpb_bindings::{
-    entry::{Py_Entry, Py_Entry_Ref},
-    hard_state::Py_HardState_Ref,
-    message::{Py_Message, Py_Message_Ref},
-    snapshot::Py_Snapshot_Ref,
+    entry::{PyEntry, PyEntryRef},
+    hard_state::PyHardStateRef,
+    message::{PyMessage, PyMessageRef},
+    snapshot::PySnapshotRef,
 };
 
 use super::{
-    read_state::{Py_ReadState, Py_ReadState_Ref},
-    soft_state::Py_SoftState,
+    read_state::{PyReadState, PyReadStateRef},
+    soft_state::PySoftState,
 };
 use crate::utils::{
     reference::{RefMutContainer, RefMutOwner},
@@ -18,26 +18,26 @@ use crate::utils::{
 use raft::{raw_node::Ready, SoftState};
 
 #[pyclass(name = "Ready")]
-pub struct Py_Ready {
+pub struct PyReady {
     pub inner: RefMutOwner<Ready>,
 }
 
 #[pyclass(name = "Ready_Ref")]
-pub struct Py_Ready_Ref {
+pub struct PyReadyRef {
     pub inner: RefMutContainer<Ready>,
 }
 
 #[pymethods]
-impl Py_Ready {
+impl PyReady {
     #[staticmethod]
     pub fn default() -> Self {
-        Py_Ready {
+        PyReady {
             inner: RefMutOwner::new(Ready::default()),
         }
     }
 
-    pub fn make_ref(&mut self) -> Py_Ready_Ref {
-        Py_Ready_Ref {
+    pub fn make_ref(&mut self) -> PyReadyRef {
+        PyReadyRef {
             inner: RefMutContainer::new(&mut self.inner),
         }
     }
@@ -53,22 +53,22 @@ impl Py_Ready {
 }
 
 #[pymethods]
-impl Py_Ready_Ref {
+impl PyReadyRef {
     pub fn __repr__(&self) -> PyResult<String> {
         self.inner.map_as_ref(|inner| format!("{:?}", inner))
     }
 
-    pub fn hs(&mut self) -> PyResult<Option<Py_HardState_Ref>> {
+    pub fn hs(&mut self) -> PyResult<Option<PyHardStateRef>> {
         self.inner.map_as_mut(|inner| {
-            inner.hs().map(|hs| Py_HardState_Ref {
+            inner.hs().map(|hs| PyHardStateRef {
                 inner: RefMutContainer::new_raw(unsafe { make_mut(hs) }),
             })
         })
     }
 
-    pub fn ss(&mut self) -> PyResult<Option<Py_SoftState>> {
+    pub fn ss(&mut self) -> PyResult<Option<PySoftState>> {
         self.inner.map_as_mut(|inner| {
-            inner.ss().map(|ss| Py_SoftState {
+            inner.ss().map(|ss| PySoftState {
                 inner: RefMutOwner::new(SoftState {
                     leader_id: ss.leader_id,
                     raft_state: ss.raft_state,
@@ -85,8 +85,8 @@ impl Py_Ready_Ref {
         self.inner.map_as_ref(|inner| inner.number())
     }
 
-    pub fn snapshot(&mut self) -> PyResult<Py_Snapshot_Ref> {
-        self.inner.map_as_mut(|inner| Py_Snapshot_Ref {
+    pub fn snapshot(&mut self) -> PyResult<PySnapshotRef> {
+        self.inner.map_as_mut(|inner| PySnapshotRef {
             inner: RefMutContainer::new_raw(unsafe { make_mut(inner.snapshot()) }),
         })
     }
@@ -95,7 +95,7 @@ impl Py_Ready_Ref {
         self.inner.map_as_ref(|inner| {
             unsafe { make_mut(inner.committed_entries()) }
                 .iter_mut()
-                .map(|entry| Py_Entry_Ref {
+                .map(|entry| PyEntryRef {
                     inner: RefMutContainer::new_raw(entry),
                 })
                 .collect::<Vec<_>>()
@@ -108,7 +108,7 @@ impl Py_Ready_Ref {
             inner
                 .take_committed_entries()
                 .into_iter()
-                .map(|entry| Py_Entry {
+                .map(|entry| PyEntry {
                     inner: RefMutOwner::new(entry),
                 })
                 .collect::<Vec<_>>()
@@ -120,7 +120,7 @@ impl Py_Ready_Ref {
         self.inner.map_as_ref(|inner| {
             unsafe { make_mut(inner.entries()) }
                 .iter_mut()
-                .map(|entry| Py_Entry_Ref {
+                .map(|entry| PyEntryRef {
                     inner: RefMutContainer::new_raw(entry),
                 })
                 .collect::<Vec<_>>()
@@ -133,7 +133,7 @@ impl Py_Ready_Ref {
             inner
                 .take_entries()
                 .into_iter()
-                .map(|entry| Py_Entry {
+                .map(|entry| PyEntry {
                     inner: RefMutOwner::new(entry),
                 })
                 .collect::<Vec<_>>()
@@ -146,7 +146,7 @@ impl Py_Ready_Ref {
             inner
                 .messages()
                 .iter()
-                .map(|msg| Py_Message_Ref {
+                .map(|msg| PyMessageRef {
                     inner: RefMutContainer::new_raw(unsafe { make_mut(msg) }),
                 })
                 .collect::<Vec<_>>()
@@ -159,7 +159,7 @@ impl Py_Ready_Ref {
             inner
                 .take_messages()
                 .into_iter()
-                .map(|msg| Py_Message {
+                .map(|msg| PyMessage {
                     inner: RefMutOwner::new(msg),
                 })
                 .collect::<Vec<_>>()
@@ -172,7 +172,7 @@ impl Py_Ready_Ref {
             inner
                 .persisted_messages()
                 .iter()
-                .map(|msg| Py_Message_Ref {
+                .map(|msg| PyMessageRef {
                     inner: RefMutContainer::new_raw(unsafe { make_mut(msg) }),
                 })
                 .collect::<Vec<_>>()
@@ -185,7 +185,7 @@ impl Py_Ready_Ref {
             inner
                 .take_persisted_messages()
                 .into_iter()
-                .map(|msg| Py_Message {
+                .map(|msg| PyMessage {
                     inner: RefMutOwner::new(msg),
                 })
                 .collect::<Vec<_>>()
@@ -198,7 +198,7 @@ impl Py_Ready_Ref {
             inner
                 .read_states()
                 .iter()
-                .map(|rs| Py_ReadState_Ref {
+                .map(|rs| PyReadStateRef {
                     inner: RefMutContainer::new_raw(unsafe { make_mut(rs) }),
                 })
                 .collect::<Vec<_>>()
@@ -211,7 +211,7 @@ impl Py_Ready_Ref {
             inner
                 .take_read_states()
                 .into_iter()
-                .map(|rs| Py_ReadState {
+                .map(|rs| PyReadState {
                     inner: RefMutOwner::new(rs),
                 })
                 .collect::<Vec<_>>()

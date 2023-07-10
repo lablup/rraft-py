@@ -5,27 +5,27 @@ use raft::eraftpb::ConfChangeType;
 
 #[derive(Clone)]
 #[pyclass(name = "ConfChangeType")]
-pub struct Py_ConfChangeType(pub ConfChangeType);
+pub struct PyConfChangeType(pub ConfChangeType);
 
-impl From<Py_ConfChangeType> for ConfChangeType {
-    fn from(val: Py_ConfChangeType) -> Self {
+impl From<PyConfChangeType> for ConfChangeType {
+    fn from(val: PyConfChangeType) -> Self {
         val.0
     }
 }
 
-impl From<ConfChangeType> for Py_ConfChangeType {
+impl From<ConfChangeType> for PyConfChangeType {
     fn from(x: ConfChangeType) -> Self {
         match x {
-            ConfChangeType::AddNode => Py_ConfChangeType(ConfChangeType::AddNode),
-            ConfChangeType::AddLearnerNode => Py_ConfChangeType(ConfChangeType::AddLearnerNode),
-            ConfChangeType::RemoveNode => Py_ConfChangeType(ConfChangeType::RemoveNode),
+            ConfChangeType::AddNode => PyConfChangeType(ConfChangeType::AddNode),
+            ConfChangeType::AddLearnerNode => PyConfChangeType(ConfChangeType::AddLearnerNode),
+            ConfChangeType::RemoveNode => PyConfChangeType(ConfChangeType::RemoveNode),
         }
     }
 }
 
 #[pymethods]
-impl Py_ConfChangeType {
-    pub fn __richcmp__(&self, py: Python, rhs: &Py_ConfChangeType, op: CompareOp) -> PyObject {
+impl PyConfChangeType {
+    pub fn __richcmp__(&self, py: Python, rhs: &PyConfChangeType, op: CompareOp) -> PyObject {
         match op {
             CompareOp::Eq => (self.0 == rhs.0).into_py(py),
             CompareOp::Ne => (self.0 != rhs.0).into_py(py),
@@ -52,22 +52,22 @@ impl Py_ConfChangeType {
     #[staticmethod]
     pub fn from_int(v: i32, py: Python) -> PyResult<PyObject> {
         ConfChangeType::from_i32(v)
-            .map(|x| Py_ConfChangeType(x).into_py(py))
+            .map(|x| PyConfChangeType(x).into_py(py))
             .ok_or_else(|| runtime_error("Invalid value"))
     }
 
     #[classattr]
     pub fn AddNode() -> Self {
-        Py_ConfChangeType(ConfChangeType::AddNode)
+        PyConfChangeType(ConfChangeType::AddNode)
     }
 
     #[classattr]
     pub fn AddLearnerNode() -> Self {
-        Py_ConfChangeType(ConfChangeType::AddLearnerNode)
+        PyConfChangeType(ConfChangeType::AddLearnerNode)
     }
 
     #[classattr]
     pub fn RemoveNode() -> Self {
-        Py_ConfChangeType(ConfChangeType::RemoveNode)
+        PyConfChangeType(ConfChangeType::RemoveNode)
     }
 }

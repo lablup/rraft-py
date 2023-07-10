@@ -4,26 +4,26 @@ use crate::utils::reference::{RefMutContainer, RefMutOwner};
 use raft::raw_node::Peer;
 
 #[pyclass(name = "Peer")]
-pub struct Py_Peer {
+pub struct PyPeer {
     pub inner: RefMutOwner<Peer>,
 }
 
 #[pyclass(name = "Peer_Ref")]
-pub struct Py_Peer_Ref {
+pub struct PyPeerRef {
     pub inner: RefMutContainer<Peer>,
 }
 
 #[pymethods]
-impl Py_Peer {
+impl PyPeer {
     #[new]
     pub fn new() -> Self {
-        Py_Peer {
+        PyPeer {
             inner: RefMutOwner::new(Peer::default()),
         }
     }
 
-    pub fn make_ref(&mut self) -> Py_Peer_Ref {
-        Py_Peer_Ref {
+    pub fn make_ref(&mut self) -> PyPeerRef {
+        PyPeerRef {
             inner: RefMutContainer::new(&mut self.inner),
         }
     }
@@ -39,7 +39,7 @@ impl Py_Peer {
 }
 
 #[pymethods]
-impl Py_Peer_Ref {
+impl PyPeerRef {
     pub fn __repr__(&self) -> PyResult<String> {
         self.inner.map_as_ref(|inner| format!("{:?}", inner))
     }

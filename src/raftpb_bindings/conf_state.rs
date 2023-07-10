@@ -13,30 +13,30 @@ use crate::utils::reference::{RefMutContainer, RefMutOwner};
 
 #[derive(Clone)]
 #[pyclass(name = "ConfState")]
-pub struct Py_ConfState {
+pub struct PyConfState {
     pub inner: RefMutOwner<ConfState>,
 }
 
 #[derive(Clone)]
 #[pyclass(name = "ConfState_Ref")]
-pub struct Py_ConfState_Ref {
+pub struct PyConfStateRef {
     pub inner: RefMutContainer<ConfState>,
 }
 
 #[derive(FromPyObject)]
-pub enum Py_ConfState_Mut<'p> {
-    Owned(PyRefMut<'p, Py_ConfState>),
-    RefMut(Py_ConfState_Ref),
+pub enum PyConfStateMut<'p> {
+    Owned(PyRefMut<'p, PyConfState>),
+    RefMut(PyConfStateRef),
 }
 
-implement_type_conversion!(ConfState, Py_ConfState_Mut);
+implement_type_conversion!(ConfState, PyConfStateMut);
 
 #[pymethods]
-impl Py_ConfState {
+impl PyConfState {
     #[new]
     pub fn new(voters: Option<&PyList>, learners: Option<&PyList>) -> PyResult<Self> {
         if voters.and(learners).is_none() {
-            Ok(Py_ConfState {
+            Ok(PyConfState {
                 inner: RefMutOwner::new(ConfState::new()),
             })
         } else if voters.or(learners).is_none() {
@@ -46,7 +46,7 @@ impl Py_ConfState {
         } else {
             let voters = voters.unwrap().extract::<Vec<u64>>()?;
             let learners = learners.unwrap().extract::<Vec<u64>>()?;
-            Ok(Py_ConfState {
+            Ok(PyConfState {
                 inner: RefMutOwner::new(ConfState::from((voters, learners))),
             })
         }
@@ -54,20 +54,20 @@ impl Py_ConfState {
 
     #[staticmethod]
     pub fn default() -> Self {
-        Py_ConfState {
+        PyConfState {
             inner: RefMutOwner::new(ConfState::default()),
         }
     }
 
     #[staticmethod]
-    pub fn decode(v: &[u8]) -> PyResult<Py_ConfState> {
-        Ok(Py_ConfState {
+    pub fn decode(v: &[u8]) -> PyResult<PyConfState> {
+        Ok(PyConfState {
             inner: RefMutOwner::new(to_pyresult(ProstMessage::decode(v))?),
         })
     }
 
-    pub fn make_ref(&mut self) -> Py_ConfState_Ref {
-        Py_ConfState_Ref {
+    pub fn make_ref(&mut self) -> PyConfStateRef {
+        PyConfStateRef {
             inner: RefMutContainer::new(&mut self.inner),
         }
     }
@@ -76,7 +76,7 @@ impl Py_ConfState {
         format!("{:?}", self.inner.inner)
     }
 
-    pub fn __richcmp__(&self, py: Python, rhs: Py_ConfState_Mut, op: CompareOp) -> PyObject {
+    pub fn __richcmp__(&self, py: Python, rhs: PyConfStateMut, op: CompareOp) -> PyObject {
         let rhs: ConfState = rhs.into();
 
         match op {
@@ -93,7 +93,7 @@ impl Py_ConfState {
 }
 
 #[pymethods]
-impl Py_ConfState_Ref {
+impl PyConfStateRef {
     pub fn __repr__(&self) -> PyResult<String> {
         self.inner.map_as_ref(|inner| format!("{:?}", inner))
     }
@@ -101,7 +101,7 @@ impl Py_ConfState_Ref {
     pub fn __richcmp__(
         &self,
         py: Python,
-        rhs: Py_ConfState_Mut,
+        rhs: PyConfStateMut,
         op: CompareOp,
     ) -> PyResult<PyObject> {
         self.inner.map_as_ref(|inner| {
@@ -115,8 +115,8 @@ impl Py_ConfState_Ref {
         })
     }
 
-    pub fn clone(&self) -> PyResult<Py_ConfState> {
-        Ok(Py_ConfState {
+    pub fn clone(&self) -> PyResult<PyConfState> {
+        Ok(PyConfState {
             inner: RefMutOwner::new(self.inner.map_as_ref(|inner| inner.clone())?),
         })
     }

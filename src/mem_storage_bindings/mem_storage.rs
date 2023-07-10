@@ -4,65 +4,63 @@ use pyo3::{intern, prelude::*};
 
 use crate::implement_type_conversion;
 use crate::utils::{
-    errors::Py_RaftError,
+    errors::PyRaftError,
     reference::{RefMutContainer, RefMutOwner},
     unsafe_cast::make_mut,
 };
 use raft::{prelude::ConfState, storage::MemStorage, storage::Storage, GetEntriesContext};
 
-use crate::raftpb_bindings::{
-    conf_state::Py_ConfState_Mut, entry::Py_Entry, snapshot::Py_Snapshot,
-};
+use crate::raftpb_bindings::{conf_state::PyConfStateMut, entry::PyEntry, snapshot::PySnapshot};
 
-use super::mem_storage_core::Py_MemStorageCore_Ref;
+use super::mem_storage_core::PyMemStorageCoreRef;
 
-use crate::bindings::{get_entries_context::Py_GetEntriesContext_Ref, raft_state::Py_RaftState};
+use crate::bindings::{get_entries_context::PyGetEntriesContextRef, raft_state::PyRaftState};
 
 #[derive(Clone)]
 #[pyclass(name = "MemStorage")]
-pub struct Py_MemStorage {
+pub struct PyMemStorage {
     pub inner: RefMutOwner<MemStorage>,
 }
 
 #[derive(Clone)]
 #[pyclass(name = "MemStorage_Ref")]
-pub struct Py_MemStorage_Ref {
+pub struct PyMemStorageRef {
     pub inner: RefMutContainer<MemStorage>,
 }
 
 #[derive(FromPyObject)]
-pub enum Py_MemStorage_Mut<'p> {
-    Owned(PyRefMut<'p, Py_MemStorage>),
-    RefMut(Py_MemStorage_Ref),
+pub enum PyMemStorageMut<'p> {
+    Owned(PyRefMut<'p, PyMemStorage>),
+    RefMut(PyMemStorageRef),
 }
 
-implement_type_conversion!(MemStorage, Py_MemStorage_Mut);
+implement_type_conversion!(MemStorage, PyMemStorageMut);
 
 #[pymethods]
-impl Py_MemStorage {
+impl PyMemStorage {
     #[new]
     pub fn new() -> Self {
-        Py_MemStorage {
+        PyMemStorage {
             inner: RefMutOwner::new(MemStorage::new()),
         }
     }
 
     #[staticmethod]
     pub fn default() -> Self {
-        Py_MemStorage {
+        PyMemStorage {
             inner: RefMutOwner::new(MemStorage::default()),
         }
     }
 
     #[staticmethod]
-    pub fn new_with_conf_state(cs: Py_ConfState_Mut) -> Self {
-        Py_MemStorage {
+    pub fn new_with_conf_state(cs: PyConfStateMut) -> Self {
+        PyMemStorage {
             inner: RefMutOwner::new(MemStorage::new_with_conf_state::<ConfState>(cs.into())),
         }
     }
 
-    pub fn make_ref(&mut self) -> Py_MemStorage_Ref {
-        Py_MemStorage_Ref {
+    pub fn make_ref(&mut self) -> PyMemStorageRef {
+        PyMemStorageRef {
             inner: RefMutContainer::new(&mut self.inner),
         }
     }
@@ -74,52 +72,52 @@ impl Py_MemStorage {
 }
 
 #[pymethods]
-impl Py_MemStorage_Ref {
-    pub fn clone(&mut self) -> PyResult<Py_MemStorage> {
-        Ok(Py_MemStorage {
+impl PyMemStorageRef {
+    pub fn clone(&mut self) -> PyResult<PyMemStorage> {
+        Ok(PyMemStorage {
             inner: RefMutOwner::new(self.inner.map_as_mut(|x| x.clone())?),
         })
     }
 
-    pub fn initialize_with_conf_state(&mut self, cs: Py_ConfState_Mut) -> PyResult<()> {
+    pub fn initialize_with_conf_state(&mut self, cs: PyConfStateMut) -> PyResult<()> {
         self.inner
             .map_as_mut(|inner| inner.initialize_with_conf_state::<ConfState>(cs.into()))
     }
 
-    pub fn initial_state(&self) -> PyResult<Py_RaftState> {
+    pub fn initial_state(&self) -> PyResult<PyRaftState> {
         self.inner.map_as_ref(|inner| {
             inner
                 .initial_state()
-                .map(|state| Py_RaftState {
+                .map(|state| PyRaftState {
                     inner: RefMutOwner::new(state),
                 })
-                .map_err(|e| Py_RaftError(e).into())
+                .map_err(|e| PyRaftError(e).into())
         })?
     }
 
     pub fn first_index(&self) -> PyResult<u64> {
         self.inner
-            .map_as_ref(|inner| inner.first_index().map_err(|e| Py_RaftError(e).into()))?
+            .map_as_ref(|inner| inner.first_index().map_err(|e| PyRaftError(e).into()))?
     }
 
     pub fn last_index(&self) -> PyResult<u64> {
         self.inner
-            .map_as_ref(|inner| inner.last_index().map_err(|e| Py_RaftError(e).into()))?
+            .map_as_ref(|inner| inner.last_index().map_err(|e| PyRaftError(e).into()))?
     }
 
     pub fn term(&self, idx: u64) -> PyResult<u64> {
         self.inner
-            .map_as_ref(|inner| inner.term(idx).map_err(|e| Py_RaftError(e).into()))?
+            .map_as_ref(|inner| inner.term(idx).map_err(|e| PyRaftError(e).into()))?
     }
 
-    pub fn snapshot(&self, request_index: u64, _to: u64) -> PyResult<Py_Snapshot> {
+    pub fn snapshot(&self, request_index: u64, _to: u64) -> PyResult<PySnapshot> {
         self.inner.map_as_ref(|inner| {
             inner
                 .snapshot(request_index, _to)
-                .map(|snapshot| Py_Snapshot {
+                .map(|snapshot| PySnapshot {
                     inner: RefMutOwner::new(snapshot),
                 })
-                .map_err(|e| Py_RaftError(e).into())
+                .map_err(|e| PyRaftError(e).into())
         })?
     }
 
@@ -127,7 +125,7 @@ impl Py_MemStorage_Ref {
         &self,
         low: u64,
         high: u64,
-        context: &mut Py_GetEntriesContext_Ref,
+        context: &mut PyGetEntriesContextRef,
         max_size: Option<u64>,
         py: Python,
     ) -> PyResult<PyObject> {
@@ -141,24 +139,24 @@ impl Py_MemStorage_Ref {
                 .map(|entries| {
                     entries
                         .into_iter()
-                        .map(|entry| Py_Entry {
+                        .map(|entry| PyEntry {
                             inner: RefMutOwner::new(entry),
                         })
                         .collect::<Vec<_>>()
                         .into_py(py)
                 })
-                .map_err(|e| Py_RaftError(e).into())
+                .map_err(|e| PyRaftError(e).into())
         })?
     }
 
-    pub fn wl(&mut self) -> PyResult<Py_MemStorageCore_Ref> {
-        self.inner.map_as_mut(|inner| Py_MemStorageCore_Ref {
+    pub fn wl(&mut self) -> PyResult<PyMemStorageCoreRef> {
+        self.inner.map_as_mut(|inner| PyMemStorageCoreRef {
             inner: RefMutContainer::new_raw(inner.wl().deref_mut()),
         })
     }
 
-    pub fn rl(&self) -> PyResult<Py_MemStorageCore_Ref> {
-        self.inner.map_as_ref(|inner| Py_MemStorageCore_Ref {
+    pub fn rl(&self) -> PyResult<PyMemStorageCoreRef> {
+        self.inner.map_as_ref(|inner| PyMemStorageCoreRef {
             inner: RefMutContainer::new_raw(unsafe { make_mut(inner.rl().deref()) }),
         })
     }

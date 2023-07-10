@@ -13,56 +13,52 @@ use raft::{
 };
 
 use crate::raftpb_bindings::{
-    conf_change_v2::Py_ConfChangeV2_Mut,
-    conf_state::Py_ConfState_Ref,
-    entry::Py_Entry_Mut,
-    hard_state::{Py_HardState, Py_HardState_Mut},
-    message::{Py_Message, Py_Message_Mut, Py_Message_Ref},
-    snapshot::{Py_Snapshot_Mut, Py_Snapshot_Ref},
+    conf_change_v2::PyConfChangeV2Mut,
+    conf_state::PyConfStateRef,
+    entry::PyEntryMut,
+    hard_state::{PyHardState, PyHardStateMut},
+    message::{PyMessage, PyMessageMut, PyMessageRef},
+    snapshot::{PySnapshotMut, PySnapshotRef},
 };
 
 use crate::bindings::{
-    config::Py_Config_Mut,
-    progress_tracker::Py_ProgressTracker_Ref,
-    read_state::{Py_ReadState, Py_ReadState_Mut},
-    readonly_option::Py_ReadOnlyOption,
-    soft_state::Py_SoftState,
-    state_role::Py_StateRole,
+    config::PyConfigMut,
+    progress_tracker::PyProgressTrackerRef,
+    read_state::{PyReadState, PyReadStateMut},
+    readonly_option::PyReadOnlyOption,
+    soft_state::PySoftState,
+    state_role::PyStateRole,
 };
-use crate::external_bindings::slog::Py_Logger_Mut;
+use crate::external_bindings::slog::PyLoggerMut;
 
-use super::raft_log::Py_InMemoryRaftLog_Ref;
-use crate::utils::errors::Py_RaftError;
+use super::raft_log::PyInMemoryRaftLogRef;
+use crate::utils::errors::PyRaftError;
 
-use super::mem_storage::{Py_MemStorage_Mut, Py_MemStorage_Ref};
+use super::mem_storage::{PyMemStorageMut, PyMemStorageRef};
 
 #[pyclass(name = "InMemoryRaft")]
-pub struct Py_InMemoryRaft {
+pub struct PyInMemoryRaft {
     pub inner: RefMutOwner<Raft<MemStorage>>,
 }
 
 #[pyclass(name = "InMemoryRaft_Ref")]
-pub struct Py_InMemoryRaft_Ref {
+pub struct PyInMemoryRaftRef {
     pub inner: RefMutContainer<Raft<MemStorage>>,
 }
 
 #[pymethods]
-impl Py_InMemoryRaft {
+impl PyInMemoryRaft {
     #[new]
-    pub fn new(
-        cfg: Py_Config_Mut,
-        store: Py_MemStorage_Mut,
-        logger: Py_Logger_Mut,
-    ) -> PyResult<Self> {
+    pub fn new(cfg: PyConfigMut, store: PyMemStorageMut, logger: PyLoggerMut) -> PyResult<Self> {
         Raft::new(&cfg.into(), store.into(), &logger.into())
-            .map(|r| Py_InMemoryRaft {
+            .map(|r| PyInMemoryRaft {
                 inner: RefMutOwner::new(r),
             })
-            .map_err(|e| Py_RaftError(e).into())
+            .map_err(|e| PyRaftError(e).into())
     }
 
-    pub fn make_ref(&mut self) -> Py_InMemoryRaft_Ref {
-        Py_InMemoryRaft_Ref {
+    pub fn make_ref(&mut self) -> PyInMemoryRaftRef {
+        PyInMemoryRaftRef {
             inner: RefMutContainer::new(&mut self.inner),
         }
     }
@@ -74,7 +70,7 @@ impl Py_InMemoryRaft {
 }
 
 #[pymethods]
-impl Py_InMemoryRaft_Ref {
+impl PyInMemoryRaftRef {
     pub fn __repr__(&mut self) -> PyResult<String> {
         self.inner.map_as_mut(|inner| {
             format!(
@@ -87,7 +83,7 @@ impl Py_InMemoryRaft_Ref {
     }
 
     pub fn append_entry(&mut self, ents: &PyList) -> PyResult<bool> {
-        let mut entries = ents.extract::<Vec<Py_Entry_Mut>>()?;
+        let mut entries = ents.extract::<Vec<PyEntryMut>>()?;
 
         self.inner.map_as_mut(|inner| {
             inner.append_entry(
@@ -151,7 +147,7 @@ impl Py_InMemoryRaft_Ref {
     }
 
     pub fn maybe_increase_uncommitted_size(&mut self, ents: &PyList) -> PyResult<bool> {
-        let mut entries = ents.extract::<Vec<Py_Entry_Mut>>()?;
+        let mut entries = ents.extract::<Vec<PyEntryMut>>()?;
 
         self.inner.map_as_mut(|inner| {
             inner.maybe_increase_uncommitted_size(
@@ -165,7 +161,7 @@ impl Py_InMemoryRaft_Ref {
     }
 
     pub fn reduce_uncommitted_size(&mut self, ents: &PyList) -> PyResult<()> {
-        let mut entries = ents.extract::<Vec<Py_Entry_Mut>>()?;
+        let mut entries = ents.extract::<Vec<PyEntryMut>>()?;
 
         self.inner.map_as_mut(|inner| {
             inner.reduce_uncommitted_size(
@@ -178,7 +174,7 @@ impl Py_InMemoryRaft_Ref {
         })
     }
 
-    pub fn restore(&mut self, snap: Py_Snapshot_Mut) -> PyResult<bool> {
+    pub fn restore(&mut self, snap: PySnapshotMut) -> PyResult<bool> {
         self.inner.map_as_mut(|inner| inner.restore(snap.into()))
     }
 
@@ -258,18 +254,18 @@ impl Py_InMemoryRaft_Ref {
         self.inner.map_as_ref(|inner| inner.pending_read_count())
     }
 
-    pub fn load_state(&mut self, hs: Py_HardState_Mut) -> PyResult<()> {
+    pub fn load_state(&mut self, hs: PyHardStateMut) -> PyResult<()> {
         self.inner.map_as_mut(|inner| inner.load_state(&hs.into()))
     }
 
-    pub fn soft_state(&self) -> PyResult<Py_SoftState> {
-        self.inner.map_as_ref(|inner| Py_SoftState {
+    pub fn soft_state(&self) -> PyResult<PySoftState> {
+        self.inner.map_as_ref(|inner| PySoftState {
             inner: RefMutOwner::new(inner.soft_state()),
         })
     }
 
-    pub fn hard_state(&self) -> PyResult<Py_HardState> {
-        self.inner.map_as_ref(|inner| Py_HardState {
+    pub fn hard_state(&self) -> PyResult<PyHardState> {
+        self.inner.map_as_ref(|inner| PyHardState {
             inner: RefMutOwner::new(inner.hard_state()),
         })
     }
@@ -278,14 +274,14 @@ impl Py_InMemoryRaft_Ref {
         self.inner.map_as_mut(|inner| inner.ping())
     }
 
-    pub fn apply_conf_change(&mut self, cc: Py_ConfChangeV2_Mut) -> PyResult<Py_ConfState_Ref> {
+    pub fn apply_conf_change(&mut self, cc: PyConfChangeV2Mut) -> PyResult<PyConfStateRef> {
         self.inner.map_as_mut(|inner| {
             inner
                 .apply_conf_change(&cc.into())
-                .map(|cs| Py_ConfState_Ref {
+                .map(|cs| PyConfStateRef {
                     inner: RefMutContainer::new_raw(unsafe { make_mut(&cs) }),
                 })
-                .map_err(|e| Py_RaftError(e).into())
+                .map_err(|e| PyRaftError(e).into())
         })?
     }
 
@@ -301,17 +297,17 @@ impl Py_InMemoryRaft_Ref {
         self.inner.map_as_mut(|inner| inner.promotable())
     }
 
-    pub fn step(&mut self, msg: Py_Message_Mut) -> PyResult<()> {
+    pub fn step(&mut self, msg: PyMessageMut) -> PyResult<()> {
         self.inner
-            .map_as_mut(|inner| inner.step(msg.into()).map_err(|e| Py_RaftError(e).into()))?
+            .map_as_mut(|inner| inner.step(msg.into()).map_err(|e| PyRaftError(e).into()))?
     }
 
     pub fn has_pending_conf(&self) -> PyResult<bool> {
         self.inner.map_as_ref(|inner| inner.has_pending_conf())
     }
 
-    pub fn post_conf_change(&mut self) -> PyResult<Py_ConfState_Ref> {
-        self.inner.map_as_mut(|inner| Py_ConfState_Ref {
+    pub fn post_conf_change(&mut self) -> PyResult<PyConfStateRef> {
+        self.inner.map_as_mut(|inner| PyConfStateRef {
             inner: RefMutContainer::new_raw(&mut inner.post_conf_change()),
         })
     }
@@ -320,23 +316,23 @@ impl Py_InMemoryRaft_Ref {
         self.inner.map_as_ref(|inner| inner.in_lease())
     }
 
-    pub fn handle_heartbeat(&mut self, msg: Py_Message_Mut) -> PyResult<()> {
+    pub fn handle_heartbeat(&mut self, msg: PyMessageMut) -> PyResult<()> {
         self.inner
             .map_as_mut(|inner| inner.handle_heartbeat(msg.into()))
     }
 
-    pub fn handle_append_entries(&mut self, msg: Py_Message_Mut) -> PyResult<()> {
+    pub fn handle_append_entries(&mut self, msg: PyMessageMut) -> PyResult<()> {
         self.inner
             .map_as_mut(|inner| inner.handle_append_entries(&msg.into()))
     }
 
     pub fn request_snapshot(&mut self) -> PyResult<()> {
         self.inner
-            .map_as_mut(|inner| inner.request_snapshot().map_err(|e| Py_RaftError(e).into()))?
+            .map_as_mut(|inner| inner.request_snapshot().map_err(|e| PyRaftError(e).into()))?
     }
 
-    pub fn prs(&mut self) -> PyResult<Py_ProgressTracker_Ref> {
-        self.inner.map_as_mut(|inner| Py_ProgressTracker_Ref {
+    pub fn prs(&mut self) -> PyResult<PyProgressTrackerRef> {
+        self.inner.map_as_mut(|inner| PyProgressTrackerRef {
             inner: RefMutContainer::new_raw(inner.mut_prs()),
         })
     }
@@ -345,9 +341,9 @@ impl Py_InMemoryRaft_Ref {
         self.inner.map_as_mut(|inner| inner.reset(term))
     }
 
-    pub fn snap(&self) -> PyResult<Option<Py_Snapshot_Ref>> {
+    pub fn snap(&self) -> PyResult<Option<PySnapshotRef>> {
         self.inner.map_as_ref(|inner| {
-            inner.snap().map(|snapshot| Py_Snapshot_Ref {
+            inner.snap().map(|snapshot| PySnapshotRef {
                 inner: RefMutContainer::new_raw(unsafe { make_mut(snapshot) }),
             })
         })
@@ -413,7 +409,7 @@ impl Py_InMemoryRaft_Ref {
             inner
                 .read_states
                 .iter()
-                .map(|rs| Py_ReadState {
+                .map(|rs| PyReadState {
                     inner: RefMutOwner::new(rs.clone()),
                 })
                 .collect::<Vec<_>>()
@@ -422,7 +418,7 @@ impl Py_InMemoryRaft_Ref {
     }
 
     pub fn set_read_states(&mut self, v: &PyList) -> PyResult<()> {
-        let mut read_states = v.extract::<Vec<Py_ReadState_Mut>>()?;
+        let mut read_states = v.extract::<Vec<PyReadStateMut>>()?;
 
         self.inner.map_as_mut(|inner| {
             inner.read_states = read_states
@@ -479,7 +475,7 @@ impl Py_InMemoryRaft_Ref {
             inner
                 .msgs
                 .iter_mut()
-                .map(|msg| Py_Message_Ref {
+                .map(|msg| PyMessageRef {
                     inner: RefMutContainer::new_raw(msg),
                 })
                 .collect::<Vec<_>>()
@@ -488,7 +484,7 @@ impl Py_InMemoryRaft_Ref {
     }
 
     pub fn set_msgs(&mut self, msgs: &PyList) -> PyResult<()> {
-        let mut msgs = msgs.extract::<Vec<Py_Message_Mut>>()?;
+        let mut msgs = msgs.extract::<Vec<PyMessageMut>>()?;
 
         self.inner.map_as_mut(|inner| {
             inner.msgs = msgs.iter_mut().map(|msg| msg.into()).collect::<Vec<_>>()
@@ -500,7 +496,7 @@ impl Py_InMemoryRaft_Ref {
             let msgs = inner.msgs.drain(..).collect::<Vec<_>>();
 
             msgs.into_iter()
-                .map(|msg| Py_Message {
+                .map(|msg| PyMessage {
                     inner: RefMutOwner::new(msg),
                 })
                 .collect::<Vec<_>>()
@@ -508,8 +504,8 @@ impl Py_InMemoryRaft_Ref {
         })
     }
 
-    pub fn get_raft_log(&mut self) -> PyResult<Py_InMemoryRaftLog_Ref> {
-        self.inner.map_as_mut(|inner| Py_InMemoryRaftLog_Ref {
+    pub fn get_raft_log(&mut self) -> PyResult<PyInMemoryRaftLogRef> {
+        self.inner.map_as_mut(|inner| PyInMemoryRaftLogRef {
             inner: RefMutContainer::new_raw(&mut inner.raft_log),
         })
     }
@@ -518,11 +514,11 @@ impl Py_InMemoryRaft_Ref {
         todo!()
     }
 
-    pub fn get_state(&self) -> PyResult<Py_StateRole> {
-        self.inner.map_as_ref(|inner| Py_StateRole(inner.state))
+    pub fn get_state(&self) -> PyResult<PyStateRole> {
+        self.inner.map_as_ref(|inner| PyStateRole(inner.state))
     }
 
-    pub fn set_state(&mut self, v: &Py_StateRole) -> PyResult<()> {
+    pub fn set_state(&mut self, v: &PyStateRole) -> PyResult<()> {
         self.inner.map_as_mut(|inner| inner.state = v.0)
     }
 
@@ -546,8 +542,8 @@ impl Py_InMemoryRaft_Ref {
         self.inner.map_as_mut(|inner| inner.pre_vote)
     }
 
-    pub fn store(&mut self) -> PyResult<Py_MemStorage_Ref> {
-        self.inner.map_as_mut(|inner| Py_MemStorage_Ref {
+    pub fn store(&mut self) -> PyResult<PyMemStorageRef> {
+        self.inner.map_as_mut(|inner| PyMemStorageRef {
             inner: RefMutContainer::new_raw(inner.mut_store()),
         })
     }
@@ -582,12 +578,12 @@ impl Py_InMemoryRaft_Ref {
             .map_as_mut(|inner| inner.set_max_committed_size_per_ready(v))
     }
 
-    pub fn get_read_only_option(&self) -> PyResult<Py_ReadOnlyOption> {
+    pub fn get_read_only_option(&self) -> PyResult<PyReadOnlyOption> {
         self.inner
-            .map_as_ref(|inner| Py_ReadOnlyOption(inner.read_only.option))
+            .map_as_ref(|inner| PyReadOnlyOption(inner.read_only.option))
     }
 
-    pub fn set_read_only_option(&mut self, option: &Py_ReadOnlyOption) -> PyResult<()> {
+    pub fn set_read_only_option(&mut self, option: &PyReadOnlyOption) -> PyResult<()> {
         self.inner
             .map_as_mut(|inner| inner.read_only.option = option.0)
     }

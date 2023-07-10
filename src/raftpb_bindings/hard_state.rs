@@ -12,49 +12,49 @@ use crate::utils::{
 
 #[derive(Clone)]
 #[pyclass(name = "HardState")]
-pub struct Py_HardState {
+pub struct PyHardState {
     pub inner: RefMutOwner<HardState>,
 }
 
 #[derive(Clone)]
 #[pyclass(name = "HardState_Ref")]
-pub struct Py_HardState_Ref {
+pub struct PyHardStateRef {
     pub inner: RefMutContainer<HardState>,
 }
 
 #[derive(FromPyObject)]
-pub enum Py_HardState_Mut<'p> {
-    Owned(PyRefMut<'p, Py_HardState>),
-    RefMut(Py_HardState_Ref),
+pub enum PyHardStateMut<'p> {
+    Owned(PyRefMut<'p, PyHardState>),
+    RefMut(PyHardStateRef),
 }
 
-implement_type_conversion!(HardState, Py_HardState_Mut);
+implement_type_conversion!(HardState, PyHardStateMut);
 
 #[pymethods]
-impl Py_HardState {
+impl PyHardState {
     #[new]
     pub fn new() -> Self {
-        Py_HardState {
+        PyHardState {
             inner: RefMutOwner::new(HardState::new()),
         }
     }
 
     #[staticmethod]
     pub fn default() -> Self {
-        Py_HardState {
+        PyHardState {
             inner: RefMutOwner::new(HardState::default()),
         }
     }
 
     #[staticmethod]
-    pub fn decode(v: &[u8]) -> PyResult<Py_HardState> {
-        Ok(Py_HardState {
+    pub fn decode(v: &[u8]) -> PyResult<PyHardState> {
+        Ok(PyHardState {
             inner: RefMutOwner::new(to_pyresult(ProstMessage::decode(v))?),
         })
     }
 
-    pub fn make_ref(&mut self) -> Py_HardState_Ref {
-        Py_HardState_Ref {
+    pub fn make_ref(&mut self) -> PyHardStateRef {
+        PyHardStateRef {
             inner: RefMutContainer::new(&mut self.inner),
         }
     }
@@ -63,7 +63,7 @@ impl Py_HardState {
         format!("{:?}", self.inner.inner)
     }
 
-    pub fn __richcmp__(&self, py: Python, rhs: Py_HardState_Mut, op: CompareOp) -> PyObject {
+    pub fn __richcmp__(&self, py: Python, rhs: PyHardStateMut, op: CompareOp) -> PyObject {
         let rhs: HardState = rhs.into();
 
         match op {
@@ -80,7 +80,7 @@ impl Py_HardState {
 }
 
 #[pymethods]
-impl Py_HardState_Ref {
+impl PyHardStateRef {
     pub fn __repr__(&self) -> PyResult<String> {
         self.inner.map_as_ref(|inner| format!("{:?}", inner))
     }
@@ -88,7 +88,7 @@ impl Py_HardState_Ref {
     pub fn __richcmp__(
         &self,
         py: Python,
-        rhs: Py_HardState_Mut,
+        rhs: PyHardStateMut,
         op: CompareOp,
     ) -> PyResult<PyObject> {
         self.inner.map_as_ref(|inner| {
@@ -102,8 +102,8 @@ impl Py_HardState_Ref {
         })
     }
 
-    pub fn clone(&self) -> PyResult<Py_HardState> {
-        Ok(Py_HardState {
+    pub fn clone(&self) -> PyResult<PyHardState> {
+        Ok(PyHardState {
             inner: RefMutOwner::new(self.inner.map_as_ref(|x| x.clone())?),
         })
     }

@@ -5,27 +5,27 @@ use raft::eraftpb::EntryType;
 
 #[derive(Clone)]
 #[pyclass(name = "EntryType")]
-pub struct Py_EntryType(pub EntryType);
+pub struct PyEntryType(pub EntryType);
 
-impl From<Py_EntryType> for EntryType {
-    fn from(val: Py_EntryType) -> Self {
+impl From<PyEntryType> for EntryType {
+    fn from(val: PyEntryType) -> Self {
         val.0
     }
 }
 
-impl From<EntryType> for Py_EntryType {
+impl From<EntryType> for PyEntryType {
     fn from(x: EntryType) -> Self {
         match x {
-            EntryType::EntryConfChange => Py_EntryType(EntryType::EntryConfChange),
-            EntryType::EntryConfChangeV2 => Py_EntryType(EntryType::EntryConfChangeV2),
-            EntryType::EntryNormal => Py_EntryType(EntryType::EntryNormal),
+            EntryType::EntryConfChange => PyEntryType(EntryType::EntryConfChange),
+            EntryType::EntryConfChangeV2 => PyEntryType(EntryType::EntryConfChangeV2),
+            EntryType::EntryNormal => PyEntryType(EntryType::EntryNormal),
         }
     }
 }
 
 #[pymethods]
-impl Py_EntryType {
-    pub fn __richcmp__(&self, py: Python, rhs: &Py_EntryType, op: CompareOp) -> PyResult<PyObject> {
+impl PyEntryType {
+    pub fn __richcmp__(&self, py: Python, rhs: &PyEntryType, op: CompareOp) -> PyResult<PyObject> {
         Ok(match op {
             CompareOp::Eq => (self.0 == rhs.0).into_py(py),
             CompareOp::Ne => (self.0 != rhs.0).into_py(py),
@@ -52,22 +52,22 @@ impl Py_EntryType {
     #[staticmethod]
     pub fn from_int(v: i32, py: Python) -> PyResult<PyObject> {
         EntryType::from_i32(v)
-            .map(|x| Py_EntryType(x).into_py(py))
+            .map(|x| PyEntryType(x).into_py(py))
             .ok_or_else(|| runtime_error("Invalid value"))
     }
 
     #[classattr]
     pub fn EntryConfChange() -> Self {
-        Py_EntryType(EntryType::EntryConfChange)
+        PyEntryType(EntryType::EntryConfChange)
     }
 
     #[classattr]
     pub fn EntryConfChangeV2() -> Self {
-        Py_EntryType(EntryType::EntryConfChangeV2)
+        PyEntryType(EntryType::EntryConfChangeV2)
     }
 
     #[classattr]
     pub fn EntryNormal() -> Self {
-        Py_EntryType(EntryType::EntryNormal)
+        PyEntryType(EntryType::EntryNormal)
     }
 }

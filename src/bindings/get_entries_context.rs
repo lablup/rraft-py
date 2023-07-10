@@ -3,26 +3,26 @@ use pyo3::{intern, prelude::*};
 use raft::GetEntriesContext;
 
 #[pyclass(name = "GetEntriesContext")]
-pub struct Py_GetEntriesContext {
+pub struct PyGetEntriesContext {
     pub inner: RefMutOwner<GetEntriesContext>,
 }
 
 #[pyclass(name = "GetEntriesContext_Ref")]
-pub struct Py_GetEntriesContext_Ref {
+pub struct PyGetEntriesContextRef {
     pub inner: RefMutContainer<GetEntriesContext>,
 }
 
 #[pymethods]
-impl Py_GetEntriesContext {
+impl PyGetEntriesContext {
     #[staticmethod]
     pub fn empty(can_async: bool) -> Self {
-        Py_GetEntriesContext {
+        PyGetEntriesContext {
             inner: RefMutOwner::new(GetEntriesContext::empty(can_async)),
         }
     }
 
-    pub fn make_ref(&mut self) -> Py_GetEntriesContext_Ref {
-        Py_GetEntriesContext_Ref {
+    pub fn make_ref(&mut self) -> PyGetEntriesContextRef {
+        PyGetEntriesContextRef {
             inner: RefMutContainer::new(&mut self.inner),
         }
     }
@@ -38,7 +38,7 @@ impl Py_GetEntriesContext {
 }
 
 #[pymethods]
-impl Py_GetEntriesContext_Ref {
+impl PyGetEntriesContextRef {
     pub fn __repr__(&self) -> PyResult<String> {
         self.inner.map_as_ref(|inner| format!("{:?}", inner))
     }
