@@ -1,4 +1,4 @@
-﻿use crate::bindings::get_entries_context::PyGetEntriesContext;
+use crate::bindings::get_entries_context::PyGetEntriesContext;
 use pyo3::{intern, prelude::*, types::PyList};
 
 use crate::utils::{
