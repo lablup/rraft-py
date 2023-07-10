@@ -10,24 +10,24 @@ from rraft import (
     ConfChangeV2,
     ConfState,
     Config,
-    Config_Ref,
+    ConfigRef,
     Entry,
-    Entry_Ref,
+    EntryRef,
     EntryType,
     GetEntriesContext,
-    HardState_Ref,
-    Logger_Ref,
+    HardStateRef,
+    LoggerRef,
     MemStorage,
     Message,
     MessageType,
     InMemoryRawNode,
-    InMemoryRawNode_Ref,
+    InMemoryRawNodeRef,
     ProposalDroppedError,
     ReadState,
-    Ready_Ref,
+    ReadyRef,
     Snapshot,
-    Snapshot_Ref,
-    SoftState_Ref,
+    SnapshotRef,
+    SoftStateRef,
     StateRole,
     default_logger,
     new_conf_change_single,
@@ -58,12 +58,12 @@ MAX_UINT64 = (1 << 64) - 1
 
 
 def must_cmp_ready(
-    r: Ready_Ref,
-    ss: Optional[SoftState_Ref],
-    hs: Optional[HardState_Ref],
-    entries: List[Entry_Ref],
-    committed_entries: List[Entry_Ref],
-    snapshot: Optional[Snapshot_Ref],
+    r: ReadyRef,
+    ss: Optional[SoftStateRef],
+    hs: Optional[HardStateRef],
+    entries: List[EntryRef],
+    committed_entries: List[EntryRef],
+    snapshot: Optional[SnapshotRef],
     msg_is_empty: bool,
     persisted_msg_is_empty: bool,
     must_sync: bool,
@@ -88,7 +88,7 @@ def new_raw_node(
     election_tick: int,
     heartbeat_tick: int,
     storage: MemStorage,
-    logger: Logger_Ref,
+    logger: LoggerRef,
 ) -> InMemoryRawNode:
     config = new_test_config(id, election_tick, heartbeat_tick)
     return new_raw_node_with_config(peers, config, storage, logger)
@@ -96,9 +96,9 @@ def new_raw_node(
 
 def new_raw_node_with_config(
     peers: List[int],
-    config: Config_Ref,
+    config: ConfigRef,
     storage: MemStorage,
-    logger: Logger_Ref,
+    logger: LoggerRef,
 ) -> InMemoryRawNode:
     initial_state = storage.initial_state()
     assert not (
@@ -340,7 +340,7 @@ def test_raw_node_propose_and_conf_change():
             s.wl().append(rd.entries())
 
             def handle_committed_entries(
-                rn: InMemoryRawNode_Ref, committed_entries: List[Entry]
+                rn: InMemoryRawNodeRef, committed_entries: List[Entry]
             ):
                 for e in committed_entries:
                     nonlocal cs
@@ -464,7 +464,7 @@ def test_raw_node_joint_auto_leave():
         s.wl().append(rd.entries())
 
         def handle_committed_entries(
-            rn: InMemoryRawNode_Ref, committed_entries: List[Entry]
+            rn: InMemoryRawNodeRef, committed_entries: List[Entry]
         ):
             for e in committed_entries:
                 nonlocal cs
@@ -562,7 +562,7 @@ def test_raw_node_propose_add_duplicate_node():
         s.wl().append(rd.entries())
 
         def handle_committed_entries(
-            rn: InMemoryRawNode_Ref, committed_entries: List[Entry]
+            rn: InMemoryRawNodeRef, committed_entries: List[Entry]
         ):
             for e in committed_entries:
                 if e.get_entry_type() == EntryType.EntryConfChange:

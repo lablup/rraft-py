@@ -41,15 +41,15 @@ from rraft import (
     GetEntriesContext,
     HardState,
     Logger,
-    Logger_Ref,
+    LoggerRef,
     MemStorage,
-    MemStorage_Ref,
+    MemStorageRef,
     Message,
     MessageType,
     ProgressState,
     InMemoryRaft,
-    InMemoryRaft_Ref,
-    InMemoryRaftLog_Ref,
+    InMemoryRaftRef,
+    InMemoryRaftLogRef,
     ProposalDroppedError,
     ReadOnlyOption,
     Snapshot,
@@ -70,7 +70,7 @@ def ents_with_config(
     pre_vote: bool,
     id: int,
     peers: List[int],
-    l: Logger | Logger_Ref,
+    l: Logger | LoggerRef,
 ) -> Interface:
     store = MemStorage.new_with_conf_state(ConfState(peers, []))
 
@@ -87,7 +87,7 @@ def ents_with_config(
 
 def assert_raft_log(
     prefix: str,
-    raft_log: InMemoryRaftLog_Ref,
+    raft_log: InMemoryRaftLogRef,
     committed: int,
     applied: int,
     last: int,
@@ -112,7 +112,7 @@ def voted_with_config(
     pre_vote: bool,
     id: int,
     peers: List[int],
-    l: Logger | Logger_Ref,
+    l: Logger | LoggerRef,
 ) -> Interface:
     cs = ConfState(peers, [])
     store = MemStorage.new_with_conf_state(cs)
@@ -126,7 +126,7 @@ def voted_with_config(
 
 
 # Persist committed index and fetch next entries.
-def next_ents(r: InMemoryRaft_Ref, s: MemStorage_Ref) -> List[Entry]:
+def next_ents(r: InMemoryRaftRef, s: MemStorageRef) -> List[Entry]:
     unstable_refs = r.get_raft_log().unstable_entries()
     unstable = list(map(lambda e: e.clone(), unstable_refs))
 
@@ -3452,7 +3452,7 @@ def test_leader_transfer_second_transfer_to_same_node():
     check_leader_transfer_state(nt.peers[1].raft, StateRole.Leader, 1)
 
 
-def check_leader_transfer_state(r: InMemoryRaft_Ref, state: StateRole, lead: int):
+def check_leader_transfer_state(r: InMemoryRaftRef, state: StateRole, lead: int):
     assert (
         r.get_state() == state and r.get_leader_id() == lead
     ), f"after transferring, node has state {r.state} lead {state}, want state {r.get_leader_id()} lead {lead}"
@@ -3547,8 +3547,8 @@ def new_test_learner_raft(
     learners: List[int],
     election: int,
     heartbeat: int,
-    storage: MemStorage_Ref,
-    logger: Logger_Ref,
+    storage: MemStorageRef,
+    logger: LoggerRef,
 ) -> Interface:
     initial_state = storage.initial_state()
 
@@ -3564,7 +3564,7 @@ def new_test_learner_raft(
 
 
 def new_test_learner_raft_with_prevote(
-    id: int, peers: List[int], learners: List[int], logger: Logger_Ref, prevote: bool
+    id: int, peers: List[int], learners: List[int], logger: LoggerRef, prevote: bool
 ) -> Interface:
     storage = new_storage()
     storage.initialize_with_conf_state(ConfState(peers, learners))

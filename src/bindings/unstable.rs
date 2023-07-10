@@ -17,7 +17,7 @@ pub struct PyUnstable {
     pub inner: RefMutOwner<Unstable>,
 }
 
-#[pyclass(name = "Unstable_Ref")]
+#[pyclass(name = "UnstableRef")]
 pub struct PyUnstableRef {
     pub inner: RefMutContainer<Unstable>,
 }

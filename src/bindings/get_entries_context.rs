@@ -7,7 +7,7 @@ pub struct PyGetEntriesContext {
     pub inner: RefMutOwner<GetEntriesContext>,
 }
 
-#[pyclass(name = "GetEntriesContext_Ref")]
+#[pyclass(name = "GetEntriesContextRef")]
 pub struct PyGetEntriesContextRef {
     pub inner: RefMutContainer<GetEntriesContext>,
 }

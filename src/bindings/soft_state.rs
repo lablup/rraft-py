@@ -10,7 +10,7 @@ pub struct PySoftState {
     pub inner: RefMutOwner<SoftState>,
 }
 
-#[pyclass(name = "SoftState_Ref")]
+#[pyclass(name = "SoftStateRef")]
 pub struct PySoftStateRef {
     pub inner: RefMutContainer<SoftState>,
 }

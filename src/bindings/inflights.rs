@@ -11,7 +11,7 @@ pub struct PyInflights {
 }
 
 #[derive(Clone)]
-#[pyclass(name = "Inflights_Ref")]
+#[pyclass(name = "InflightsRef")]
 pub struct PyInflightsRef {
     pub inner: RefMutContainer<Inflights>,
 }

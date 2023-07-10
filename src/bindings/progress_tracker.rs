@@ -21,7 +21,7 @@ pub struct PyProgressTracker {
 }
 
 #[derive(Clone)]
-#[pyclass(name = "ProgressTracker_Ref")]
+#[pyclass(name = "ProgressTrackerRef")]
 pub struct PyProgressTrackerRef {
     pub inner: RefMutContainer<ProgressTracker>,
 }

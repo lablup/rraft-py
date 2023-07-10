@@ -14,7 +14,7 @@ pub struct PyLightReady {
     pub inner: RefMutOwner<LightReady>,
 }
 
-#[pyclass(name = "LightReady_Ref")]
+#[pyclass(name = "LightReadyRef")]
 pub struct PyLightReadyRef {
     pub inner: RefMutContainer<LightReady>,
 }

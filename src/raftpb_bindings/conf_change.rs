@@ -21,7 +21,7 @@ pub struct PyConfChange {
 }
 
 #[derive(Clone)]
-#[pyclass(name = "ConfChange_Ref")]
+#[pyclass(name = "ConfChangeRef")]
 pub struct PyConfChangeRef {
     pub inner: RefMutContainer<ConfChange>,
 }

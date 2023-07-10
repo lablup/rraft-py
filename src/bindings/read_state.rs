@@ -11,7 +11,7 @@ pub struct PyReadState {
 }
 
 #[derive(Clone)]
-#[pyclass(name = "ReadState_Ref")]
+#[pyclass(name = "ReadStateRef")]
 pub struct PyReadStateRef {
     pub inner: RefMutContainer<ReadState>,
 }

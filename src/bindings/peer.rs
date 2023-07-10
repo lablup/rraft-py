@@ -8,7 +8,7 @@ pub struct PyPeer {
     pub inner: RefMutOwner<Peer>,
 }
 
-#[pyclass(name = "Peer_Ref")]
+#[pyclass(name = "PeerRef")]
 pub struct PyPeerRef {
     pub inner: RefMutContainer<Peer>,
 }

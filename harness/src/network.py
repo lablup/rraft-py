@@ -3,12 +3,12 @@ from harness.src.interface import Interface
 from rraft import (
     Config,
     ConfState,
-    Config_Ref,
+    ConfigRef,
     Logger,
-    Logger_Ref,
+    LoggerRef,
     MemStorage,
     Message,
-    Message_Ref,
+    MessageRef,
     MessageType,
     NO_LIMIT,
     InMemoryRaft,
@@ -66,7 +66,7 @@ class Network:
         return cfg
 
     @staticmethod
-    def new(peers: List[Optional[Interface]], l: Logger | Logger_Ref) -> "Network":
+    def new(peers: List[Optional[Interface]], l: Logger | LoggerRef) -> "Network":
         """
         Initializes a network from `peers`.
 
@@ -80,8 +80,8 @@ class Network:
     @staticmethod
     def new_with_config(
         peers: List[Optional[Interface]],
-        config: Config | Config_Ref,
-        l: Logger | Logger_Ref,
+        config: Config | ConfigRef,
+        l: Logger | LoggerRef,
     ) -> "Network":
         """
         Initialize a network from `peers` with explicitly specified `config`.
@@ -120,12 +120,12 @@ class Network:
         self.ignorem[t] = True
 
     def filter_(
-        self, msgs: List[Message] | List[Message_Ref]
+        self, msgs: List[Message] | List[MessageRef]
     ) -> List[Message]:
         """
         Filter out messages that should be dropped according to rules set by `ignore` or `drop`.
         """
-        def should_be_filtered(m: Message | Message_Ref):
+        def should_be_filtered(m: Message | MessageRef):
             if self.ignorem.get(m.get_msg_type()):
                 return False
 
@@ -149,7 +149,7 @@ class Network:
             msgs.extend(p.read_messages())
         return msgs
 
-    def send(self, msgs: List[Message] | List[Message_Ref]) -> None:
+    def send(self, msgs: List[Message] | List[MessageRef]) -> None:
         """
         # Instruct the cluster to `step` through the given messages.
         #
@@ -173,13 +173,13 @@ class Network:
             msgs = []
             msgs.extend(new_msgs)
 
-    def filter_and_send(self, msgs: List[Message] | List[Message_Ref]) -> None:
+    def filter_and_send(self, msgs: List[Message] | List[MessageRef]) -> None:
         """
         Filter `msgs` and then instruct the cluster to `step` through the given messages.
         """
         self.send(self.filter_(msgs))
 
-    def dispatch(self, messages: List[Message] | List[Message_Ref]) -> None:
+    def dispatch(self, messages: List[Message] | List[MessageRef]) -> None:
         """
         # Dispatches the given messages to the appropriate peers.
         #

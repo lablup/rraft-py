@@ -2,22 +2,22 @@ from typing import List, Optional
 from rraft import (
     ConfChange,
     ConfChangeSingle,
-    ConfChangeSingle_Ref,
+    ConfChangeSingleRef,
     ConfChangeType,
     ConfChangeV2,
     ConfState,
     Config,
     Entry,
-    Entry_Ref,
+    EntryRef,
     HardState,
     Logger,
-    Logger_Ref,
+    LoggerRef,
     MemStorage,
-    MemStorage_Ref,
+    MemStorageRef,
     Message,
     MessageType,
     InMemoryRaft,
-    InMemoryRaftLog_Ref,
+    InMemoryRaftLogRef,
     Snapshot,
     SoftState,
     StateRole,
@@ -27,7 +27,7 @@ from rraft import (
 from harness.src.interface import Interface
 
 
-def ltoa(raft_log: InMemoryRaftLog_Ref) -> str:
+def ltoa(raft_log: InMemoryRaftLogRef) -> str:
     s = f"commited {raft_log.get_committed()}\n"
     s += f"applied {raft_log.get_applied()}\n"
     for i, e in enumerate(raft_log.all_entries()):
@@ -54,8 +54,8 @@ def new_test_raft(
     peers: List[int],
     election: int,
     heartbeat: int,
-    storage: MemStorage | MemStorage_Ref,
-    logger: Logger | Logger_Ref,
+    storage: MemStorage | MemStorageRef,
+    logger: Logger | LoggerRef,
 ) -> Interface:
     config = new_test_config(id, election, heartbeat)
     initial_state = storage.initial_state()
@@ -76,9 +76,9 @@ def new_test_raft_with_prevote(
     peers: List[int],
     election: int,
     heartbeat: int,
-    storage: MemStorage | MemStorage_Ref,
+    storage: MemStorage | MemStorageRef,
     pre_vote: bool,
-    logger: Logger | Logger_Ref,
+    logger: Logger | LoggerRef,
 ) -> Interface:
     config = new_test_config(id, election, heartbeat)
     config.set_pre_vote(pre_vote)
@@ -100,9 +100,9 @@ def new_test_raft_with_logs(
     peers: List[int],
     election: int,
     heartbeat: int,
-    storage: MemStorage | MemStorage_Ref,
-    logs: List[Entry] | List[Entry_Ref],
-    logger: Logger | Logger_Ref,
+    storage: MemStorage | MemStorageRef,
+    logs: List[Entry] | List[EntryRef],
+    logger: Logger | LoggerRef,
 ) -> Interface:
     config = new_test_config(id, election, heartbeat)
     initial_state = storage.initial_state()
@@ -122,8 +122,8 @@ def new_test_raft_with_logs(
 
 def new_test_raft_with_config(
     config: Config,
-    storage: MemStorage | MemStorage_Ref,
-    logger: Logger | Logger_Ref,
+    storage: MemStorage | MemStorageRef,
+    logger: Logger | LoggerRef,
 ) -> Interface:
     return Interface(InMemoryRaft(config, storage, logger))
 
@@ -235,7 +235,7 @@ def conf_state_v2(
 
 
 def conf_change_v2(
-    steps: List[ConfChangeSingle] | List[ConfChangeSingle_Ref],
+    steps: List[ConfChangeSingle] | List[ConfChangeSingleRef],
 ) -> ConfChangeV2:
     cc = ConfChangeV2.default()
     cc.set_changes(steps)

@@ -17,7 +17,7 @@ pub struct PyEntry {
 }
 
 #[derive(Clone)]
-#[pyclass(name = "Entry_Ref")]
+#[pyclass(name = "EntryRef")]
 pub struct PyEntryRef {
     pub inner: RefMutContainer<Entry>,
 }

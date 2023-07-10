@@ -18,7 +18,7 @@ pub struct PyConfState {
 }
 
 #[derive(Clone)]
-#[pyclass(name = "ConfState_Ref")]
+#[pyclass(name = "ConfStateRef")]
 pub struct PyConfStateRef {
     pub inner: RefMutContainer<ConfState>,
 }

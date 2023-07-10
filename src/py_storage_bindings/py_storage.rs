@@ -22,7 +22,7 @@ pub struct PyStorage {
 }
 
 #[derive(Clone)]
-#[pyclass(name = "Storage_Ref")]
+#[pyclass(name = "StorageRef")]
 pub struct PyStorageRef {
     pub inner: RefMutContainer<PyStorage>,
 }

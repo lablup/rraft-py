@@ -18,7 +18,7 @@ pub struct PyRaftLog {
     pub inner: RefMutOwner<RaftLog<PyStorage>>,
 }
 
-#[pyclass(name = "RaftLog_Ref")]
+#[pyclass(name = "RaftLogRef")]
 pub struct PyRaftLogRef {
     pub inner: RefMutContainer<RaftLog<PyStorage>>,
 }

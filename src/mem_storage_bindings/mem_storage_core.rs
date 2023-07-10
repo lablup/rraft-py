@@ -19,7 +19,7 @@ pub struct PyMemStorageCore {
     pub inner: RefMutOwner<MemStorageCore>,
 }
 
-#[pyclass(name = "MemStorageCore_Ref")]
+#[pyclass(name = "MemStorageCoreRef")]
 pub struct PyMemStorageCoreRef {
     pub inner: RefMutContainer<MemStorageCore>,
 }

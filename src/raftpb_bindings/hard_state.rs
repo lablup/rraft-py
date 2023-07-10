@@ -17,7 +17,7 @@ pub struct PyHardState {
 }
 
 #[derive(Clone)]
-#[pyclass(name = "HardState_Ref")]
+#[pyclass(name = "HardStateRef")]
 pub struct PyHardStateRef {
     pub inner: RefMutContainer<HardState>,
 }

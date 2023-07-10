@@ -29,7 +29,7 @@ pub struct PyRawNode {
     pub inner: RefMutOwner<RawNode<PyStorage>>,
 }
 
-#[pyclass(name = "RawNode_Ref")]
+#[pyclass(name = "RawNodeRef")]
 pub struct PyRawNodeRef {
     pub inner: RefMutContainer<RawNode<PyStorage>>,
 }

@@ -18,7 +18,7 @@ pub struct PySnapshot {
 }
 
 #[derive(Clone)]
-#[pyclass(name = "Snapshot_Ref")]
+#[pyclass(name = "SnapshotRef")]
 pub struct PySnapshotRef {
     pub inner: RefMutContainer<Snapshot>,
 }

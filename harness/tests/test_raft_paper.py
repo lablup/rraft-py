@@ -6,9 +6,9 @@ from rraft import (
     ConfState,
     Entry,
     MemStorage,
-    MemStorage_Ref,
+    MemStorageRef,
     Message,
-    Message_Ref,
+    MessageRef,
     MessageType,
     StateRole,
     default_logger,
@@ -29,7 +29,7 @@ from harness.utils import (
 )
 
 
-def commit_noop_entry(r: Interface, s: MemStorage_Ref):
+def commit_noop_entry(r: Interface, s: MemStorageRef):
     assert r.raft.get_state() == StateRole.Leader
     r.raft.bcast_append()
 
@@ -56,7 +56,7 @@ def commit_noop_entry(r: Interface, s: MemStorage_Ref):
         r.raft.commit_apply(committed)
 
 
-def accept_and_reply(m: Message_Ref) -> Message:
+def accept_and_reply(m: MessageRef) -> Message:
     assert m.get_msg_type() == MessageType.MsgAppend
     reply = new_message(m.get_to(), m.get_from(), MessageType.MsgAppendResponse, 0)
     reply.set_term(m.get_term())

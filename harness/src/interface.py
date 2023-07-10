@@ -2,9 +2,9 @@ from typing import List
 
 from rraft import (
     Message,
-    Message_Ref,
+    MessageRef,
     InMemoryRaft,
-    InMemoryRaftLog_Ref,
+    InMemoryRaftLogRef,
 )
 
 
@@ -33,10 +33,10 @@ class Interface:
         return f"Interface {{ id: {self.raft.get_id()} }}"
 
     @property
-    def raft_log(self) -> InMemoryRaftLog_Ref:
+    def raft_log(self) -> InMemoryRaftLogRef:
         return self.raft.get_raft_log()
 
-    def step(self, message: Message | Message_Ref) -> None:
+    def step(self, message: Message | MessageRef) -> None:
         """
         Step the raft, if it exists.
         """

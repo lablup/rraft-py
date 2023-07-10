@@ -20,7 +20,7 @@ pub struct PyInMemoryRaftLog {
     pub inner: RefMutOwner<RaftLog<MemStorage>>,
 }
 
-#[pyclass(name = "InMemoryRaftLog_Ref")]
+#[pyclass(name = "InMemoryRaftLogRef")]
 pub struct PyInMemoryRaftLogRef {
     pub inner: RefMutContainer<RaftLog<MemStorage>>,
 }

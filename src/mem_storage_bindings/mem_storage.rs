@@ -23,7 +23,7 @@ pub struct PyMemStorage {
 }
 
 #[derive(Clone)]
-#[pyclass(name = "MemStorage_Ref")]
+#[pyclass(name = "MemStorageRef")]
 pub struct PyMemStorageRef {
     pub inner: RefMutContainer<MemStorage>,
 }

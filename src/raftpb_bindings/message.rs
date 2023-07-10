@@ -28,7 +28,7 @@ pub struct PyMessage {
 }
 
 #[derive(Clone)]
-#[pyclass(name = "Message_Ref")]
+#[pyclass(name = "MessageRef")]
 pub struct PyMessageRef {
     pub inner: RefMutContainer<Message>,
 }

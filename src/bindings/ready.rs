@@ -22,7 +22,7 @@ pub struct PyReady {
     pub inner: RefMutOwner<Ready>,
 }
 
-#[pyclass(name = "Ready_Ref")]
+#[pyclass(name = "ReadyRef")]
 pub struct PyReadyRef {
     pub inner: RefMutContainer<Ready>,
 }

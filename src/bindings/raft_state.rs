@@ -16,7 +16,7 @@ pub struct PyRaftState {
 }
 
 #[derive(Clone)]
-#[pyclass(name = "RaftState_Ref")]
+#[pyclass(name = "RaftStateRef")]
 pub struct PyRaftStateRef {
     pub inner: RefMutContainer<RaftState>,
 }

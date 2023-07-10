@@ -5,12 +5,12 @@ from typing import Callable, Dict, List
 from rraft import (
     Config,
     ConfState,
-    Entry_Ref,
+    EntryRef,
     EntryType,
-    Logger_Ref,
+    LoggerRef,
     Logger,
     MemStorage,
-    Message_Ref,
+    MessageRef,
     OverflowStrategy,
     InMemoryRawNode,
 )
@@ -22,7 +22,7 @@ def now() -> int:
     return int(datetime.now(tz=timezone.utc).timestamp() * 1000)
 
 
-async def send_propose(logger: Logger | Logger_Ref) -> None:
+async def send_propose(logger: Logger | LoggerRef) -> None:
     # Wait some time and send the request to the Raft.
     await asyncio.sleep(10)
     logger.info("propose a request")
@@ -57,7 +57,7 @@ async def on_ready(
     # Get the `Ready` with `RawNode::ready` interface.
     ready = raft_group.ready()
 
-    async def handle_messages(msgs: List[Message_Ref]):
+    async def handle_messages(msgs: List[MessageRef]):
         for _msg in msgs:
             # Send messages to other peers.
             continue
@@ -73,7 +73,7 @@ async def on_ready(
 
     _last_apply_index = 0
 
-    async def handle_committed_entries(committed_entries: List[Entry_Ref]):
+    async def handle_committed_entries(committed_entries: List[EntryRef]):
         for entry in committed_entries:
             # Mostly, you need to save the last apply index to resume applying
             # after restart. Here we just ignore this because we use a Memory storage.

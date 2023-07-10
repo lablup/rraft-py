@@ -14,7 +14,7 @@ pub struct PyJointConfig {
 }
 
 #[derive(Clone)]
-#[pyclass(name = "JointConfig_Ref")]
+#[pyclass(name = "JointConfigRef")]
 pub struct PyJointConfigRef {
     pub inner: RefMutContainer<JointConfig>,
 }

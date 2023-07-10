@@ -13,7 +13,7 @@ pub struct PyMajorityConfig {
 }
 
 #[derive(Clone)]
-#[pyclass(name = "MajorityConfig_Ref")]
+#[pyclass(name = "MajorityConfigRef")]
 pub struct PyMajorityConfigRef {
     pub inner: RefMutContainer<MajorityConfig>,
 }

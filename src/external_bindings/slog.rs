@@ -57,7 +57,7 @@ pub struct PyLogger {
 }
 
 #[derive(Clone)]
-#[pyclass(name = "Logger_Ref")]
+#[pyclass(name = "LoggerRef")]
 pub struct PyLoggerRef {
     pub inner: RefMutContainer<Logger>,
 }

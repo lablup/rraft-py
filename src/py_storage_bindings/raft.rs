@@ -40,7 +40,7 @@ pub struct PyRaft {
     pub inner: RefMutOwner<Raft<PyStorage>>,
 }
 
-#[pyclass(name = "Raft_Ref")]
+#[pyclass(name = "RaftRef")]
 pub struct PyRaftRef {
     pub inner: RefMutContainer<Raft<PyStorage>>,
 }
