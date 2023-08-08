@@ -63,7 +63,7 @@ class __Encoder:
 
 class __Decoder:
     @staticmethod
-    def decode(v: List[int] | bytes) -> Any:
+    def decode(v: bytes) -> Any:
         """ """
 
 class OverflowStrategy:
@@ -716,12 +716,12 @@ class __API_RawNode:
         """
         Campaign causes this RawNode to transition to candidate state.
         """
-    def propose(self, context: bytes | List[int], data: bytes | List[int]) -> None:
+    def propose(self, context: bytes, data: bytes) -> None:
         """
         Propose proposes data be appended to the raft log.
         """
     def propose_conf_change(
-        self, context: bytes | List[int], cc: "ConfChange" | "ConfChangeRef"
+        self, context: bytes, cc: "ConfChange" | "ConfChangeRef"
     ) -> None:
         """
         ProposeConfChange proposes a config change.
@@ -731,7 +731,7 @@ class __API_RawNode:
         leaving joint state.
         """
     def propose_conf_change_v2(
-        self, context: bytes | List[int], cc: "ConfChangeV2" | "ConfChangeV2Ref"
+        self, context: bytes, cc: "ConfChangeV2" | "ConfChangeV2Ref"
     ) -> None:
         """
         ProposeConfChange proposes a config change.
@@ -770,7 +770,7 @@ class __API_RawNode:
         [`Self::has_ready`] and [`Self::ready`] should be called later to handle further
         updates that become valid after ready being persisted.
         """
-    def read_index(self, rctx: bytes | List[int]) -> None:
+    def read_index(self, rctx: bytes) -> None:
         """
         ReadIndex requests a read state. The read state will be set in ready.
         Read State has a read index. Once the application advances further than the read
@@ -889,7 +889,7 @@ class __API_Peer:
         `context`: If there is context associated with the peer (like connection information), it can be
         serialized and stored here.
         """
-    def set_context(self, context: bytes | List[int]) -> None:
+    def set_context(self, context: bytes) -> None:
         """
         `context`: If there is context associated with the peer (like connection information), it can be
         serialized and stored here.
@@ -1000,7 +1000,7 @@ class SnapshotMetadata(__API_SnapshotMetadata):
     @staticmethod
     def default() -> "SnapshotMetadata": ...
     @staticmethod
-    def decode(v: List[int] | bytes) -> "SnapshotMetadata": ...
+    def decode(v: bytes) -> "SnapshotMetadata": ...
     def make_ref(self) -> "SnapshotMetadataRef": ...
 
 class SnapshotMetadataRef(__API_SnapshotMetadata):
@@ -1034,7 +1034,7 @@ class Snapshot(__API_Snapshot):
     @staticmethod
     def default() -> "Snapshot": ...
     @staticmethod
-    def decode(v: List[int] | bytes) -> "Snapshot": ...
+    def decode(v: bytes) -> "Snapshot": ...
     def make_ref(self) -> "SnapshotRef": ...
 
 class SnapshotRef(__API_Snapshot):
@@ -1124,7 +1124,7 @@ class __API_Message(__Cloneable, __Encoder, __Decoder):
         """
     def get_context(self) -> bytes:
         """ """
-    def set_context(self, context: bytes | List[int]) -> None:
+    def set_context(self, context: bytes) -> None:
         """ """
     def clear_context(self) -> None:
         """ """
@@ -1185,7 +1185,7 @@ class Message(__API_Message):
     @staticmethod
     def default() -> "Message": ...
     @staticmethod
-    def decode(v: List[int] | bytes) -> "Message": ...
+    def decode(v: bytes) -> "Message": ...
 
 class MessageRef(Message):
     """
@@ -1221,7 +1221,7 @@ class HardState(__API_HardState):
     @staticmethod
     def default() -> "HardState": ...
     @staticmethod
-    def decode(v: List[int] | bytes) -> "HardState": ...
+    def decode(v: bytes) -> "HardState": ...
 
 class HardStateRef(__API_HardState):
     """
@@ -1255,13 +1255,13 @@ class __API_Entry(__Cloneable, __Encoder, __Decoder):
     def clone(self) -> "Entry": ...
     def get_context(self) -> bytes:
         """ """
-    def set_context(self, context: bytes | List[int]) -> None:
+    def set_context(self, context: bytes) -> None:
         """ """
     def clear_context(self) -> None:
         """ """
     def get_data(self) -> bytes:
         """ """
-    def set_data(self, data: bytes | List[int]) -> None:
+    def set_data(self, data: bytes) -> None:
         """ """
     def clear_data(self) -> None:
         """ """
@@ -1318,7 +1318,7 @@ class Entry(__API_Entry):
     @staticmethod
     def default() -> "Entry": ...
     @staticmethod
-    def decode(v: List[int] | bytes) -> "Entry": ...
+    def decode(v: bytes) -> "Entry": ...
 
 class EntryRef(__API_Entry):
     """
@@ -1368,7 +1368,7 @@ class ConfState(__API_ConfState):
     @staticmethod
     def default() -> "ConfState": ...
     @staticmethod
-    def decode(v: List[int] | bytes) -> "ConfState": ...
+    def decode(v: bytes) -> "ConfState": ...
 
 class ConfStateRef(__API_ConfState):
     """
@@ -1387,7 +1387,7 @@ class __API_ConfChangeV2(__Cloneable, __Encoder, __Decoder):
         """ """
     def get_context(self) -> bytes:
         """ """
-    def set_context(self, context: bytes | List[int]) -> None:
+    def set_context(self, context: bytes) -> None:
         """ """
     def clear_context(self) -> None:
         """ """
@@ -1473,7 +1473,7 @@ class ConfChangeV2(__API_ConfChangeV2):
     def default() -> "ConfChangeV2": ...
     def make_ref(self) -> "ConfChangeV2Ref": ...
     @staticmethod
-    def decode(v: List[int] | bytes) -> "ConfChangeV2": ...
+    def decode(v: bytes) -> "ConfChangeV2": ...
 
 class ConfChangeV2Ref(__API_ConfChangeV2):
     """
@@ -1506,7 +1506,7 @@ class ConfChangeSingle(__API_ConfChangeSingle):
     @staticmethod
     def default() -> "ConfChangeSingle": ...
     @staticmethod
-    def decode(v: List[int] | bytes) -> "ConfChangeSingle": ...
+    def decode(v: bytes) -> "ConfChangeSingle": ...
 
 class ConfChangeSingleRef(__API_ConfChangeSingle):
     """
@@ -1535,7 +1535,7 @@ class __API_ConfChange(__Cloneable, __Encoder, __Decoder):
         """ """
     def get_context(self) -> bytes:
         """ """
-    def set_context(self, context: bytes | List[int]) -> None:
+    def set_context(self, context: bytes) -> None:
         """ """
     def clear_context(self) -> None:
         """ """
@@ -1566,7 +1566,7 @@ class ConfChange(__API_ConfChange):
     @staticmethod
     def default() -> "ConfChange": ...
     @staticmethod
-    def decode(v: List[int] | bytes) -> "ConfChange": ...
+    def decode(v: bytes) -> "ConfChange": ...
 
 class ConfChangeRef(__API_ConfChange):
     """
@@ -1726,7 +1726,7 @@ class __API_ReadState(__Cloneable):
         """
         `request_ctx`: A datagram consisting of context about the request.
         """
-    def set_request_ctx(self, request_ctx: bytes | List[int]) -> None:
+    def set_request_ctx(self, request_ctx: bytes) -> None:
         """
         `request_ctx`: A datagram consisting of context about the request.
         """
