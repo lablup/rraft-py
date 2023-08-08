@@ -2,7 +2,7 @@ use crate::utils::{
     errors::to_pyresult,
     reference::{RefMutContainer, RefMutOwner},
 };
-use crate::{deserialize_bytes, deserialize_bytes_ref, implement_type_conversion};
+use crate::{deserialize_bytes, implement_type_conversion};
 use prost::Message as ProstMessage;
 use protobuf::Message as PbMessage;
 use pyo3::{intern, prelude::*, pyclass::CompareOp, types::PyBytes};
@@ -34,6 +34,16 @@ pub enum PyConfChangeMut<'p> {
 
 implement_type_conversion!(ConfChange, PyConfChangeMut);
 
+pub fn format_confchange(cc: &ConfChange, py: Python) -> String {
+    format!(
+        "ConfChange {{ change_type: {change_type:?}, node_id: {node_id:?}, context: {context:?}, id: {id:?} }}",
+        change_type = cc.get_change_type(),
+        node_id = cc.get_node_id(),
+        id = cc.get_id(),
+        context = deserialize_bytes!(cc, "confchange_context_deserializer", context, py)
+    )
+}
+
 #[pymethods]
 impl PyConfChange {
     #[new]
@@ -64,13 +74,7 @@ impl PyConfChange {
     }
 
     pub fn __repr__(&self, py: Python) -> String {
-        format!(
-            "ConfChange {{ change_type: {change_type:?}, node_id: {node_id:?}, context: {context:}, id: {id:} }}",
-            change_type = self.inner.inner.get_change_type(),
-            node_id = self.inner.inner.get_node_id(),
-            id = self.inner.inner.get_id(),
-            context = deserialize_bytes!(self, "confchange_context_deserializer", context, py)
-        )
+        format_confchange(&self.inner.inner, py)
     }
 
     pub fn __richcmp__(&self, py: Python, rhs: PyConfChangeMut, op: CompareOp) -> PyObject {
@@ -92,16 +96,7 @@ impl PyConfChange {
 #[pymethods]
 impl PyConfChangeRef {
     pub fn __repr__(&self, py: Python) -> PyResult<String> {
-        self.inner.map_as_ref(|inner| {
-
-            format!(
-                "ConfChange {{ change_type: {change_type:?}, node_id: {node_id:?}, context: {context:}, id: {id:} }}",
-                change_type = inner.get_change_type(),
-                node_id = inner.get_node_id(),
-                id = inner.get_id(),
-                context = deserialize_bytes_ref!(inner, "confchange_context_deserializer", context, py)
-            )
-        })
+        self.inner.map_as_ref(|inner| format_confchange(inner, py))
     }
 
     pub fn __richcmp__(

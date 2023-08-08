@@ -3,7 +3,7 @@ use crate::utils::{
     reference::{RefMutContainer, RefMutOwner},
     unsafe_cast::make_mut,
 };
-use crate::{deserialize_bytes, deserialize_bytes_ref, implement_type_conversion};
+use crate::{deserialize_bytes, implement_type_conversion};
 use prost::Message as ProstMessage;
 use protobuf::Message as PbMessage;
 use pyo3::{
@@ -19,6 +19,15 @@ use super::{
     conf_change_single::{PyConfChangeSingleMut, PyConfChangeSingleRef},
     conf_change_transition::PyConfChangeTransition,
 };
+
+pub fn format_confchangev2(cc: &ConfChangeV2, py: Python) -> String {
+    format!(
+        "ConfChangeV2 {{ transition: {transition:?}, changes: {changes:?}, context: {context:?} }}",
+        transition = cc.transition(),
+        changes = cc.changes,
+        context = deserialize_bytes!(cc, "confchangev2_context_deserializer", context, py)
+    )
+}
 
 #[derive(Clone)]
 #[pyclass(name = "ConfChangeV2")]
@@ -70,12 +79,7 @@ impl PyConfChangeV2 {
     }
 
     pub fn __repr__(&self, py: Python) -> String {
-        format!(
-            "ConfChangeV2 {{ transition: {transition:?}, changes: {changes:?}, context: {context:} }}",
-            transition = self.inner.inner.transition(),
-            changes = self.inner.inner.changes,
-            context = deserialize_bytes!(self, "confchangev2_context_deserializer", context, py)
-        )
+        format_confchangev2(&self.inner.inner, py)
     }
 
     pub fn __richcmp__(&self, py: Python, rhs: PyConfChangeV2Mut, op: CompareOp) -> PyObject {
@@ -103,14 +107,8 @@ impl Default for PyConfChangeV2 {
 #[pymethods]
 impl PyConfChangeV2Ref {
     pub fn __repr__(&self, py: Python) -> PyResult<String> {
-        self.inner.map_as_ref(|inner| {
-            format!(
-                "ConfChangeV2 {{ transition: {transition:?}, changes: {changes:?}, context: {context:} }}",
-                transition = inner.transition(),
-                changes = inner.changes,
-                context = deserialize_bytes_ref!(inner, "confchangev2_context_deserializer", context, py)
-            )
-        })
+        self.inner
+            .map_as_ref(|inner| format_confchangev2(inner, py))
     }
 
     pub fn __richcmp__(

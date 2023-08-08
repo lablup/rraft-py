@@ -1,6 +1,6 @@
 use crate::utils::errors::to_pyresult;
 use crate::utils::reference::{RefMutContainer, RefMutOwner};
-use crate::{deserialize_bytes, deserialize_bytes_ref, implement_type_conversion};
+use crate::{deserialize_bytes, implement_type_conversion};
 use prost::Message as ProstMessage;
 use protobuf::Message as PbMessage;
 use pyo3::pyclass::CompareOp;
@@ -29,6 +29,18 @@ pub enum PyEntryMut<'p> {
 }
 
 implement_type_conversion!(Entry, PyEntryMut);
+
+pub fn format_entry(entry: &Entry, py: Python) -> String {
+    format!(
+        "Entry {{ context: {context:?}, data: {data:?}, entry_type: {entry_type:?}, index: {index:?}, sync_log: {sync_log:?}, term: {term:?} }}",
+        data=deserialize_bytes!(entry, "entry_data_deserializer", data, py),
+        context=deserialize_bytes!(entry, "entry_context_deserializer", context, py),
+        entry_type=entry.get_entry_type(),
+        index=entry.get_index(),
+        sync_log=entry.get_sync_log(),
+        term=entry.get_term(),
+    )
+}
 
 #[pymethods]
 impl PyEntry {
@@ -60,15 +72,7 @@ impl PyEntry {
     }
 
     pub fn __repr__(&self, py: Python) -> String {
-        format!(
-            "Entry {{ context: {context:?}, data: {data:}, entry_type: {entry_type:?}, index: {index:?}, sync_log: {sync_log:?}, term: {term:?} }}",
-            data=deserialize_bytes!(self, "entry_data_deserializer", data, py),
-            context=deserialize_bytes!(self, "entry_context_deserializer", context, py),
-            entry_type=self.inner.inner.get_entry_type(),
-            index=self.inner.inner.get_index(),
-            sync_log=self.inner.inner.get_sync_log(),
-            term=self.inner.inner.get_term(),
-        )
+        format_entry(&self.inner.inner, py)
     }
 
     pub fn __richcmp__(&self, py: Python, rhs: PyEntryMut, op: CompareOp) -> PyObject {
@@ -90,17 +94,7 @@ impl PyEntry {
 #[pymethods]
 impl PyEntryRef {
     pub fn __repr__(&self, py: Python) -> PyResult<String> {
-        self.inner.map_as_ref(|inner| {
-            format!(
-                "Entry {{ context: {context:?}, data: {data:}, entry_type: {entry_type:?}, index: {index:?}, sync_log: {sync_log:?}, term: {term:?} }}",
-                data=deserialize_bytes_ref!(inner, "entry_data_deserializer", data, py),
-                context=deserialize_bytes_ref!(inner, "entry_context_deserializer", context, py),
-                entry_type=inner.get_entry_type(),
-                index=inner.get_index(),
-                sync_log=inner.get_sync_log(),
-                term=inner.get_term(),
-            )
-        })
+        self.inner.map_as_ref(|inner| format_entry(inner, py))
     }
 
     pub fn __richcmp__(&self, py: Python, rhs: PyEntryMut, op: CompareOp) -> PyResult<PyObject> {
