@@ -71,17 +71,6 @@ impl PyInMemoryRaft {
 
 #[pymethods]
 impl PyInMemoryRaftRef {
-    pub fn __repr__(&mut self) -> PyResult<String> {
-        self.inner.map_as_mut(|inner| {
-            format!(
-                "Raft {{ \
-                    msgs: {:?} \
-                }}",
-                inner.msgs,
-            )
-        })
-    }
-
     pub fn append_entry(&mut self, ents: &PyList) -> PyResult<bool> {
         let mut entries = ents.extract::<Vec<PyEntryMut>>()?;
 
