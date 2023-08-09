@@ -1,5 +1,6 @@
 [build-system]
-requires = ["maturin>=0.14,<0.15"]
+requires = ["maturin>=1.0,<2.0"]
+
 build-backend = "maturin"
 
 [tool.maturin]
@@ -8,6 +9,9 @@ bindings = "pyo3"
 [project]
 name = "rraft-py"
 requires-python = ">=3.10"
+description = "Unofficial Python Binding of the tikv/raft-rs"
+readme = "README.md"
+license = { file = "LICENSE" }
 classifiers = [
     "Programming Language :: Rust",
     "Programming Language :: Python :: Implementation :: CPython",
