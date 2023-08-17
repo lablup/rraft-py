@@ -34,3 +34,6 @@ lint-fix:
 
 lint-fix-py:
 	python -m black **/*.py
+
+publish:
+	maturin publish

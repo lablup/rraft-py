@@ -5,6 +5,8 @@
 #![allow(clippy::wrong_self_convention)]
 
 use pyo3::prelude::*;
+use raft::derializer::set_custom_deserializer;
+use utils::deserializer::MyDeserializer;
 
 mod bindings;
 mod external_bindings;
@@ -174,6 +176,9 @@ fn rraft(py: Python, m: &PyModule) -> PyResult<()> {
     )?;
 
     bindings::global::add_constants(m)?;
+
+    // IMPORTANT: Uncomment below line when you want to use raft-rs's upstream repository.
+    set_custom_deserializer(MyDeserializer);
 
     Ok(())
 }

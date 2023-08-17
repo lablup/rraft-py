@@ -32,7 +32,7 @@ implement_type_conversion!(Entry, PyEntryMut);
 
 pub fn format_entry(entry: &Entry, py: Python) -> String {
     format!(
-        "Entry {{ context: {context:?}, data: {data:?}, entry_type: {entry_type:?}, index: {index:?}, sync_log: {sync_log:?}, term: {term:?} }}",
+        "Entry {{ context: {context:}, data: {data:}, entry_type: {entry_type:?}, index: {index:}, sync_log: {sync_log:}, term: {term:} }}",
         data=deserialize_bytes!(entry, "entry_data_deserializer", data, py),
         context=deserialize_bytes!(entry, "entry_context_deserializer", context, py),
         entry_type=entry.get_entry_type(),
