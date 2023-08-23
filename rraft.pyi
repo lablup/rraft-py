@@ -218,6 +218,8 @@ class EntryType:
     def from_int(v: int) -> "EntryType": ...
 
 class __API_Logger:
+    mutex: "Mutex"
+
     def info(self, s: str) -> None:
         """
         Log info level record
@@ -228,25 +230,25 @@ class __API_Logger:
         """
         Log debug level record
 
-        See `log` for documentation.
+        See `slog_debug` for documentation.
         """
     def trace(self, s: str) -> None:
         """
         Log trace level record
 
-        See `log` for documentation.
+        See `slog_trace` for documentation.
         """
     def crit(self, s: str) -> None:
         """
         Log crit level record
 
-        See `log` for documentation.
+        See `slog_crit` for documentation.
         """
     def error(self, s: str) -> None:
         """
         Log error level record
 
-        See `log` for documentation.
+        See `slog_error` for documentation.
         """
 
 class Logger(__API_Logger):
@@ -3345,3 +3347,11 @@ class OtherError(RaftStorageError):
     """
     Some other error occurred.
     """
+
+class Mutex:
+    def incr(self):
+        """ """
+    def decr(self):
+        """ """
+    def acquire_lock_and(self, cb: Any):
+        """ """

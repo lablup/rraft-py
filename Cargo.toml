@@ -1,6 +1,6 @@
 [package]
 name = "rraft-py"
-version = "0.2.0"
+version = "0.2.9"
 authors = ["Lablup Inc."]
 license = "Apache-2.0"
 repository = "https://github.com/lablup/rraft-py"
@@ -17,6 +17,7 @@ edition = "2021"
 prost = "0.11"
 protobuf = "2"
 pyo3 = { version = "0.19.2", features = ["extension-module", "multiple-pymethods"] }
+pyo3-asyncio = { version = "0.19", features = ["attributes", "tokio-runtime"] }
 raft = { git = "https://github.com/jopemachine/raft-rs.git", branch = "feat/add-custom-deserializer", features = ["prost-codec", "default-logger"], default-features = false }
 slog = { version = "2.2", features = ["max_level_debug", "release_max_level_debug"] }
 slog-envlogger = "2.1.0"
@@ -26,6 +27,8 @@ slog-async = "2.7.0"
 fxhash = "0.2.1"
 bincode = "1.3.3"
 bytes = "1.0"
+tokio = { version = "1.32", features = ["sync", "macros"] }
+once_cell = "1.7"
 
 [lib]
 name = "rraft"

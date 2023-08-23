@@ -1,5 +1,6 @@
 use pyo3::prelude::*;
 
+use crate::external_bindings::mutex::PyMutex;
 use crate::raftpb_bindings::conf_change::new_conf_change_single as _new_conf_change_single;
 use crate::raftpb_bindings::conf_change_single::PyConfChangeSingle;
 use crate::raftpb_bindings::conf_change_type::PyConfChangeType;
@@ -28,6 +29,7 @@ pub fn majority(total: usize) -> usize {
 pub fn default_logger() -> PyLogger {
     PyLogger {
         inner: RefMutOwner::new(_default_logger()),
+        mutex: PyMutex::new(),
     }
 }
 
