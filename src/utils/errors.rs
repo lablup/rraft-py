@@ -173,8 +173,7 @@ pub fn make_native_raft_error(py: Python, py_err: PyErr) -> raft::Error {
         unimplemented!()
     }
 
-    // println!("Unreachable: {:?}", e);
-    panic!("Unreachable")
+    panic!("Unreachable {:?}", py_err);
 }
 
 fn make_native_storage_error(py_err: PyErr, err_kind: &PyAny) -> raft::Error {
