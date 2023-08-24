@@ -1,5 +1,3 @@
-use std::sync::Arc;
-
 use pyo3::{intern, prelude::*, types::PyString};
 use slog::*;
 use slog_async::OverflowStrategy;

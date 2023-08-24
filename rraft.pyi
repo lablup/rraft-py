@@ -66,6 +66,24 @@ class __Decoder:
     def decode(v: bytes) -> Any:
         """ """
 
+def set_snapshot_data_deserializer(cb: Any) -> None:
+    """ """
+
+def set_message_context_deserializer(cb: Any) -> None:
+    """ """
+
+def set_confchange_context_deserializer(cb: Any) -> None:
+    """ """
+
+def set_confchangev2_context_deserializer(cb: Any) -> None:
+    """ """
+
+def set_entry_data_deserializer(cb: Any) -> None:
+    """ """
+
+def set_entry_context_deserializer(cb: Any) -> None:
+    """ """
+
 class OverflowStrategy:
     """ """
 

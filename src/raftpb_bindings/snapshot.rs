@@ -2,11 +2,11 @@ use prost::Message as ProstMessage;
 use protobuf::Message as PbMessage;
 use pyo3::{intern, prelude::*, pyclass::CompareOp, types::PyBytes};
 
+use crate::implement_type_conversion;
 use crate::utils::{
     errors::to_pyresult,
     reference::{RefMutContainer, RefMutOwner},
 };
-use crate::{deserialize_bytes, implement_type_conversion};
 use raft::eraftpb::Snapshot;
 
 use super::snapshot_metadata::{PySnapshotMetadataMut, PySnapshotMetadataRef};
@@ -30,14 +30,6 @@ pub enum PySnapshotMut<'p> {
 }
 
 implement_type_conversion!(Snapshot, PySnapshotMut);
-
-pub fn format_snapshot(snapshot: &Snapshot, py: Python) -> String {
-    format!(
-        "Snapshot {{ data: {data:?}, metadata: {metadata:?} }}",
-        data = deserialize_bytes!(snapshot, "snapshot_data_deserializer", data, py),
-        metadata = snapshot.metadata,
-    )
-}
 
 #[pymethods]
 impl PySnapshot {
@@ -68,8 +60,8 @@ impl PySnapshot {
         }
     }
 
-    pub fn __repr__(&self, py: Python) -> String {
-        format_snapshot(&self.inner, py)
+    pub fn __repr__(&self) -> String {
+        format!("{:?}", self.inner.inner)
     }
 
     pub fn __bool__(&self) -> bool {
@@ -94,8 +86,8 @@ impl PySnapshot {
 
 #[pymethods]
 impl PySnapshotRef {
-    pub fn __repr__(&self, py: Python) -> PyResult<String> {
-        self.inner.map_as_ref(|inner| format_snapshot(inner, py))
+    pub fn __repr__(&self) -> PyResult<String> {
+        self.inner.map_as_ref(|inner| format!("{:?}", inner))
     }
 
     pub fn __richcmp__(&self, py: Python, rhs: PySnapshotMut, op: CompareOp) -> PyResult<PyObject> {
