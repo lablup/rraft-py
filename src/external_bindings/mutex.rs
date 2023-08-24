@@ -1,14 +1,6 @@
 use pyo3::prelude::*;
 
-use once_cell::sync::Lazy;
-use std::sync::Arc;
-use tokio::sync::Mutex;
-
-static RT: Lazy<tokio::runtime::Runtime> = Lazy::new(|| {
-    tokio::runtime::Builder::new_current_thread()
-        .build()
-        .unwrap()
-});
+use std::sync::{Arc, Mutex};
 
 #[derive(Clone)]
 #[pyclass(name = "Mutex")]
@@ -19,18 +11,20 @@ pub struct PyMutex {
 impl PyMutex {
     #[tokio::main]
     pub async fn acquire_lock_and<T>(&self, cb: impl FnOnce() -> PyResult<T>) -> PyResult<T> {
-        let mut guard = self.inner.lock().await;
+        let mut guard = self.inner.lock().unwrap();
 
         // Wait until the guard's int value becomes 0.
         while *guard != 0 {
             tokio::task::yield_now().await;
-            guard = self.inner.lock().await;
+            guard = self.inner.lock().unwrap();
         }
 
+        *guard += 1;
         // The guard will be dropped when after cb executed.
-        cb()
+        let res = cb();
+        *guard -= 1;
+        res
     }
-
 }
 
 #[pymethods]
@@ -49,24 +43,14 @@ impl PyMutex {
     }
 
     pub fn incr(&self) -> PyResult<()> {
-        let inner = self.inner.clone();
-
-        RT.block_on(async {
-            let mut guard = inner.lock().await;
-            *guard += 1;
-        });
-
+        let mut guard = self.inner.lock().unwrap();
+        *guard += 1;
         Ok(())
     }
 
     pub fn decr(&self) -> PyResult<()> {
-        let inner = self.inner.clone();
-
-        RT.block_on(async {
-            let mut guard = inner.lock().await;
-            *guard -= 1;
-        });
-
+        let mut guard = self.inner.lock().unwrap();
+        *guard -= 1;
         Ok(())
     }
 
