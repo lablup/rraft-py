@@ -236,8 +236,6 @@ class EntryType:
     def from_int(v: int) -> "EntryType": ...
 
 class __API_Logger:
-    mutex: "Mutex"
-
     def info(self, s: str) -> None:
         """
         Log info level record
