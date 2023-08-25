@@ -1,6 +1,6 @@
 [package]
 name = "rraft-py"
-version = "0.2.9"
+version = "0.2.12"
 authors = ["Lablup Inc."]
 license = "Apache-2.0"
 repository = "https://github.com/lablup/rraft-py"
