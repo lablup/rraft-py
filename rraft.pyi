@@ -275,6 +275,8 @@ class Logger(__API_Logger):
     def __init__(
         self, chan_size: int, overflow_strategy: "OverflowStrategy"
     ) -> None: ...
+    @staticmethod
+    def new_file_logger(log_path: str): ...
     def make_ref(self) -> "LoggerRef": ...
 
 class LoggerRef(__API_Logger):
@@ -3365,11 +3367,3 @@ class OtherError(RaftStorageError):
     """
     Some other error occurred.
     """
-
-class Mutex:
-    def incr(self):
-        """ """
-    def decr(self):
-        """ """
-    def acquire_lock_and(self, cb: Any):
-        """ """

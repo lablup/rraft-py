@@ -96,7 +96,6 @@ fn rraft(py: Python, m: &PyModule) -> PyResult<()> {
     m.add_class::<external_bindings::slog::PyLogger>()?;
     m.add_class::<external_bindings::slog::PyLoggerRef>()?;
     m.add_class::<external_bindings::slog::PyOverflowStrategy>()?;
-    m.add_class::<external_bindings::mutex::PyMutex>()?;
 
     m.add_class::<utils::errors::PyRaftError>()?;
     m.add_class::<utils::errors::PyStorageError>()?;
