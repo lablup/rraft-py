@@ -7,14 +7,11 @@ use pyo3::{
     types::{PyBytes, PyList},
 };
 
+use crate::implement_type_conversion;
 use crate::utils::{
     errors::to_pyresult,
     reference::{RefMutContainer, RefMutOwner},
     unsafe_cast::make_mut,
-};
-use crate::{
-    deserialize_bytes, implement_type_conversion, raftpb_bindings::entry::format_entry,
-    raftpb_bindings::snapshot::format_snapshot,
 };
 use raft::eraftpb::Message;
 
@@ -43,28 +40,6 @@ pub enum PyMessageMut<'p> {
 }
 
 implement_type_conversion!(Message, PyMessageMut);
-
-pub fn format_message(msg: &Message, py: Python) -> String {
-    format!(
-        "Message {{ msg_type: {msg_type:?}, to: {to:?}, from: {from:?}, term: {term:?}, log_term: {log_term:?}, index: {index:?}, entries: [{entries:?}], commit: {commit:?}, commit_term: {commit_term:?}, snapshot: {snapshot:?}, request_snapshot: {request_snapshot:?}, reject: {reject:?}, reject_hint: {reject_hint:?}, context: {context:?}, deprecated_priority: {deprecated_priority:?}, priority: {priority:?} }}",
-        msg_type=msg.get_msg_type(),
-        to=msg.get_to(),
-        from=msg.get_from(),
-        term=msg.get_term(),
-        log_term=msg.get_log_term(),
-        index=msg.get_index(),
-        entries=msg.get_entries().iter().map(|e| format_entry(e, py)).collect::<Vec<String>>().join(", "),
-        commit=msg.get_commit(),
-        commit_term=msg.get_commit_term(),
-        snapshot=format_snapshot(msg.get_snapshot(), py),
-        request_snapshot=msg.get_request_snapshot(),
-        reject=msg.get_reject(),
-        reject_hint=msg.get_reject_hint(),
-        context=deserialize_bytes!(msg, "message_context_deserializer", context, py),
-        deprecated_priority=msg.get_deprecated_priority(),
-        priority=msg.get_priority(),
-    )
-}
 
 #[pymethods]
 impl PyMessage {
@@ -95,8 +70,8 @@ impl PyMessage {
         }
     }
 
-    pub fn __repr__(&self, py: Python) -> String {
-        format_message(&self.inner.inner, py)
+    pub fn __repr__(&self) -> String {
+        format!("{:?}", self.inner.inner)
     }
 
     pub fn __richcmp__(&self, py: Python, rhs: PyMessageMut, op: CompareOp) -> PyObject {
@@ -117,8 +92,8 @@ impl PyMessage {
 
 #[pymethods]
 impl PyMessageRef {
-    pub fn __repr__(&self, py: Python) -> PyResult<String> {
-        self.inner.map_as_ref(|inner| format_message(inner, py))
+    pub fn __repr__(&self) -> PyResult<String> {
+        self.inner.map_as_ref(|inner| format!("{:?}", inner))
     }
 
     pub fn __richcmp__(&self, py: Python, rhs: PyMessageMut, op: CompareOp) -> PyResult<PyObject> {

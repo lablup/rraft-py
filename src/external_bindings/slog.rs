@@ -1,9 +1,11 @@
-use pyo3::{intern, prelude::*, types::PyString};
-use slog::*;
-use slog_async::OverflowStrategy;
+use std::fs::OpenOptions;
+use std::sync::{Arc, Mutex};
 
 use crate::implement_type_conversion;
 use crate::utils::reference::{RefMutContainer, RefMutOwner};
+use pyo3::{intern, prelude::*, types::PyString};
+use slog::*;
+use slog_async::OverflowStrategy;
 
 #[pyclass(name = "OverflowStrategy")]
 pub struct PyOverflowStrategy(pub OverflowStrategy);
@@ -51,15 +53,25 @@ impl PyOverflowStrategy {
 }
 
 #[derive(Clone)]
+pub enum LoggerMode {
+    File,
+    Stdout,
+}
+
+#[derive(Clone)]
 #[pyclass(name = "Logger")]
 pub struct PyLogger {
     pub inner: RefMutOwner<Logger>,
+    pub mutex: Arc<Mutex<()>>,
+    pub mode: LoggerMode,
 }
 
 #[derive(Clone)]
 #[pyclass(name = "LoggerRef")]
 pub struct PyLoggerRef {
     pub inner: RefMutContainer<Logger>,
+    pub mutex: Arc<Mutex<()>>,
+    pub mode: LoggerMode,
 }
 
 #[derive(FromPyObject)]
@@ -76,6 +88,7 @@ impl PyLogger {
     pub fn new(chan_size: usize, overflow_strategy: &PyOverflowStrategy) -> Self {
         let decorator = slog_term::TermDecorator::new().build();
         let drain = slog_term::FullFormat::new(decorator).build().fuse();
+
         let drain = slog_async::Async::new(drain)
             .chan_size(chan_size)
             .overflow_strategy(overflow_strategy.0)
@@ -86,12 +99,39 @@ impl PyLogger {
 
         PyLogger {
             inner: RefMutOwner::new(logger),
+            mutex: Arc::new(Mutex::new(())),
+            mode: LoggerMode::Stdout,
+        }
+    }
+
+    #[staticmethod]
+    pub fn new_file_logger(log_path: &PyString) -> Self {
+        let log_path = log_path.to_str().unwrap();
+        let file = OpenOptions::new()
+            .create(true)
+            .write(true)
+            .truncate(true)
+            .open(log_path)
+            .unwrap();
+
+        let decorator = slog_term::PlainDecorator::new(file);
+        let drain = slog_term::FullFormat::new(decorator).build().fuse();
+        let drain = slog_async::Async::new(drain).build().fuse();
+
+        let logger = slog::Logger::root(drain, o!());
+
+        PyLogger {
+            inner: RefMutOwner::new(logger),
+            mutex: Arc::new(Mutex::new(())),
+            mode: LoggerMode::File,
         }
     }
 
     pub fn make_ref(&mut self) -> PyLoggerRef {
         PyLoggerRef {
             inner: RefMutContainer::new(&mut self.inner),
+            mutex: self.mutex.clone(),
+            mode: self.mode.clone(),
         }
     }
 
@@ -104,27 +144,87 @@ impl PyLogger {
 #[pymethods]
 impl PyLoggerRef {
     pub fn info(&mut self, s: &PyString) -> PyResult<()> {
-        self.inner
-            .map_as_ref(|inner| info!(inner, "{}", format!("{}", s)))
+        let print = || {
+            self.inner
+                    .map_as_ref(|inner| info!(inner, "{}", format!("{}", s)))
+        };
+
+        match self.mode {
+            LoggerMode::Stdout => {
+                let _guard = self.mutex.lock().unwrap();
+                print()
+            }
+            LoggerMode::File => {
+                print()
+            }
+        }
     }
 
     pub fn debug(&mut self, s: &PyString) -> PyResult<()> {
-        self.inner
-            .map_as_ref(|inner| debug!(inner, "{}", format!("{}", s)))
+        let print = || {
+            self.inner
+                    .map_as_ref(|inner| debug!(inner, "{}", format!("{}", s)))
+        };
+
+        match self.mode {
+            LoggerMode::Stdout => {
+                let _guard = self.mutex.lock().unwrap();
+                print()
+            }
+            LoggerMode::File => {
+                print()
+            }
+        }
     }
 
     pub fn trace(&mut self, s: &PyString) -> PyResult<()> {
-        self.inner
-            .map_as_ref(|inner| trace!(inner, "{}", format!("{}", s)))
+        let print = || {
+            self.inner
+                    .map_as_ref(|inner| trace!(inner, "{}", format!("{}", s)))
+        };
+
+        match self.mode {
+            LoggerMode::Stdout => {
+                let _guard = self.mutex.lock().unwrap();
+                print()
+            }
+            LoggerMode::File => {
+                print()
+            }
+        }
     }
 
     pub fn error(&mut self, s: &PyString) -> PyResult<()> {
-        self.inner
-            .map_as_ref(|inner| error!(inner, "{}", format!("{}", s)))
+        let print = || {
+            self.inner
+                    .map_as_ref(|inner| error!(inner, "{}", format!("{}", s)))
+        };
+
+        match self.mode {
+            LoggerMode::Stdout => {
+                let _guard = self.mutex.lock().unwrap();
+                print()
+            }
+            LoggerMode::File => {
+                print()
+            }
+        }
     }
 
     pub fn crit(&mut self, s: &PyString) -> PyResult<()> {
-        self.inner
-            .map_as_ref(|inner| crit!(inner, "{}", format!("{}", s)))
+        let print = || {
+            self.inner
+                    .map_as_ref(|inner: &Logger| crit!(inner, "{}", format!("{}", s)))
+        };
+
+        match self.mode {
+            LoggerMode::Stdout => {
+                let _guard = self.mutex.lock().unwrap();
+                print()
+            }
+            LoggerMode::File => {
+                print()
+            }
+        }
     }
 }

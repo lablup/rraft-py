@@ -110,6 +110,36 @@ fn rraft(py: Python, m: &PyModule) -> PyResult<()> {
         m
     )?)?;
 
+    m.add_function(wrap_pyfunction!(
+        utils::deserializer::set_confchange_context_deserializer,
+        m
+    )?)?;
+
+    m.add_function(wrap_pyfunction!(
+        utils::deserializer::set_confchangev2_context_deserializer,
+        m
+    )?)?;
+
+    m.add_function(wrap_pyfunction!(
+        utils::deserializer::set_entry_context_deserializer,
+        m
+    )?)?;
+
+    m.add_function(wrap_pyfunction!(
+        utils::deserializer::set_entry_data_deserializer,
+        m
+    )?)?;
+
+    m.add_function(wrap_pyfunction!(
+        utils::deserializer::set_message_context_deserializer,
+        m
+    )?)?;
+
+    m.add_function(wrap_pyfunction!(
+        utils::deserializer::set_snapshot_data_deserializer,
+        m
+    )?)?;
+
     m.add(
         "DestroyedRefUsedError",
         py.get_type::<utils::errors::DestroyedRefUsedError>(),

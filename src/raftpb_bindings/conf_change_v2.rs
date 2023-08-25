@@ -1,9 +1,9 @@
+use crate::implement_type_conversion;
 use crate::utils::{
     errors::to_pyresult,
     reference::{RefMutContainer, RefMutOwner},
     unsafe_cast::make_mut,
 };
-use crate::{deserialize_bytes, implement_type_conversion};
 use prost::Message as ProstMessage;
 use protobuf::Message as PbMessage;
 use pyo3::{
@@ -19,15 +19,6 @@ use super::{
     conf_change_single::{PyConfChangeSingleMut, PyConfChangeSingleRef},
     conf_change_transition::PyConfChangeTransition,
 };
-
-pub fn format_confchangev2(cc: &ConfChangeV2, py: Python) -> String {
-    format!(
-        "ConfChangeV2 {{ transition: {transition:?}, changes: {changes:?}, context: {context:?} }}",
-        transition = cc.transition(),
-        changes = cc.changes,
-        context = deserialize_bytes!(cc, "confchangev2_context_deserializer", context, py)
-    )
-}
 
 #[derive(Clone)]
 #[pyclass(name = "ConfChangeV2")]
@@ -78,8 +69,8 @@ impl PyConfChangeV2 {
         }
     }
 
-    pub fn __repr__(&self, py: Python) -> String {
-        format_confchangev2(&self.inner.inner, py)
+    pub fn __repr__(&self) -> String {
+        format!("{:?}", self.inner.inner)
     }
 
     pub fn __richcmp__(&self, py: Python, rhs: PyConfChangeV2Mut, op: CompareOp) -> PyObject {
@@ -106,9 +97,8 @@ impl Default for PyConfChangeV2 {
 
 #[pymethods]
 impl PyConfChangeV2Ref {
-    pub fn __repr__(&self, py: Python) -> PyResult<String> {
-        self.inner
-            .map_as_ref(|inner| format_confchangev2(inner, py))
+    pub fn __repr__(&self) -> PyResult<String> {
+        self.inner.map_as_ref(|inner| format!("{:?}", inner))
     }
 
     pub fn __richcmp__(
