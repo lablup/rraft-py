@@ -164,8 +164,6 @@ if __name__ == "__main__":
     # Use another thread to propose a Raft request.
     send_propose(logger)
 
-    logger.mutex.acquire_lock_and(lambda: print('start!!!'))
-
     t = now()
     timeout = 100
     # Use a HashMap to hold the `propose` callbacks.

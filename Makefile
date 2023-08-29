@@ -36,4 +36,5 @@ lint-fix-py:
 	python -m black **/*.py
 
 publish:
+	maturin build --release --strip
 	maturin publish
