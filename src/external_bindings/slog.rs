@@ -1,4 +1,3 @@
-use std::fs::OpenOptions;
 use std::sync::{Arc, Mutex};
 
 use crate::implement_type_conversion;
@@ -6,6 +5,10 @@ use crate::utils::reference::{RefMutContainer, RefMutOwner};
 use pyo3::{intern, prelude::*, types::PyString};
 use slog::*;
 use slog_async::OverflowStrategy;
+
+use sloggers::file::FileLoggerBuilder;
+use sloggers::types::{Severity, SourceLocation};
+use sloggers::Build;
 
 #[pyclass(name = "OverflowStrategy")]
 pub struct PyOverflowStrategy(pub OverflowStrategy);
@@ -105,20 +108,24 @@ impl PyLogger {
     }
 
     #[staticmethod]
-    pub fn new_file_logger(log_path: &PyString) -> Self {
+    pub fn new_file_logger(
+        log_path: &PyString,
+        channel_size: usize,
+        rotate_size: u64,
+        rotate_count: usize,
+    ) -> Self {
         let log_path = log_path.to_str().unwrap();
-        let file = OpenOptions::new()
-            .create(true)
-            .write(true)
-            .truncate(true)
-            .open(log_path)
+
+        let logger = FileLoggerBuilder::new(log_path)
+            .level(Severity::Debug)
+            .source_location(SourceLocation::LocalFileAndLine)
+            .channel_size(channel_size)
+            .rotate_size(rotate_size)
+            .rotate_keep(rotate_count)
+            // TODO: Implement this
+            // .overflow_strategy(overflow_strategy.0)
+            .build()
             .unwrap();
-
-        let decorator = slog_term::PlainDecorator::new(file);
-        let drain = slog_term::FullFormat::new(decorator).build().fuse();
-        let drain = slog_async::Async::new(drain).build().fuse();
-
-        let logger = slog::Logger::root(drain, o!());
 
         PyLogger {
             inner: RefMutOwner::new(logger),
