@@ -110,18 +110,19 @@ impl PyLogger {
     #[staticmethod]
     pub fn new_file_logger(
         log_path: &PyString,
-        channel_size: usize,
+        chan_size: usize,
         rotate_size: u64,
-        rotate_count: usize,
+        rotate_keep: usize,
     ) -> Self {
         let log_path = log_path.to_str().unwrap();
 
         let logger = FileLoggerBuilder::new(log_path)
+            // TODO: Implement this
             .level(Severity::Debug)
             .source_location(SourceLocation::LocalFileAndLine)
-            .channel_size(channel_size)
+            .channel_size(chan_size)
             .rotate_size(rotate_size)
-            .rotate_keep(rotate_count)
+            .rotate_keep(rotate_keep)
             // TODO: Implement this
             // .overflow_strategy(overflow_strategy.0)
             .build()
