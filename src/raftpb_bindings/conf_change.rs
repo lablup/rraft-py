@@ -8,6 +8,7 @@ use protobuf::Message as PbMessage;
 use pyo3::{intern, prelude::*, pyclass::CompareOp, types::PyBytes};
 
 use super::{conf_change_type::PyConfChangeType, conf_change_v2::PyConfChangeV2};
+use raft::derializer::format_confchange;
 
 use raft::{
     eraftpb::ConfChange,
@@ -64,7 +65,7 @@ impl PyConfChange {
     }
 
     pub fn __repr__(&self) -> String {
-        format!("{:?}", self.inner.inner)
+        format_confchange(&self.inner.inner)
     }
 
     pub fn __richcmp__(&self, py: Python, rhs: PyConfChangeMut, op: CompareOp) -> PyObject {
@@ -86,7 +87,7 @@ impl PyConfChange {
 #[pymethods]
 impl PyConfChangeRef {
     pub fn __repr__(&self) -> PyResult<String> {
-        self.inner.map_as_ref(|inner| format!("{:?}", inner))
+        self.inner.map_as_ref(|inner| format_confchange(inner))
     }
 
     pub fn __richcmp__(

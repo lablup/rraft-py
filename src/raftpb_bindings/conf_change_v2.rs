@@ -19,6 +19,7 @@ use super::{
     conf_change_single::{PyConfChangeSingleMut, PyConfChangeSingleRef},
     conf_change_transition::PyConfChangeTransition,
 };
+use raft::derializer::format_confchangev2;
 
 #[derive(Clone)]
 #[pyclass(name = "ConfChangeV2")]
@@ -70,7 +71,7 @@ impl PyConfChangeV2 {
     }
 
     pub fn __repr__(&self) -> String {
-        format!("{:?}", self.inner.inner)
+        format_confchangev2(&self.inner.inner)
     }
 
     pub fn __richcmp__(&self, py: Python, rhs: PyConfChangeV2Mut, op: CompareOp) -> PyObject {
@@ -98,7 +99,7 @@ impl Default for PyConfChangeV2 {
 #[pymethods]
 impl PyConfChangeV2Ref {
     pub fn __repr__(&self) -> PyResult<String> {
-        self.inner.map_as_ref(|inner| format!("{:?}", inner))
+        self.inner.map_as_ref(|inner| format_confchangev2(inner))
     }
 
     pub fn __richcmp__(

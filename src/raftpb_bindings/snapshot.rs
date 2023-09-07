@@ -7,6 +7,7 @@ use crate::utils::{
     errors::to_pyresult,
     reference::{RefMutContainer, RefMutOwner},
 };
+use raft::derializer::format_snapshot;
 use raft::eraftpb::Snapshot;
 
 use super::snapshot_metadata::{PySnapshotMetadataMut, PySnapshotMetadataRef};
@@ -61,7 +62,7 @@ impl PySnapshot {
     }
 
     pub fn __repr__(&self) -> String {
-        format!("{:?}", self.inner.inner)
+        format_snapshot(&self.inner.inner)
     }
 
     pub fn __bool__(&self) -> bool {
@@ -87,7 +88,8 @@ impl PySnapshot {
 #[pymethods]
 impl PySnapshotRef {
     pub fn __repr__(&self) -> PyResult<String> {
-        self.inner.map_as_ref(|inner| format!("{:?}", inner))
+        self.inner
+            .map_as_ref(|inner: &Snapshot| format_snapshot(inner))
     }
 
     pub fn __richcmp__(&self, py: Python, rhs: PySnapshotMut, op: CompareOp) -> PyResult<PyObject> {

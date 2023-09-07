@@ -6,6 +6,7 @@ use protobuf::Message as PbMessage;
 use pyo3::pyclass::CompareOp;
 use pyo3::types::PyBytes;
 use pyo3::{intern, prelude::*};
+use raft::derializer::format_entry;
 use raft::eraftpb::Entry;
 
 use super::entry_type::PyEntryType;
@@ -60,7 +61,7 @@ impl PyEntry {
     }
 
     pub fn __repr__(&self) -> String {
-        format!("{:?}", self.inner.inner)
+        format_entry(&self.inner.inner)
     }
 
     pub fn __richcmp__(&self, py: Python, rhs: PyEntryMut, op: CompareOp) -> PyObject {
@@ -82,7 +83,7 @@ impl PyEntry {
 #[pymethods]
 impl PyEntryRef {
     pub fn __repr__(&self) -> PyResult<String> {
-        self.inner.map_as_ref(|inner| format!("{:?}", inner))
+        self.inner.map_as_ref(|inner| format_entry(inner))
     }
 
     pub fn __richcmp__(&self, py: Python, rhs: PyEntryMut, op: CompareOp) -> PyResult<PyObject> {

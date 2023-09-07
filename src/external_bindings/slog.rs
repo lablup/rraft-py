@@ -146,7 +146,7 @@ impl PyLoggerRef {
     pub fn info(&mut self, s: &PyString) -> PyResult<()> {
         let print = || {
             self.inner
-                    .map_as_ref(|inner| info!(inner, "{}", format!("{}", s)))
+                .map_as_ref(|inner| info!(inner, "{}", format!("{}", s)))
         };
 
         match self.mode {
@@ -154,16 +154,14 @@ impl PyLoggerRef {
                 let _guard = self.mutex.lock().unwrap();
                 print()
             }
-            LoggerMode::File => {
-                print()
-            }
+            LoggerMode::File => print(),
         }
     }
 
     pub fn debug(&mut self, s: &PyString) -> PyResult<()> {
         let print = || {
             self.inner
-                    .map_as_ref(|inner| debug!(inner, "{}", format!("{}", s)))
+                .map_as_ref(|inner| debug!(inner, "{}", format!("{}", s)))
         };
 
         match self.mode {
@@ -171,16 +169,14 @@ impl PyLoggerRef {
                 let _guard = self.mutex.lock().unwrap();
                 print()
             }
-            LoggerMode::File => {
-                print()
-            }
+            LoggerMode::File => print(),
         }
     }
 
     pub fn trace(&mut self, s: &PyString) -> PyResult<()> {
         let print = || {
             self.inner
-                    .map_as_ref(|inner| trace!(inner, "{}", format!("{}", s)))
+                .map_as_ref(|inner| trace!(inner, "{}", format!("{}", s)))
         };
 
         match self.mode {
@@ -188,16 +184,14 @@ impl PyLoggerRef {
                 let _guard = self.mutex.lock().unwrap();
                 print()
             }
-            LoggerMode::File => {
-                print()
-            }
+            LoggerMode::File => print(),
         }
     }
 
     pub fn error(&mut self, s: &PyString) -> PyResult<()> {
         let print = || {
             self.inner
-                    .map_as_ref(|inner| error!(inner, "{}", format!("{}", s)))
+                .map_as_ref(|inner| error!(inner, "{}", format!("{}", s)))
         };
 
         match self.mode {
@@ -205,16 +199,14 @@ impl PyLoggerRef {
                 let _guard = self.mutex.lock().unwrap();
                 print()
             }
-            LoggerMode::File => {
-                print()
-            }
+            LoggerMode::File => print(),
         }
     }
 
     pub fn crit(&mut self, s: &PyString) -> PyResult<()> {
         let print = || {
             self.inner
-                    .map_as_ref(|inner: &Logger| crit!(inner, "{}", format!("{}", s)))
+                .map_as_ref(|inner: &Logger| crit!(inner, "{}", format!("{}", s)))
         };
 
         match self.mode {
@@ -222,9 +214,7 @@ impl PyLoggerRef {
                 let _guard = self.mutex.lock().unwrap();
                 print()
             }
-            LoggerMode::File => {
-                print()
-            }
+            LoggerMode::File => print(),
         }
     }
 }

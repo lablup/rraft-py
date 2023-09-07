@@ -13,6 +13,7 @@ use crate::utils::{
     reference::{RefMutContainer, RefMutOwner},
     unsafe_cast::make_mut,
 };
+use raft::derializer::format_message;
 use raft::eraftpb::Message;
 
 use super::{
@@ -71,7 +72,7 @@ impl PyMessage {
     }
 
     pub fn __repr__(&self) -> String {
-        format!("{:?}", self.inner.inner)
+        format_message(&self.inner.inner)
     }
 
     pub fn __richcmp__(&self, py: Python, rhs: PyMessageMut, op: CompareOp) -> PyObject {
@@ -93,7 +94,7 @@ impl PyMessage {
 #[pymethods]
 impl PyMessageRef {
     pub fn __repr__(&self) -> PyResult<String> {
-        self.inner.map_as_ref(|inner| format!("{:?}", inner))
+        self.inner.map_as_ref(|inner| format_message(inner))
     }
 
     pub fn __richcmp__(&self, py: Python, rhs: PyMessageMut, op: CompareOp) -> PyResult<PyObject> {
