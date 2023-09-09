@@ -2,7 +2,7 @@
 Type hints for Native Rust Extension
 """
 from abc import ABCMeta, abstractmethod
-from typing import Any, Final, List, Optional, Set, Tuple
+from typing import Any, Callable, Final, List, Optional, Set, Tuple
 
 """
 A number to represent that there is no limit.
@@ -66,22 +66,22 @@ class __Decoder:
     def decode(v: bytes) -> Any:
         """ """
 
-def set_snapshot_data_deserializer(cb: Any) -> None:
+def set_snapshot_data_deserializer(cb: Callable[[bytes], Optional[str]]) -> None:
     """ """
 
-def set_message_context_deserializer(cb: Any) -> None:
+def set_message_context_deserializer(cb: Callable[[bytes], Optional[str]]) -> None:
     """ """
 
-def set_confchange_context_deserializer(cb: Any) -> None:
+def set_confchange_context_deserializer(cb: Callable[[bytes], Optional[str]]) -> None:
     """ """
 
-def set_confchangev2_context_deserializer(cb: Any) -> None:
+def set_confchangev2_context_deserializer(cb: Callable[[bytes], Optional[str]]) -> None:
     """ """
 
-def set_entry_data_deserializer(cb: Any) -> None:
+def set_entry_data_deserializer(cb: Callable[[bytes], Optional[str]]) -> None:
     """ """
 
-def set_entry_context_deserializer(cb: Any) -> None:
+def set_entry_context_deserializer(cb: Callable[[bytes], Optional[str]]) -> None:
     """ """
 
 class OverflowStrategy:
@@ -274,7 +274,9 @@ class Logger(__API_Logger):
         self, chan_size: int, overflow_strategy: "OverflowStrategy"
     ) -> None: ...
     @staticmethod
-    def new_file_logger(log_path: str, chan_size: int, rotate_size: int, rotate_keep: int): ...
+    def new_file_logger(
+        log_path: str, chan_size: int, rotate_size: int, rotate_keep: int
+    ): ...
     def make_ref(self) -> "LoggerRef": ...
 
 class LoggerRef(__API_Logger):
