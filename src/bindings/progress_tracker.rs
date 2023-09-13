@@ -163,14 +163,13 @@ impl PyProgressTrackerRef {
         self.inner.map_as_mut(|inner| inner.reset_votes())
     }
 
-    // TODO: Resolve "below types not exposed" issue.
-    pub fn vote_result(&mut self, votes: &PyDict) -> PyResult<()> {
+    pub fn vote_result(&mut self, votes: &PyDict) -> PyResult<String> {
         self.inner.map_as_mut(|inner| {
             let votes = votes
                 .extract::<HashMap<u64, bool, BuildHasherDefault<FxHasher>>>()
                 .unwrap();
 
-            let _vote_result = inner.vote_result(&votes);
+            format!("{}", inner.vote_result(&votes))
         })
     }
 

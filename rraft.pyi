@@ -2636,6 +2636,14 @@ class __API_ProgressTracker(__Cloneable):
         """ """
     def collect(self) -> List["ProgressMapItem"]:
         """ """
+    def vote_result(self, votes: dict) -> str:
+        """
+        Returns the Candidate's eligibility in the current election.
+
+        If it is still eligible, it should continue polling nodes and checking.
+        Eventually, the election will result in this returning either `Elected`
+        or `Ineligible`, meaning the election can be concluded.
+        """
 
 class ProgressTracker(__API_ProgressTracker):
     """
