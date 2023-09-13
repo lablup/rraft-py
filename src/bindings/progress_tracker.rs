@@ -66,6 +66,10 @@ pub struct PyProgressMapItem(pub &'static u64, pub &'static Progress);
 
 #[pymethods]
 impl PyProgressMapItem {
+    pub fn __repr__(&self) -> String {
+        format!("ProgressMapItem (id: {}, progress: {:?})", self.0, self.1)
+    }
+
     pub fn id(&self) -> u64 {
         *self.0
     }
