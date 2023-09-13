@@ -2644,6 +2644,11 @@ class __API_ProgressTracker(__Cloneable):
         Eventually, the election will result in this returning either `Elected`
         or `Ineligible`, meaning the election can be concluded.
         """
+    def tally_votes(self) -> tuple[int, int, str]:
+        """
+        TallyVotes returns the number of granted and rejected Votes, and whether the
+        election outcome is known.
+        """
 
 class ProgressTracker(__API_ProgressTracker):
     """

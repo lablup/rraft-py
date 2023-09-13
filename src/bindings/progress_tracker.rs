@@ -2,7 +2,7 @@ use std::collections::HashMap;
 use std::{collections::HashSet, hash::BuildHasherDefault};
 
 use pyo3::intern;
-use pyo3::types::PyDict;
+use pyo3::types::{PyDict, PyList};
 use pyo3::{prelude::*, types::PySet};
 
 use crate::implement_type_conversion;
@@ -184,9 +184,17 @@ impl PyProgressTrackerRef {
             .map_as_mut(|inner| inner.conf().learners().clone().into_py(py))
     }
 
-    // pub fn tally_votes(&self) -> (usize, usize, VoteResult) {
-    //     self.inner.tally_votes()
-    // }
+    pub fn tally_votes(&mut self, py: Python) -> PyResult<PyObject> {
+        self.inner.map_as_mut(|inner| {
+            let vote_result = inner.tally_votes();
+
+            let res = PyList::new(py, vec![0, 0, 0]);
+            res.set_item(0, vote_result.0).unwrap();
+            res.set_item(1, vote_result.1).unwrap();
+            res.set_item(2, format!("{}", vote_result.2)).unwrap();
+            res.to_object(py)
+        })
+    }
 
     // pub fn apply_conf(&mut self, conf: Configuration, changes: MapChange, next_idx: u64) -> bool {
     //     self.inner.apply_conf(conf, changes, next_idx)
