@@ -34,6 +34,12 @@ impl PyStorage {
         PyStorage { storage }
     }
 
+    // !TODO: Implement below method.
+    // #[staticmethod]
+    // pub fn new_with_conf_state(cs: PyConfStateMut) -> Self {
+
+    // }
+
     pub fn make_ref(&mut self) -> PyStorageRef {
         PyStorageRef {
             inner: RefMutContainer::new_raw(self),
