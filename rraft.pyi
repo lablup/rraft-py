@@ -187,6 +187,7 @@ class MessageType:
     MsgRequestPreVoteResponse: Final[Any]
     @staticmethod
     def from_int(v: int) -> "MessageType": ...
+    def __int__(self) -> int: ...
 
 class ConfChangeTransition:
     """ """
@@ -216,6 +217,7 @@ class ConfChangeTransition:
     Explicit: Final[Any]
     @staticmethod
     def from_int(v: int) -> "ConfChangeTransition": ...
+    def __int__(self) -> int: ...
 
 class ConfChangeType:
     """ """
@@ -225,6 +227,7 @@ class ConfChangeType:
     RemoveNode: Final[Any]
     @staticmethod
     def from_int(v: int) -> "ConfChangeType": ...
+    def __int__(self) -> int: ...
 
 class EntryType:
     """ """
@@ -234,6 +237,7 @@ class EntryType:
     EntryNormal: Final[Any]
     @staticmethod
     def from_int(v: int) -> "EntryType": ...
+    def __int__(self) -> int: ...
 
 class __API_Logger:
     def info(self, s: str) -> None:
@@ -293,7 +297,7 @@ class __API_RaftState(__Cloneable):
         `conf_state`: Records the current node IDs like `[1, 2, 3]` in the cluster. Every Raft node must have a
         unique ID in the cluster;
         """
-    def set_conf_state(self, cs: "ConfStateRef") -> None:
+    def set_conf_state(self, cs: "ConfState" | "ConfStateRef") -> None:
         """
         `conf_state`: Records the current node IDs like `[1, 2, 3]` in the cluster. Every Raft node must have a
         unique ID in the cluster;
@@ -302,7 +306,7 @@ class __API_RaftState(__Cloneable):
         """
         `hard_state`: Contains the last meta information including commit index, the vote leader, and the vote term.
         """
-    def set_hard_state(self, hs: "HardStateRef") -> None:
+    def set_hard_state(self, hs: "HardState" | "HardStateRef") -> None:
         """
         `hard_state`: Contains the last meta information including commit index, the vote leader, and the vote term.
         """
@@ -522,7 +526,7 @@ class Storage(__API_Storage):
     application is responsible for cleanup and recovery in this case.
     """
 
-    def __init__(self) -> None: ...
+    def __init__(self, storage: Any) -> None: ...
     def make_ref(self) -> "StorageRef": ...
     def clone(self) -> "Storage": ...
     @staticmethod
@@ -1152,7 +1156,7 @@ class __API_Message(__Cloneable, __Encoder, __Decoder):
         """ """
     def get_reject_hint(self) -> int:
         """ """
-    def set_reject_hint(self, reject_hint: bool) -> None:
+    def set_reject_hint(self, reject_hint: int) -> None:
         """ """
     def clear_reject_hint(self) -> None:
         """ """
@@ -1193,6 +1197,10 @@ class __API_Message(__Cloneable, __Encoder, __Decoder):
     def clear_request_snapshot(self) -> None:
         """ """
     def has_snapshot(self) -> bool:
+        """ """
+    def get_deprecated_priority(self) -> int:
+        """ """
+    def set_deprecated_priority(self, v: int) -> None:
         """ """
     def compute_size(self) -> int:
         """
