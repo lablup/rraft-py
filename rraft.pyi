@@ -714,7 +714,7 @@ class __API_RawNode:
         """
         Sets priority of node.
         """
-    def report_snapshot(self, id: int, snapshot: "SnapshotStatus") -> None:
+    def report_snapshot(self, id: int, status: "SnapshotStatus") -> None:
         """
         ReportSnapshot reports the status of the sent snapshot.
         """
