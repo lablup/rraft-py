@@ -94,66 +94,67 @@ class OverflowStrategy:
 class SnapshotStatus:
     """The status of the snapshot."""
 
+    Finish: Final[Any]
     """
     Represents that the snapshot is finished being created.
     """
-    Finish: Final[Any]
 
+    Failure: Final[Any]
     """
     Indicates that the snapshot failed to build or is not ready.
     """
-    Failure: Final[Any]
 
 class ProgressState:
     """The state of the progress."""
 
+    Probe: Final[Any]
     """
     Whether it's probing.
     """
-    Probe: Final[Any]
 
+    Replicate: Final[Any]
     """
     Whether it's replicating.
     """
-    Replicate: Final[Any]
 
+    Snapshot: Final[Any]
     """
     Whether it's a snapshot.
     """
-    Snapshot: Final[Any]
 
 class StateRole:
     """The role of the node."""
 
+    Candidate: Final[Any]
     """
     The node could become a leader.
     """
-    Candidate: Final[Any]
 
+    Follower: Final[Any]
     """
     The node is a follower of the leader.
     """
-    Follower: Final[Any]
 
+    Leader: Final[Any]
     """
     The node is a leader.
     """
-    Leader: Final[Any]
 
+    PreCandidate: Final[Any]
     """
     The node could become a candidate, if `prevote` is enabled.
     """
-    PreCandidate: Final[Any]
 
 class ReadOnlyOption:
     """Determines the relative safety of and consistency of read only requests."""
 
+    Safe: Final[Any]
     """
     Safe guarantees the linearizability of the read only request by
     communicating with the quorum. It is the default and suggested option.
     """
-    Safe: Final[Any]
 
+    LeaseBased: Final[Any]
     """
     LeaseBased ensures linearizability of the read only request by
     relying on the leader lease. It can be affected by clock drift.
@@ -161,7 +162,6 @@ class ReadOnlyOption:
     should (clock can move backward/pause without any bound). ReadIndex is not safe
     in that case.
     """
-    LeaseBased: Final[Any]
 
 class MessageType:
     """ """
