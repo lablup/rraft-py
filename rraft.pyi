@@ -4,37 +4,37 @@ Type hints for Native Rust Extension
 from abc import ABCMeta, abstractmethod
 from typing import Any, Callable, Final, List, Optional, Set, Tuple
 
+NO_LIMIT: Final[Any]
 """
 A number to represent that there is no limit.
 """
-NO_LIMIT: Final[Any]
 
+CAMPAIGN_ELECTION: Final[Any]
 """
 CAMPAIGN_ELECTION represents a normal (time-based) election (the second phase
 of the election when Config.pre_vote is true).
 """
-CAMPAIGN_ELECTION: Final[Any]
 
+CAMPAIGN_PRE_ELECTION: Final[Any]
 """
 CAMPAIGN_PRE_ELECTION represents the first phase of a normal election when
 Config.pre_vote is true.
 """
-CAMPAIGN_PRE_ELECTION: Final[Any]
 
+CAMPAIGN_TRANSFER: Final[Any]
 """
 CAMPAIGN_TRANSFER represents the type of leader transfer.
 """
-CAMPAIGN_TRANSFER: Final[Any]
 
+INVALID_ID: Final[Any]
 """
 A constant represents invalid id of raft.
 """
-INVALID_ID: Final[Any]
 
+INVALID_INDEX: Final[Any]
 """
 A constant represents invalid index of raft log.
 """
-INVALID_INDEX: Final[Any]
 
 def majority(total: int) -> int:
     """
