@@ -192,12 +192,13 @@ class MessageType:
 class ConfChangeTransition:
     """ """
 
+    Auto: Final[Any]
     """
     Automatically use the simple protocol if possible, otherwise fall back
     to ConfChangeType::Implicit. Most applications will want to use this.
     """
-    Auto: Final[Any]
 
+    Implicit: Final[Any]
     """
     Use joint consensus unconditionally, and transition out of them
     automatically (by proposing a zero configuration change).
@@ -206,15 +207,15 @@ class ConfChangeTransition:
     spent in the joint configuration and do not store the joint configuration
     in the state machine (outside of InitialState).
     """
-    Implicit: Final[Any]
 
+    Explicit: Final[Any]
     """
     Use joint consensus and remain in the joint configuration until the
     application proposes a no-op configuration change. This is suitable for
     applications that want to explicitly control the transitions, for example
     to use a custom payload (via the Context field).
     """
-    Explicit: Final[Any]
+
     @staticmethod
     def from_int(v: int) -> "ConfChangeTransition": ...
     def __int__(self) -> int: ...
