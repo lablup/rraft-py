@@ -66,22 +66,22 @@ class __Decoder:
     def decode(v: bytes) -> Any:
         """ """
 
-def set_snapshot_data_deserializer(cb: Callable[[bytes], Optional[str]]) -> None:
+def set_snapshot_data_deserializer(cb: Callable[[bytes], str | bytes]) -> None:
     """ """
 
-def set_message_context_deserializer(cb: Callable[[bytes], Optional[str]]) -> None:
+def set_message_context_deserializer(cb: Callable[[bytes], str | bytes]) -> None:
     """ """
 
-def set_confchange_context_deserializer(cb: Callable[[bytes], Optional[str]]) -> None:
+def set_confchange_context_deserializer(cb: Callable[[bytes], str | bytes]) -> None:
     """ """
 
-def set_confchangev2_context_deserializer(cb: Callable[[bytes], Optional[str]]) -> None:
+def set_confchangev2_context_deserializer(cb: Callable[[bytes], str | bytes]) -> None:
     """ """
 
-def set_entry_data_deserializer(cb: Callable[[bytes], Optional[str]]) -> None:
+def set_entry_data_deserializer(cb: Callable[[bytes], str | bytes]) -> None:
     """ """
 
-def set_entry_context_deserializer(cb: Callable[[bytes], Optional[str]]) -> None:
+def set_entry_context_deserializer(cb: Callable[[bytes], str | bytes]) -> None:
     """ """
 
 class OverflowStrategy:
@@ -767,7 +767,7 @@ class __API_RawNode:
         caller's responsibility to propose an empty conf change again to force
         leaving joint state.
         """
-    def apply_conf_change(self, cc: "ConfChange" | "ConfChangeRef") -> ConfState:
+    def apply_conf_change(self, cc: "ConfChange" | "ConfChangeRef") -> "ConfState":
         """
         Applies a config change to the local node. The app must call this when it
         applies a configuration change, except when it decides to reject the
