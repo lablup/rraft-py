@@ -16,7 +16,7 @@ edition = "2021"
 [dependencies]
 prost = "0.11"
 protobuf = "2"
-pyo3 = { version = "0.19.2", features = ["extension-module", "multiple-pymethods"] }
+pyo3 = { version = "0.20.0", features = ["extension-module", "multiple-pymethods"] }
 raft = { git = "https://github.com/jopemachine/raft-rs.git", branch = "feat/add-custom-deserializer", features = ["prost-codec", "default-logger"], default-features = false }
 slog = { version = "2.2", features = ["max_level_debug", "release_max_level_debug"] }
 slog-envlogger = "2.1.0"
