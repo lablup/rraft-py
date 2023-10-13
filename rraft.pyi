@@ -3345,12 +3345,12 @@ class StoreError(RaftError):
     A storage error occurred.
     """
 
-class StepLocalMsg(RaftError):
+class StepLocalMsgError(RaftError):
     """
     Raft cannot step the local message.
     """
 
-class StepPeerNotFound(RaftError):
+class StepPeerNotFoundError(RaftError):
     """
     The raft peer is not found and thus cannot step.
     """
@@ -3380,7 +3380,7 @@ class SnapshotOutOfDateError(RaftStorageError):
     The snapshot is out of date.
     """
 
-class SnapshotTemporarilyUnavailable(RaftStorageError):
+class SnapshotTemporarilyUnavailableError(RaftStorageError):
     """
     The snapshot is being created.
     """
