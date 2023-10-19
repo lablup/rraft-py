@@ -1,5 +1,6 @@
 use prost::Message as ProstMessage;
 use protobuf::Message as PbMessage;
+use pyo3::types::PyDict;
 use pyo3::{intern, prelude::*, pyclass::CompareOp, types::PyBytes};
 
 use raft::eraftpb::HardState;
@@ -99,6 +100,16 @@ impl PyHardStateRef {
                 CompareOp::Ne => (inner != &rhs).into_py(py),
                 _ => py.NotImplemented(),
             }
+        })
+    }
+
+    pub fn to_dict(&self, py: Python) -> PyResult<PyObject> {
+        self.inner.map_as_ref(|inner| {
+            let res = PyDict::new(py);
+            res.set_item("term", inner.get_term()).unwrap();
+            res.set_item("commit", inner.get_commit()).unwrap();
+            res.set_item("vote", inner.get_vote()).unwrap();
+            res.into_py(py)
         })
     }
 

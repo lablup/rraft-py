@@ -4,7 +4,7 @@ use crate::utils::reference::{RefMutContainer, RefMutOwner};
 use prost::Message as ProstMessage;
 use protobuf::Message as PbMessage;
 use pyo3::pyclass::CompareOp;
-use pyo3::types::PyBytes;
+use pyo3::types::{PyBytes, PyDict};
 use pyo3::{intern, prelude::*};
 use raft::derializer::format_entry;
 use raft::eraftpb::Entry;
@@ -101,6 +101,26 @@ impl PyEntryRef {
     pub fn clone(&self) -> PyResult<PyEntry> {
         Ok(PyEntry {
             inner: RefMutOwner::new(self.inner.map_as_ref(|x| x.clone())?),
+        })
+    }
+
+    pub fn to_dict(&mut self, py: Python) -> PyResult<PyObject> {
+        let data = self.get_data(py)?;
+        let context = self.get_context(py)?;
+        let entry_type = self.get_entry_type()?.__repr__();
+        let index = self.get_index()?;
+        let term = self.get_term()?;
+        let sync_log = self.get_sync_log()?;
+
+        self.inner.map_as_ref(|_inner| {
+            let res = PyDict::new(py);
+            res.set_item("data", data).unwrap();
+            res.set_item("context", context).unwrap();
+            res.set_item("entry_type", entry_type).unwrap();
+            res.set_item("index", index).unwrap();
+            res.set_item("term", term).unwrap();
+            res.set_item("sync_log", sync_log).unwrap();
+            res.into_py(py)
         })
     }
 

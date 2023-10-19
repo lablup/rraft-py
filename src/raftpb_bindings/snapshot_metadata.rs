@@ -1,5 +1,6 @@
 use prost::Message as ProstMessage;
 use protobuf::Message as PbMessage;
+use pyo3::types::PyDict;
 use pyo3::{intern, prelude::*, pyclass::CompareOp, types::PyBytes};
 
 use raft::eraftpb::SnapshotMetadata;
@@ -104,6 +105,21 @@ impl PySnapshotMetadataRef {
         })
     }
 
+    pub fn to_dict(&mut self, py: Python) -> PyResult<PyObject> {
+        let index = self.get_index()?;
+        let term = self.get_term()?;
+        let conf_state = self.get_conf_state()?;
+        let conf_state = conf_state.to_dict(py)?;
+
+        self.inner.map_as_ref(|_inner| {
+            let res = PyDict::new(py);
+            res.set_item("index", index).unwrap();
+            res.set_item("term", term).unwrap();
+            res.set_item("conf_state", conf_state).unwrap();
+            res.into_py(py)
+        })
+    }
+
     pub fn clone(&self) -> PyResult<PySnapshotMetadata> {
         Ok(PySnapshotMetadata {
             inner: RefMutOwner::new(self.inner.map_as_ref(|inner| inner.clone())?),
@@ -139,6 +155,7 @@ impl PySnapshotMetadataRef {
         self.inner.map_as_mut(|inner| inner.clear_term())
     }
 
+    // TODO: Make &mut self to &self
     pub fn get_conf_state(&mut self) -> PyResult<PyConfStateRef> {
         self.inner.map_as_mut(|inner| PyConfStateRef {
             inner: RefMutContainer::new_raw(inner.mut_conf_state()),

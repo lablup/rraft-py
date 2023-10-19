@@ -70,6 +70,7 @@ fn format_config<T: Into<Config>>(cfg: T) -> String {
     )
 }
 
+// TODO: Implement to_dict for this type
 #[pymethods]
 impl PyConfig {
     #![allow(clippy::too_many_arguments)]

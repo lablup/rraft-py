@@ -91,6 +91,7 @@ impl PyMessage {
     }
 }
 
+// TODO: Implement `to_dict` to this type.
 #[pymethods]
 impl PyMessageRef {
     pub fn __repr__(&self) -> PyResult<String> {

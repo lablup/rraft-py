@@ -1,5 +1,6 @@
 use prost::Message as ProstMessage;
 use protobuf::Message as PbMessage;
+use pyo3::types::PyDict;
 use pyo3::{intern, prelude::*, pyclass::CompareOp, types::PyBytes};
 
 use crate::implement_type_conversion;
@@ -108,6 +109,20 @@ impl PySnapshotRef {
         self.inner.map_as_ref(|inner| !inner.is_empty())
     }
 
+    pub fn to_dict(&mut self, py: Python) -> PyResult<PyObject> {
+        let data = self.get_data(py)?;
+        let mut metadata = self.get_metadata()?;
+        let metadata = metadata.to_dict(py)?;
+
+        self.inner.map_as_ref(|_inner| {
+            let res = PyDict::new(py);
+            res.set_item("data", data).unwrap();
+            res.set_item("metadata", metadata).unwrap();
+
+            res.into_py(py)
+        })
+    }
+
     pub fn clone(&self) -> PyResult<PySnapshot> {
         Ok(PySnapshot {
             inner: RefMutOwner::new(self.inner.map_as_ref(|inner| inner.clone())?),
@@ -133,6 +148,7 @@ impl PySnapshotRef {
         self.inner.map_as_mut(|inner| inner.clear_data())
     }
 
+    // TODO: Make &mut self to &self
     pub fn get_metadata(&mut self) -> PyResult<PySnapshotMetadataRef> {
         self.inner.map_as_mut(|inner| PySnapshotMetadataRef {
             inner: RefMutContainer::new_raw(inner.mut_metadata()),

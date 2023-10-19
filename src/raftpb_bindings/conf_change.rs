@@ -5,6 +5,7 @@ use crate::utils::{
 };
 use prost::Message as ProstMessage;
 use protobuf::Message as PbMessage;
+use pyo3::types::PyDict;
 use pyo3::{intern, prelude::*, pyclass::CompareOp, types::PyBytes};
 
 use super::{conf_change_type::PyConfChangeType, conf_change_v2::PyConfChangeV2};
@@ -104,6 +105,22 @@ impl PyConfChangeRef {
                 CompareOp::Ne => (inner != &rhs).into_py(py),
                 _ => py.NotImplemented(),
             }
+        })
+    }
+
+    pub fn to_dict(&mut self, py: Python) -> PyResult<PyObject> {
+        let context = self.get_context(py)?;
+        let id = self.get_id()?;
+        let node_id = self.get_node_id()?;
+        let change_type = self.get_change_type()?.__repr__();
+
+        self.inner.map_as_ref(|_inner| {
+            let res = PyDict::new(py);
+            res.set_item("id", id).unwrap();
+            res.set_item("node_id", node_id).unwrap();
+            res.set_item("context", context).unwrap();
+            res.set_item("change_type", change_type).unwrap();
+            res.into_py(py)
         })
     }
 

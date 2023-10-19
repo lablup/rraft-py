@@ -2,7 +2,7 @@ use prost::Message as ProstMessage;
 use protobuf::Message as PbMessage;
 use pyo3::intern;
 use pyo3::pyclass::CompareOp;
-use pyo3::types::PyBytes;
+use pyo3::types::{PyBytes, PyDict};
 use pyo3::{prelude::*, types::PyList};
 
 use raft::eraftpb::ConfState;
@@ -112,6 +112,24 @@ impl PyConfStateRef {
                 CompareOp::Ne => (inner != &rhs).into_py(py),
                 _ => py.NotImplemented(),
             }
+        })
+    }
+
+    pub fn to_dict(&self, py: Python) -> PyResult<PyObject> {
+        let voters = self.get_voters(py)?;
+        let voters_outgoing = self.get_voters_outgoing(py)?;
+        let learners = self.get_learners(py)?;
+        let learners_next = self.get_learners_next(py)?;
+        let auto_leave = self.get_auto_leave()?;
+
+        self.inner.map_as_ref(|_inner| {
+            let res = PyDict::new(py);
+            res.set_item("voters", voters).unwrap();
+            res.set_item("voters_outgoing", voters_outgoing).unwrap();
+            res.set_item("learners", learners).unwrap();
+            res.set_item("learners_next", learners_next).unwrap();
+            res.set_item("auto_leave", auto_leave).unwrap();
+            res.into_py(py)
         })
     }
 

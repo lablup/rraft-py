@@ -53,6 +53,10 @@ def vote_resp_msg_type(t: "MessageType") -> "MessageType":
     Maps vote and pre_vote message types to their correspond responses.
     """
 
+class __DICT_SERIALIZABLE(metaclass=ABCMeta):
+    @abstractmethod
+    def to_dict(self) -> str: ...
+
 class __Cloneable(metaclass=ABCMeta):
     @abstractmethod
     def clone(self) -> Any: ...
@@ -922,18 +926,19 @@ class __API_Peer:
         serialized and stored here.
         """
 
-class Peer(__API_Peer):
-    """
-    Represents a Peer node in the cluster.
-    """
+# * No place for use.
+# class Peer(__API_Peer):
+#     """
+#     Represents a Peer node in the cluster.
+#     """
 
-    def __init__(self) -> None: ...
-    def make_ref(self) -> "PeerRef": ...
+#     def __init__(self) -> None: ...
+#     def make_ref(self) -> "PeerRef": ...
 
-class PeerRef(__API_Peer):
-    """
-    Reference type of :class:`Peer`.
-    """
+# class PeerRef(__API_Peer):
+#     """
+#     Reference type of :class:`Peer`.
+#     """
 
 class __API_LightReady:
     def commit_index(self) -> Optional[int]:
@@ -977,7 +982,7 @@ class LightReadyRef(__API_LightReady):
     Reference type of :class:`LightReady`.
     """
 
-class __API_SnapshotMetadata(__Cloneable, __Encoder, __Decoder):
+class __API_SnapshotMetadata(__Cloneable, __Encoder, __Decoder, __DICT_SERIALIZABLE):
     def clone(self) -> "SnapshotMetadata": ...
     def get_index(self) -> int:
         """
@@ -1035,7 +1040,7 @@ class SnapshotMetadataRef(__API_SnapshotMetadata):
     Reference type of :class:`SnapshotMetadata`.
     """
 
-class __API_Snapshot(__Cloneable, __Encoder, __Decoder):
+class __API_Snapshot(__Cloneable, __Encoder, __Decoder, __DICT_SERIALIZABLE):
     def clone(self) -> "Snapshot": ...
     def get_data(self) -> bytes:
         """ """
@@ -1223,7 +1228,7 @@ class MessageRef(Message):
     Reference type of :class:`Message`.
     """
 
-class __API_HardState(__Cloneable, __Encoder, __Decoder):
+class __API_HardState(__Cloneable, __Encoder, __Decoder, __DICT_SERIALIZABLE):
     def clone(self) -> "HardState": ...
     def get_term(self) -> int:
         """ """
@@ -1282,7 +1287,7 @@ class GetEntriesContextRef(__API_GetEntriesContext):
     Reference type of :class:`GetEntriesContext`.
     """
 
-class __API_Entry(__Cloneable, __Encoder, __Decoder):
+class __API_Entry(__Cloneable, __Encoder, __Decoder, __DICT_SERIALIZABLE):
     def clone(self) -> "Entry": ...
     def get_context(self) -> bytes:
         """ """
@@ -1356,7 +1361,7 @@ class EntryRef(__API_Entry):
     Reference type of :class:`Entry`.
     """
 
-class __API_ConfState(__Cloneable, __Encoder, __Decoder):
+class __API_ConfState(__Cloneable, __Encoder, __Decoder, __DICT_SERIALIZABLE):
     def clone(self) -> "ConfState": ...
     def get_auto_leave(self) -> bool:
         """ """
@@ -1406,7 +1411,7 @@ class ConfStateRef(__API_ConfState):
     Reference type of :class:`ConfState`.
     """
 
-class __API_ConfChangeV2(__Cloneable, __Encoder, __Decoder):
+class __API_ConfChangeV2(__Cloneable, __Encoder, __Decoder, __DICT_SERIALIZABLE):
     def clone(self) -> "ConfChangeV2": ...
     def get_changes(self) -> List["ConfChangeSingleRef"]:
         """ """
@@ -1511,7 +1516,7 @@ class ConfChangeV2Ref(__API_ConfChangeV2):
     Reference type of :class:`ConfChangeV2`.
     """
 
-class __API_ConfChangeSingle(__Cloneable, __Encoder, __Decoder):
+class __API_ConfChangeSingle(__Cloneable, __Encoder, __Decoder, __DICT_SERIALIZABLE):
     def clone(self) -> "ConfChangeSingle": ...
     def get_node_id(self) -> int:
         """ """
@@ -1544,7 +1549,7 @@ class ConfChangeSingleRef(__API_ConfChangeSingle):
     Reference type of :class:`ConfChangeSingle`.
     """
 
-class __API_ConfChange(__Cloneable, __Encoder, __Decoder):
+class __API_ConfChange(__Cloneable, __Encoder, __Decoder, __DICT_SERIALIZABLE):
     def clone(self) -> "ConfChange": ...
     def get_id(self) -> int:
         """ """

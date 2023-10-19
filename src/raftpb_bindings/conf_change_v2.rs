@@ -6,6 +6,7 @@ use crate::utils::{
 };
 use prost::Message as ProstMessage;
 use protobuf::Message as PbMessage;
+use pyo3::types::PyDict;
 use pyo3::{
     intern,
     prelude::*,
@@ -14,6 +15,7 @@ use pyo3::{
 };
 use raft::eraftpb::ConfChangeV2;
 
+use super::conf_change_single::PyConfChangeSingle;
 use super::{
     conf_change::PyConfChangeRef,
     conf_change_single::{PyConfChangeSingleMut, PyConfChangeSingleRef},
@@ -116,6 +118,32 @@ impl PyConfChangeV2Ref {
                 CompareOp::Ne => (inner != &rhs).into_py(py),
                 _ => py.NotImplemented(),
             }
+        })
+    }
+
+    pub fn to_dict(&mut self, py: Python) -> PyResult<PyObject> {
+        let context = self.get_context(py)?;
+        let transition: String = self.get_transition()?.__repr__();
+
+        self.inner.map_as_ref(|inner| {
+            let changes = inner
+                .get_changes()
+                .iter()
+                .map(|cs| {
+                    PyConfChangeSingleRef {
+                        inner: RefMutContainer::new_raw(unsafe { make_mut(cs) }),
+                    }
+                    .to_dict(py)
+                    .unwrap()
+                })
+                .collect::<Vec<_>>();
+            let changes = PyList::new(py, changes);
+
+            let res = PyDict::new(py);
+            res.set_item("changes", changes).unwrap();
+            res.set_item("context", context).unwrap();
+            res.set_item("transition", transition).unwrap();
+            res.into_py(py)
         })
     }
 
