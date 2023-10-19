@@ -55,7 +55,7 @@ def vote_resp_msg_type(t: "MessageType") -> "MessageType":
 
 class __DICT_SERIALIZABLE(metaclass=ABCMeta):
     @abstractmethod
-    def to_dict(self) -> str: ...
+    def to_dict(self) -> dict[str, Any]: ...
 
 class __Cloneable(metaclass=ABCMeta):
     @abstractmethod
