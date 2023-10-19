@@ -2678,7 +2678,7 @@ class ProgressTrackerRef(__API_ProgressTracker):
     Reference type of :class:`ProgressTracker`.
     """
 
-class __API_Progress(__Cloneable):
+class __API_Progress(__Cloneable, __DICT_SERIALIZABLE):
     def clone(self) -> "Progress": ...
     def become_probe(self) -> None:
         """Changes the progress to a probe."""

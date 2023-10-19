@@ -15,7 +15,6 @@ use pyo3::{
 };
 use raft::eraftpb::ConfChangeV2;
 
-use super::conf_change_single::PyConfChangeSingle;
 use super::{
     conf_change::PyConfChangeRef,
     conf_change_single::{PyConfChangeSingleMut, PyConfChangeSingleRef},

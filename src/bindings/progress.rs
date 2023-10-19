@@ -1,3 +1,4 @@
+use pyo3::types::PyDict;
 use pyo3::{intern, prelude::*, pyclass::CompareOp};
 
 use crate::implement_type_conversion;
@@ -79,6 +80,33 @@ impl PyProgressRef {
                 CompareOp::Ne => (inner != &rhs).into_py(py),
                 _ => py.NotImplemented(),
             }
+        })
+    }
+
+    pub fn to_dict(&mut self, py: Python) -> PyResult<PyObject> {
+        let commit_group_id = self.get_commit_group_id()?;
+        let committed_index = self.get_committed_index()?;
+        // let ins = self.get_ins()?;
+        let matched = self.get_matched()?;
+        let next_idx = self.get_next_idx()?;
+        let paused = self.get_paused()?;
+        let pending_request_snapshot = self.get_pending_request_snapshot()?;
+        let pending_snapshot = self.get_pending_snapshot()?;
+        let recent_active = self.get_recent_active()?;
+        let state = self.get_state()?.__repr__();
+
+        self.inner.map_as_ref(|_inner| {
+            let res = PyDict::new(py);
+            res.set_item("commit_group_id", commit_group_id).unwrap();
+            res.set_item("committed_index", committed_index).unwrap();
+            res.set_item("matched", matched).unwrap();
+            res.set_item("next_idx", next_idx).unwrap();
+            res.set_item("paused", paused).unwrap();
+            res.set_item("pending_request_snapshot", pending_request_snapshot).unwrap();
+            res.set_item("pending_snapshot", pending_snapshot).unwrap();
+            res.set_item("recent_active", recent_active).unwrap();
+            res.set_item("state", state).unwrap();
+            res.into_py(py)
         })
     }
 
