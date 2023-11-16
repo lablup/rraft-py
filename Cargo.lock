@@ -749,7 +749,7 @@ dependencies = [
 [[package]]
 name = "raft"
 version = "0.7.0"
-source = "git+https://github.com/jopemachine/raft-rs.git?branch=feat/add-custom-deserializer#a5527ec8e9a9297251fdc615370117068f702720"
+source = "git+https://github.com/jopemachine/raft-rs.git#49e01860a3d8b5d818d0891a7ce143a2c7f6c741"
 dependencies = [
  "bytes",
  "fxhash",
@@ -768,7 +768,7 @@ dependencies = [
 [[package]]
 name = "raft-proto"
 version = "0.7.0"
-source = "git+https://github.com/jopemachine/raft-rs.git?branch=feat/add-custom-deserializer#a5527ec8e9a9297251fdc615370117068f702720"
+source = "git+https://github.com/jopemachine/raft-rs.git#49e01860a3d8b5d818d0891a7ce143a2c7f6c741"
 dependencies = [
  "lazy_static",
  "prost",
@@ -860,7 +860,7 @@ checksum = "3582f63211428f83597b51b2ddb88e2a91a9d52d12831f9d08f5e624e8977422"
 
 [[package]]
 name = "rraft-py"
-version = "0.2.23"
+version = "0.2.24"
 dependencies = [
  "bincode",
  "bytes",
