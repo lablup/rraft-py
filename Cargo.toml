@@ -18,7 +18,7 @@ prost = "0.11"
 protobuf = "2"
 pyo3 = { version = "0.20.0", features = ["extension-module", "multiple-pymethods"] }
 raft = { git = "https://github.com/jopemachine/raft-rs.git", branch = "feat/add-custom-deserializer", features = ["prost-codec", "default-logger"], default-features = false }
-slog = { version = "2.2", features = ["max_level_debug", "release_max_level_debug"] }
+slog = { version = "2.2", features = ["max_level_trace", "release_max_level_trace"] }
 slog-envlogger = "2.1.0"
 slog-term = "2.9.0"
 slog-stdlog = "4"
