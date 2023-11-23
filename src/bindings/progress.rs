@@ -102,7 +102,8 @@ impl PyProgressRef {
             res.set_item("matched", matched).unwrap();
             res.set_item("next_idx", next_idx).unwrap();
             res.set_item("paused", paused).unwrap();
-            res.set_item("pending_request_snapshot", pending_request_snapshot).unwrap();
+            res.set_item("pending_request_snapshot", pending_request_snapshot)
+                .unwrap();
             res.set_item("pending_snapshot", pending_snapshot).unwrap();
             res.set_item("recent_active", recent_active).unwrap();
             res.set_item("state", state).unwrap();
