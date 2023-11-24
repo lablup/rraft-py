@@ -2,7 +2,7 @@
 Type hints for Native Rust Extension
 """
 from abc import ABCMeta, abstractmethod
-from typing import Any, Callable, Final, List, Optional, Set, Tuple
+from typing import Any, Callable, Final, Optional
 
 NO_LIMIT: Final[Any]
 """
@@ -350,7 +350,7 @@ class RaftStateRef(__API_RaftState):
     """
 
 class __API_MemStorageCore:
-    def append(self, ents: List["Entry"] | List["EntryRef"]) -> None:
+    def append(self, ents: list["Entry"] | list["EntryRef"]) -> None:
         """
         Append the new entries to storage.
 
@@ -455,7 +455,7 @@ class __API_Storage(__Cloneable):
         high: int,
         context: "GetEntriesContextRef",
         max_size: Optional[int],
-    ) -> List["Entry"]:
+    ) -> list["Entry"]:
         """
         Returns a slice of log entries in the range `[low, high)`.
         max_size limits the total size of the log entries returned if not `None`, however
@@ -633,48 +633,48 @@ class __API_Ready:
         """
         Snapshot specifies the snapshot to be saved to stable storage.
         """
-    def committed_entries(self) -> List["EntryRef"]:
+    def committed_entries(self) -> list["EntryRef"]:
         """
         CommittedEntries specifies entries to be committed to a
         store/state-machine. These have previously been committed to stable
         store.
         """
-    def take_committed_entries(self) -> List["Entry"]:
+    def take_committed_entries(self) -> list["Entry"]:
         """
         Take the CommitEntries.
         """
-    def entries(self) -> List["EntryRef"]:
+    def entries(self) -> list["EntryRef"]:
         """
         Entries specifies entries to be saved to stable storage.
         """
-    def take_entries(self) -> List["Entry"]:
+    def take_entries(self) -> list["Entry"]:
         """
         Take the Entries.
         """
-    def messages(self) -> List["MessageRef"]:
+    def messages(self) -> list["MessageRef"]:
         """
         Messages specifies outbound messages to be sent.
         If it contains a MsgSnap message, the application MUST report back to raft
         when the snapshot has been received or has failed by calling ReportSnapshot.
         """
-    def take_messages(self) -> List["Message"]:
+    def take_messages(self) -> list["Message"]:
         """
         Take the Messages.
         """
-    def persisted_messages(self) -> List["MessageRef"]:
+    def persisted_messages(self) -> list["MessageRef"]:
         """
         Persisted Messages specifies outbound messages to be sent AFTER the HardState,
         Entries and Snapshot are persisted to stable storage.
         """
-    def take_persisted_messages(self) -> List["Message"]:
+    def take_persisted_messages(self) -> list["Message"]:
         """
         Take the Persisted Messages.
         """
-    def read_states(self) -> List["ReadStateRef"]:
+    def read_states(self) -> list["ReadStateRef"]:
         """
         ReadStates specifies the state for read only query.
         """
-    def take_read_states(self) -> List["ReadState"]:
+    def take_read_states(self) -> list["ReadState"]:
         """
         ReadStates specifies the state for read only query.
         """
@@ -982,21 +982,21 @@ class __API_LightReady:
         It will be None state if there is no update.
         It is not required to save it to stable storage.
         """
-    def committed_entries(self) -> List["EntryRef"]:
+    def committed_entries(self) -> list["EntryRef"]:
         """
         CommittedEntries specifies entries to be committed to a
         store/state-machine. These have previously been committed to stable
         store.
         """
-    def take_committed_entries(self) -> List["Entry"]:
+    def take_committed_entries(self) -> list["Entry"]:
         """
         Take the CommitEntries.
         """
-    def messages(self) -> List["MessageRef"]:
+    def messages(self) -> list["MessageRef"]:
         """
         Messages specifies outbound messages to be sent.
         """
-    def take_messages(self) -> List["Message"]:
+    def take_messages(self) -> list["Message"]:
         """
         Take the Messages.
         """
@@ -1201,9 +1201,9 @@ class __API_Message(__Cloneable, __Encoder, __Decoder):
         """ """
     def clear_reject_hint(self) -> None:
         """ """
-    def get_entries(self) -> List["EntryRef"]:
+    def get_entries(self) -> list["EntryRef"]:
         """ """
-    def set_entries(self, ents: List["Entry"] | List["EntryRef"]) -> None:
+    def set_entries(self, ents: list["Entry"] | list["EntryRef"]) -> None:
         """ """
     def clear_entries(self) -> None:
         """ """
@@ -1404,27 +1404,27 @@ class __API_ConfState(__Cloneable, __Encoder, __Decoder, __DICT_SERIALIZABLE):
         """ """
     def clear_auto_leave(self) -> None:
         """ """
-    def get_learners(self) -> List[int]:
+    def get_learners(self) -> list[int]:
         """ """
-    def set_learners(self, learners: List[int]) -> None:
+    def set_learners(self, learners: list[int]) -> None:
         """ """
     def clear_learners(self) -> None:
         """ """
-    def get_learners_next(self) -> List[int]:
+    def get_learners_next(self) -> list[int]:
         """ """
-    def set_learners_next(self, learners_next: List[int]) -> None:
+    def set_learners_next(self, learners_next: list[int]) -> None:
         """ """
     def clear_learners_next(self) -> None:
         """ """
-    def get_voters(self) -> List[int]:
+    def get_voters(self) -> list[int]:
         """ """
-    def set_voters(self, voters: List[int]) -> None:
+    def set_voters(self, voters: list[int]) -> None:
         """ """
     def clear_voters(self) -> None:
         """ """
-    def get_voters_outgoing(self) -> List[int]:
+    def get_voters_outgoing(self) -> list[int]:
         """ """
-    def set_voters_outgoing(self, voters_outgoing: List[int]) -> None:
+    def set_voters_outgoing(self, voters_outgoing: list[int]) -> None:
         """ """
     def clear_voters_outgoing(self) -> None:
         """ """
@@ -1433,7 +1433,7 @@ class ConfState(__API_ConfState):
     """ """
 
     def __init__(
-        self, voters: Optional[List[int]], learners: Optional[List[int]]
+        self, voters: Optional[list[int]], learners: Optional[list[int]]
     ) -> None: ...
     def make_ref(self) -> "ConfStateRef": ...
     @staticmethod
@@ -1448,10 +1448,10 @@ class ConfStateRef(__API_ConfState):
 
 class __API_ConfChangeV2(__Cloneable, __Encoder, __Decoder, __DICT_SERIALIZABLE):
     def clone(self) -> "ConfChangeV2": ...
-    def get_changes(self) -> List["ConfChangeSingleRef"]:
+    def get_changes(self) -> list["ConfChangeSingleRef"]:
         """ """
     def set_changes(
-        self, changes: List["ConfChangeSingle"] | List["ConfChangeSingleRef"]
+        self, changes: list["ConfChangeSingle"] | list["ConfChangeSingleRef"]
     ) -> None:
         """ """
     def clear_changes(self) -> None:
@@ -1663,7 +1663,7 @@ class __API_Unstable:
         Asserts the `hi` and `lo` values against each other and against the
         entries themselves.
         """
-    def slice(self, lo: int, hi: int) -> List["EntryRef"]:
+    def slice(self, lo: int, hi: int) -> list["EntryRef"]:
         """
         Returns a slice of entries between the high and low.
 
@@ -1685,7 +1685,7 @@ class __API_Unstable:
         """
         From a given snapshot, restores the snapshot to self, but doesn't unpack.
         """
-    def truncate_and_append(self, ents: List["Entry"] | List["EntryRef"]) -> None:
+    def truncate_and_append(self, ents: list["Entry"] | list["EntryRef"]) -> None:
         """
         Append entries to unstable, truncate local block first if overlapped.
 
@@ -1709,11 +1709,11 @@ class __API_Unstable:
         """
         `offset`: The offset from the vector index.
         """
-    def get_entries(self) -> List["EntryRef"]:
+    def get_entries(self) -> list["EntryRef"]:
         """
         `entries`: All entries that have not yet been written to storage.
         """
-    def set_entries(self, ents: List["Entry"] | List["EntryRef"]) -> None:
+    def set_entries(self, ents: list["Entry"] | list["EntryRef"]) -> None:
         """
         `entries`: All entries that have not yet been written to storage.
         """
@@ -1822,15 +1822,15 @@ class ReadStateRef(__API_ReadState):
 class __API_RaftLog:
     def entries(
         self, idx: int, context: "GetEntriesContextRef", max_size: Optional[int]
-    ) -> List["Entry"]:
+    ) -> list["Entry"]:
         """
         Returns entries starting from a particular index and not exceeding a bytesize.
         """
-    def all_entries(self) -> List["Entry"]:
+    def all_entries(self) -> list["Entry"]:
         """
         Returns all the entries. Only used by tests.
         """
-    def append(self, ents: List["Entry"] | List["EntryRef"]) -> int:
+    def append(self, ents: list["Entry"] | list["EntryRef"]) -> int:
         """
         Appends a set of entries to the unstable list.
         """
@@ -1838,7 +1838,7 @@ class __API_RaftLog:
         """
         Returns the last applied index.
         """
-    def find_conflict(self, ents: List["Entry"] | List["EntryRef"]) -> int:
+    def find_conflict(self, ents: list["Entry"] | list["EntryRef"]) -> int:
         """
         Finds the index of the conflict.
 
@@ -1857,7 +1857,7 @@ class __API_RaftLog:
         The first entry MUST have an index equal to the argument 'from'.
         The index of the given entries MUST be continuously increasing.
         """
-    def find_conflict_by_term(self, index: int, term: int) -> Tuple[int, Optional[int]]:
+    def find_conflict_by_term(self, index: int, term: int) -> tuple[int, Optional[int]]:
         """
         find_conflict_by_term takes an (`index`, `term`) pair (indicating a conflicting log
         entry on a leader/follower during an append) and finds the largest index in
@@ -1877,13 +1877,13 @@ class __API_RaftLog:
 
         Panics if the index goes past the last index.
         """
-    def commit_info(self) -> Tuple[int, int]:
+    def commit_info(self) -> tuple[int, int]:
         """
         Returns the committed index and its term.
         """
     def store(self) -> "MemStorageRef":
         """ """
-    def next_entries(self, max_size: Optional[int]) -> Optional[List["Entry"]]:
+    def next_entries(self, max_size: Optional[int]) -> Optional[list["Entry"]]:
         """
         Returns all the available entries for execution.
         If applied is smaller than the index of snapshot, it returns all committed
@@ -1891,7 +1891,7 @@ class __API_RaftLog:
         """
     def next_entries_since(
         self, since_idx: int, max_size: Optional[int]
-    ) -> Optional[List["Entry"]]:
+    ) -> Optional[list["Entry"]]:
         """
         Returns committed and persisted entries since max(`since_idx` + 1, first_index).
         """
@@ -1930,8 +1930,8 @@ class __API_RaftLog:
         idx: int,
         term: int,
         committed: int,
-        ents: List["Entry"] | List["EntryRef"],
-    ) -> Optional[Tuple[int, int]]:
+        ents: list["Entry"] | list["EntryRef"],
+    ) -> Optional[tuple[int, int]]:
         """
         Returns None if the entries cannot be appended. Otherwise,
         it returns Some((conflict_index, last_index)).
@@ -1989,7 +1989,7 @@ class __API_RaftLog:
         """
         Returns a reference to the unstable log.
         """
-    def unstable_entries(self) -> List["EntryRef"]:
+    def unstable_entries(self) -> list["EntryRef"]:
         """
         Returns slice of entries that are not persisted.
         """
@@ -2047,7 +2047,7 @@ class __API_RaftLog:
         high: int,
         max_size: Optional[int],
         context: "GetEntriesContextRef",
-    ) -> List["EntryRef"]:
+    ) -> list["EntryRef"]:
         """
         Grabs a slice of entries from the raft. Unlike a rust slice pointer, these are
         returned by value. The result is truncated to the max_size in bytes.
@@ -2102,7 +2102,7 @@ class RaftLogRef(__API_RaftLog):
         """
 
 class __API_Raft:
-    def append_entry(self, ents: List["Entry"] | List["EntryRef"]) -> bool:
+    def append_entry(self, ents: list["Entry"] | list["EntryRef"]) -> bool:
         """
         Appends a slice of entries to the log.
         The entries are updated to match the current index and term.
@@ -2151,7 +2151,7 @@ class __API_Raft:
 
         If it can't get a correct answer, `None` is returned.
         """
-    def assign_commit_groups(self, ids: List[Tuple[int, int]]) -> None:
+    def assign_commit_groups(self, ids: list[tuple[int, int]]) -> None:
         """
         Assigns groups to peers.
 
@@ -2180,14 +2180,14 @@ class __API_Raft:
         Return current uncommitted size recorded by uncommitted_state
         """
     def maybe_increase_uncommitted_size(
-        self, ents: List["Entry"] | List["EntryRef"]
+        self, ents: list["Entry"] | list["EntryRef"]
     ) -> bool:
         """
         Increase size of 'ents' to uncommitted size. Return true when size limit
         is satisfied. Otherwise return false and uncommitted size remains unchanged.
         For raft with no limit(or non-leader raft), it always return true.
         """
-    def reduce_uncommitted_size(self, ents: List["Entry"] | List["EntryRef"]) -> None:
+    def reduce_uncommitted_size(self, ents: list["Entry"] | list["EntryRef"]) -> None:
         """
         Reduce size of 'ents' from uncommitted size.
         """
@@ -2470,15 +2470,15 @@ class __API_Raft:
         """
         `id`: The ID of this node.
         """
-    def get_msgs(self) -> List["MessageRef"]:
+    def get_msgs(self) -> list["MessageRef"]:
         """
         `msgs`: The list of messages.
         """
-    def set_msgs(self, msgs: List["Message" | "MessageRef"]) -> None:
+    def set_msgs(self, msgs: list["Message" | "MessageRef"]) -> None:
         """
         `msgs`: The list of messages.
         """
-    def take_msgs(self) -> List["Message"]:
+    def take_msgs(self) -> list["Message"]:
         """
         `msgs`: The list of messages.
         """
@@ -2536,12 +2536,12 @@ class __API_Raft:
         """
     def apply_conf_change(self, conf_change: "ConfChangeV2Ref") -> "ConfChangeRef":
         """ """
-    def get_read_states(self) -> List["ReadState"]:
+    def get_read_states(self) -> list["ReadState"]:
         """
         `read_states`: The current read states.
         """
     def set_read_states(
-        self, read_states: List["ReadState"] | List["ReadStateRef"]
+        self, read_states: list["ReadState"] | list["ReadStateRef"]
     ) -> None:
         """
         `read_states`: The current read states.
@@ -2569,7 +2569,7 @@ class __API_Raft:
         To adjust `max_inflight_msgs` for the specified peer.
         Set to `0` will disable the progress.
         """
-    def get_readonly_read_index_queue(self) -> List[List[int]]:
+    def get_readonly_read_index_queue(self) -> list[list[int]]:
         """ """
     def set_batch_append(self, batch_append: bool) -> None:
         """
@@ -2644,7 +2644,7 @@ class __API_ProgressTracker(__Cloneable):
         """
         Configures group commit.
         """
-    def has_quorum(self, potential_quorum: Set[int]) -> bool:
+    def has_quorum(self, potential_quorum: set[int]) -> bool:
         """
         Determine if a quorum is formed from the given set of nodes.
 
@@ -2662,7 +2662,7 @@ class __API_ProgressTracker(__Cloneable):
 
         This should only be called by the leader.
         """
-    def maximal_committed_index(self) -> Tuple[int, bool]:
+    def maximal_committed_index(self) -> tuple[int, bool]:
         """
         Returns the maximal committed index for the cluster. The bool flag indicates whether
         the index is computed by group commit algorithm successfully
@@ -2681,9 +2681,9 @@ class __API_ProgressTracker(__Cloneable):
         """
     def conf_voters(self) -> "JointConfigRef":
         """ """
-    def conf_learners(self) -> Set[int]:
+    def conf_learners(self) -> set[int]:
         """ """
-    def collect(self) -> List["ProgressMapItem"]:
+    def collect(self) -> list["ProgressMapItem"]:
         """ """
     def vote_result(self, votes: dict) -> str:
         """
@@ -2912,7 +2912,7 @@ class __API_JointConfig(__Cloneable):
         """Clears all IDs."""
     def contains(self, id: int) -> bool:
         """Check if an id is a voter."""
-    def ids() -> Set[int]:
+    def ids() -> set[int]:
         """Returns an iterator over two hash set without cloning."""
     def is_singleton(self) -> bool:
         """
@@ -2926,7 +2926,7 @@ class JointConfig(__API_JointConfig):
     Decisions require the support of both majorities.
     """
 
-    def __init__(self, voters: Set[int]) -> None: ...
+    def __init__(self, voters: set[int]) -> None: ...
     def make_ref(self) -> "JointConfigRef": ...
 
 class JointConfigRef(__API_JointConfig):
@@ -2936,13 +2936,13 @@ class JointConfigRef(__API_JointConfig):
 
 class __API_MajorityConfig(__Cloneable):
     def clone(self) -> "MajorityConfig": ...
-    def raw_slice(self) -> List[int]:
+    def raw_slice(self) -> list[int]:
         """
         Returns the MajorityConfig as a slice.
         """
     def capacity(self) -> int:
         """"""
-    def extend(self, other_set: Set[int]) -> None:
+    def extend(self, other_set: set[int]) -> None:
         """"""
     def get(self, index: int) -> Optional[int]:
         """"""
@@ -2950,11 +2950,11 @@ class __API_MajorityConfig(__Cloneable):
         """"""
     def replace(self, value: int) -> int:
         """"""
-    def is_disjoint(self, other: Set[int]) -> bool:
+    def is_disjoint(self, other: set[int]) -> bool:
         """"""
-    def is_superset(self, other: Set[int]) -> bool:
+    def is_superset(self, other: set[int]) -> bool:
         """"""
-    def is_subset(self, other: Set[int]) -> bool:
+    def is_subset(self, other: set[int]) -> bool:
         """"""
     def reserve(self, additional: int) -> None:
         """"""
@@ -2972,7 +2972,7 @@ class MajorityConfig(__API_MajorityConfig):
     A set of IDs that uses majority quorums to make decisions.
     """
 
-    def __init__(self, voters: Set[int]) -> None: ...
+    def __init__(self, voters: set[int]) -> None: ...
     def make_ref(self) -> "MajorityConfigRef": ...
 
 class MajorityConfigRef(__API_MajorityConfig):
