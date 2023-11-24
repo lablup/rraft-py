@@ -332,7 +332,7 @@ class RaftStateRef(__API_RaftState):
     Reference type of :class:`RaftState`.
     """
 
-class __API_StorageCore:
+class __API_MemStorageCore:
     def append(self, ents: List["Entry"] | List["EntryRef"]) -> None:
         """
         Append the new entries to storage.
@@ -399,7 +399,7 @@ class __API_StorageCore:
         Take get entries context.
         """
 
-class MemStorageCore(__API_StorageCore):
+class MemStorageCore(__API_MemStorageCore):
     """
     The Memory Storage Core instance holds the actual state of the storage struct. To access this
     value, use the `rl` and `wl` functions on the main MemStorage implementation.
@@ -409,21 +409,9 @@ class MemStorageCore(__API_StorageCore):
     @staticmethod
     def default() -> "MemStorageCore": ...
 
-class MemStorageCoreRef(__API_StorageCore):
+class MemStorageCoreRef(__API_MemStorageCore):
     """
     Reference type of :class:`MemStorage`.
-    """
-
-class StorageCore(__API_StorageCore):
-    """ """
-
-    def make_ref(self) -> "StorageCoreRef": ...
-    @staticmethod
-    def default() -> "StorageCore": ...
-
-class StorageCoreRef(__API_StorageCore):
-    """
-    Reference type of :class:`StorageCore`.
     """
 
 class __API_Storage(__Cloneable):
@@ -438,7 +426,11 @@ class __API_Storage(__Cloneable):
         """
     def initial_state(self) -> RaftState:
         """
-        Implements the Storage trait.
+        `initial_state` is called when Raft is initialized. This interface will return a `RaftState`
+        which contains `HardState` and `ConfState`.
+
+        `RaftState` could be initialized or not. If it's initialized it means the `Storage` is
+        created with a configuration, and its last index and term should be greater than 0.
         """
     def entries(
         self,
@@ -448,23 +440,49 @@ class __API_Storage(__Cloneable):
         max_size: Optional[int],
     ) -> List["Entry"]:
         """
-        Implements the Storage trait.
+        Returns a slice of log entries in the range `[low, high)`.
+        max_size limits the total size of the log entries returned if not `None`, however
+        the slice of entries returned will always have length at least 1 if entries are
+        found in the range.
+
+        Entries are supported to be fetched asynchronously depending on the context. Async is optional.
+        Storage should check context.can_async() first and decide whether to fetch entries asynchronously
+        based on its own implementation. If the entries are fetched asynchronously, storage should return
+        LogTemporarilyUnavailable, and application needs to call `on_entries_fetched(context)` to trigger
+        re-fetch of the entries after the storage finishes fetching the entries.
+
+        # Panics
+
+        Panics if `high` is higher than `Storage::last_index(&self) + 1`.
         """
     def term(self, idx: int) -> int:
         """
-        Implements the Storage trait.
+        Returns the term of entry idx, which must be in the range
+        [first_index()-1, last_index()]. The term of the entry before
+        first_index is retained for matching purpose even though the
+        rest of that entry may not be available.
         """
     def first_index(self) -> int:
         """
-        Implements the Storage trait.
+        Returns the index of the first log entry that is possible available via entries, which will
+        always equal to `truncated index` plus 1.
+
+        New created (but not initialized) `Storage` can be considered as truncated at 0 so that 1
+        will be returned in this case.
         """
     def last_index(self) -> int:
         """
-        Implements the Storage trait.
+        The index of the last entry replicated in the `Storage`.
         """
     def snapshot(self, request_index: int, to: int) -> "Snapshot":
         """
-        Implements the Storage trait.
+        Returns the most recent snapshot.
+
+        If snapshot is temporarily unavailable, it should return SnapshotTemporarilyUnavailable,
+        so raft state machine could know that Storage needs some time to prepare
+        snapshot and call snapshot later.
+        A snapshot's index must not less than the `request_index`.
+        `to` indicates which peer is requesting the snapshot.
         """
 
 class MemStorage(__API_Storage):
